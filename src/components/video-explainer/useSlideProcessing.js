@@ -18,6 +18,18 @@ export function useSlideProcessing(setSlides, diagrams, examples, keyConcepts, l
         let duration = 45;
         let slideNumber = index + 1;
 
+        // First line after [SLIDE]: marker is typically the title/heading
+        if (lines.length > 0) {
+            let firstLine = lines[0];
+            // Remove leading colon and whitespace (from [SLIDE]: marker split)
+            firstLine = firstLine.replace(/^:\s*/, '').trim();
+            // Check if first line looks like a heading (not a bullet point, not too long)
+            if (firstLine && !firstLine.startsWith('-') && !firstLine.startsWith('•') && !firstLine.startsWith('*') && firstLine.length < 100) {
+                title = firstLine;
+                lines.shift(); // Remove the title from lines to process
+            }
+        }
+
         lines.forEach(line => {
             const lowerLine = line.toLowerCase();
 

@@ -200,11 +200,11 @@ export default function VideoCourseExplainerSimple({
                     </>
                 )}
 
-                {/* Slide Counter */}
-                {videoState.slides.length > 0 && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-800/80 backdrop-blur-sm rounded-full">
-                        <span className="text-sm text-white font-medium">
-                            {videoState.currentSlide + 1} / {videoState.slides.length}
+                {/* Slide Title */}
+                {videoState.slides.length > 0 && videoState.slides[videoState.currentSlide] && (
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 px-5 py-2 bg-slate-800/80 backdrop-blur-sm rounded-full max-w-md">
+                        <span className="text-sm text-white font-medium truncate block">
+                            {videoState.slides[videoState.currentSlide].title || `Section ${videoState.currentSlide + 1}`}
                         </span>
                     </div>
                 )}
@@ -270,7 +270,9 @@ export default function VideoCourseExplainerSimple({
                     </div>
                     <div className="flex justify-between mt-1">
                         <span className="text-xs text-slate-500">{videoState.formatTime(videoState.timeSpent)}</span>
-                        <span className="text-xs text-slate-500">Slide {videoState.currentSlide + 1} of {videoState.slides.length}</span>
+                        <span className="text-xs text-slate-500 truncate max-w-xs">
+                            {videoState.slides[videoState.currentSlide]?.title || `Section ${videoState.currentSlide + 1}`} ({videoState.currentSlide + 1}/{videoState.slides.length})
+                        </span>
                     </div>
                 </div>
 
