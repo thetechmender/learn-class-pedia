@@ -43,6 +43,7 @@ import {
     Rocket
 } from 'lucide-react';
 import VideoCourseExplainerSimple from '../components/VideoCourseExplainerSimple';
+import ChatBox from '../components/video-explainer/ChatBox';
 
 // Transform API response to LinkedIn-style course structure
 const transformApiResponse = (apiData) => {
@@ -238,6 +239,7 @@ const LinkedInStyleDemo = () => {
     const [notes, setNotes] = useState('');
     const [showNotes, setShowNotes] = useState(false);
     const [bookmarkedLectures, setBookmarkedLectures] = useState(new Set());
+    const [showChatBox, setShowChatBox] = useState(true);
 
     // Fetch course data from API
     useEffect(() => {
@@ -588,7 +590,6 @@ const LinkedInStyleDemo = () => {
                             )}
                         </div>
                     </div>
-
                     {/* Video Player Area with Notes Sidebar */}
                     <div className="flex-1 flex overflow-hidden">
                         <div className={`${showNotes ? 'w-3/4' : 'w-full'} transition-all duration-300`}>
@@ -673,17 +674,39 @@ const LinkedInStyleDemo = () => {
                     </div>
                 </div>
 
-                {/* Course Outline Sidebar - Mobile overlay, Desktop always visible */}
+                {/* ChatBox Panel - RIGHT SIDE - Fixed on desktop */}
+                {showChatBox && (
+                    <div className="hidden lg:block w-80 flex-shrink-0 border-l border-gray-200 dark:border-slate-800 bg-white relative">
+                        <ChatBox 
+                            isOpen={showChatBox}
+                            onToggle={() => setShowChatBox(!showChatBox)}
+                            courseId={courseData.id}
+                            isEmbedded={true}
+                        />
+                    </div>
+                )}
+                {!showChatBox && (
+                    <button 
+                        onClick={() => setShowChatBox(true)}
+                        className="hidden lg:flex items-center justify-center w-12 flex-shrink-0 border-l border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                        title="Open Chat"
+                    >
+                        <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </button>
+                )}
+
+                {/* Course Outline Sidebar - LEFT SIDE - Mobile overlay, Desktop always visible */}
                 <div className={`
-                    ${showSidebar || isLargeScreen ? 'translate-x-0' : 'translate-x-full'}
-                    fixed lg:relative right-0 top-0 h-full lg:h-auto
-                    w-[85vw] sm:w-80 lg:w-96
+                    ${showSidebar || isLargeScreen ? 'translate-x-0' : '-translate-x-full'}
+                    fixed lg:relative left-0 top-0 h-full lg:h-auto
+                    w-[85vw] sm:w-72 lg:w-72
                     transition-all duration-300 ease-in-out
                     bg-white dark:bg-slate-900
-                    border-l border-gray-200 dark:border-slate-800
+                    border-r border-gray-200 dark:border-slate-800
                     flex flex-col overflow-hidden flex-shrink-0
                     shadow-lg lg:shadow-none
                     z-50 lg:z-auto
+                    order-first
                 `}>
                     {(showSidebar || isLargeScreen) && (
                         <>

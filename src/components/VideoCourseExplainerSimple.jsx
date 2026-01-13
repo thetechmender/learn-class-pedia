@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Play, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import mermaid from 'mermaid';
 import SlideContent from './video-explainer/SlideContent';
 import Avatar from './Avatar';
-import ChatBox from './video-explainer/ChatBox';
 import { useVideoExplainer } from './video-explainer/useVideoExplainer';
 import { useSlideProcessing } from './video-explainer/useSlideProcessing';
 import { useTTS } from './video-explainer/useTTS';
@@ -37,9 +36,6 @@ export default function VideoCourseExplainerSimple({
     practiceExercises,
     courseId = 1
 }) {
-    // State for chat
-    const [showChat, setShowChat] = useState(false);
-
     // Custom hooks
     const videoState = useVideoExplainer(lessonText, audios, structuredOutline);
     const { processLessonText } = useSlideProcessing(videoState.setSlides, diagrams, examples, keyConcepts, learningObjectives, comprehensiveSummary, assessments);
@@ -367,25 +363,6 @@ export default function VideoCourseExplainerSimple({
                 </div>
             )}
 
-            {/* Chat Toggle Button */}
-            <button
-                onClick={() => setShowChat(!showChat)}
-                className={`absolute bottom-24 left-6 z-30 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${
-                    showChat 
-                        ? 'bg-purple-500 hover:bg-purple-400' 
-                        : 'bg-slate-800 hover:bg-slate-700'
-                }`}
-            >
-                <MessageCircle className="w-5 h-5 text-white" />
-            </button>
-
-            {/* ChatBox */}
-            <ChatBox
-                currentLecture={videoState.slides[videoState.currentSlide]?.content || ''}
-                isOpen={showChat}
-                onToggle={() => setShowChat(!showChat)}
-                courseId={courseId}
-            />
         </div>
     );
 }
