@@ -222,8 +222,19 @@ const LinkedInStyleDemo = () => {
     const [selectedLecture, setSelectedLecture] = useState(null);
     const [expandedChapters, setExpandedChapters] = useState(new Set());
     const [completedLectures, setCompletedLectures] = useState(new Set());
-    const [showSidebar, setShowSidebar] = useState(true);
+    const [showSidebar, setShowSidebar] = useState(false);
     const [activeTab, setActiveTab] = useState('content');
+    const [isLargeScreen, setIsLargeScreen] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+
+    // Handle screen resize for responsive sidebar
+    useEffect(() => {
+        const handleResize = () => {
+            setIsLargeScreen(window.innerWidth >= 1024);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const [notes, setNotes] = useState('');
     const [showNotes, setShowNotes] = useState(false);
     const [bookmarkedLectures, setBookmarkedLectures] = useState(new Set());
@@ -442,6 +453,14 @@ const LinkedInStyleDemo = () => {
                 </div>
             </header>
 
+            {/* Mobile Sidebar Overlay */}
+            {showSidebar && !isLargeScreen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+                    onClick={() => setShowSidebar(false)} 
+                />
+            )}
+
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
                 {/* Video/Content Area */}
@@ -487,7 +506,7 @@ const LinkedInStyleDemo = () => {
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-blue-500 dark:text-blue-400 text-sm font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+                                    <span className="text-blue-500 dark:text-blue-400 text-sm font-medium px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full">
                                         {courseData.chapters.find(ch => ch.lectures.some(l => l.id === selectedLecture.id))?.title}
                                     </span>
                                     <span className="text-gray-500 dark:text-gray-400 text-sm">•</span>
@@ -654,17 +673,35 @@ const LinkedInStyleDemo = () => {
                     </div>
                 </div>
 
-                {/* Course Outline Sidebar */}
-                <div className={`${showSidebar ? 'w-96' : 'w-0'} transition-all duration-300 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 flex flex-col overflow-hidden flex-shrink-0 shadow-lg`}>
-                    {showSidebar && (
+                {/* Course Outline Sidebar - Mobile overlay, Desktop always visible */}
+                <div className={`
+                    ${showSidebar || isLargeScreen ? 'translate-x-0' : 'translate-x-full'}
+                    fixed lg:relative right-0 top-0 h-full lg:h-auto
+                    w-[85vw] sm:w-80 lg:w-96
+                    transition-all duration-300 ease-in-out
+                    bg-white dark:bg-slate-900
+                    border-l border-gray-200 dark:border-slate-800
+                    flex flex-col overflow-hidden flex-shrink-0
+                    shadow-lg lg:shadow-none
+                    z-50 lg:z-auto
+                `}>
+                    {(showSidebar || isLargeScreen) && (
                         <>
                             {/* Sidebar Header */}
                             <div className="p-5 border-b border-gray-200 dark:border-slate-800">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-gray-900 dark:text-white font-semibold text-lg">Course Content</h3>
-                                    <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                                        <BarChart3 className="w-4 h-4" />
-                                        <span>{getTotalDuration()} total</span>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                                            <BarChart3 className="w-4 h-4" />
+                                            <span>{getTotalDuration()} total</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => setShowSidebar(false)}
+                                            className="lg:hidden p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                        >
+                                            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                        </button>
                                     </div>
                                 </div>
                                 
