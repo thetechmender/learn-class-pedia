@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Minimize2, Maximize2, Bot, User, Sparkles, Copy, ThumbsUp, ThumbsDown, RefreshCw, Zap, Clock, BookOpen, HelpCircle, Trash2, Paperclip, Mic, MicOff } from 'lucide-react';
-import { sendChatMessage, getSuggestedQuestions, clearChatThread } from '../../services/chatApi';
+import { MessageCircle, Send, X, Minimize2, Maximize2, Bot, User, Copy, ThumbsUp, ThumbsDown, Clock, BookOpen, Trash2, Paperclip, Mic, MicOff } from 'lucide-react';
+import { sendChatMessage, clearChatThread } from '../../services/chatApi';
 import MarkdownRenderer from './MarkdownRenderer';
 
 export default function ChatBox({ currentLecture, isOpen, onToggle, courseId = 1 }) {
@@ -18,8 +18,7 @@ export default function ChatBox({ currentLecture, isOpen, onToggle, courseId = 1
     const [isTyping, setIsTyping] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [threadId, setThreadId] = useState('');
-    const [suggestedQuestions, setSuggestedQuestions] = useState([]);
-    const [isListening, setIsListening] = useState(false);
+        const [isListening, setIsListening] = useState(false);
     const [recognition, setRecognition] = useState(null);
     const [attachment, setAttachment] = useState(null);
     const [inputHeight, setInputHeight] = useState('56px');
@@ -104,19 +103,8 @@ export default function ChatBox({ currentLecture, isOpen, onToggle, courseId = 1
                     isCopied: false
                 }
             ]);
-            fetchSuggestedQuestions();
         }
     }, [isOpen, currentLecture]);
-
-    // Fetch suggested questions based on lecture content
-    const fetchSuggestedQuestions = async () => {
-        try {
-            const questions = await getSuggestedQuestions(currentLecture);
-            setSuggestedQuestions(questions.slice(0, 3));
-        } catch (error) {
-            console.error('Failed to fetch suggested questions:', error);
-        }
-    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -166,9 +154,6 @@ export default function ChatBox({ currentLecture, isOpen, onToggle, courseId = 1
             if (messages.length >= 3) {
                 saveToHistory([...messages, userMessage, botResponse]);
             }
-            
-            // Refresh suggested questions
-            fetchSuggestedQuestions();
         } catch (error) {
             const errorResponse = {
                 id: Date.now() + 1,
@@ -236,11 +221,6 @@ export default function ChatBox({ currentLecture, isOpen, onToggle, courseId = 1
         }
     };
 
-    const handleSuggestedQuestion = (question) => {
-        setInputValue(question);
-        inputRef.current.focus();
-    };
-
     const handleCopyMessage = async (text, messageId) => {
         try {
             await navigator.clipboard.writeText(text);
@@ -282,8 +262,6 @@ export default function ChatBox({ currentLecture, isOpen, onToggle, courseId = 1
                     }
                 ]);
                 setThreadId('');
-                setSuggestedQuestions([]);
-                fetchSuggestedQuestions();
             } catch (error) {
                 console.error('Failed to clear chat:', error);
             }
@@ -382,27 +360,6 @@ export default function ChatBox({ currentLecture, isOpen, onToggle, courseId = 1
 
             {!isMinimized && (
                 <>
-                    {/* Suggested Questions */}
-                    {suggestedQuestions.length > 0 && messages.length < 4 && (
-                        <div className="px-4 pt-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Zap className="w-4 h-4 text-yellow-400" />
-                                <h4 className="text-xs font-medium text-slate-300">Suggested Questions</h4>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {suggestedQuestions.map((question, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handleSuggestedQuestion(question)}
-                                        className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-lg transition-all hover:scale-105 cursor-pointer border border-slate-600"
-                                    >
-                                        {question}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-900/80 to-slate-800/50">
                         {messages.map((message) => (

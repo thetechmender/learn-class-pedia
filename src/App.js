@@ -8,7 +8,7 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<CourseHierarchy />} />
+          <Route path="/" element={<LinkedInStyleDemo />} />
           <Route path="/course-hierarchy" element={<CourseHierarchy />} />
           <Route path="/demo" element={<LinkedInStyleDemo />} />
         </Routes>
