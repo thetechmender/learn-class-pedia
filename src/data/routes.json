@@ -1,0 +1,114 @@
+{
+  "routes": [
+    {
+      "id": "dashboard",
+      "path": "/admin/dashboard",
+      "component": "Dashboard",
+      "label": "Dashboard",
+      "icon": "LayoutDashboard",
+      "category": "main",
+      "allowedRoles": [1, 2],
+      "order": 1
+    },
+    {
+      "id": "courses",
+      "path": "/admin/courses",
+      "component": "CourseManagement",
+      "label": "Course Management",
+      "icon": "BookOpen",
+      "category": "management",
+      "allowedRoles": [1],
+      "order": 2
+    },
+    {
+      "id": "career-path",
+      "path": "/admin/career-path",
+      "component": "CareerPath",
+      "label": "Career Path",
+      "icon": "TrendingUp",
+      "category": "management",
+      "allowedRoles": [1],
+      "order": 3
+    },
+    {
+      "id": "featured",
+      "path": "/admin/featured",
+      "component": "FeaturedMarking",
+      "label": "Featured Marking",
+      "icon": "Star",
+      "category": "management",
+      "allowedRoles": [1],
+      "order": 4
+    },
+    {
+      "id": "reviews",
+      "path": "/admin/reviews",
+      "component": "Reviews",
+      "label": "Review Management",
+      "icon": "MessageSquare",
+      "category": "management",
+      "allowedRoles": [1, 2],
+      "order": 5
+    },
+    {
+      "id": "course-urls",
+      "path": "/admin/course-urls",
+      "component": "CourseUrlManagement",
+      "label": "Course URL Management",
+      "icon": "Link2",
+      "category": "management",
+      "allowedRoles": [1],
+      "order": 6
+    },
+    {
+      "id": "my-courses",
+      "path": "/admin/my-courses",
+      "component": "MyCourses",
+      "label": "My Courses",
+      "icon": "BookOpen",
+      "category": "main",
+      "allowedRoles": [2],
+      "order": 7
+    },
+    {
+      "id": "my-profile",
+      "path": "/admin/my-profile",
+      "component": "MyProfile",
+      "label": "My Profile",
+      "icon": "User",
+      "category": "main",
+      "allowedRoles": [1, 2],
+      "order": 8
+    }
+  ],
+  "roles": [
+    {
+      "id": 1,
+      "name": "admin",
+      "description": "Full administrative access",
+      "permissions": ["read", "write", "delete", "manage_users", "manage_courses"]
+    },
+    {
+      "id": 2,
+      "name": "student",
+      "description": "Limited student access",
+      "permissions": ["read", "view_own_courses", "manage_own_profile"]
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@example.com",
+      "name": "Admin User",
+      "roleId": 1,
+      "avatar": "AU"
+    },
+    {
+      "id": 2,
+      "email": "student@example.com",
+      "name": "Student User",
+      "roleId": 2,
+      "avatar": "SU"
+    }
+  ]
+}
