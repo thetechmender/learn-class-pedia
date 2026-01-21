@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiService } from '../services/api';
+import { adminApiService } from '../services/AdminApi';
 import { useAuth } from '../context/AuthContext';
 import * as Icons from 'lucide-react';
 
@@ -11,17 +11,41 @@ export const useDynamicRoutes = () => {
 
   useEffect(() => {
     const loadRoutes = async () => {
-      if (!user?.roleId) {
+      console.log('useDynamicRoutes - user:', user);
+      console.log('useDynamicRoutes - user.roleId:', user?.roleId);
+      
+      // Check if user exists and has roleId
+      if (!user) {
+        console.log('useDynamicRoutes - No user found, setting loading to false');
         setLoading(false);
+        setError('No user authenticated');
         return;
       }
 
+      if (!user.roleId) {
+        console.log('useDynamicRoutes - No roleId found in user object');
+        console.log('useDynamicRoutes - User object structure:', JSON.stringify(user, null, 2));
+        setLoading(false);
+        setError('User role not found');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
       try {
-        const userRoutes = await apiService.getRoutesByRole(user.roleId);
+        console.log('useDynamicRoutes - Calling adminApiService.getRoutesByRole with roleId:', user.roleId);
+        const userRoutes = await adminApiService.getRoutesByRole(user.roleId);
+        console.log('useDynamicRoutes - Routes received:', userRoutes);
+        
+        if (!userRoutes || !Array.isArray(userRoutes)) {
+          throw new Error('Invalid routes data received');
+        }
+        
         setRoutes(userRoutes);
       } catch (err) {
-        setError('Failed to load routes');
-        console.error('Error loading routes:', err);
+        console.error('useDynamicRoutes - Error loading routes:', err);
+        setError(`Failed to load routes: ${err.message}`);
       } finally {
         setLoading(false);
       }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { apiService } from '../../../services/api';
+import { adminApiService } from '../../../services/AdminApi';
 import { useAuth } from '../../../context/AuthContext';
 
 // Import all existing components
@@ -15,6 +15,7 @@ import MyProfile from '../pages/MyProfile/MyProfile';
 import Settings from '../pages/Settings/Settings';
 import Notifications from '../pages/Notifications/Notifications';
 import Support from '../pages/Support/Support';
+import CategoryManagement from '../pages/CategoryManagement';
 
 // Component mapping
 const componentMap = {
@@ -29,6 +30,7 @@ const componentMap = {
   Settings,
   Notifications,
   Support,
+  CategoryManagement,
 };
 
 // Protected Route Component
@@ -71,20 +73,38 @@ const DynamicRoutes = () => {
       console.log('DynamicRoutes - user:', user);
       console.log('DynamicRoutes - user.roleId:', user?.roleId);
       
-      if (!user?.roleId) {
-        console.log('DynamicRoutes - No roleId found, setting loading to false');
+      // Check if user exists and has roleId
+      if (!user) {
+        console.log('DynamicRoutes - No user found, setting loading to false');
         setLoading(false);
+        setError('No user authenticated');
         return;
       }
 
+      if (!user.roleId) {
+        console.log('DynamicRoutes - No roleId found in user object');
+        console.log('DynamicRoutes - User object structure:', JSON.stringify(user, null, 2));
+        setLoading(false);
+        setError('User role not found');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
       try {
-        console.log('DynamicRoutes - Calling apiService.getRoutesByRole with roleId:', user.roleId);
-        const userRoutes = await apiService.getRoutesByRole(user.roleId);
+        console.log('DynamicRoutes - Calling adminApiService.getRoutesByRole with roleId:', user.roleId);
+        const userRoutes = await adminApiService.getRoutesByRole(user.roleId);
         console.log('DynamicRoutes - Routes received:', userRoutes);
+        
+        if (!userRoutes || !Array.isArray(userRoutes)) {
+          throw new Error('Invalid routes data received');
+        }
+        
         setRoutes(userRoutes);
       } catch (err) {
         console.error('DynamicRoutes - Error loading routes:', err);
-        setError('Failed to load routes');
+        setError(`Failed to load routes: ${err.message}`);
       } finally {
         setLoading(false);
       }

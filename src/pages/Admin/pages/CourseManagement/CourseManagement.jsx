@@ -1,127 +1,333 @@
-import React, { useState } from 'react';
-import { useCourseManagement } from '../../../../hooks/useCourseManagement';
-import {
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Star,
-  Users,
-  Clock,
-  DollarSign,
-  Tag,
-  Award,
-  Filter,
-  ChevronDown,
-  MoreVertical,
-  RefreshCw
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useAdminApi } from '../../../../hooks/useAdminApi';
+import { useAdmin } from '../../../../hooks/useAdmin';
+import { Search, RefreshCw, ChevronDown, ChevronUp, Image, DollarSign, Tag, BookOpen, Globe, CheckCircle, XCircle, Eye, Edit2 } from 'lucide-react';
+import GenericDropdown from '../../../../components/GenericDropdown';
+import MultiSelectDropdown from '../../../../components/MultiSelectDropdown';
+import CategoryDropdown from '../../../../components/CategoryDropdown';
 
 const CourseManagement = () => {
-  const {
-    courses,
-    tags,
-    badges,
-    loading,
-    error,
-    selectedCourse,
-    showCreateModal,
-    showEditModal,
-    setShowCreateModal,
-    setShowEditModal,
-    createCourse,
-    updateCourse,
-    updateCourseTags,
-    updateCourseBadge,
-    updateCourseFeatured,
-    updateCourseStatus,
-    deleteCourse,
-    getCourseById,
-    openEditModal,
-    closeModals,
-    clearError
-  } = useCourseManagement();
-
+  const { loading, error, courses, page, totalPages, nextPage, prevPage, getCourseById, updateCourse } = useAdminApi();
+  const { getCourseTypes, getCourseLevels, getCourseBadges, getAllCategories, createCourse } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    instructor: '',
-    category: '',
-    level: 'beginner',
+  const [expandedCourses, setExpandedCourses] = useState({});
+  const [courseDetails, setCourseDetails] = useState({});
+  const [detailsLoading, setDetailsLoading] = useState({});
+  
+  // Update modal state
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState('');
+  
+  // Create modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [createFormData, setCreateFormData] = useState({
+    title: '',
+    subtitle: '',
     description: '',
-    price: '',
-    duration: '',
-    tags: [],
-    badge: null
+    overview: '',
+    languageCode: 'EN',
+    courseTypeId: 0,
+    categoryId: 0,
+    courseLevelId: 0,
+    isPaid: true,
+    price: 0,
+    discountedPrice: 0,
+    currencyCode: 'USD',
+    thumbnailUrl: '',
+    promoVideoUrl: '',
+    badgeIds: []
   });
 
-  // Filter courses
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.instructor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || course.status === filterStatus;
-    const matchesCategory = filterCategory === 'all' || course.category === filterCategory;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
+  // Form state for update
+  const [updateFormData, setUpdateFormData] = useState({
+    title: '',
+    subtitle: '',
+    description: '',
+    overview: '',
+    languageCode: 'EN',
+    courseTypeId: 0,
+    categoryId: 0,
+    courseLevelId: 0,
+    isPaid: true,
+    price: 0,
+    discountedPrice: 0,
+    currencyCode: 'USD',
+    thumbnailUrl: '',
+    promoVideoUrl: '',
+    badgeIds: []
   });
 
-  // Get status badge color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'published': return 'bg-green-100 text-green-800';
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
-      case 'archived': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // State for dropdown data
+  const [categories, setCategories] = useState([]);
+  const [courseLevels, setCourseLevels] = useState([]);
+  const [courseTypes, setCourseTypes] = useState([]);
+  const [badges, setBadges] = useState([]);
+  
+  const [dropdownLoading, setDropdownLoading] = useState({
+    categories: false,
+    courseLevels: false,
+    courseTypes: false,
+    badges: false
+  });
+  
+  const [dropdownError, setDropdownError] = useState({
+    categories: '',
+    courseLevels: '',
+    courseTypes: '',
+    badges: ''
+  });
 
-  // Get level badge color
-  const getLevelColor = (level) => {
-    switch (level) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-blue-100 text-blue-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Filter courses based on search term
+  const filteredCourses = courses?.filter(course =>
+    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.subtitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.courseLevelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.courseTypeName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  console.log(courses)
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (selectedCourse) {
-        await updateCourse(selectedCourse.id, formData);
-      } else {
-        await createCourse(formData);
+  // Fetch dropdown data on component mount
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      // Fetch Categories
+      setDropdownLoading(prev => ({ ...prev, categories: true }));
+      try {
+        const data = await getAllCategories();
+        const categories = data.items || data || [];
+        setCategories(categories);
+        setDropdownError(prev => ({ ...prev, categories: '' }));
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setDropdownError(prev => ({ ...prev, categories: 'Failed to load categories' }));
+      } finally {
+        setDropdownLoading(prev => ({ ...prev, categories: false }));
       }
-      setFormData({
-        name: '',
-        instructor: '',
-        category: '',
-        level: 'beginner',
-        description: '',
-        price: '',
-        duration: '',
-        tags: [],
-        badge: null
-      });
-    } catch (err) {
-      console.error('Failed to save course:', err);
+
+      // Fetch Course Types
+      setDropdownLoading(prev => ({ ...prev, courseTypes: true }));
+      try {
+        const data = await getCourseTypes();
+        setCourseTypes(data);
+        setDropdownError(prev => ({ ...prev, courseTypes: '' }));
+      } catch (error) {
+        console.error('Error fetching course types:', error);
+        setDropdownError(prev => ({ ...prev, courseTypes: 'Failed to load course types' }));
+      } finally {
+        setDropdownLoading(prev => ({ ...prev, courseTypes: false }));
+      }
+
+      // Fetch Course Levels
+      setDropdownLoading(prev => ({ ...prev, courseLevels: true }));
+      try {
+        const data = await getCourseLevels();
+        setCourseLevels(data);
+        setDropdownError(prev => ({ ...prev, courseLevels: '' }));
+      } catch (error) {
+        console.error('Error fetching course levels:', error);
+        setDropdownError(prev => ({ ...prev, courseLevels: 'Failed to load course levels' }));
+      } finally {
+        setDropdownLoading(prev => ({ ...prev, courseLevels: false }));
+      }
+
+      // Fetch Badges
+      setDropdownLoading(prev => ({ ...prev, badges: true }));
+      try {
+        const data = await getCourseBadges();
+        setBadges(data);
+        setDropdownError(prev => ({ ...prev, badges: '' }));
+      } catch (error) {
+        console.error('Error fetching badges:', error);
+        setDropdownError(prev => ({ ...prev, badges: 'Failed to load badges' }));
+      } finally {
+        setDropdownLoading(prev => ({ ...prev, badges: false }));
+      }
+    };
+
+    fetchDropdownData();
+  }, [getAllCategories, getCourseTypes, getCourseLevels, getCourseBadges]);
+
+  // Handle view course details
+  const handleViewDetails = async (courseId) => {
+    // Toggle expansion
+    setExpandedCourses(prev => ({
+      ...prev,
+      [courseId]: !prev[courseId]
+    }));
+
+    // Fetch details if not already loaded and row is being expanded
+    if (!expandedCourses[courseId] && !courseDetails[courseId]) {
+      try {
+        setDetailsLoading(prev => ({ ...prev, [courseId]: true }));
+        const courseDetailData = await getCourseById(courseId);
+        setCourseDetails(prev => ({
+          ...prev,
+          [courseId]: courseDetailData
+        }));
+      } catch (error) {
+        console.error('Error fetching course details:', error);
+      } finally {
+        setDetailsLoading(prev => ({ ...prev, [courseId]: false }));
+      }
     }
   };
 
-  // Handle tag selection
-  const handleTagChange = (tagId) => {
-    const newTags = formData.tags.includes(tagId) 
-      ? formData.tags.filter(id => id !== tagId)
-      : [...formData.tags, tagId];
-    setFormData(prev => ({ ...prev, tags: newTags }));
+  // Handle edit course
+  const handleEdit = async (course) => {
+    try {
+      // Fetch full course details to get all available data
+      const courseDetailData = await getCourseById(course.id);
+      setEditingCourse(courseDetailData);
+      
+      // Populate form with course data
+      setUpdateFormData({
+        title: courseDetailData.title || '',
+        subtitle: courseDetailData.subtitle || '',
+        description: courseDetailData.description || '',
+        overview: courseDetailData.overview || '',
+        languageCode: courseDetailData.languageCode || 'EN',
+        courseTypeId: courseDetailData.courseTypeId || 0,
+        categoryId: courseDetailData.categoryId || 0,
+        courseLevelId: courseDetailData.courseLevelId || 0,
+        isPaid: courseDetailData.isPaid ?? true,
+        price: courseDetailData.price || 0,
+        discountedPrice: courseDetailData.discountedPrice || 0,
+        currencyCode: courseDetailData.currencyCode || 'USD',
+        thumbnailUrl: courseDetailData.thumbnailUrl || '',
+        promoVideoUrl: courseDetailData.promoVideoUrl || '',
+        badgeIds: courseDetailData.badgeIds || []
+      });
+      
+      setShowUpdateModal(true);
+      setUpdateError('');
+    } catch (error) {
+      console.error('Error fetching course details for edit:', error);
+      setUpdateError('Failed to load course details for editing');
+    }
+  };
+
+  // Handle form input changes
+  const handleUpdateFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setUpdateFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value
+    }));
+  };
+
+  // Handle update course submission
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    if (!editingCourse) return;
+    
+    try {
+      setUpdateLoading(true);
+      setUpdateError('');
+      
+      await updateCourse(editingCourse.id, updateFormData);
+      
+      // Update the course details in expanded view if it's open
+      if (expandedCourses[editingCourse.id]) {
+        const updatedCourseData = await getCourseById(editingCourse.id);
+        setCourseDetails(prev => ({
+          ...prev,
+          [editingCourse.id]: updatedCourseData
+        }));
+      }
+      
+      setShowUpdateModal(false);
+      setEditingCourse(null);
+      
+      // Show success message (you might want to add a toast notification)
+      alert('Course updated successfully!');
+    } catch (error) {
+      console.error('Error updating course:', error);
+      setUpdateError(error.response?.data?.message || 'Failed to update course');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  // Close update modal
+  const closeUpdateModal = () => {
+    setShowUpdateModal(false);
+    setEditingCourse(null);
+    setUpdateError('');
+  };
+
+  // Handle create course form changes
+  const handleCreateFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setCreateFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value
+    }));
+  };
+
+  // Handle create course submission
+  const handleCreateCourse = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setCreateLoading(true);
+      setCreateError('');
+      
+      await createCourse(createFormData);
+      
+      setShowCreateModal(false);
+      setCreateFormData({
+        title: '',
+        subtitle: '',
+        description: '',
+        overview: '',
+        languageCode: 'EN',
+        courseTypeId: 0,
+        categoryId: 0,
+        courseLevelId: 0,
+        isPaid: true,
+        price: 0,
+        discountedPrice: 0,
+        currencyCode: 'USD',
+        thumbnailUrl: '',
+        promoVideoUrl: '',
+        badgeIds: []
+      });
+      
+      // Show success message (you might want to add a toast notification)
+      alert('Course created successfully!');
+    } catch (error) {
+      console.error('Error creating course:', error);
+      setCreateError(error.response?.data?.message || 'Failed to create course');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // Close create modal
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setCreateError('');
+    setCreateFormData({
+      title: '',
+      subtitle: '',
+      description: '',
+      overview: '',
+      languageCode: 'EN',
+      courseTypeId: 0,
+      categoryId: 0,
+      courseLevelId: 0,
+      isPaid: true,
+      price: 0,
+      discountedPrice: 0,
+      currencyCode: 'USD',
+      thumbnailUrl: '',
+      promoVideoUrl: '',
+      badgeIds: []
+    });
   };
 
   if (loading) {
@@ -133,212 +339,347 @@ const CourseManagement = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-red-500 p-4">{error}</div>
+    );
+  }
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-full mx-auto bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Course Management</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage courses, tags, badges, and featured content</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Course Management</h1>
+        <p className="text-gray-600">Manage and monitor all your courses in one place</p>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
-          <button onClick={clearError} className="ml-2 text-red-500 hover:text-red-700">
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Actions Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-4">
-        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search courses..."
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-2">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-                <option value="archived">Archived</option>
-              </select>
-
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">All Categories</option>
-                <option value="Web Development">Web Development</option>
-                <option value="Programming">Programming</option>
-                <option value="Data Science">Data Science</option>
-                <option value="Machine Learning">Machine Learning</option>
-                <option value="Database">Database</option>
-              </select>
-            </div>
+      {/* Search and Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative flex-1 max-w-lg">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search courses by title, subtitle, category, level, or type..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
           </div>
-
-          {/* Create Button */}
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Course
+            <span>Create Course</span>
           </button>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-medium">
+              {filteredCourses?.length || 0} courses
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Courses Grid */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      {/* Courses Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Course
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Instructor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Level
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Featured
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Course</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Level</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Language</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tags</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredCourses.length === 0 ? (
+            <tbody className="bg-white divide-y divide-gray-100">
+              {filteredCourses?.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                    No courses found
+                  <td colSpan="10" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center">
+                      <BookOpen className="w-12 h-12 text-gray-300 mb-3" />
+                      <p className="text-gray-500 text-lg font-medium">No courses found</p>
+                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search criteria</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                filteredCourses.map(course => (
-                  <tr key={course.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <img
-                          className="h-16 w-16 rounded-lg object-cover mr-3"
-                          src={course.thumbnail}
-                          alt={course.name}
-                        />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {course.name}
+                filteredCourses?.map(course => (
+                  <React.Fragment key={course.id}>
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            {course.thumbnailUrl ? (
+                              <img 
+                                className="h-12 w-12 rounded-lg object-cover border border-gray-200" 
+                                src={course.thumbnailUrl} 
+                                alt={course.title}
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center" style={{ display: course.thumbnailUrl ? 'none' : 'flex' }}>
+                              <Image className="w-6 h-6 text-blue-600" />
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {course.category}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{course.title}</p>
+                            <p className="text-sm text-gray-500 truncate">{course.subtitle}</p>
                           </div>
-                          {course.tags && course.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {course.tags.slice(0, 3).map(tag => {
-                                const tagData = tags.find(t => t.name === tag);
-                                return tagData ? (
-                                  <span
-                                    key={tag}
-                                    className="px-2 py-1 text-xs rounded-full"
-                                    style={{ backgroundColor: tagData.color + '20', color: tagData.color }}
-                                  >
-                                    {tagData.label}
-                                  </span>
-                                ) : null;
-                              })}
-                              {course.tags.length > 3 && (
-                                <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                  +{course.tags.length - 3}
-                                </span>
-                              )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="max-w-xs">
+                          <p className="text-sm text-gray-600 line-clamp-2" title={course.description}>
+                            {course.description}
+                          </p>
+                          {course.description && course.description.length > 100 && (
+                            <button className="text-xs text-blue-600 hover:text-blue-800 mt-1">
+                              Read more
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {course.categoryName}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">{course.courseTypeName}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          {course.courseLevelName}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Globe className="w-4 h-4 mr-1 text-gray-400" />
+                          {course.languageCode}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
+                          <div className="text-sm">
+                            {course.discountedPrice < course.price ? (
+                              <div className="flex items-center space-x-2">
+                                <span className="font-semibold text-green-600">{course.discountedPrice}</span>
+                                <span className="text-gray-400 line-through text-xs">{course.price}</span>
+                              </div>
+                            ) : (
+                              <span className="font-semibold text-gray-900">{course.price}</span>
+                            )}
+                            <span className="text-gray-500 ml-1">{course.currencyCode}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          {course.isActive ? (
+                            <div className="flex items-center text-green-600">
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              <span className="text-sm font-medium">Active</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-red-600">
+                              <XCircle className="w-4 h-4 mr-1" />
+                              <span className="text-sm font-medium">Inactive</span>
                             </div>
                           )}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 dark:text-white">{course.instructor}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getLevelColor(course.level)}`}>
-                        {course.level}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(course.status)}`}>
-                        {course.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {course.featured ? (
-                        <span className="flex items-center text-yellow-500">
-                          <Star className="w-4 h-4 fill-current mr-1" />
-                          Featured
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 dark:text-gray-500">Not Featured</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => openEditModal(course)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Edit Course"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => updateCourseFeatured(course.id, !course.featured)}
-                          className="text-yellow-600 hover:text-yellow-900"
-                          title={course.featured ? "Remove from Featured" : "Add to Featured"}
-                        >
-                          <Star className="w-4 h-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => updateCourseStatus(course.id, course.status === 'published' ? 'draft' : 'published')}
-                          className="text-green-600 hover:text-green-900"
-                          title={course.status === 'published' ? "Unpublish" : "Publish"}
-                        >
-                          {course.status === 'published' ? '📤' : '📥'}
-                        </button>
-                        
-                        <button
-                          onClick={() => deleteCourse(course.id)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete Course"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {course.courseTags?.map((tag, index) => (
+                            <span key={index} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                              <Tag className="w-3 h-3 mr-1" />
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleViewDetails(course.id)}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg transition-colors flex items-center space-x-1"
+                            title="View Course Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                            {expandedCourses[course.id] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          </button>
+                          <button
+                            onClick={() => handleEdit(course)}
+                            className="text-green-600 hover:text-green-800 hover:bg-green-50 p-2 rounded-lg transition-colors"
+                            title="Edit Course"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    {/* Accordion Row for Course Details */}
+                    {expandedCourses[course.id] && (
+                      <tr className="bg-blue-50 border-b border-blue-200">
+                        <td colSpan="10" className="px-6 py-4">
+                          {detailsLoading[course.id] ? (
+                            <div className="flex items-center justify-center py-8">
+                              <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
+                              <span className="ml-2 text-gray-600">Loading course details...</span>
+                            </div>
+                          ) : courseDetails[course.id] ? (
+                            <div className="space-y-4">
+                              {/* Course Header */}
+                              <div className="flex items-start space-x-4 pb-4 border-b border-blue-200">
+                                {courseDetails[course.id].thumbnailUrl ? (
+                                  <img 
+                                    src={courseDetails[course.id].thumbnailUrl} 
+                                    alt={courseDetails[course.id].title}
+                                    className="w-20 h-20 rounded-lg object-cover border border-gray-200"
+                                  />
+                                ) : (
+                                  <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                                    <Image className="w-10 h-10 text-blue-600" />
+                                  </div>
+                                )}
+                                <div className="flex-1">
+                                  <h4 className="text-lg font-bold text-gray-900">{courseDetails[course.id].title}</h4>
+                                  {courseDetails[course.id].subtitle && (
+                                    <p className="text-gray-600 mt-1">{courseDetails[course.id].subtitle}</p>
+                                  )}
+                                  <div className="flex items-center space-x-3 mt-2">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                      {courseDetails[course.id].categoryName}
+                                    </span>
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                      {courseDetails[course.id].courseLevelName}
+                                    </span>
+                                    {courseDetails[course.id].badges?.map((badge, index) => (
+                                      <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        {badge}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Course Details Grid */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Course Type</h5>
+                                  <p className="mt-1 text-sm text-gray-900">{courseDetails[course.id].courseTypeName}</p>
+                                </div>
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Language</h5>
+                                  <div className="mt-1 flex items-center text-sm text-gray-900">
+                                    <Globe className="w-3 h-3 mr-1 text-gray-400" />
+                                    {courseDetails[course.id].languageCode}
+                                  </div>
+                                </div>
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pricing</h5>
+                                  <div className="mt-1 flex items-center">
+                                    <DollarSign className="w-3 h-3 mr-1 text-gray-400" />
+                                    <div className="text-sm">
+                                      {courseDetails[course.id].discountedPrice < courseDetails[course.id].price ? (
+                                        <div className="flex items-center space-x-2">
+                                          <span className="font-semibold text-green-600">{courseDetails[course.id].discountedPrice}</span>
+                                          <span className="text-gray-400 line-through text-xs">{courseDetails[course.id].price}</span>
+                                        </div>
+                                      ) : (
+                                        <span className="font-semibold text-gray-900">{courseDetails[course.id].price}</span>
+                                      )}
+                                      <span className="text-gray-500 ml-1">{courseDetails[course.id].currencyCode}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Course ID</h5>
+                                  <p className="mt-1 text-sm text-gray-900 font-mono">{courseDetails[course.id].id}</p>
+                                </div>
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Slug</h5>
+                                  <p className="mt-1 text-sm text-gray-900 font-mono text-xs">{courseDetails[course.id].slug}</p>
+                                </div>
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating</h5>
+                                  <div className="mt-1 text-sm text-gray-900">
+                                    {courseDetails[course.id].averageRating || 'N/A'} 
+                                    {courseDetails[course.id].totalReviews && ` (${courseDetails[course.id].totalReviews} reviews)`}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Description and Overview */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</h5>
+                                  <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                                    {courseDetails[course.id].description || 'No description available'}
+                                  </p>
+                                </div>
+                                {courseDetails[course.id].overview && (
+                                  <div>
+                                    <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Overview</h5>
+                                    <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                                      {courseDetails[course.id].overview}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Tags */}
+                              {courseDetails[course.id].courseTags && courseDetails[course.id].courseTags.length > 0 && (
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</h5>
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    {courseDetails[course.id].courseTags.map((tag, index) => (
+                                      <span key={index} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                        <Tag className="w-3 h-3 mr-1" />
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Media URLs */}
+                              {courseDetails[course.id].promoVideoUrl && (
+                                <div>
+                                  <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Promo Video</h5>
+                                  <a 
+                                    href={courseDetails[course.id].promoVideoUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="mt-1 text-sm text-blue-600 hover:text-blue-800 truncate block"
+                                  >
+                                    {courseDetails[course.id].promoVideoUrl}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-center text-gray-500 py-4">
+                              Failed to load course details.
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </tbody>
@@ -346,193 +687,642 @@ const CourseManagement = () => {
         </div>
       </div>
 
-      {/* Create/Edit Modal */}
-      {(showCreateModal || showEditModal) && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                {selectedCourse ? 'Edit Course' : 'Create New Course'}
-              </h3>
+      {/* Enhanced Pagination */}
+      <div className="mt-6 flex items-center justify-between">
+        <div className="text-sm text-gray-700">
+          Showing <span className="font-medium">{filteredCourses?.length || 0}</span> of{' '}
+          <span className="font-medium">{courses?.length || 0}</span> courses
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={prevPage}
+            disabled={page === 1}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              page === 1 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Previous
+          </button>
+          <div className="flex items-center space-x-1">
+            <span className="px-3 py-1 text-sm font-medium text-gray-700 bg-blue-50 border border-blue-200 rounded-lg">
+              {page}
+            </span>
+            <span className="text-sm text-gray-500">of</span>
+            <span className="text-sm font-medium text-gray-700">{totalPages}</span>
+          </div>
+          <button
+            onClick={nextPage}
+            disabled={page === totalPages}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              page === totalPages 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+
+      {/* Update Course Modal */}
+      {showUpdateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">Update Course</h2>
               <button
-                onClick={closeModals}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                onClick={closeUpdateModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                ×
+                <XCircle className="w-6 h-6" />
               </button>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Course Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
+            
+            <form onSubmit={handleUpdateCourse} className="p-6">
+              {/* Error Display */}
+              {updateError && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
+                  {updateError}
                 </div>
-
-                {/* Instructor */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Instructor
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.instructor}
-                    onChange={(e) => setFormData(prev => ({ ...prev, instructor: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={updateFormData.title}
+                      onChange={handleUpdateFormChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter course title"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                    <input
+                      type="text"
+                      name="subtitle"
+                      value={updateFormData.subtitle}
+                      onChange={handleUpdateFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter course subtitle"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                    <textarea
+                      name="description"
+                      value={updateFormData.description}
+                      onChange={handleUpdateFormChange}
+                      required
+                      rows="3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter course description"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
+                    <textarea
+                      name="overview"
+                      value={updateFormData.overview}
+                      onChange={handleUpdateFormChange}
+                      rows="3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter course overview"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Language Code</label>
+                    <select
+                      name="languageCode"
+                      value={updateFormData.languageCode}
+                      onChange={handleUpdateFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="EN">English</option>
+                      <option value="ES">Spanish</option>
+                      <option value="FR">French</option>
+                      <option value="DE">German</option>
+                      <option value="IT">Italian</option>
+                      <option value="PT">Portuguese</option>
+                      <option value="RU">Russian</option>
+                      <option value="ZH">Chinese</option>
+                      <option value="JA">Japanese</option>
+                      <option value="AR">Arabic</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Course Type</label>
+                    {dropdownLoading.courseTypes ? (
+                      <div className="flex items-center">
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                        <span className="text-gray-500">Loading course types...</span>
+                      </div>
+                    ) : dropdownError.courseTypes ? (
+                      <div className="text-red-500 text-sm">{dropdownError.courseTypes}</div>
+                    ) : (
+                      <GenericDropdown
+                        items={courseTypes}
+                        value={updateFormData.courseTypeId}
+                        onChange={(value) => setUpdateFormData(prev => ({ ...prev, courseTypeId: value }))}
+                        placeholder="Select a course type"
+                        className="w-full"
+                      />
+                    )}
+                  </div>
                 </div>
-
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    <option value="Web Development">Web Development</option>
-                    <option value="Programming">Programming</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="Machine Learning">Machine Learning</option>
-                    <option value="Database">Database</option>
-                  </select>
-                </div>
-
-                {/* Level */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Level
-                  </label>
-                  <select
-                    value={formData.level}
-                    onChange={(e) => setFormData(prev => ({ ...prev, level: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  >
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                  </select>
-                </div>
-
-                {/* Price */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Price ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    step="0.01"
-                    min="0"
-                    required
-                  />
-                </div>
-
-                {/* Duration */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Duration
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="e.g., 8 weeks"
-                    required
-                  />
-                </div>
-
-                {/* Badge */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Badge
-                  </label>
-                  <select
-                    value={formData.badge || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, badge: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">No Badge</option>
-                    {badges.map(badge => (
-                      <option key={badge.id} value={badge.name}>
-                        {badge.icon} {badge.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Tags */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Tags
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map(tag => (
-                      <label key={tag.id} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.tags.includes(tag.id)}
-                          onChange={() => handleTagChange(tag.id)}
-                          className="mr-2"
-                        />
-                        <span
-                          className="px-2 py-1 text-xs rounded-full cursor-pointer"
-                          style={{ backgroundColor: tag.color + '20', color: tag.color }}
-                        >
-                          {tag.label}
-                        </span>
-                      </label>
-                    ))}
+                
+                {/* Right Column */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    {dropdownLoading.categories ? (
+                      <div className="flex items-center">
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                        <span className="text-gray-500">Loading categories...</span>
+                      </div>
+                    ) : dropdownError.categories ? (
+                      <div className="text-red-500 text-sm">{dropdownError.categories}</div>
+                    ) : (
+                      <CategoryDropdown
+                        categories={categories}
+                        value={updateFormData.categoryId}
+                        onChange={(value) => setUpdateFormData(prev => ({ ...prev, categoryId: value }))}
+                        placeholder="Select a category"
+                        className="w-full"
+                      />
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Course Level</label>
+                    {dropdownLoading.courseLevels ? (
+                      <div className="flex items-center">
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                        <span className="text-gray-500">Loading course levels...</span>
+                      </div>
+                    ) : dropdownError.courseLevels ? (
+                      <div className="text-red-500 text-sm">{dropdownError.courseLevels}</div>
+                    ) : (
+                      <GenericDropdown
+                        items={courseLevels}
+                        value={updateFormData.courseLevelId}
+                        onChange={(value) => setUpdateFormData(prev => ({ ...prev, courseLevelId: value }))}
+                        placeholder="Select a course level"
+                        className="w-full"
+                      />
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Is Paid</label>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="isPaid"
+                        checked={updateFormData.isPaid}
+                        onChange={handleUpdateFormChange}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">This is a paid course</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={updateFormData.price}
+                      onChange={handleUpdateFormChange}
+                      min="0"
+                      step="0.01"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter price"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
+                    <input
+                      type="number"
+                      name="discountedPrice"
+                      value={updateFormData.discountedPrice}
+                      onChange={handleUpdateFormChange}
+                      min="0"
+                      step="0.01"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter discounted price"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Currency Code</label>
+                    <select
+                      name="currencyCode"
+                      value={updateFormData.currencyCode}
+                      onChange={handleUpdateFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="GBP">GBP - British Pound</option>
+                      <option value="JPY">JPY - Japanese Yen</option>
+                      <option value="CAD">CAD - Canadian Dollar</option>
+                      <option value="AUD">AUD - Australian Dollar</option>
+                      <option value="INR">INR - Indian Rupee</option>
+                      <option value="CNY">CNY - Chinese Yuan</option>
+                    </select>
                   </div>
                 </div>
               </div>
-
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+              
+              {/* Media URLs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL</label>
+                  <input
+                    type="url"
+                    name="thumbnailUrl"
+                    value={updateFormData.thumbnailUrl}
+                    onChange={handleUpdateFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com/thumbnail.jpg"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Promo Video URL</label>
+                  <input
+                    type="url"
+                    name="promoVideoUrl"
+                    value={updateFormData.promoVideoUrl}
+                    onChange={handleUpdateFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com/promo-video.mp4"
+                  />
+                </div>
               </div>
-
+              
+              {/* Badge IDs */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Badges</label>
+                {dropdownLoading.badges ? (
+                  <div className="flex items-center">
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                    <span className="text-gray-500">Loading badges...</span>
+                  </div>
+                ) : dropdownError.badges ? (
+                  <div className="text-red-500 text-sm">{dropdownError.badges}</div>
+                ) : (
+                  <MultiSelectDropdown
+                    items={badges}
+                    values={updateFormData.badgeIds}
+                    onChange={(values) => setUpdateFormData(prev => ({ ...prev, badgeIds: values }))}
+                    placeholder="Select badges"
+                    className="w-full"
+                    displayField="badgeName"
+                    valueField="id"
+                  />
+                )}
+              </div>
+              
               {/* Form Actions */}
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={closeModals}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                  onClick={closeUpdateModal}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  disabled={updateLoading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
-                  {selectedCourse ? 'Update Course' : 'Create Course'}
+                  {updateLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Course'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create Course Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">Create New Course</h2>
+              <button
+                onClick={closeCreateModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCourse} className="p-6">
+              {createError && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600">{createError}</p>
+                </div>
+              )}
+
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Course Title *</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={createFormData.title}
+                    onChange={handleCreateFormChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter course title"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                  <input
+                    type="text"
+                    name="subtitle"
+                    value={createFormData.subtitle}
+                    onChange={handleCreateFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter course subtitle"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Course Type</label>
+                  {dropdownLoading.courseTypes ? (
+                    <div className="flex items-center">
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                      <span className="text-gray-500">Loading course types...</span>
+                    </div>
+                  ) : dropdownError.courseTypes ? (
+                    <div className="text-red-500 text-sm">{dropdownError.courseTypes}</div>
+                  ) : (
+                    <GenericDropdown
+                      items={courseTypes}
+                      value={createFormData.courseTypeId}
+                      onChange={(value) => setCreateFormData(prev => ({ ...prev, courseTypeId: value }))}
+                      placeholder="Select a course type"
+                      className="w-full"
+                    />
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  {dropdownLoading.categories ? (
+                    <div className="flex items-center">
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                      <span className="text-gray-500">Loading categories...</span>
+                    </div>
+                  ) : dropdownError.categories ? (
+                    <div className="text-red-500 text-sm">{dropdownError.categories}</div>
+                  ) : (
+                    <CategoryDropdown
+                      categories={categories}
+                      value={createFormData.categoryId}
+                      onChange={(value) => setCreateFormData(prev => ({ ...prev, categoryId: value }))}
+                      placeholder="Select a category"
+                      className="w-full"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Course Level</label>
+                  {dropdownLoading.courseLevels ? (
+                    <div className="flex items-center">
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                      <span className="text-gray-500">Loading course levels...</span>
+                    </div>
+                  ) : dropdownError.courseLevels ? (
+                    <div className="text-red-500 text-sm">{dropdownError.courseLevels}</div>
+                  ) : (
+                    <GenericDropdown
+                      items={courseLevels}
+                      value={createFormData.courseLevelId}
+                      onChange={(value) => setCreateFormData(prev => ({ ...prev, courseLevelId: value }))}
+                      placeholder="Select a course level"
+                      className="w-full"
+                    />
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Language Code</label>
+                  <select
+                    name="languageCode"
+                    value={createFormData.languageCode}
+                    onChange={handleCreateFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="EN">English</option>
+                    <option value="ES">Spanish</option>
+                    <option value="FR">French</option>
+                    <option value="DE">German</option>
+                    <option value="IT">Italian</option>
+                    <option value="PT">Portuguese</option>
+                    <option value="RU">Russian</option>
+                    <option value="ZH">Chinese</option>
+                    <option value="JA">Japanese</option>
+                    <option value="AR">Arabic</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Description and Overview */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  name="description"
+                  value={createFormData.description}
+                  onChange={handleCreateFormChange}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter course description"
+                />
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
+                <textarea
+                  name="overview"
+                  value={createFormData.overview}
+                  onChange={handleCreateFormChange}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter course overview"
+                />
+              </div>
+
+              {/* Pricing */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Is Paid</label>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isPaid"
+                      checked={createFormData.isPaid}
+                      onChange={handleCreateFormChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Paid Course</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={createFormData.price}
+                    onChange={handleCreateFormChange}
+                    step="0.01"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
+                  <input
+                    type="number"
+                    name="discountedPrice"
+                    value={createFormData.discountedPrice}
+                    onChange={handleCreateFormChange}
+                    step="0.01"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Currency Code</label>
+                <select
+                  name="currencyCode"
+                  value={createFormData.currencyCode}
+                  onChange={handleCreateFormChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="USD">USD - US Dollar</option>
+                  <option value="EUR">EUR - Euro</option>
+                  <option value="GBP">GBP - British Pound</option>
+                  <option value="CAD">CAD - Canadian Dollar</option>
+                  <option value="AUD">AUD - Australian Dollar</option>
+                  <option value="INR">INR - Indian Rupee</option>
+                  <option value="CNY">CNY - Chinese Yuan</option>
+                </select>
+              </div>
+              
+              {/* Media URLs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL</label>
+                  <input
+                    type="url"
+                    name="thumbnailUrl"
+                    value={createFormData.thumbnailUrl}
+                    onChange={handleCreateFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com/thumbnail.jpg"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Promo Video URL</label>
+                  <input
+                    type="url"
+                    name="promoVideoUrl"
+                    value={createFormData.promoVideoUrl}
+                    onChange={handleCreateFormChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com/promo-video.mp4"
+                  />
+                </div>
+              </div>
+              
+              {/* Badge IDs */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Badges</label>
+                {dropdownLoading.badges ? (
+                  <div className="flex items-center">
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                    <span className="text-gray-500">Loading badges...</span>
+                  </div>
+                ) : dropdownError.badges ? (
+                  <div className="text-red-500 text-sm">{dropdownError.badges}</div>
+                ) : (
+                  <MultiSelectDropdown
+                    items={badges}
+                    values={createFormData.badgeIds}
+                    onChange={(values) => setCreateFormData(prev => ({ ...prev, badgeIds: values }))}
+                    placeholder="Select badges"
+                    className="w-full"
+                    displayField="badgeName"
+                    valueField="id"
+                  />
+                )}
+              </div>
+              
+              {/* Form Actions */}
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={closeCreateModal}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createLoading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {createLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Course'
+                  )}
                 </button>
               </div>
             </form>

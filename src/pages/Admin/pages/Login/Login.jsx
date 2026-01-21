@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
-import { apiService } from '../../../../services/api';
+import { adminApiService } from '../../../../services/AdminApi';
 import './Login.css';
 
 const Login = () => {
@@ -101,7 +101,7 @@ const Login = () => {
 
     try {
     
-      const response = await apiService.login(formData.email, formData.password);
+      const response = await adminApiService.login(formData.email, formData.password);
       
       if (response.success) {
         login(response.user);

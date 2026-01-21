@@ -25,6 +25,58 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
 
   const mainNavItems = getMainNavItems();
   const managementItems = getManagementItems();
+  
+  // Handle loading state
+  if (loading) {
+    return (
+      <aside className={`fixed lg:sticky inset-y-0 left-0 z-50 top-0 ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}>
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                <BookOpen className="w-4 h-4 text-white" />
+              </div>
+              {!isCollapsed && (
+                <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Classpedia</span>
+              )}
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    console.error('Sidebar error:', error);
+    return (
+      <aside className={`fixed lg:sticky inset-y-0 left-0 z-50 top-0 ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}>
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                <BookOpen className="w-4 h-4 text-white" />
+              </div>
+              {!isCollapsed && (
+                <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Classpedia</span>
+              )}
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div className="text-red-500 dark:text-red-400 text-sm text-center">
+              {isCollapsed ? 'Error' : `Error: ${error}`}
+            </div>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  console.log('Sidebar - mainNavItems:', mainNavItems);
+  console.log('Sidebar - managementItems:', managementItems);
   return (
     <>
       {/* Mobile backdrop */}

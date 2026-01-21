@@ -61,6 +61,16 @@
       "order": 6
     },
     {
+      "id": "categories",
+      "path": "/admin/categories",
+      "component": "CategoryManagement",
+      "label": "Category Management",
+      "icon": "FolderTree",
+      "category": "management",
+      "allowedRoles": [1],
+      "order": 7
+    },
+    {
       "id": "my-courses",
       "path": "/admin/my-courses",
       "component": "MyCourses",
@@ -68,7 +78,7 @@
       "icon": "BookOpen",
       "category": "main",
       "allowedRoles": [2],
-      "order": 7
+      "order": 8
     },
     {
       "id": "my-profile",
@@ -78,7 +88,7 @@
       "icon": "User",
       "category": "main",
       "allowedRoles": [1, 2],
-      "order": 8
+      "order": 9
     }
   ],
   "roles": [
