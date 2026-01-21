@@ -1,23 +1,13 @@
-import { Database, Code, Lightbulb, Bookmark } from 'lucide-react';
-
 export default function SlideContent({
     slide,
     currentSlide,
     highlightedCharIndex,
     isPlaying,
-    useTTS,
-    diagrams,
-    examples,
-    renderedDiagrams,
-    bookmarks,
-    userNotes,
-    showDiagrams
+    useTTS
 }) {
     if (!slide) return null;
 
-    const { title, content, type, hasDiagram, hasExample, slideNumber } = slide;
-    const slideDiagrams = diagrams.filter(d => d.slideNumber === slideNumber);
-    const slideExamples = examples.filter(e => e.slideNumber === slideNumber);
+    const { title, content, type } = slide;
 
     const renderContentWithHighlighting = () => {
         const text = content.replace(/\*\*/g, '');
@@ -70,11 +60,8 @@ export default function SlideContent({
                                 type === 'quiz' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
                                     'bg-gray-700/50 text-white/80 border border-white/10'
                         }`}>
-                        {type.toUpperCase()}
+                        {type?.toUpperCase() || 'CONTENT'}
                     </div>
-                    {bookmarks.includes(currentSlide) && (
-                        <Bookmark className="w-4 h-4 text-yellow-400 fill-current" />
-                    )}
                 </div>
                 <div className="text-xs text-white/50">
                     Duration: {slide.duration}s
@@ -110,82 +97,6 @@ export default function SlideContent({
                         )}
                     </div>
 
-                    {/* Diagrams */}
-                    {showDiagrams && slideDiagrams.length > 0 && (
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-cyan-300 flex items-center gap-2">
-                                    <Database className="w-5 h-5" /> Diagrams
-                                </h3>
-                            </div>
-                            {slideDiagrams.map(diagram => (
-                                <div key={diagram.id} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="text-sm font-medium text-white">{diagram.title}</h4>
-                                        <span className="text-xs px-2 py-1 bg-slate-700/50 rounded">
-                                            {diagram.diagramType}
-                                        </span>
-                                    </div>
-                                    <div
-                                        className="mermaid-diagram rounded overflow-hidden bg-slate-900/50 p-4"
-                                        dangerouslySetInnerHTML={{ __html: renderedDiagrams[diagram.id] || '' }}
-                                    />
-                                    <p className="text-white/70 text-xs mt-2">{diagram.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Examples */}
-                    {slideExamples.length > 0 && (
-                        <div className="space-y-3">
-                            <h3 className="text-lg font-semibold text-green-300 flex items-center gap-2">
-                                <Code className="w-5 h-5" /> Examples
-                            </h3>
-                            {slideExamples.map(example => (
-                                <div key={example.id} className="bg-emerald-900/20 rounded-lg p-3 border border-emerald-700/30">
-                                    <h4 className="text-sm font-medium text-white mb-2">{example.title}</h4>
-                                    {example.codeExample && (
-                                        <pre className="bg-black/50 rounded p-3 text-xs font-mono text-emerald-300 overflow-x-auto">
-                                            <code>{example.codeExample}</code>
-                                        </pre>
-                                    )}
-                                    {example.scenario && (
-                                        <p className="text-white/80 text-sm mt-2">{example.scenario}</p>
-                                    )}
-                                    {example.stepByStepExplanation && (
-                                        <div className="mt-3">
-                                            <h5 className="text-xs font-semibold text-emerald-400 mb-1">Step-by-Step:</h5>
-                                            <div className="text-white/70 text-sm space-y-1">
-                                                {example.stepByStepExplanation.split('\n').map((step, idx) => (
-                                                    <div key={idx} className="flex items-start gap-2">
-                                                        <span className="text-emerald-400">{idx + 1}.</span>
-                                                        <span>{step}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* User Notes */}
-                    {userNotes[currentSlide]?.length > 0 && (
-                        <div className="bg-amber-900/20 rounded-lg p-3 border border-amber-700/30">
-                            <h3 className="text-lg font-semibold text-amber-300 flex items-center gap-2">
-                                <Lightbulb className="w-5 h-5" /> Your Notes
-                            </h3>
-                            <div className="space-y-2 mt-2">
-                                {userNotes[currentSlide].map((note, idx) => (
-                                    <div key={idx} className="text-white/80 text-sm bg-amber-900/10 p-2 rounded">
-                                        {note.text}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

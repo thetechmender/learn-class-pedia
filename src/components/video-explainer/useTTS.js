@@ -15,9 +15,7 @@ export function useTTS({
     setIsAudioPlaying,
     setCurrentSlide,
     setIsPlaying,
-    markSlideCompleted,
-    assessments,
-    setActiveTab
+    markSlideCompleted
 }) {
     useEffect(() => {
         // Cancel any ongoing speech first
@@ -236,9 +234,6 @@ export function useTTS({
                     setCurrentSlide(prev => prev + 1);
                 } else {
                     setIsPlaying(false);
-                    if (assessments.length > 0) {
-                        setActiveTab('quiz');
-                    }
                 }
             }, pauseDuration);
         };

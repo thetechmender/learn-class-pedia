@@ -1,52 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
-import mermaid from 'mermaid';
 import SlideContent from './video-explainer/SlideContent';
 import Avatar from './Avatar';
 import { useVideoExplainer } from './video-explainer/useVideoExplainer';
 import { useSlideProcessing } from './video-explainer/useSlideProcessing';
 import { useTTS } from './video-explainer/useTTS';
-import { useDiagrams } from './video-explainer/useDiagrams';
-
-// Initialize Mermaid
-mermaid.initialize({
-    startOnLoad: false,
-    theme: 'dark',
-    securityLevel: 'loose',
-    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
-    themeCSS: `
-    .node rect, .node circle, .node ellipse, .node polygon {
-      fill: #1e293b; stroke: #0ea5e9; stroke-width: 2px;
-    }
-    .edgePath path { stroke: #0ea5e9; stroke-width: 2px; }
-    .cluster rect { fill: rgba(30, 41, 59, 0.7); stroke: rgba(14, 165, 233, 0.5); stroke-dasharray: 5,5; }
-  `
-});
 
 export default function VideoCourseExplainerSimple({
     lessonText,
     audios = [],
-    diagrams = [],
-    examples = [],
-    assessments = [],
-    structuredOutline,
-    keyConcepts,
-    learningObjectives,
-    comprehensiveSummary,
-    practiceExercises,
-    courseId = 1
+    courseId = 1,
+    lectureId,
+    durationSeconds = 0,
+    onWatchProgress
 }) {
     // Custom hooks
-    const videoState = useVideoExplainer(lessonText, audios, structuredOutline);
-    const { processLessonText } = useSlideProcessing(videoState.setSlides, diagrams, examples, keyConcepts, learningObjectives, comprehensiveSummary, assessments);
-    const { renderedDiagrams } = useDiagrams(diagrams);
+    const videoState = useVideoExplainer(lessonText, audios);
+    const { processLessonText } = useSlideProcessing(videoState.setSlides);
 
     // Process lesson text
     useEffect(() => {
         if (lessonText) {
             processLessonText(lessonText);
+            videoState.setTimeSpent(0);
+            lastSentAtRef.current = 0;
         }
     }, [lessonText]);
+
+    const lastSentAtRef = useRef(0);
+    const lastPositionRef = useRef(0);
+    const timeSpentRef = useRef(0);
 
     // TTS Effect
     useTTS({
@@ -63,9 +46,7 @@ export default function VideoCourseExplainerSimple({
         setIsAudioPlaying: videoState.setIsAudioPlaying,
         setCurrentSlide: videoState.setCurrentSlide,
         setIsPlaying: videoState.setIsPlaying,
-        markSlideCompleted: videoState.markSlideCompleted,
-        assessments,
-        setActiveTab: () => {}
+        markSlideCompleted: videoState.markSlideCompleted
     });
 
     // Audio playback effect
@@ -82,6 +63,71 @@ export default function VideoCourseExplainerSimple({
             }
         }
     }, [videoState.isPlaying, videoState.audioStreamUrl, videoState.useTTS, videoState.isMuted, videoState.playbackRate]);
+
+    useEffect(() => {
+        timeSpentRef.current = videoState.timeSpent;
+    }, [videoState.timeSpent]);
+
+    // Watch progress heartbeat (every 15s while playing)
+    useEffect(() => {
+        if (!videoState.isPlaying || !onWatchProgress || !lectureId) return undefined;
+
+        lastPositionRef.current = timeSpentRef.current;
+
+        const intervalId = setInterval(() => {
+            const positionSeconds = timeSpentRef.current;
+            const deltaSeconds = Math.max(0, positionSeconds - lastPositionRef.current);
+
+            if (deltaSeconds === 0) return;
+
+            lastPositionRef.current = positionSeconds;
+            lastSentAtRef.current = positionSeconds;
+
+            onWatchProgress({
+                deltaSeconds: Math.min(60, deltaSeconds),
+                durationSeconds,
+                positionSeconds
+            });
+        }, 15000);
+
+        return () => clearInterval(intervalId);
+    }, [videoState.isPlaying, onWatchProgress, lectureId, durationSeconds]);
+
+    // Flush progress when playback stops
+    useEffect(() => {
+        if (videoState.isPlaying || !onWatchProgress || !lectureId) return;
+
+        const positionSeconds = timeSpentRef.current;
+        const deltaSeconds = Math.max(0, positionSeconds - lastPositionRef.current);
+
+        if (deltaSeconds > 0) {
+            lastPositionRef.current = positionSeconds;
+            onWatchProgress({
+                deltaSeconds: Math.min(60, deltaSeconds),
+                durationSeconds,
+                positionSeconds
+            });
+        }
+    }, [videoState.isPlaying, onWatchProgress, lectureId, durationSeconds]);
+
+    // Flush progress on unmount or lecture change
+    useEffect(() => {
+        if (!onWatchProgress || !lectureId) return undefined;
+
+        return () => {
+            const positionSeconds = timeSpentRef.current;
+            const deltaSeconds = Math.max(0, positionSeconds - lastPositionRef.current);
+
+            if (deltaSeconds > 0) {
+                lastPositionRef.current = positionSeconds;
+                onWatchProgress({
+                    deltaSeconds: Math.min(60, deltaSeconds),
+                    durationSeconds,
+                    positionSeconds
+                });
+            }
+        };
+    }, [lectureId, onWatchProgress, durationSeconds]);
 
     // Event Handlers
     const handlePlayPause = () => {
@@ -148,12 +194,6 @@ export default function VideoCourseExplainerSimple({
                                 highlightedCharIndex={videoState.highlightedCharIndex}
                                 isPlaying={videoState.isPlaying}
                                 useTTS={videoState.useTTS}
-                                diagrams={diagrams}
-                                examples={examples}
-                                renderedDiagrams={renderedDiagrams}
-                                bookmarks={videoState.bookmarks}
-                                userNotes={videoState.userNotes}
-                                showDiagrams={true}
                             />
                         ) : (
                             <div className="flex items-center justify-center h-full">

@@ -142,6 +142,7 @@ export function useVideoExplainer(lessonText, audios, structuredOutline) {
         setSelectedVoice,
         completedSlides,
         timeSpent,
+        setTimeSpent,
         hasStarted,
         setHasStarted,
         highlightedCharIndex,

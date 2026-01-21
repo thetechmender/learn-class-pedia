@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    Play, 
-    CheckCircle2, 
-    Circle, 
-    ChevronDown, 
-    ChevronRight, 
-    Clock, 
+    Play,
+    CheckCircle2,
+    Circle,
+    ChevronDown,
+    ChevronRight,
+    Clock,
     BookOpen,
     Award,
     BarChart3,
     Menu,
     X,
-    Loader2,
     AlertCircle,
     RefreshCw,
     Star,
@@ -26,184 +25,33 @@ import {
     Bell,
     Search,
     Home,
-    TrendingUp,
     GraduationCap,
-    Target,
-    Calendar,
-    Clock4,
-    Percent,
-    CheckCircle,
-    Crown,
-    Zap,
-    Globe,
-    Video,
-    Headphones,
-    FileCode,
-    Brain,
-    Rocket
+    Video
 } from 'lucide-react';
 import VideoCourseExplainerSimple from '../components/VideoCourseExplainerSimple';
 import ChatBox from '../components/video-explainer/ChatBox';
+import { transformApiResponse } from '../utils/courseTransformer';
+import { 
+    getCourseDetails, 
+    getLectureSections, 
+    getStudentProgress,
+    markLectureComplete,
+    toggleLectureBookmark,
+    saveLectureNotes,
+    updateLectureWatch
+} from '../services/learningApi';
 
-// Transform API response to LinkedIn-style course structure
-// New API: https://localhost:7043/api/Learning/course/{courseId}/lecture-sections
-// Returns array of: { id, sectionType, content, sectionOrder, lectureId }
-const transformApiResponse = (apiData, courseId = 1) => {
-    if (!apiData || !Array.isArray(apiData) || apiData.length === 0) return null;
+// TODO: Replace with actual student ID from auth context
+const STUDENT_ID = 1;
+const COURSE_ID = 3466;
 
-    // Map section types to readable titles
-    const sectionTypeToTitle = {
-        'introduction': 'Introduction',
-        'mainTopicEarly': 'Foundational Concepts',
-        'mainTopicMid': 'Core Topics',
-        'mainTopicAdvanced': 'Advanced Topics',
-        'facts': 'Key Facts & Data',
-        'summary': 'Summary',
-        'conclusion': 'Conclusion'
-    };
-
-    // Clean HTML content to slide format
-    const cleanHtmlContent = (htmlContent) => {
-        if (!htmlContent) return '';
-        
-        let text = htmlContent;
-        // Extract h2 title if present
-        const h2Match = text.match(/<h2>(.*?)<\/h2>/i);
-        const slideTitle = h2Match ? h2Match[1] : '';
-        
-        // Clean HTML tags
-        text = text.replace(/<section>/gi, '');
-        text = text.replace(/<\/section>/gi, '');
-        text = text.replace(/<h2>.*?<\/h2>/gi, '');
-        text = text.replace(/<h3>(.*?)<\/h3>/gi, '\n\n$1\n');
-        text = text.replace(/<\/p>/gi, '\n\n');
-        text = text.replace(/<\/li>/gi, '\n');
-        text = text.replace(/<ul>/gi, '\n');
-        text = text.replace(/<\/ul>/gi, '\n');
-        text = text.replace(/<ol>/gi, '\n');
-        text = text.replace(/<\/ol>/gi, '\n');
-        text = text.replace(/<li>/gi, '• ');
-        text = text.replace(/<strong>(.*?)<\/strong>/gi, '$1');
-        text = text.replace(/<em>(.*?)<\/em>/gi, '$1');
-        text = text.replace(/<[^>]+>/g, '');
-        text = text.replace(/&nbsp;/g, ' ')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"');
-        text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
-        
-        return { title: slideTitle, content: text.trim() };
-    };
-
-    // Group sections by lectureId
-    const lectureGroups = apiData.reduce((acc, section) => {
-        const lectureId = section.lectureId;
-        if (!acc[lectureId]) {
-            acc[lectureId] = [];
-        }
-        acc[lectureId].push(section);
-        return acc;
-    }, {});
-
-    // Process each lecture's sections into slide format
-    const processLectureSections = (sections) => {
-        // Sort by sectionOrder
-        const sortedSections = [...sections].sort((a, b) => a.sectionOrder - b.sectionOrder);
-        
-        let text = '';
-        sortedSections.forEach(section => {
-            const { title, content } = cleanHtmlContent(section.content);
-            const sectionTitle = title || sectionTypeToTitle[section.sectionType] || section.sectionType;
-            text += `\n[SLIDE]: ${sectionTitle}\n`;
-            text += content + '\n';
-        });
-        
-        return text.trim() || '[SLIDE]: Content\n\nNo content available for this section.';
-    };
-
-    // Estimate duration based on content length
-    const estimateDuration = (content) => {
-        if (!content) return '5m';
-        const wordCount = content.replace(/<[^>]+>/g, '').split(/\s+/).length;
-        const minutes = Math.max(5, Math.ceil(wordCount / 150)); // ~150 words per minute
-        return `${minutes}m`;
-    };
-
-    // Transform lectures from grouped sections
-    const lectureIds = Object.keys(lectureGroups);
-    const transformedLectures = lectureIds.map((lectureId, index) => {
-        const sections = lectureGroups[lectureId];
-        const firstSection = sections[0];
-        const allContent = sections.map(s => s.content).join(' ');
-        
-        // Try to extract lecture title from first section's h2
-        const h2Match = firstSection.content?.match(/<h2>(.*?)<\/h2>/i);
-        const lectureTitle = h2Match ? h2Match[1] : `Lecture ${index + 1}`;
-        
-        return {
-            id: `lecture-${lectureId}`,
-            title: lectureTitle,
-            duration: estimateDuration(allContent),
-            completed: false,
-            content: processLectureSections(sections),
-            lectureNumber: index + 1,
-            hasVideo: Math.random() > 0.3,
-            hasResources: Math.random() > 0.5,
-            hasQuiz: Math.random() > 0.6,
-            icon: [Video, Headphones, FileCode, Brain][index % 4],
-            studentCount: Math.floor(Math.random() * 1000) + 50
-        };
-    });
-
-    // Calculate total duration
-    const totalMinutes = transformedLectures.reduce((acc, l) => {
-        const mins = parseInt(l.duration) || 5;
-        return acc + mins;
-    }, 0);
-
-    // Create chapter structure
-    const chapters = [{
-        id: `chapter-course-${courseId}`,
-        title: 'Course Content',
-        duration: `${totalMinutes}m`,
-        lectures: transformedLectures,
-        project: true,
-        certificate: true
-    }];
-
-    return {
-        id: `course-${courseId}`,
-        title: transformedLectures[0]?.title || 'Course',
-        courseCode: `COURSE-${courseId}`,
-        instructor: 'Instructor',
-        instructorTitle: 'Course Instructor',
-        duration: `${totalMinutes}m`,
-        level: 'Professional',
-        description: 'Course content loaded from lecture sections',
-        chapters,
-        rating: 4.8,
-        reviews: 892,
-        students: 23456,
-        lastUpdated: '1 month ago',
-        language: 'English',
-        category: 'Education',
-        difficulty: 'Intermediate',
-        includes: [
-            '10 hours on-demand video',
-            '8 articles',
-            '12 downloadable resources',
-            'Certificate of completion',
-            'Lifetime access'
-        ],
-        instructorImage: `https://ui-avatars.com/api/?name=Instructor&background=6366f1&color=fff`,
-        badges: ['Popular', 'Highest Rated'],
-        achievements: [
-            { name: 'Fast Track', icon: Rocket, color: 'text-blue-400' },
-            { name: 'Consistent Learner', icon: Clock4, color: 'text-indigo-400' },
-            { name: 'Top Performer', icon: Award, color: 'text-orange-400' }
-        ]
-    };
+const parseDurationToSeconds = (duration) => {
+    if (!duration) return 0;
+    const hoursMatch = duration.match(/(\d+)\s*h/);
+    const minutesMatch = duration.match(/(\d+)\s*m/);
+    const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+    const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+    return (hours * 60 + minutes) * 60;
 };
 
 const LinkedInStyleDemo = () => {
@@ -227,40 +75,61 @@ const LinkedInStyleDemo = () => {
     }, []);
 
     const [notes, setNotes] = useState('');
+    const [lectureNotes, setLectureNotes] = useState({});
     const [showNotes, setShowNotes] = useState(false);
     const [bookmarkedLectures, setBookmarkedLectures] = useState(new Set());
     const [showChatBox, setShowChatBox] = useState(true);
+    const [savingNotes, setSavingNotes] = useState(false);
 
     // Fetch course data from API
-    useEffect(() => {
-        fetchCourseData();
-    }, []);
-
-    const fetchCourseData = async () => {
+    const fetchCourseData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch('https://localhost:7043/api/Learning/course/1/lecture-sections');
             
-            if (!response.ok) {
-                throw new Error('Failed to fetch course data');
-            }
+            // Fetch course details, lecture sections, and student progress in parallel
+            const [courseDetails, lectureSections, studentProgress] = await Promise.all([
+                getCourseDetails(COURSE_ID).catch(() => null),
+                getLectureSections(COURSE_ID),
+                getStudentProgress(STUDENT_ID, COURSE_ID).catch(() => null)
+            ]);
             
-            const apiData = await response.json();
-            const transformedData = transformApiResponse(apiData);
+            const transformedData = transformApiResponse(lectureSections, courseDetails);
             
             if (transformedData && transformedData.chapters.length > 0) {
                 setCourseData(transformedData);
-                setSelectedLecture(transformedData.chapters[0].lectures[0]);
+                
+                // Set initial lecture - prefer last accessed or first lecture
+                const lastAccessedId = studentProgress?.lastAccessedLectureId;
+                let initialLecture = transformedData.chapters[0].lectures[0];
+                
+                if (lastAccessedId) {
+                    for (const chapter of transformedData.chapters) {
+                        const found = chapter.lectures.find(l => l.id === lastAccessedId || l.id === String(lastAccessedId));
+                        if (found) {
+                            initialLecture = found;
+                            break;
+                        }
+                    }
+                }
+                
+                setSelectedLecture(initialLecture);
                 setExpandedChapters(new Set([transformedData.chapters[0].id]));
                 
-                // Initialize some completed lectures for demo
-                const initialCompleted = new Set();
-                if (transformedData.chapters[0].lectures.length > 2) {
-                    initialCompleted.add(transformedData.chapters[0].lectures[0].id);
-                    initialCompleted.add(transformedData.chapters[0].lectures[1].id);
+                // Set completed lectures from API
+                if (studentProgress?.completedLectureIds) {
+                    setCompletedLectures(new Set(studentProgress.completedLectureIds.map(String)));
                 }
-                setCompletedLectures(initialCompleted);
+                
+                // Set bookmarked lectures from API
+                if (studentProgress?.bookmarkedLectureIds) {
+                    setBookmarkedLectures(new Set(studentProgress.bookmarkedLectureIds.map(String)));
+                }
+                
+                // Set notes from API
+                if (studentProgress?.notes) {
+                    setLectureNotes(studentProgress.notes);
+                }
             }
         } catch (err) {
             console.error('Error fetching course data:', err);
@@ -268,7 +137,20 @@ const LinkedInStyleDemo = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchCourseData();
+    }, [fetchCourseData]);
+
+    // Update notes when lecture changes
+    useEffect(() => {
+        if (selectedLecture && lectureNotes[selectedLecture.id]) {
+            setNotes(lectureNotes[selectedLecture.id]);
+        } else {
+            setNotes('');
+        }
+    }, [selectedLecture, lectureNotes]);
 
     const toggleChapter = (chapterId) => {
         setExpandedChapters(prev => {
@@ -282,16 +164,60 @@ const LinkedInStyleDemo = () => {
         setSelectedLecture(lecture);
     };
 
-    const markAsComplete = (lectureId) => {
-        setCompletedLectures(prev => new Set([...prev, lectureId]));
+    const markAsComplete = async (lectureId) => {
+        try {
+            await markLectureComplete(STUDENT_ID, lectureId);
+            setCompletedLectures(prev => new Set([...prev, String(lectureId)]));
+        } catch (err) {
+            console.error('Error marking lecture complete:', err);
+        }
     };
 
-    const toggleBookmark = (lectureId) => {
-        setBookmarkedLectures(prev => {
-            const newSet = new Set(prev);
-            newSet.has(lectureId) ? newSet.delete(lectureId) : newSet.add(lectureId);
-            return newSet;
-        });
+    const handleWatchProgress = useCallback(async ({ deltaSeconds, durationSeconds, positionSeconds }) => {
+        if (!selectedLecture?.id) return;
+        try {
+            await updateLectureWatch(STUDENT_ID, selectedLecture.id, {
+                deltaSeconds,
+                durationSeconds,
+                positionSeconds
+            });
+        } catch (err) {
+            console.error('Error updating lecture watch progress:', err);
+        }
+    }, [selectedLecture]);
+
+    const toggleBookmark = async (lectureId) => {
+        try {
+            const result = await toggleLectureBookmark(STUDENT_ID, lectureId);
+            setBookmarkedLectures(prev => {
+                const newSet = new Set(prev);
+                if (result.isBookmarked) {
+                    newSet.add(String(lectureId));
+                } else {
+                    newSet.delete(String(lectureId));
+                }
+                return newSet;
+            });
+        } catch (err) {
+            console.error('Error toggling bookmark:', err);
+        }
+    };
+
+    const handleSaveNotes = async () => {
+        if (!selectedLecture || !notes.trim()) return;
+        
+        try {
+            setSavingNotes(true);
+            await saveLectureNotes(STUDENT_ID, selectedLecture.id, notes);
+            setLectureNotes(prev => ({
+                ...prev,
+                [selectedLecture.id]: notes
+            }));
+        } catch (err) {
+            console.error('Error saving notes:', err);
+        } finally {
+            setSavingNotes(false);
+        }
     };
 
     const getProgress = () => {
@@ -586,10 +512,10 @@ const LinkedInStyleDemo = () => {
                             <VideoCourseExplainerSimple
                                 lessonText={selectedLecture.content}
                                 audios={[]}
-                                diagrams={[]}
-                                examples={[]}
-                                assessments={[]}
                                 courseId={courseData.id}
+                                lectureId={selectedLecture.id}
+                                durationSeconds={parseDurationToSeconds(selectedLecture.duration)}
+                                onWatchProgress={handleWatchProgress}
                             />
                         </div>
                         
@@ -606,10 +532,17 @@ const LinkedInStyleDemo = () => {
                                     className="w-full h-64 p-3 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                                 />
                                 <div className="flex items-center gap-2 mt-4">
-                                    <button className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors">
+                                    <button
+                                        onClick={handleSaveNotes}
+                                        disabled={savingNotes}
+                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white text-sm rounded-lg transition-colors"
+                                    >
                                         Save Note
                                     </button>
-                                    <button className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg transition-colors">
+                                    <button
+                                        onClick={() => setNotes('')}
+                                        className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg transition-colors"
+                                    >
                                         Clear
                                     </button>
                                 </div>
