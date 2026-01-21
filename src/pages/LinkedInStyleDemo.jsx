@@ -46,60 +46,79 @@ import VideoCourseExplainerSimple from '../components/VideoCourseExplainerSimple
 import ChatBox from '../components/video-explainer/ChatBox';
 
 // Transform API response to LinkedIn-style course structure
-const transformApiResponse = (apiData) => {
-    if (!apiData) return null;
+// New API: https://localhost:7043/api/Learning/course/{courseId}/lecture-sections
+// Returns array of: { id, sectionType, content, sectionOrder, lectureId }
+const transformApiResponse = (apiData, courseId = 1) => {
+    if (!apiData || !Array.isArray(apiData) || apiData.length === 0) return null;
 
-    const { courseName, courseCode, school, program, module, courseGenerationWithGptId } = apiData;
+    // Map section types to readable titles
+    const sectionTypeToTitle = {
+        'introduction': 'Introduction',
+        'mainTopicEarly': 'Foundational Concepts',
+        'mainTopicMid': 'Core Topics',
+        'mainTopicAdvanced': 'Advanced Topics',
+        'facts': 'Key Facts & Data',
+        'summary': 'Summary',
+        'conclusion': 'Conclusion'
+    };
 
-    // Process lecture content to slide format
-    const processLectureContent = (lectureContent) => {
-        if (!lectureContent) return '[SLIDE]: No content available\n\nContent for this lecture is not yet available.';
+    // Clean HTML content to slide format
+    const cleanHtmlContent = (htmlContent) => {
+        if (!htmlContent) return '';
+        
+        let text = htmlContent;
+        // Extract h2 title if present
+        const h2Match = text.match(/<h2>(.*?)<\/h2>/i);
+        const slideTitle = h2Match ? h2Match[1] : '';
+        
+        // Clean HTML tags
+        text = text.replace(/<section>/gi, '');
+        text = text.replace(/<\/section>/gi, '');
+        text = text.replace(/<h2>.*?<\/h2>/gi, '');
+        text = text.replace(/<h3>(.*?)<\/h3>/gi, '\n\n$1\n');
+        text = text.replace(/<\/p>/gi, '\n\n');
+        text = text.replace(/<\/li>/gi, '\n');
+        text = text.replace(/<ul>/gi, '\n');
+        text = text.replace(/<\/ul>/gi, '\n');
+        text = text.replace(/<ol>/gi, '\n');
+        text = text.replace(/<\/ol>/gi, '\n');
+        text = text.replace(/<li>/gi, '• ');
+        text = text.replace(/<strong>(.*?)<\/strong>/gi, '$1');
+        text = text.replace(/<em>(.*?)<\/em>/gi, '$1');
+        text = text.replace(/<[^>]+>/g, '');
+        text = text.replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"');
+        text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+        
+        return { title: slideTitle, content: text.trim() };
+    };
 
-        const sections = [
-            { key: 'introduction', title: 'Introduction' },
-            { key: 'mainTopicEarly', title: 'Foundational Concepts' },
-            { key: 'mainTopicMid', title: 'Core Topics' },
-            { key: 'mainTopicAdvanced', title: 'Advanced Topics' },
-            { key: 'facts', title: 'Key Facts & Data' },
-            { key: 'summary', title: 'Summary' },
-            { key: 'conclusion', title: 'Conclusion' }
-        ];
+    // Group sections by lectureId
+    const lectureGroups = apiData.reduce((acc, section) => {
+        const lectureId = section.lectureId;
+        if (!acc[lectureId]) {
+            acc[lectureId] = [];
+        }
+        acc[lectureId].push(section);
+        return acc;
+    }, {});
 
+    // Process each lecture's sections into slide format
+    const processLectureSections = (sections) => {
+        // Sort by sectionOrder
+        const sortedSections = [...sections].sort((a, b) => a.sectionOrder - b.sectionOrder);
+        
         let text = '';
-        sections.forEach(section => {
-            if (lectureContent[section.key]) {
-                let sectionText = lectureContent[section.key];
-                const h2Match = sectionText.match(/<h2>(.*?)<\/h2>/i);
-                const slideTitle = h2Match ? h2Match[1] : section.title;
-
-                text += `\n[SLIDE]: ${slideTitle}\n`;
-
-                // Clean HTML tags
-                sectionText = sectionText.replace(/<section>/gi, '');
-                sectionText = sectionText.replace(/<\/section>/gi, '');
-                sectionText = sectionText.replace(/<h2>.*?<\/h2>/gi, '');
-                sectionText = sectionText.replace(/<h3>(.*?)<\/h3>/gi, '\n\n$1\n');
-                sectionText = sectionText.replace(/<\/p>/gi, '\n\n');
-                sectionText = sectionText.replace(/<\/li>/gi, '\n');
-                sectionText = sectionText.replace(/<ul>/gi, '\n');
-                sectionText = sectionText.replace(/<\/ul>/gi, '\n');
-                sectionText = sectionText.replace(/<ol>/gi, '\n');
-                sectionText = sectionText.replace(/<\/ol>/gi, '\n');
-                sectionText = sectionText.replace(/<li>/gi, '• ');
-                sectionText = sectionText.replace(/<strong>(.*?)<\/strong>/gi, '$1');
-                sectionText = sectionText.replace(/<em>(.*?)<\/em>/gi, '$1');
-                sectionText = sectionText.replace(/<[^>]+>/g, '');
-                sectionText = sectionText.replace(/&nbsp;/g, ' ')
-                    .replace(/&amp;/g, '&')
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&quot;/g, '"');
-                sectionText = sectionText.replace(/\n\s*\n\s*\n/g, '\n\n');
-
-                text += sectionText.trim() + '\n';
-            }
+        sortedSections.forEach(section => {
+            const { title, content } = cleanHtmlContent(section.content);
+            const sectionTitle = title || sectionTypeToTitle[section.sectionType] || section.sectionType;
+            text += `\n[SLIDE]: ${sectionTitle}\n`;
+            text += content + '\n';
         });
-
+        
         return text.trim() || '[SLIDE]: Content\n\nNo content available for this section.';
     };
 
@@ -111,94 +130,65 @@ const transformApiResponse = (apiData) => {
         return `${minutes}m`;
     };
 
-    // Transform lectures
-    const transformedLectures = module?.subject?.lectures?.map((lecture, index) => ({
-        id: `lecture-${lecture.id}`,
-        title: lecture.lectureName,
-        duration: estimateDuration(JSON.stringify(lecture.lectureContent)),
-        completed: false,
-        content: processLectureContent(lecture.lectureContent),
-        lectureNumber: lecture.lectureNumber,
-        hasVideo: Math.random() > 0.3,
-        hasResources: Math.random() > 0.5,
-        hasQuiz: Math.random() > 0.6,
-        icon: [Video, Headphones, FileCode, Brain][index % 4],
-        studentCount: Math.floor(Math.random() * 1000) + 50
-    })) || [];
+    // Transform lectures from grouped sections
+    const lectureIds = Object.keys(lectureGroups);
+    const transformedLectures = lectureIds.map((lectureId, index) => {
+        const sections = lectureGroups[lectureId];
+        const firstSection = sections[0];
+        const allContent = sections.map(s => s.content).join(' ');
+        
+        // Try to extract lecture title from first section's h2
+        const h2Match = firstSection.content?.match(/<h2>(.*?)<\/h2>/i);
+        const lectureTitle = h2Match ? h2Match[1] : `Lecture ${index + 1}`;
+        
+        return {
+            id: `lecture-${lectureId}`,
+            title: lectureTitle,
+            duration: estimateDuration(allContent),
+            completed: false,
+            content: processLectureSections(sections),
+            lectureNumber: index + 1,
+            hasVideo: Math.random() > 0.3,
+            hasResources: Math.random() > 0.5,
+            hasQuiz: Math.random() > 0.6,
+            icon: [Video, Headphones, FileCode, Brain][index % 4],
+            studentCount: Math.floor(Math.random() * 1000) + 50
+        };
+    });
 
-    // Create chapter structure (grouping by subject)
+    // Calculate total duration
+    const totalMinutes = transformedLectures.reduce((acc, l) => {
+        const mins = parseInt(l.duration) || 5;
+        return acc + mins;
+    }, 0);
+
+    // Create chapter structure
     const chapters = [{
-        id: `chapter-${module?.subject?.id || 'default'}`,
-        title: module?.subject?.subjectName || 'Course Content',
-        duration: transformedLectures.reduce((acc, l) => {
-            const mins = parseInt(l.duration) || 5;
-            return acc + mins;
-        }, 0) + 'm',
+        id: `chapter-course-${courseId}`,
+        title: 'Course Content',
+        duration: `${totalMinutes}m`,
         lectures: transformedLectures,
-        project: Math.random() > 0.7,
+        project: true,
         certificate: true
     }];
 
-    // If there's a module, wrap it as a higher-level chapter
-    if (module?.moduleName) {
-        return {
-            id: courseGenerationWithGptId || 'course-1',
-            title: courseName,
-            courseCode: courseCode,
-            instructor: school,
-            instructorTitle: program,
-            duration: chapters[0].duration,
-            level: 'Professional',
-            description: `${courseName} - ${module.moduleName}`,
-            chapters: [{
-                id: `module-${module.id}`,
-                title: `${module.moduleName}`,
-                duration: chapters[0].duration,
-                lectures: transformedLectures,
-                project: true,
-                certificate: true
-            }],
-            rating: 4.7,
-            reviews: 1243,
-            students: 15420,
-            lastUpdated: '2 weeks ago',
-            language: 'English',
-            category: 'Technology',
-            difficulty: 'Intermediate',
-            includes: [
-                '12 hours on-demand video',
-                '5 articles',
-                '15 downloadable resources',
-                'Certificate of completion',
-                'Lifetime access'
-            ],
-            instructorImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(school)}&background=6366f1&color=fff`,
-            badges: ['Bestseller', 'Hot & New'],
-            achievements: [
-                { name: 'Quick Learner', icon: Zap, color: 'text-yellow-400' },
-                { name: 'Perfect Score', icon: Target, color: 'text-green-400' },
-                { name: 'Course Master', icon: Crown, color: 'text-purple-400' }
-            ]
-        };
-    }
-
     return {
-        id: courseGenerationWithGptId || 'course-1',
-        title: courseName,
-        courseCode: courseCode,
-        instructor: school,
-        instructorTitle: program,
-        duration: chapters[0].duration,
+        id: `course-${courseId}`,
+        title: transformedLectures[0]?.title || 'Course',
+        courseCode: `COURSE-${courseId}`,
+        instructor: 'Instructor',
+        instructorTitle: 'Course Instructor',
+        duration: `${totalMinutes}m`,
         level: 'Professional',
-        description: courseName,
+        description: 'Course content loaded from lecture sections',
         chapters,
         rating: 4.8,
         reviews: 892,
         students: 23456,
         lastUpdated: '1 month ago',
         language: 'English',
-        category: 'Business',
-        difficulty: 'Beginner',
+        category: 'Education',
+        difficulty: 'Intermediate',
         includes: [
             '10 hours on-demand video',
             '8 articles',
@@ -206,7 +196,7 @@ const transformApiResponse = (apiData) => {
             'Certificate of completion',
             'Lifetime access'
         ],
-        instructorImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(school)}&background=6366f1&color=fff`,
+        instructorImage: `https://ui-avatars.com/api/?name=Instructor&background=6366f1&color=fff`,
         badges: ['Popular', 'Highest Rated'],
         achievements: [
             { name: 'Fast Track', icon: Rocket, color: 'text-blue-400' },
@@ -250,7 +240,7 @@ const LinkedInStyleDemo = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch('https://gptassistant.thetechmenders.com/api/CourseData/specific-hierarchy');
+            const response = await fetch('https://localhost:7043/api/Learning/course/1/lecture-sections');
             
             if (!response.ok) {
                 throw new Error('Failed to fetch course data');
