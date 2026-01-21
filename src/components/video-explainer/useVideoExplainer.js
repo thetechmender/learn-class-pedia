@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { apiService } from '../../services/api';
+
+// Helper function to get audio stream URL
+const getAudioStreamUrl = (audioId) => {
+    const baseUrl = process.env.REACT_APP_API_URL || 'https://localhost:7043/api';
+    return `${baseUrl}/media/audio/${audioId}`;
+};
 
 export function useVideoExplainer(lessonText, audios, structuredOutline) {
     // State
@@ -57,7 +62,7 @@ export function useVideoExplainer(lessonText, audios, structuredOutline) {
     // Audio/TTS Management
     useEffect(() => {
         if (audios && audios.length > currentSlide && audios[currentSlide]) {
-            setAudioStreamUrl(apiService.getAudioStreamUrl(audios[currentSlide].id));
+            setAudioStreamUrl(getAudioStreamUrl(audios[currentSlide].id));
             setUseTTS(false);
         } else {
             setAudioStreamUrl('');
