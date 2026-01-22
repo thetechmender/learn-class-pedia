@@ -71,11 +71,7 @@ class AdminApiService {
   // Category Management methods
   
   // GET all categories with pagination and filters
-  // async getAllCategories(page = 1, pageSize = 50, queryParams = '') {
-  //   const url = queryParams ? `${ENDPOINTS.CATEGORIES_Admin}?${queryParams}` : `${ENDPOINTS.CATEGORIES_Admin}?page=${page}&pageSize=${pageSize}`;
-  //   return this.request(url);
-  // }
-async getAllCategories(page = null, pageSize = null, queryParams = '') {
+  async getAllCategories(page = null, pageSize = null, queryParams = '') {
     let url = ENDPOINTS.CATEGORIES_Admin;
 
     // Build query parameters
@@ -132,9 +128,34 @@ async getAllCategories(page = null, pageSize = null, queryParams = '') {
 
   // Course Management methods
   
-  // GET all courses for admin
-  async getAllCoursesAdmin() {
-    return this.request(ENDPOINTS.COURSES_ADMIN);
+  // GET all courses for admin with filters
+  async getAllCoursesAdmin(filters = {}) {
+    const queryParams = new URLSearchParams();
+    
+    // Add pagination parameters
+    if (filters.page !== undefined) queryParams.append('page', filters.page);
+    if (filters.pageSize !== undefined) queryParams.append('pageSize', filters.pageSize);
+    
+    // Add course filter parameters
+    if (filters.title) queryParams.append('Title', filters.title);
+    if (filters.subtitle) queryParams.append('Subtitle', filters.subtitle);
+    if (filters.description) queryParams.append('Description', filters.description);
+    if (filters.overview) queryParams.append('Overview', filters.overview);
+    if (filters.courseTypeId !== undefined) queryParams.append('CourseTypeId', filters.courseTypeId);
+    if (filters.categoryId !== undefined) queryParams.append('CategoryId', filters.categoryId);
+    if (filters.courseLevelId !== undefined) queryParams.append('CourseLevelId', filters.courseLevelId);
+    if (filters.slug) queryParams.append('Slug', filters.slug);
+    if (filters.thumbnailUrl) queryParams.append('ThumbnailUrl', filters.thumbnailUrl);
+    if (filters.promoVideoUrl) queryParams.append('PromoVideoUrl', filters.promoVideoUrl);
+    if (filters.price !== undefined) queryParams.append('Price', filters.price);
+    if (filters.discountedPrice !== undefined) queryParams.append('DiscountedPrice', filters.discountedPrice);
+    if (filters.currencyCode) queryParams.append('CurrencyCode', filters.currencyCode);
+    if (filters.isPaid !== undefined) queryParams.append('IsPaid', filters.isPaid);
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${ENDPOINTS.COURSES_ADMIN}?${queryString}` : ENDPOINTS.COURSES_ADMIN;
+    
+    return this.request(url);
   }
 
   // GET course by ID for admin

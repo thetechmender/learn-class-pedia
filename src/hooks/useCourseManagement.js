@@ -23,13 +23,13 @@ export const useCourseManagement = () => {
   });
 
   // Load initial data
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (filters = {}) => {
     try {
       setLoading(true);
       setError(null);
       
       const [coursesData, tagsData, badgesData] = await Promise.all([
-        apiService.getAllCoursesAdmin(),
+        apiService.getAllCoursesAdmin(filters),
         apiService.getAllCourseTags(),
         apiService.getAllCourseBadges()
       ]);
@@ -167,6 +167,23 @@ export const useCourseManagement = () => {
     }
   }, []);
 
+  // Get filtered courses
+  const getFilteredCourses = useCallback(async (filters = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const coursesData = await apiService.getAllCoursesAdmin(filters);
+      setCourses(coursesData);
+      return coursesData;
+    } catch (err) {
+      setError(err.message || 'Failed to load filtered courses');
+      console.error('Error loading filtered courses:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Open edit modal
   const openEditModal = useCallback((course) => {
     setSelectedCourse(course);
@@ -210,6 +227,7 @@ export const useCourseManagement = () => {
     updateCourseStatus,
     deleteCourse,
     getCourseById,
+    getFilteredCourses,
     openEditModal,
     closeModals,
     clearError

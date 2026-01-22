@@ -28,13 +28,17 @@ const GenericDropdown = ({
     );
   }, [items, searchTerm, searchable, displayField]);
 
-  // Get display name for selected value
   const getSelectedDisplayName = () => {
-    if (!value) return placeholder;
-    
-    const selected = items.find(item => item[valueField] === value);
-    return selected ? selected[displayField] : placeholder;
-  };
+   
+  if (value === null || value === undefined) return placeholder;
+
+  const selected = items.find(
+    item => String(item[valueField]) === String(value)
+  );
+
+  return selected ? selected : placeholder;
+};
+
 
   // Handle item selection
   const handleSelect = (itemValue) => {
@@ -67,7 +71,7 @@ const GenericDropdown = ({
         <span className={`flex-1 truncate ${
           value === null || value === '' ? 'text-gray-400' : 'text-gray-900'
         }`}>
-          {getSelectedDisplayName()}
+          {getSelectedDisplayName()?.description ? getSelectedDisplayName()?.description : getSelectedDisplayName()?.title}
         </span>
         <div className="flex items-center space-x-2">
           {allowClear && value && (
@@ -131,9 +135,9 @@ const GenericDropdown = ({
                     }`} />
                     <div className="flex-1">
                       <div className="font-medium text-sm">{item[displayField]}</div>
-                      {item.description && (
+                      {item?.description ? (
                         <div className="text-xs text-gray-500">{item.description}</div>
-                      )}
+                      ) :  <div className="text-xs text-gray-500">{item.title}</div>}
                     </div>
                   </div>
                 );

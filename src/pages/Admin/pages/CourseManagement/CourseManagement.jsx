@@ -1,15 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useAdminApi } from '../../../../hooks/useAdminApi';
 import { useAdmin } from '../../../../hooks/useAdmin';
-import { Search, RefreshCw, ChevronDown, ChevronUp, Image, DollarSign, Tag, BookOpen, Globe, CheckCircle, XCircle, Eye, Edit2 } from 'lucide-react';
+import { Search, RefreshCw, ChevronDown, ChevronUp, Image, DollarSign, Tag, BookOpen, Globe, CheckCircle, XCircle, Eye, Edit2, Trash2 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import MultiSelectDropdown from '../../../../components/MultiSelectDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 
 const CourseManagement = () => {
-  const { loading, error, courses, page, totalPages, nextPage, prevPage, getCourseById, updateCourse } = useAdminApi();
-  const { getCourseTypes, getCourseLevels, getCourseBadges, getAllCategories, createCourse } = useAdmin();
+  const { loading, error, page, totalPages, nextPage, prevPage, getCourseById, updateCourse } = useAdminApi();
+  const { getCourseTypes, getCourseLevels, getCourseBadges, getAllCategories, createCourse, deleteCourse, getAllCoursesAdmin } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [filtersLoading, setFiltersLoading] = useState(false);
+  const [paginationInfo, setPaginationInfo] = useState({ page: 1, pageSize: 10, totalCount: 0 });
+  const [filters, setFilters] = useState({
+    page: 1,
+    pageSize: 10,
+    title: '',
+    subtitle: '',
+    description: '',
+    overview: '',
+    courseTypeId: 0,
+    categoryId: 0,
+    courseLevelId: 0,
+    slug: '',
+    thumbnailUrl: '',
+    promoVideoUrl: '',
+    price: '',
+    discountedPrice: '',
+    currencyCode: '',
+    isPaid: ''
+  });
   const [expandedCourses, setExpandedCourses] = useState({});
   const [courseDetails, setCourseDetails] = useState({});
   const [detailsLoading, setDetailsLoading] = useState({});
@@ -24,6 +45,12 @@ const CourseManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
+  
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const [createFormData, setCreateFormData] = useState({
     title: '',
     subtitle: '',
@@ -81,15 +108,15 @@ const CourseManagement = () => {
     badges: ''
   });
 
-  // Filter courses based on search term
-  const filteredCourses = courses?.filter(course =>
+  // Filter courses based on search term (keeping for backward compatibility)
+  const searchFilteredCourses = filteredCourses?.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.subtitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.courseLevelName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.courseTypeName.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  console.log(courses)
+  console.log(filteredCourses)
 
   // Fetch dropdown data on component mount
   useEffect(() => {
@@ -124,6 +151,7 @@ const CourseManagement = () => {
       // Fetch Course Levels
       setDropdownLoading(prev => ({ ...prev, courseLevels: true }));
       try {
+       
         const data = await getCourseLevels();
         setCourseLevels(data);
         setDropdownError(prev => ({ ...prev, courseLevels: '' }));
@@ -199,7 +227,7 @@ const CourseManagement = () => {
         currencyCode: courseDetailData.currencyCode || 'USD',
         thumbnailUrl: courseDetailData.thumbnailUrl || '',
         promoVideoUrl: courseDetailData.promoVideoUrl || '',
-        badgeIds: courseDetailData.badgeIds || []
+        badgeIds: courseDetailData.badges?.map(badge => badge.id) || []
       });
       
       setShowUpdateModal(true);
@@ -330,7 +358,183 @@ const CourseManagement = () => {
     });
   };
 
-  if (loading) {
+  // Handle delete course confirmation
+  const handleDeleteClick = (course) => {
+    setCourseToDelete(course);
+    setShowDeleteModal(true);
+    setDeleteError('');
+  };
+
+  // Handle delete course submission
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return;
+    
+    try {
+      setDeleteLoading(true);
+      setDeleteError('');
+      
+      await deleteCourse(courseToDelete.id);
+      
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+      
+      // Show success message (you might want to add a toast notification)
+      alert('Course deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      setDeleteError(error.response?.data?.message || 'Failed to delete course');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Close delete modal
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setCourseToDelete(null);
+    setDeleteError('');
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Apply filters and fetch courses
+  const applyFilters = async (usePagination = true) => {
+    try {
+      setFiltersLoading(true);
+      
+      // Remove empty values from filters, but keep pagination params
+      const activeFilters = Object.fromEntries(
+        Object.entries(filters).filter(([key, value]) => {
+          // Always include pagination params
+          if (key === 'page' || key === 'pageSize') {
+            return true;
+          }
+          // Filter out empty values for other fields
+          return value !== '' && value !== 0 && value !== null && value !== undefined;
+        })
+      );
+      
+      console.log('Applying filters:', activeFilters);
+      const coursesData = await getAllCoursesAdmin(activeFilters);
+      console.log('Received courses data:', coursesData);
+      
+      // Handle different response structures
+      const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
+      setFilteredCourses(coursesArray);
+      
+      // Update pagination info from response
+      if (coursesData?.page !== undefined) {
+        setPaginationInfo({
+          page: coursesData.page,
+          pageSize: coursesData.pageSize,
+          totalCount: coursesData.totalCount || coursesData.totalCount || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      setFilteredCourses([]);
+      setPaginationInfo({ page: 1, pageSize: 10, totalCount: 0 });
+    } finally {
+      setFiltersLoading(false);
+    }
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setFilters({
+      page: 1,
+      pageSize: 10,
+      title: '',
+      subtitle: '',
+      description: '',
+      overview: '',
+      courseTypeId: 0,
+      categoryId: 0,
+      courseLevelId: 0,
+      slug: '',
+      thumbnailUrl: '',
+      promoVideoUrl: '',
+      price: '',
+      discountedPrice: '',
+      currencyCode: '',
+      isPaid: ''
+    });
+    setFilteredCourses([]);
+    setPaginationInfo({ page: 1, pageSize: 10, totalCount: 0 });
+  };
+
+  // Handle page changes
+  const handlePageChange = async (newPage) => {
+    debugger;
+    if (newPage < 1) return;
+    
+    console.log('Changing to page:', newPage);
+    console.log('Current filters:', filters);
+    console.log('Current paginationInfo:', paginationInfo);
+    
+    // Create updated filters using current filters state but with new page
+    const updatedFilters = { ...filters, page: newPage };
+    console.log('Updated filters:', updatedFilters);
+    
+    // Update both states
+    setFilters(updatedFilters);
+    
+    // Apply filters with the updated filters directly
+    try {
+      setFiltersLoading(true);
+      
+      // Remove empty values from filters, but keep pagination params
+      const activeFilters = Object.fromEntries(
+        Object.entries(updatedFilters).filter(([key, value]) => {
+          // Always include pagination params
+          if (key === 'page' || key === 'pageSize') {
+            return true;
+          }
+          // Filter out empty values for other fields
+          return value !== '' && value !== 0 && value !== null && value !== undefined;
+        })
+      );
+      
+      console.log('Applying page change filters:', activeFilters);
+      const coursesData = await getAllCoursesAdmin(activeFilters);
+      console.log('Received courses data:', coursesData);
+      
+      // Handle different response structures
+      const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
+      setFilteredCourses(coursesArray);
+      
+      // Update pagination info from response
+      if (coursesData?.page !== undefined) {
+        debugger;
+        const newPaginationInfo = {
+          page: coursesData.page,
+          pageSize: coursesData.pageSize,
+          totalCount: coursesData.totalCount || coursesData.totalCount || 0
+        };
+        console.log('Setting pagination info:', newPaginationInfo);
+        setPaginationInfo(newPaginationInfo);
+      }
+    } catch (error) {
+      console.error('Error applying page change:', error);
+      setFilteredCourses([]);
+      setPaginationInfo({ page: 1, pageSize: 10, totalCount: 0 });
+    } finally {
+      setFiltersLoading(false);
+    }
+  };
+
+  // Load filtered courses on component mount and when filters change
+  useEffect(() => {
+    applyFilters();
+  }, []); // Only run on mount
+
+  if (filtersLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
@@ -355,17 +559,187 @@ const CourseManagement = () => {
 
       {/* Search and Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Course Filters</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Reset Filters
+            </button>
+            <button
+              onClick={applyFilters}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Text Input Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search courses by title, subtitle, category, level, or type..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              value={filters.title}
+              onChange={(e) => handleFilterChange('title', e.target.value)}
+              placeholder="Search by title..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+            <input
+              type="text"
+              value={filters.subtitle}
+              onChange={(e) => handleFilterChange('subtitle', e.target.value)}
+              placeholder="Search by subtitle..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <input
+              type="text"
+              value={filters.description}
+              onChange={(e) => handleFilterChange('description', e.target.value)}
+              placeholder="Search by description..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
+            <input
+              type="text"
+              value={filters.overview}
+              onChange={(e) => handleFilterChange('overview', e.target.value)}
+              placeholder="Search by overview..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Dropdown Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <CategoryDropdown
+              categories={categories}
+              value={filters.categoryId}
+              onChange={(categoryId) => handleFilterChange('categoryId', categoryId)}
+              placeholder="Select category..."
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Course Type</label>
+            <GenericDropdown
+              items={courseTypes.map(type => ({ value: type.id, label: type.description }))}
+              value={filters.Id}
+              onChange={(value) => handleFilterChange('courseTypeId', value)}
+              placeholder="Select course type..."
+              className="w-full"
+              displayField="label"
+              valueField="value"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Course Level</label>
+            <GenericDropdown
+              items={courseLevels.map(level => ({ value: level.id, label: level.title }))}
+              value={filters.Id}
+              onChange={(value) => handleFilterChange('courseLevelId', value)}
+              placeholder="Select course level..."
+              className="w-full"
+              displayField="label"
+              valueField="value"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Is Paid</label>
+            <select
+              value={filters.isPaid}
+              onChange={(e) => handleFilterChange('isPaid', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+
+        {/* URL and Pricing Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+            <input
+              type="text"
+              value={filters.slug}
+              onChange={(e) => handleFilterChange('slug', e.target.value)}
+              placeholder="Search by slug..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL</label>
+            <input
+              type="text"
+              value={filters.thumbnailUrl}
+              onChange={(e) => handleFilterChange('thumbnailUrl', e.target.value)}
+              placeholder="Search by thumbnail URL..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Promo Video URL</label>
+            <input
+              type="text"
+              value={filters.promoVideoUrl}
+              onChange={(e) => handleFilterChange('promoVideoUrl', e.target.value)}
+              placeholder="Search by promo video URL..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Currency Code</label>
+            <input
+              type="text"
+              value={filters.currencyCode}
+              onChange={(e) => handleFilterChange('currencyCode', e.target.value)}
+              placeholder="e.g., USD"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Price Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+            <input
+              type="number"
+              value={filters.price}
+              onChange={(e) => handleFilterChange('price', e.target.value)}
+              placeholder="Enter price..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
+            <input
+              type="number"
+              value={filters.discountedPrice}
+              onChange={(e) => handleFilterChange('discountedPrice', e.target.value)}
+              placeholder="Enter discounted price..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
@@ -527,6 +901,13 @@ const CourseManagement = () => {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          <button
+                            onClick={() => handleDeleteClick(course)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                            title="Delete Course"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -569,7 +950,7 @@ const CourseManagement = () => {
                                     </span>
                                     {courseDetails[course.id].badges?.map((badge, index) => (
                                       <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        {badge}
+                                        {badge?.badgeName}
                                       </span>
                                     ))}
                                   </div>
@@ -691,32 +1072,30 @@ const CourseManagement = () => {
       <div className="mt-6 flex items-center justify-between">
         <div className="text-sm text-gray-700">
           Showing <span className="font-medium">{filteredCourses?.length || 0}</span> of{' '}
-          <span className="font-medium">{courses?.length || 0}</span> courses
+          <span className="font-medium">{paginationInfo.totalCount || 0}</span> courses
         </div>
         <div className="flex items-center space-x-2">
           <button
-            onClick={prevPage}
-            disabled={page === 1}
+            onClick={() => handlePageChange(paginationInfo.page - 1)}
+            disabled={paginationInfo.page === 1}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              page === 1 
+              paginationInfo.page === 1 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                 : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             Previous
           </button>
-          <div className="flex items-center space-x-1">
-            <span className="px-3 py-1 text-sm font-medium text-gray-700 bg-blue-50 border border-blue-200 rounded-lg">
-              {page}
-            </span>
-            <span className="text-sm text-gray-500">of</span>
-            <span className="text-sm font-medium text-gray-700">{totalPages}</span>
-          </div>
+          
+          <span className="px-3 py-2 text-sm text-gray-700">
+            Page {paginationInfo.page}
+          </span>
+          
           <button
-            onClick={nextPage}
-            disabled={page === totalPages}
+            onClick={() => handlePageChange(paginationInfo.page + 1)}
+            disabled={filteredCourses?.length < paginationInfo.pageSize}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              page === totalPages 
+              filteredCourses?.length < paginationInfo.pageSize
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                 : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
@@ -1326,6 +1705,60 @@ const CourseManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              
+              <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                Delete Course
+              </h3>
+              
+              <p className="text-gray-600 text-center mb-6">
+                Are you sure you want to delete the course "{courseToDelete?.title}"? 
+                This action cannot be undone.
+              </p>
+
+              {deleteError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{deleteError}</p>
+                </div>
+              )}
+
+              <div className="flex justify-center space-x-3">
+                <button
+                  type="button"
+                  onClick={closeDeleteModal}
+                  disabled={deleteLoading}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteCourse}
+                  disabled={deleteLoading}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {deleteLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Course'
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

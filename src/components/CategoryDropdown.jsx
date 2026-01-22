@@ -31,6 +31,8 @@ const CategoryDropdown = ({
 
   // Build hierarchical tree structure
   const categoryTree = useMemo(() => {
+    if (!categories || !Array.isArray(categories)) return [];
+    
     const categoryMap = new Map();
     const rootCategories = [];
 
@@ -59,12 +61,21 @@ const CategoryDropdown = ({
       }
     });
 
+    // If no root categories found (all have parents), find categories that are not children
+    if (rootCategories.length === 0) {
+      const allCategoryIds = new Set(filteredCategories.map(cat => cat.id));
+      const allParentIds = new Set(filteredCategories.map(cat => cat.parentCategoryId).filter(id => id && id !== 0));
+      const rootCategoryIds = [...allCategoryIds].filter(id => !allParentIds.has(id));
+      rootCategories.push(...filteredCategories.filter(cat => rootCategoryIds.includes(cat.id)));
+    }
+
     // Sort categories and their children
     const sortCategories = (cats) => {
+      if (!cats || !Array.isArray(cats)) return [];
       return cats.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
         .map(cat => ({
           ...cat,
-          children: cat.children.length > 0 ? sortCategories(cat.children) : []
+          children: cat.children && Array.isArray(cat.children) && cat.children.length > 0 ? sortCategories(cat.children) : []
         }));
     };
 
@@ -116,8 +127,10 @@ const CategoryDropdown = ({
 
   // Render category tree recursively
   const renderCategoryTree = (categories, level = 0) => {
+    if (!categories || !Array.isArray(categories)) return null;
+    
     return categories.map(category => {
-      const hasChildren = category.children.length > 0;
+      const hasChildren = category.children && Array.isArray(category.children) && category.children.length > 0;
       const isExpanded = expandedCategories.has(category.id);
       const isSelected = value === category.id;
 
