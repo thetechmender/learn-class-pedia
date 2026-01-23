@@ -361,6 +361,56 @@ class AdminApiService {
     return routesData.users.find(user => user.email === email);
   }
 
+  // Career Paths Management methods
+  
+  // GET all career paths
+  async getAllCareerPaths() {
+    return this.request(ENDPOINTS.CAREER_PATHS);
+  }
+
+  // GET all courses for career path
+  async getCareerPathCourses() {
+    return this.request(`${ENDPOINTS.CAREER_PATHS}/courses`);
+  }
+
+  // GET courses by category and level for career path
+  async getCareerPathCoursesByCategoryAndLevel(categoryId, levelId) {
+    return this.request(`${ENDPOINTS.CAREER_PATHS}/courses/${categoryId}/${levelId}`);
+  }
+
+  // GET career path levels
+  async getCareerPathLevels() {
+    return this.request(`${ENDPOINTS.CAREER_PATHS}/levels`);
+  }
+
+  // GET career path by ID
+  async getCareerPathById(id) {
+    return this.request(`${ENDPOINTS.CAREER_PATHS}/${id}`);
+  }
+
+  // POST create new career path
+  async createCareerPath(careerPathData) {
+    return this.request(ENDPOINTS.CAREER_PATHS, {
+      method: 'POST',
+      body: JSON.stringify(careerPathData),
+    });
+  }
+
+  // PUT update career path
+  async updateCareerPath(id, careerPathData) {
+    return this.request(`${ENDPOINTS.CAREER_PATHS}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(careerPathData),
+    });
+  }
+
+  // DELETE career path
+  async deleteCareerPath(id) {
+    return this.request(`${ENDPOINTS.CAREER_PATHS}/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Routes and Roles Management
   
   // GET all routes

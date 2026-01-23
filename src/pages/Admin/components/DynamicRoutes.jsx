@@ -7,6 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import CourseManagement from '../pages/CourseManagement/CourseManagement';
 import CareerPath from '../pages/CareerPath/CareerPath';
+import CareerPathDetail from '../pages/CareerPath/CareerPathDetail';
 import FeaturedMarking from '../pages/FeaturedMarking/FeaturedMarking';
 import Reviews from '../pages/Reviews/Reviews';
 import CourseUrlManagement from '../pages/CourseUrlManagement/CourseUrlManagement';
@@ -22,6 +23,7 @@ const componentMap = {
   Dashboard,
   CourseManagement,
   CareerPath,
+  CareerPathDetail,
   FeaturedMarking,
   Reviews,
   CourseUrlManagement,
@@ -138,6 +140,9 @@ const DynamicRoutes = () => {
     <Routes>
       {/* Default redirect to dashboard */}
       <Route index element={<Navigate to="/admin/dashboard" replace />} />
+      
+      {/* Career Path Detail Route */}
+      <Route path="career-paths/:id" element={<CareerPathDetail />} />
       
       {/* Dynamic routes based on user role */}
       {routes.map((route) => {

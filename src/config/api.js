@@ -31,6 +31,7 @@ export const ENDPOINTS = {
   COURSE_TYPES: '/admin/course-types',
   COURSE_LEVELS: '/admin/course-levels',
   COURSE_BADGES_DROPDOWN: '/admin/course-badges',
+  CAREER_PATHS: '/career-paths',
 };
 
 // HTTP Status Codes
