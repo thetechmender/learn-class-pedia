@@ -1,3 +1,6 @@
+import { useEffect, useState, useRef } from 'react';
+import { BookOpen, Lightbulb, Code, HelpCircle, FileText } from 'lucide-react';
+
 export default function SlideContent({
     slide,
     currentSlide,
@@ -5,22 +8,78 @@ export default function SlideContent({
     isPlaying,
     useTTS
 }) {
+    const [visibleLines, setVisibleLines] = useState(0);
+    const [fadeIn, setFadeIn] = useState(false);
+    const prevSlideRef = useRef(currentSlide);
+
+    // Cinematic fade-in effect on slide change
+    useEffect(() => {
+        if (currentSlide !== prevSlideRef.current) {
+            setFadeIn(false);
+            setVisibleLines(0);
+            prevSlideRef.current = currentSlide;
+            setTimeout(() => setFadeIn(true), 50);
+        } else {
+            setFadeIn(true);
+        }
+    }, [currentSlide]);
+
+    // Progressive line reveal effect when playing
+    useEffect(() => {
+        if (!slide || !isPlaying) return;
+        const lines = slide.content.split('\n').slice(1).filter(l => l.trim()).length;
+        if (visibleLines < lines) {
+            const timer = setTimeout(() => setVisibleLines(v => v + 1), 400);
+            return () => clearTimeout(timer);
+        }
+    }, [isPlaying, visibleLines, slide]);
+
+    // Show all lines when not playing
+    useEffect(() => {
+        if (!isPlaying && slide) {
+            const lines = slide.content.split('\n').slice(1).filter(l => l.trim()).length;
+            setVisibleLines(lines);
+        }
+    }, [isPlaying, slide]);
+
     if (!slide) return null;
 
     const { title, content, type } = slide;
 
+    const getTypeIcon = () => {
+        switch (type) {
+            case 'objective': return <Lightbulb className="w-4 h-4" />;
+            case 'example': return <Code className="w-4 h-4" />;
+            case 'quiz': return <HelpCircle className="w-4 h-4" />;
+            case 'diagram': return <FileText className="w-4 h-4" />;
+            default: return <BookOpen className="w-4 h-4" />;
+        }
+    };
+
+    const getTypeStyles = () => {
+        switch (type) {
+            case 'objective': return 'from-blue-500/20 to-cyan-500/20 border-blue-500/40 text-blue-400';
+            case 'example': return 'from-green-500/20 to-emerald-500/20 border-green-500/40 text-green-400';
+            case 'diagram': return 'from-purple-500/20 to-pink-500/20 border-purple-500/40 text-purple-400';
+            case 'quiz': return 'from-orange-500/20 to-amber-500/20 border-orange-500/40 text-orange-400';
+            default: return 'from-slate-700/50 to-slate-600/50 border-white/20 text-white/80';
+        }
+    };
+
     const renderContentWithHighlighting = () => {
         const text = content.replace(/\*\*/g, '');
-        const paragraphs = text.split('\n');
-        // Skip the first paragraph (heading) - start from index 1
-        const contentParagraphs = paragraphs.slice(1);
+        const paragraphs = text.split('\n').slice(1);
         let globalCharCount = 0;
+        let lineIndex = 0;
 
-        return contentParagraphs.map((paragraph, pIdx) => {
+        return paragraphs.map((paragraph, pIdx) => {
             if (!paragraph.trim()) {
-                globalCharCount += 1; // Account for newline
-                return <div key={pIdx} className="h-3" />;
+                globalCharCount += 1;
+                return <div key={pIdx} className="h-4" />;
             }
+
+            lineIndex++;
+            const isVisible = lineIndex <= visibleLines;
 
             const words = paragraph.split(/(\s+)/);
             const paragraphContent = words.map((word, wIdx) => {
@@ -30,73 +89,89 @@ export default function SlideContent({
                 const isCurrent = highlightedCharIndex >= start && highlightedCharIndex < end && word.trim().length > 0;
 
                 return (
-                    <span key={wIdx} className={`transition-all duration-150 ${isCurrent ? 'bg-yellow-400 text-gray-900 font-bold px-1 rounded scale-110 inline-block shadow-lg'
-                        : 'text-white/90'
-                        }`}>{word}</span>
+                    <span 
+                        key={wIdx} 
+                        className={`transition-colors duration-150 ${
+                            isCurrent 
+                                ? 'bg-yellow-400/90 text-gray-900 font-medium rounded px-0.5'
+                                : 'text-slate-200'
+                        }`}
+                    >
+                        {word}
+                    </span>
                 );
             });
 
-            globalCharCount += 1; // Account for newline between paragraphs
+            globalCharCount += 1;
 
-            // Check if paragraph starts with bullet point
             const isBullet = paragraph.trim().startsWith('•') || paragraph.trim().startsWith('-');
             
             return (
-                <p key={pIdx} className={`text-white/90 mb-3 text-sm md:text-base leading-relaxed ${isBullet ? 'pl-4' : ''}`}>
+                <p 
+                    key={pIdx} 
+                    className={`mb-6 text-xl md:text-xl lg:text-xl leading-relaxed transition-all duration-500 ${
+                        isBullet ? 'pl-8 border-l-3 border-purple-500/50' : ''
+                    } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                    style={{ transitionDelay: `${lineIndex * 100}ms` }}
+                >
                     {paragraphContent}
                 </p>
             );
         });
     };
 
+    const renderStaticContent = () => {
+        const paragraphs = content.split('\n').slice(1);
+        let lineIndex = 0;
+
+        return paragraphs.map((line, idx) => {
+            if (!line.trim()) return <div key={idx} className="h-5" />;
+            
+            lineIndex++;
+            const isVisible = lineIndex <= visibleLines;
+            const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
+            
+            return (
+                <p 
+                    key={idx} 
+                    className={`text-slate-200 mb-6 text-xl md:text-2xl lg:text-3xl leading-relaxed transition-all duration-500 ${
+                        isBullet ? 'pl-8 border-l-3 border-purple-500/50' : ''
+                    } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                    style={{ transitionDelay: `${lineIndex * 100}ms` }}
+                >
+                    {line}
+                </p>
+            );
+        });
+    };
+
     return (
-        <div className="h-full flex flex-col space-y-4">
-            {/* Slide Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${type === 'objective' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                        type === 'example' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                            type === 'diagram' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-                                type === 'quiz' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
-                                    'bg-gray-700/50 text-white/80 border border-white/10'
-                        }`}>
-                        {type?.toUpperCase() || 'CONTENT'}
+        <div className={`h-full flex flex-col transition-all duration-700 ${fadeIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+            {/* Content Area with cinematic presentation */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {/* Main Content */}
+                <div className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-6 md:p-10 border border-slate-700/50 shadow-2xl">
+                    <div className="prose prose-invert max-w-none">
+                        {isPlaying && useTTS && highlightedCharIndex >= 0 
+                            ? renderContentWithHighlighting()
+                            : renderStaticContent()
+                        }
                     </div>
-                </div>
-                <div className="text-xs text-white/50">
-                    Duration: {slide.duration}s
                 </div>
             </div>
 
-            {/* Title */}
-            <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">
-                {title}
-            </h2>
-
-            {/* Content Area */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-                <div className="space-y-4">
-                    {/* Main Content */}
-                    <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                        {isPlaying && useTTS && highlightedCharIndex >= 0 ? (
-                            <div className="prose prose-invert max-w-none">
-                                {renderContentWithHighlighting()}
-                            </div>
-                        ) : (
-                            <div className="prose prose-invert max-w-none">
-                                {content.split('\n').slice(1).map((line, idx) => {
-                                    if (!line.trim()) return <div key={idx} className="h-3" />;
-                                    const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
-                                    return (
-                                        <p key={idx} className={`text-white/90 mb-3 text-sm md:text-base leading-relaxed ${isBullet ? 'pl-4' : ''}`}>
-                                            {line}
-                                        </p>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
+            {/* Bottom accent */}
+            <div className="mt-4 flex justify-center">
+                <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                        <div 
+                            key={i} 
+                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                                isPlaying ? 'bg-purple-500 animate-pulse' : 'bg-slate-700'
+                            }`}
+                            style={{ animationDelay: `${i * 150}ms` }}
+                        />
+                    ))}
                 </div>
             </div>
         </div>

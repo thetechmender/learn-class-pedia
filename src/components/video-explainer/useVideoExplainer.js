@@ -30,14 +30,21 @@ export function useVideoExplainer(lessonText, audios, structuredOutline) {
     const audioRef = useRef(null);
     const timerRef = useRef(null);
 
-    // Initialize timers and load voices
+    // Timer for tracking time spent while playing
     useEffect(() => {
-        timerRef.current = setInterval(() => {
-            if (isPlaying) {
+        if (isPlaying) {
+            timerRef.current = setInterval(() => {
                 setTimeSpent(prev => prev + 1);
-            }
-        }, 1000);
+            }, 1000);
+        } else {
+            clearInterval(timerRef.current);
+        }
 
+        return () => clearInterval(timerRef.current);
+    }, [isPlaying]);
+
+    // Load voices on mount
+    useEffect(() => {
         const loadVoices = () => {
             const availableVoices = window.speechSynthesis.getVoices();
             setVoices(availableVoices);
@@ -53,10 +60,7 @@ export function useVideoExplainer(lessonText, audios, structuredOutline) {
         loadVoices();
         window.speechSynthesis.onvoiceschanged = loadVoices;
 
-        return () => {
-            clearInterval(timerRef.current);
-            window.speechSynthesis.cancel();
-        };
+        return () => window.speechSynthesis.cancel();
     }, []);
 
     // Audio/TTS Management

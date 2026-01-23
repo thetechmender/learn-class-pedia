@@ -131,7 +131,7 @@ export const transformApiResponse = (lectureSections, courseDetails = null, lect
                 const lectureDetail = lectureDetailsMap[lecture.id] || {};
 
                 return {
-                    id: lecture.id,
+                    id: String(lecture.id),
                     title: lecture.title,
                     duration: lectureDetail.duration || estimateDuration(allContent),
                     completed: false,

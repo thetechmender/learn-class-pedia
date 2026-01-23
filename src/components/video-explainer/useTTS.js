@@ -15,7 +15,9 @@ export function useTTS({
     setIsAudioPlaying,
     setCurrentSlide,
     setIsPlaying,
-    markSlideCompleted
+    markSlideCompleted,
+    setTimeSpent,
+    durationSeconds
 }) {
     useEffect(() => {
         // Cancel any ongoing speech first
@@ -233,6 +235,10 @@ export function useTTS({
                 if (currentSlide < slides.length - 1) {
                     setCurrentSlide(prev => prev + 1);
                 } else {
+                    // Last slide finished - set time to end (full duration)
+                    if (setTimeSpent && durationSeconds) {
+                        setTimeSpent(durationSeconds);
+                    }
                     setIsPlaying(false);
                 }
             }, pauseDuration);

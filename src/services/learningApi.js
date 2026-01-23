@@ -1,3 +1,5 @@
+import { getAuthHeaders } from './authService';
+
 const BASE_URL = 'https://localhost:7043/api/Learning';
 
 /**
@@ -5,7 +7,9 @@ const BASE_URL = 'https://localhost:7043/api/Learning';
  * GET /api/Learning/course/{courseId}
  */
 export const getCourseDetails = async (courseId) => {
-    const response = await fetch(`${BASE_URL}/course/${courseId}`);
+    const response = await fetch(`${BASE_URL}/course/${courseId}`, {
+        headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Failed to fetch course details');
     return response.json();
 };
@@ -15,7 +19,9 @@ export const getCourseDetails = async (courseId) => {
  * GET /api/Learning/course/{courseId}/lecture-sections
  */
 export const getLectureSections = async (courseId) => {
-    const response = await fetch(`${BASE_URL}/course/${courseId}/lecture-sections`);
+    const response = await fetch(`${BASE_URL}/course/${courseId}/lecture-sections`, {
+        headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Failed to fetch lecture sections');
     return response.json();
 };
@@ -25,7 +31,9 @@ export const getLectureSections = async (courseId) => {
  * GET /api/Learning/student/{studentId}/course/{courseId}/progress
  */
 export const getStudentProgress = async (studentId, courseId) => {
-    const response = await fetch(`${BASE_URL}/student/${studentId}/course/${courseId}/progress`);
+    const response = await fetch(`${BASE_URL}/student/${studentId}/course/${courseId}/progress`, {
+        headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Failed to fetch student progress');
     return response.json();
 };
@@ -37,7 +45,7 @@ export const getStudentProgress = async (studentId, courseId) => {
 export const markLectureComplete = async (studentId, lectureId) => {
     const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/complete`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to mark lecture complete');
     return response.json();
@@ -50,7 +58,7 @@ export const markLectureComplete = async (studentId, lectureId) => {
 export const toggleLectureBookmark = async (studentId, lectureId) => {
     const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/bookmark`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to toggle bookmark');
     return response.json();
@@ -63,7 +71,7 @@ export const toggleLectureBookmark = async (studentId, lectureId) => {
 export const saveLectureNotes = async (studentId, lectureId, notes) => {
     const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/notes`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ notes })
     });
     if (!response.ok) throw new Error('Failed to save notes');
@@ -77,7 +85,7 @@ export const saveLectureNotes = async (studentId, lectureId, notes) => {
 export const updateLectureWatch = async (studentId, lectureId, payload) => {
     const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/watch`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
     if (!response.ok) throw new Error('Failed to update lecture watch progress');
@@ -89,7 +97,9 @@ export const updateLectureWatch = async (studentId, lectureId, payload) => {
  * GET /api/Learning/lecture/{lectureId}
  */
 export const getLectureDetails = async (lectureId) => {
-    const response = await fetch(`${BASE_URL}/lecture/${lectureId}`);
+    const response = await fetch(`${BASE_URL}/lecture/${lectureId}`, {
+        headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Failed to fetch lecture details');
     return response.json();
 };

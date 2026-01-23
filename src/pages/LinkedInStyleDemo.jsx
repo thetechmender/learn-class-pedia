@@ -41,9 +41,9 @@ import {
     updateLectureWatch
 } from '../services/learningApi';
 
-// TODO: Replace with actual student ID from auth context
-const STUDENT_ID = 1;
-const COURSE_ID = 3466;
+// Default IDs for development/testing (overridden by authenticated props)
+const DEFAULT_STUDENT_ID = 1;
+const DEFAULT_COURSE_ID = 3466;
 
 const parseDurationToSeconds = (duration) => {
     if (!duration) return 0;
@@ -54,7 +54,22 @@ const parseDurationToSeconds = (duration) => {
     return (hours * 60 + minutes) * 60;
 };
 
-const LinkedInStyleDemo = () => {
+/**
+ * LinkedInStyleDemo - Main classroom component
+ * 
+ * @param {number} authenticatedStudentId - Student ID from authenticated session (optional)
+ * @param {number} authenticatedCourseId - Course ID from authenticated session (optional)
+ * @param {string} initialLectureId - Lecture ID to start with (optional)
+ */
+const LinkedInStyleDemo = ({ 
+    authenticatedStudentId, 
+    authenticatedCourseId, 
+    initialLectureId 
+}) => {
+    // Use authenticated IDs if provided, otherwise fall back to defaults
+    const STUDENT_ID = authenticatedStudentId || DEFAULT_STUDENT_ID;
+    const COURSE_ID = authenticatedCourseId || DEFAULT_COURSE_ID;
+
     const [courseData, setCourseData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -62,7 +77,6 @@ const LinkedInStyleDemo = () => {
     const [expandedChapters, setExpandedChapters] = useState(new Set());
     const [completedLectures, setCompletedLectures] = useState(new Set());
     const [showSidebar, setShowSidebar] = useState(false);
-    const [activeTab, setActiveTab] = useState('content');
     const [isLargeScreen, setIsLargeScreen] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
     // Handle screen resize for responsive sidebar
@@ -74,12 +88,9 @@ const LinkedInStyleDemo = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const [notes, setNotes] = useState('');
     const [lectureNotes, setLectureNotes] = useState({});
-    const [showNotes, setShowNotes] = useState(false);
     const [bookmarkedLectures, setBookmarkedLectures] = useState(new Set());
     const [showChatBox, setShowChatBox] = useState(true);
-    const [savingNotes, setSavingNotes] = useState(false);
 
     // Fetch course data from API
     const fetchCourseData = useCallback(async () => {
@@ -99,22 +110,24 @@ const LinkedInStyleDemo = () => {
             if (transformedData && transformedData.chapters.length > 0) {
                 setCourseData(transformedData);
                 
-                // Set initial lecture - prefer last accessed or first lecture
-                const lastAccessedId = studentProgress?.lastAccessedLectureId;
-                let initialLecture = transformedData.chapters[0].lectures[0];
+                // Set initial lecture - priority: prop > last accessed > first lecture
+                const targetLectureId = initialLectureId || studentProgress?.lastAccessedLectureId;
+                let lectureToSelect = transformedData.chapters[0].lectures[0];
+                let chapterToExpand = transformedData.chapters[0].id;
                 
-                if (lastAccessedId) {
+                if (targetLectureId) {
                     for (const chapter of transformedData.chapters) {
-                        const found = chapter.lectures.find(l => l.id === lastAccessedId || l.id === String(lastAccessedId));
+                        const found = chapter.lectures.find(l => l.id === targetLectureId || l.id === String(targetLectureId));
                         if (found) {
-                            initialLecture = found;
+                            lectureToSelect = found;
+                            chapterToExpand = chapter.id;
                             break;
                         }
                     }
                 }
                 
-                setSelectedLecture(initialLecture);
-                setExpandedChapters(new Set([transformedData.chapters[0].id]));
+                setSelectedLecture(lectureToSelect);
+                setExpandedChapters(new Set([chapterToExpand]));
                 
                 // Set completed lectures from API
                 if (studentProgress?.completedLectureIds) {
@@ -137,20 +150,11 @@ const LinkedInStyleDemo = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [STUDENT_ID, COURSE_ID, initialLectureId]);
 
     useEffect(() => {
         fetchCourseData();
     }, [fetchCourseData]);
-
-    // Update notes when lecture changes
-    useEffect(() => {
-        if (selectedLecture && lectureNotes[selectedLecture.id]) {
-            setNotes(lectureNotes[selectedLecture.id]);
-        } else {
-            setNotes('');
-        }
-    }, [selectedLecture, lectureNotes]);
 
     const toggleChapter = (chapterId) => {
         setExpandedChapters(prev => {
@@ -200,23 +204,6 @@ const LinkedInStyleDemo = () => {
             });
         } catch (err) {
             console.error('Error toggling bookmark:', err);
-        }
-    };
-
-    const handleSaveNotes = async () => {
-        if (!selectedLecture || !notes.trim()) return;
-        
-        try {
-            setSavingNotes(true);
-            await saveLectureNotes(STUDENT_ID, selectedLecture.id, notes);
-            setLectureNotes(prev => ({
-                ...prev,
-                [selectedLecture.id]: notes
-            }));
-        } catch (err) {
-            console.error('Error saving notes:', err);
-        } finally {
-            setSavingNotes(false);
         }
     };
 
@@ -469,46 +456,11 @@ const LinkedInStyleDemo = () => {
                                 )}
                             </div>
                         </div>
-
-                        {/* Lecture Tabs */}
-                        <div className="flex items-center gap-6 mt-4 border-b border-gray-200 dark:border-slate-800">
-                            <button
-                                onClick={() => setActiveTab('content')}
-                                className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'content' ? 'text-blue-500 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'}`}
-                            >
-                                Content
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('resources')}
-                                className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'resources' ? 'text-blue-500 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'}`}
-                            >
-                                Resources
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('discussion')}
-                                className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'discussion' ? 'text-blue-500 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'}`}
-                            >
-                                Discussion
-                            </button>
-                            <button
-                                onClick={() => setShowNotes(!showNotes)}
-                                className={`pb-3 text-sm font-medium transition-colors ${showNotes ? 'text-blue-500 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'}`}
-                            >
-                                Notes
-                            </button>
-                            {selectedLecture.hasQuiz && (
-                                <button
-                                    onClick={() => setActiveTab('quiz')}
-                                    className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'quiz' ? 'text-blue-500 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'}`}
-                                >
-                                    Quiz
-                                </button>
-                            )}
-                        </div>
                     </div>
-                    {/* Video Player Area with Notes Sidebar */}
+
+                    {/* Video Player Area */}
                     <div className="flex-1 flex overflow-hidden">
-                        <div className={`${showNotes ? 'w-3/4' : 'w-full'} transition-all duration-300`}>
+                        <div className="w-full">
                             <VideoCourseExplainerSimple
                                 lessonText={selectedLecture.content}
                                 audios={[]}
@@ -518,53 +470,6 @@ const LinkedInStyleDemo = () => {
                                 onWatchProgress={handleWatchProgress}
                             />
                         </div>
-                        
-                        {showNotes && (
-                            <div className="w-1/4 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 p-4 overflow-y-auto">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-gray-900 dark:text-white font-semibold">My Notes</h3>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">{new Date().toLocaleDateString()}</span>
-                                </div>
-                                <textarea
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Take notes here... You can save important points, questions, or insights from this lecture."
-                                    className="w-full h-64 p-3 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                                />
-                                <div className="flex items-center gap-2 mt-4">
-                                    <button
-                                        onClick={handleSaveNotes}
-                                        disabled={savingNotes}
-                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white text-sm rounded-lg transition-colors"
-                                    >
-                                        Save Note
-                                    </button>
-                                    <button
-                                        onClick={() => setNotes('')}
-                                        className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg transition-colors"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
-                                <div className="mt-6">
-                                    <h4 className="text-gray-700 dark:text-gray-300 font-medium text-sm mb-2">Lecture Resources</h4>
-                                    <div className="space-y-2">
-                                        <button className="w-full p-2 flex items-center gap-2 text-left hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                            <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                            <span className="text-sm text-gray-700 dark:text-gray-300">Lecture Slides</span>
-                                        </button>
-                                        <button className="w-full p-2 flex items-center gap-2 text-left hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                            <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                            <span className="text-sm text-gray-700 dark:text-gray-300">Code Examples</span>
-                                        </button>
-                                        <button className="w-full p-2 flex items-center gap-2 text-left hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                            <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                            <span className="text-sm text-gray-700 dark:text-gray-300">Reading Materials</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     {/* Interactive Footer */}

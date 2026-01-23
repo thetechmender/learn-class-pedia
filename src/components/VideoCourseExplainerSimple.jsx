@@ -27,6 +27,18 @@ export default function VideoCourseExplainerSimple({
         }
     }, [lessonText]);
 
+    // Reset progress when lecture changes (e.g., from sidebar)
+    useEffect(() => {
+        videoState.setTimeSpent(0);
+        videoState.setCurrentSlide(0);
+        videoState.setSpeechProgress(0);
+        videoState.setIsPlaying(false);
+        videoState.setHasStarted(false);
+        lastSentAtRef.current = 0;
+        lastPositionRef.current = 0;
+        window.speechSynthesis.cancel();
+    }, [lectureId]);
+
     const lastSentAtRef = useRef(0);
     const lastPositionRef = useRef(0);
     const timeSpentRef = useRef(0);
@@ -46,7 +58,9 @@ export default function VideoCourseExplainerSimple({
         setIsAudioPlaying: videoState.setIsAudioPlaying,
         setCurrentSlide: videoState.setCurrentSlide,
         setIsPlaying: videoState.setIsPlaying,
-        markSlideCompleted: videoState.markSlideCompleted
+        markSlideCompleted: videoState.markSlideCompleted,
+        setTimeSpent: videoState.setTimeSpent,
+        durationSeconds
     });
 
     // Audio playback effect
@@ -129,6 +143,13 @@ export default function VideoCourseExplainerSimple({
         };
     }, [lectureId, onWatchProgress, durationSeconds]);
 
+    // Helper to calculate cumulative start time for a slide (total duration / slides count)
+    const getSlideStartTime = (slideIndex) => {
+        if (videoState.slides.length === 0) return 0;
+        const timePerSlide = durationSeconds / videoState.slides.length;
+        return Math.floor(timePerSlide * slideIndex);
+    };
+
     // Event Handlers
     const handlePlayPause = () => {
         if (!videoState.hasStarted) videoState.setHasStarted(true);
@@ -148,10 +169,20 @@ export default function VideoCourseExplainerSimple({
         videoState.setHighlightedCharIndex(-1);
         videoState.setSpeechProgress(0);
         if (direction === 'next' && videoState.currentSlide < videoState.slides.length - 1) {
-            videoState.setCurrentSlide(videoState.currentSlide + 1);
-            videoState.markSlideCompleted(videoState.currentSlide + 1);
+            const newSlideIndex = videoState.currentSlide + 1;
+            videoState.setCurrentSlide(newSlideIndex);
+            videoState.markSlideCompleted(newSlideIndex);
+            // Jump time to the start of the new slide
+            const newTime = getSlideStartTime(newSlideIndex);
+            videoState.setTimeSpent(newTime);
+            lastPositionRef.current = newTime;
         } else if (direction === 'prev' && videoState.currentSlide > 0) {
-            videoState.setCurrentSlide(videoState.currentSlide - 1);
+            const newSlideIndex = videoState.currentSlide - 1;
+            videoState.setCurrentSlide(newSlideIndex);
+            // Jump time to the start of the new slide
+            const newTime = getSlideStartTime(newSlideIndex);
+            videoState.setTimeSpent(newTime);
+            lastPositionRef.current = newTime;
         }
     };
 
@@ -161,7 +192,12 @@ export default function VideoCourseExplainerSimple({
         videoState.setSpeechProgress(0);
         const rect = e.currentTarget.getBoundingClientRect();
         const pct = (e.clientX - rect.left) / rect.width;
-        videoState.setCurrentSlide(Math.min(Math.max(0, Math.floor(pct * videoState.slides.length)), videoState.slides.length - 1));
+        const newSlideIndex = Math.min(Math.max(0, Math.floor(pct * videoState.slides.length)), videoState.slides.length - 1);
+        videoState.setCurrentSlide(newSlideIndex);
+        // Jump time to the start of the clicked slide
+        const newTime = getSlideStartTime(newSlideIndex);
+        videoState.setTimeSpent(newTime);
+        lastPositionRef.current = newTime;
     };
 
     // Progress calculation
@@ -185,8 +221,8 @@ export default function VideoCourseExplainerSimple({
                 </div>
 
                 {/* Content Display */}
-                <div className="absolute inset-0 flex items-center justify-center p-6 pb-4">
-                    <div className="w-full max-w-5xl h-full bg-slate-900 rounded-2xl border border-slate-700/50 p-8 overflow-auto shadow-2xl">
+                <div className="absolute inset-0 flex items-center justify-center p-4 pb-2">
+                    <div className="w-full max-w-7xl h-full bg-slate-900 rounded-2xl border border-slate-700/50 p-6 md:p-10 overflow-auto shadow-2xl">
                         {videoState.slides.length > 0 ? (
                             <SlideContent
                                 slide={videoState.slides[videoState.currentSlide]}
@@ -305,9 +341,15 @@ export default function VideoCourseExplainerSimple({
                         />
                     </div>
                     <div className="flex justify-between mt-1">
-                        <span className="text-xs text-slate-500">{videoState.formatTime(videoState.timeSpent)}</span>
-                        <span className="text-xs text-slate-500 truncate max-w-xs">
-                            {videoState.slides[videoState.currentSlide]?.title || `Section ${videoState.currentSlide + 1}`} ({videoState.currentSlide + 1}/{videoState.slides.length})
+                        <span className="text-xs text-slate-500">
+                            {videoState.formatTime(videoState.timeSpent)}
+                            {durationSeconds > 0 && ` / ${videoState.formatTime(durationSeconds)}`}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                            {durationSeconds > 0 && videoState.timeSpent < durationSeconds && (
+                                <span className="mr-2">-{videoState.formatTime(Math.max(0, durationSeconds - videoState.timeSpent))} remaining</span>
+                            )}
+                            ({videoState.currentSlide + 1}/{videoState.slides.length})
                         </span>
                     </div>
                 </div>
