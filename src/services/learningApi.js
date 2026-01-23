@@ -1,6 +1,6 @@
 import { getAuthHeaders } from './authService';
 
-const BASE_URL = 'https://localhost:7043/api/Learning';
+const BASE_URL = `${process.env.REACT_APP_API_URL}/Learning`;
 
 /**
  * Get course details
