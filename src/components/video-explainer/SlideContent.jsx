@@ -69,40 +69,59 @@ export default function SlideContent({
     const renderContentWithHighlighting = () => {
         const text = content.replace(/\*\*/g, '');
         const paragraphs = text.split('\n').slice(1);
-        let globalCharCount = 0;
         let lineIndex = 0;
+        let paragraphIndex = 0; // Track actual paragraph index (excluding empty lines)
+
+        // Decode the highlighted index: paragraphIndex * 10000 + wordInParagraph
+        const highlightedParagraph = Math.floor(highlightedCharIndex / 10000);
+        const highlightedWordInParagraph = highlightedCharIndex % 10000;
 
         return paragraphs.map((paragraph, pIdx) => {
             if (!paragraph.trim()) {
-                globalCharCount += 1;
                 return <div key={pIdx} className="h-4" />;
             }
 
+            const currentParagraphIndex = paragraphIndex;
+            paragraphIndex++;
             lineIndex++;
             const isVisible = lineIndex <= visibleLines;
 
-            const words = paragraph.split(/(\s+)/);
-            const paragraphContent = words.map((word, wIdx) => {
-                const start = globalCharCount;
-                const end = globalCharCount + word.length;
-                globalCharCount = end;
-                const isCurrent = highlightedCharIndex >= start && highlightedCharIndex < end && word.trim().length > 0;
+            // Reset word count for each paragraph
+            let wordInParagraph = 0;
+
+            // Split into words and spaces
+            const tokens = paragraph.split(/(\s+)/);
+            const paragraphContent = tokens.map((token, tIdx) => {
+                const isWord = token.trim().length > 0;
+                
+                // Clean the word the same way TTS does
+                const cleanedWord = token
+                    .replace(/\*\*/g, '').replace(/##/g, '').replace(/#/g, '')
+                    .replace(/^[-•*]\s*/g, '')
+                    .replace(/\([^)]*\)/g, '')
+                    .trim();
+                
+                let isCurrent = false;
+                if (isWord && cleanedWord.length > 0) {
+                    // Match by paragraph index AND word index within paragraph
+                    isCurrent = currentParagraphIndex === highlightedParagraph && 
+                                wordInParagraph === highlightedWordInParagraph;
+                    wordInParagraph++;
+                }
 
                 return (
                     <span 
-                        key={wIdx} 
-                        className={`transition-colors duration-150 ${
+                        key={tIdx} 
+                        className={`transition-colors duration-75 ${
                             isCurrent 
                                 ? 'bg-yellow-400/90 text-gray-900 font-medium rounded px-0.5'
                                 : 'text-slate-200'
                         }`}
                     >
-                        {word}
+                        {token}
                     </span>
                 );
             });
-
-            globalCharCount += 1;
 
             const isBullet = paragraph.trim().startsWith('•') || paragraph.trim().startsWith('-');
             

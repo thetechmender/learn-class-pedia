@@ -158,9 +158,20 @@ export default function VideoCourseExplainerSimple({
             window.speechSynthesis.cancel();
             videoState.setIsAudioPlaying(false);
         } else {
+            // If at the end (last slide and timeSpent >= durationSeconds), restart from beginning
+            const isAtEnd = videoState.currentSlide === videoState.slides.length - 1 && 
+                            videoState.timeSpent >= durationSeconds && 
+                            durationSeconds > 0;
+            
+            if (isAtEnd) {
+                videoState.setCurrentSlide(0);
+                videoState.setTimeSpent(0);
+                lastPositionRef.current = 0;
+            }
+            
             videoState.setSpeechProgress(0);
             videoState.setIsPlaying(true);
-            videoState.markSlideCompleted(videoState.currentSlide);
+            videoState.markSlideCompleted(isAtEnd ? 0 : videoState.currentSlide);
         }
     };
 
@@ -425,6 +436,7 @@ export default function VideoCourseExplainerSimple({
                                 ))
                             }
                         </select>
+
                     </div>
                 </div>
             </div>

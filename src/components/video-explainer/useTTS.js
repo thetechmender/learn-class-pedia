@@ -36,8 +36,27 @@ export function useTTS({
 
         // Split content into lines and remove the first line (heading)
         const contentLines = currentSlideData.content.split('\n');
-        const contentWithoutHeading = contentLines.slice(1).join('\n');
+        const paragraphs = contentLines.slice(1).filter(p => p.trim().length > 0);
         
+        // Build paragraph word structure for tracking
+        const paragraphWords = paragraphs.map(p => {
+            const cleaned = p
+                .replace(/\*\*/g, '').replace(/##/g, '').replace(/#/g, '')
+                .replace(/^[-•*]\s*/g, '')
+                .replace(/^(Visual|Diagram|Flowchart|Chart|Image|Loading|Title|Slide|Introduction|Main Topic Early|Main Topic Mid|Main Topic Advanced|Foundational Theories|Intermediate Applications|Advanced Topics|Case Studies and Data|Summary|Conclusion|Facts):\s*/gi, '')
+                .replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+            return cleaned.split(/\s+/).filter(w => w.length > 0);
+        });
+
+        // Flatten for TTS but keep track of paragraph boundaries
+        const wordToParagraph = []; // Maps global word index to {paragraphIndex, wordInParagraph}
+        paragraphWords.forEach((words, pIdx) => {
+            words.forEach((word, wIdx) => {
+                wordToParagraph.push({ paragraphIndex: pIdx, wordInParagraph: wIdx });
+            });
+        });
+
+        const contentWithoutHeading = contentLines.slice(1).join('\n');
         let ttsContent = contentWithoutHeading
             .replace(/\*\*/g, '').replace(/##/g, '').replace(/#/g, '')
             .replace(/^[-•*]\s*/gm, '')
@@ -185,39 +204,50 @@ export function useTTS({
             utterance.lang = 'en-US';
         }
         
-        // Add thoughtful pauses for professorial delivery
-        utterance.text = enhancedText
-            .replace(/\. /g, '.  ') // Double space after periods
-            .replace(/, /g, ', ') // Keep commas normal
-            .replace(/:\s*/g, ':  '); // Extra pause after colons
+        // Use the enhanced text for TTS
+        utterance.text = enhancedText;
 
-        // Sophisticated boundary handling with mature pacing
+        // Build word list from the TTS text to track word index
+        const ttsWords = enhancedText.split(/\s+/).filter(w => w.length > 0);
+        let currentWordIndex = 0;
+
+        // Build char-to-word-index mapping for the enhanced text
+        const charToWordIndex = [];
+        let charPos = 0;
+        ttsWords.forEach((word, wordIdx) => {
+            const wordStart = enhancedText.indexOf(word, charPos);
+            if (wordStart >= 0) {
+                while (charToWordIndex.length < wordStart) {
+                    charToWordIndex.push(Math.max(0, wordIdx - 1));
+                }
+                for (let i = 0; i < word.length; i++) {
+                    charToWordIndex.push(wordIdx);
+                }
+                charPos = wordStart + word.length;
+            }
+        });
+
+        // Word boundary handler - uses paragraph-based indexing
         utterance.onboundary = (event) => {
             if (event.name === 'word') {
-                setHighlightedCharIndex(event.charIndex);
+                const wordIndex = charToWordIndex[event.charIndex] !== undefined
+                    ? charToWordIndex[event.charIndex]
+                    : currentWordIndex;
                 
-                // Smooth progress calculation
-                const progress = Math.min(99, Math.round((event.charIndex / text.length) * 100));
-                setSpeechProgress(progress);
+                currentWordIndex = wordIndex;
                 
-                // Add emphasis on important terms
-                const wordText = text.substring(event.charIndex, event.charIndex + event.charLength);
-                if (wordText && wordText.length > 4) {
-                    // Emphasize key terms (proper nouns, important concepts)
-                    if (/^[A-Z][a-z]+$/.test(wordText) || 
-                        /\b(important|key|crucial|essential|significant)\b/i.test(wordText)) {
-                        
-                        // Briefly slow down and slightly increase volume for emphasis
-                        const originalRate = utterance.rate;
-                        const originalVolume = utterance.volume;
-                        
-                        utterance.rate = playbackRate * 0.75; // Slow down more
-                        
-                        setTimeout(() => {
-                            utterance.rate = originalRate;
-                        }, 150);
-                    }
+                // Get paragraph info for this word and encode it
+                const paragraphInfo = wordToParagraph[wordIndex];
+                if (paragraphInfo) {
+                    // Encode: paragraphIndex * 10000 + wordInParagraph
+                    const encodedIndex = paragraphInfo.paragraphIndex * 10000 + paragraphInfo.wordInParagraph;
+                    setHighlightedCharIndex(encodedIndex);
+                } else {
+                    setHighlightedCharIndex(wordIndex);
                 }
+                
+                const progress = Math.min(99, Math.round((wordIndex / ttsWords.length) * 100));
+                setSpeechProgress(progress);
             }
         };
 
@@ -227,7 +257,6 @@ export function useTTS({
             setSpeechProgress(100);
             markSlideCompleted(currentSlide);
 
-            // Thoughtful pause after slide completion
             const pauseDuration = currentSlide < slides.length - 1 ? 1000 : 1500;
             
             setTimeout(() => {
@@ -235,7 +264,6 @@ export function useTTS({
                 if (currentSlide < slides.length - 1) {
                     setCurrentSlide(prev => prev + 1);
                 } else {
-                    // Last slide finished - set time to end (full duration)
                     if (setTimeSpent && durationSeconds) {
                         setTimeSpent(durationSeconds);
                     }
@@ -249,7 +277,6 @@ export function useTTS({
             setIsAudioPlaying(false);
         };
 
-        // Warm-up delay for voice loading
         setTimeout(() => {
             if (window.speechSynthesis.speaking) {
                 window.speechSynthesis.cancel();
