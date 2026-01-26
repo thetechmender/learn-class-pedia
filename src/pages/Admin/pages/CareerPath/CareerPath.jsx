@@ -174,12 +174,22 @@ const CareerPath = () => {
       fetchCareerPaths(); // Refresh the list
     } catch (error) {
       console.error('Error saving career path:', error);
-      showToast(
-        editingCareerPath 
-          ? 'Failed to update career path. Please try again.' 
-          : 'Failed to create career path. Please try again.', 
-        'error'
-      );
+      
+      // Extract specific error message from API response
+      let errorMessage = editingCareerPath 
+        ? 'Failed to update career path. Please try again.' 
+        : 'Failed to create career path. Please try again.';
+      
+      // Check if error has a specific message from the API
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data) {
+        errorMessage = error.response.data;
+      }
+      
+      showToast(errorMessage, 'error');
     } finally {
       setFormLoading(false);
     }
@@ -559,21 +569,21 @@ const CareerPath = () => {
                   {/* Card Header */}
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 pr-4">
-                        <h3 className="text-xl font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
-                          {path.title}
+                      <div className="flex-1 pr-4 min-w-0">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors leading-tight">
+                          <span className="line-clamp-2">{path.title}</span>
                         </h3>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full">
+                          <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full flex-shrink-0">
                             {path.status || 'Active'}
                           </span>
                           {path.categoryName && (
-                            <span className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                            <span className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full flex-shrink-0">
                               {path.categoryName}
                             </span>
                           )}
                           {path.outcome && (
-                            <span className="px-3 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
+                            <span className="px-3 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
                               {path.outcome.length > 20 ? `${path.outcome.substring(0, 20)}...` : path.outcome}
                             </span>
                           )}
@@ -584,7 +594,7 @@ const CareerPath = () => {
                       </div>
                     </div>
                     
-                    <p className="text-gray-600 text-sm mb-6 line-clamp-3 leading-relaxed">
+                    <p className="text-gray-600 text-sm mb-6 leading-relaxed line-clamp-3">
                       {path.description}
                     </p>
 
@@ -633,19 +643,23 @@ const CareerPath = () => {
                           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Learning Path</div>
                           <Sparkles className="w-4 h-4 text-blue-500" />
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {firstCourses.map((course, index) => (
                             <div key={course.courseId} className="flex items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 flex-shrink-0 ${
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0 ${
                                 index === 0 ? 'bg-blue-600 text-white' :
                                 index === 1 ? 'bg-blue-500 text-white' :
                                 'bg-blue-400 text-white'
                               }`}>
                                 {course.courseSequence + 1 || index + 1}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-gray-900 font-semibold text-sm line-clamp-1">{course.title}</div>
-                                <div className="text-xs text-gray-500">{course.categoryName}</div>
+                              <div className="flex-1 min-w-0 mr-2">
+                                <div className="text-gray-900 font-semibold text-sm truncate" title={course.title}>
+                                  {course.title}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate" title={course.categoryName}>
+                                  {course.categoryName}
+                                </div>
                               </div>
                               {course.isPaid && (
                                 <span className="px-2 py-1 text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full font-medium flex-shrink-0">
@@ -667,30 +681,30 @@ const CareerPath = () => {
 
                     {/* Footer */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 flex-shrink-0">
                         <Calendar className="w-3 h-3 mr-1" />
                         {formatDate(path.createdAt)}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 ml-2">
                         <button 
                           onClick={() => navigate(`/admin/career-paths/${path.id}`)}
-                          className="flex items-center px-3 py-2 text-sm text-blue-600 hover:text-blue-700 font-semibold group"
+                          className="flex items-center px-2 py-1.5 text-xs text-blue-600 hover:text-blue-700 font-semibold group whitespace-nowrap"
                         >
-                          <Eye className="w-4 h-4 mr-1" />
+                          <Eye className="w-3 h-3 mr-1" />
                           View
                         </button>
                         <button 
                           onClick={() => handleEditCareerPath(path)}
-                          className="flex items-center text-green-600 hover:text-green-700 text-sm font-semibold group"
+                          className="flex items-center px-2 py-1.5 text-xs text-green-600 hover:text-green-700 font-semibold group whitespace-nowrap"
                         >
-                          <Edit2 className="w-4 h-4 mr-1" />
+                          <Edit2 className="w-3 h-3 mr-1" />
                           Edit
                         </button>
                         <button 
                           onClick={() => handleDeleteClick(path)}
-                          className="flex items-center text-red-600 hover:text-red-700 text-sm font-semibold group"
+                          className="flex items-center px-2 py-1.5 text-xs text-red-600 hover:text-red-700 font-semibold group whitespace-nowrap"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
+                          <Trash2 className="w-3 h-3 mr-1" />
                           Delete
                         </button>
                       </div>

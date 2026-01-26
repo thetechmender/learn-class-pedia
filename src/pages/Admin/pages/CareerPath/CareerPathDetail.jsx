@@ -25,7 +25,6 @@ const CareerPathDetail = () => {
   const [careerPath, setCareerPath] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedLevel, setSelectedLevel] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -115,7 +114,7 @@ const CareerPathDetail = () => {
                 Try Again
               </button>
               <button
-                onClick={() => navigate('/admin/career-paths')}
+                onClick={() => navigate('/admin/career-path')}
                 className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
               >
                 Go Back
@@ -263,24 +262,15 @@ const CareerPathDetail = () => {
                     />
                   </div>
                   
-                  {/* Level Filter */}
-                  <select
-                    value={selectedLevel}
-                    onChange={(e) => setSelectedLevel(e.target.value)}
-                    className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="all">All Levels</option>
-                    {Object.entries(levelStats).map(([key, stat]) => (
-                      <option key={key} value={key}>{stat.name}</option>
-                    ))}
-                  </select>
+             
+                
                 </div>
               </div>
 
               {/* Courses List */}
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredCourses.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="col-span-full text-center py-12">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <BookOpen className="w-8 h-8 text-gray-400" />
                     </div>
@@ -289,41 +279,55 @@ const CareerPathDetail = () => {
                   </div>
                 ) : (
                   filteredCourses.map((course, index) => (
-                    <div key={`${course.levelId}-${course.courseId}`} className="bg-gray-50 rounded-2xl p-6 hover:bg-gray-100 transition-colors duration-200">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                              {course.categoryName}
-                            </span>
-                            <span className="text-sm text-gray-500">Course #{course.courseSequence + 1 || index + 1}</span>
-                          </div>
-                          <h4 className="text-lg font-semibold text-gray-900 mb-2">{course.title}</h4>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <PlayCircle className="w-4 h-4" />
-                              {course.categoryName}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              Order: {course.sortOrder}
-                            </span>
-                          </div>
+                    <div key={`${course.levelId}-${course.courseId}`} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-300 hover:-translate-y-1">
+                      {/* Course Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                            {course.categoryName}
+                          </span>
+                          <span className="text-xs text-gray-500 font-medium">#{course.courseSequence + 1 || index + 1}</span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          {course.isPaid ? (
-                            <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full text-sm font-medium">
-                              Paid
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                              Free
-                            </span>
-                          )}
-                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                            <ChevronRight className="w-5 h-5" />
-                          </button>
+                        {course.isPaid ? (
+                          <span className="inline-flex items-center px-2.5 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full text-xs font-semibold shadow-sm">
+                            <DollarSign className="w-3 h-3 mr-1" />
+                            Paid
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                            Free
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Course Title */}
+                      <h4 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 leading-tight min-h-[3.5rem]">
+                        {course.title}
+                      </h4>
+
+                      {/* Course Meta */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <PlayCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{course.categoryName}</span>
                         </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span>Order: {course.sortOrder}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <BookOpen className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <span className="text-xs text-gray-500 font-medium">Course Details</span>
+                        </div>
+                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 hover:scale-105">
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
                   ))

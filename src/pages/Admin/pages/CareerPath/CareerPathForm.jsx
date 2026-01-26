@@ -41,6 +41,8 @@ const CareerPathForm = ({
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [selectedCourseIds, setSelectedCourseIds] = useState([]);
   const [courseSequences, setCourseSequences] = useState({});
+  const [draggedCourse, setDraggedCourse] = useState(null);
+  const [dragOverCourse, setDragOverCourse] = useState(null);
   const [sequenceErrors, setSequenceErrors] = useState({});
   const [errors, setErrors] = useState({});
   const [loadingData, setLoadingData] = useState(false);
@@ -147,10 +149,27 @@ const CareerPathForm = ({
       
       // Initialize sequence for newly added course
       if (!prev.includes(courseId) && newSelection.includes(courseId)) {
+        // Assign the next available sequence number
+        const existingSequences = Object.values(courseSequences);
+        const nextSequence = existingSequences.length > 0 ? Math.max(...existingSequences) + 1 : 1;
+        
         setCourseSequences(prevSequences => ({
           ...prevSequences,
-          [courseId]: prevSequences[courseId] || 0
+          [courseId]: nextSequence
         }));
+      } else if (prev.includes(courseId) && !newSelection.includes(courseId)) {
+        // Remove sequence when course is deselected
+        setCourseSequences(prevSequences => {
+          const newSequences = { ...prevSequences };
+          delete newSequences[courseId];
+          return newSequences;
+        });
+        // Clear any sequence errors for this course
+        setSequenceErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[courseId];
+          return newErrors;
+        });
       }
       
       return newSelection;
@@ -160,31 +179,50 @@ const CareerPathForm = ({
   const updateCourseSequence = (courseId, sequence) => {
     const newSequence = parseInt(sequence) || 0;
     
-    // Check if sequence is already used by another course
-    const isDuplicate = Object.entries(courseSequences).some(
-      ([id, seq]) => id !== courseId && seq === newSequence && selectedCourseIds.includes(parseInt(id))
-    );
-    
-    // Clear previous error for this course
-    setSequenceErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[courseId];
-      return newErrors;
-    });
-    
-    if (isDuplicate && newSequence !== 0) {
-      // Show error for this course
-      setSequenceErrors(prev => ({
-        ...prev,
-        [courseId]: `Sequence ${newSequence} is already used`
-      }));
-      return;
-    }
-    
+    // Only update the sequence value without validation
     setCourseSequences(prev => ({
       ...prev,
       [courseId]: newSequence
     }));
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (courseId) => {
+    setDraggedCourse(courseId);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDragEnter = (courseId) => {
+    setDragOverCourse(courseId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCourse(null);
+  };
+
+  const handleDrop = (e, targetCourseId) => {
+    e.preventDefault();
+    setDragOverCourse(null);
+    
+    if (draggedCourse && draggedCourse !== targetCourseId) {
+      reorderCourses(draggedCourse, targetCourseId);
+    }
+    setDraggedCourse(null);
+  };
+
+  const reorderCourses = (draggedCourseId, targetCourseId) => {
+    const draggedSequence = courseSequences[draggedCourseId] || 0;
+    const targetSequence = courseSequences[targetCourseId] || 0;
+    
+    // Swap the sequences
+    const newSequences = { ...courseSequences };
+    newSequences[draggedCourseId] = targetSequence;
+    newSequences[targetCourseId] = draggedSequence;
+    
+    setCourseSequences(newSequences);
   };
 
   const validateForm = () => {
@@ -223,9 +261,7 @@ const CareerPathForm = ({
       newErrors.outcome = 'Outcome is required';
     }
     
-    if (selectedCourseIds.length === 0) {
-      newErrors.courses = 'At least one course must be selected';
-    }
+    // Courses are now optional - remove validation
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -459,10 +495,7 @@ const CareerPathForm = ({
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="w-5 h-5 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Course Selection</h3>
-            {errors.courses && (
-              <span className="text-sm text-red-600">{errors.courses}</span>
-            )}
+            <h3 className="text-lg font-semibold text-gray-900">Course Selection (Optional)</h3>
           </div>
 
           {/* Filter Info */}
@@ -517,62 +550,60 @@ const CareerPathForm = ({
                 Selected Courses ({selectedCourseIds.length})
               </h4>
               <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <div className="space-y-3">
+                <p className="text-xs text-gray-600 mb-3">
+                  {selectedCourseIds.length === 1 
+                    ? '💡 Only one course selected.'
+                    : '🎯 Drag and drop courses to reorder them in the learning path sequence.'
+                  }
+                </p>
+                <div className="space-y-2">
                   {filteredCourses
                     .filter(course => selectedCourseIds.includes(course.id))
                     .sort((a, b) => (courseSequences[a.id] || 0) - (courseSequences[b.id] || 0))
                     .map((course, index) => (
-                      <div key={course.id} className="bg-white p-3 rounded-lg border border-green-200">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                            {selectedCourseIds.length === 1 ? 1 : ((courseSequences[course.id] !== undefined ? courseSequences[course.id] : index) + 1)}
+                      <div
+                        key={course.id}
+                        draggable={selectedCourseIds.length > 1}
+                        onDragStart={() => handleDragStart(course.id)}
+                        onDragOver={handleDragOver}
+                        onDragEnter={() => handleDragEnter(course.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, course.id)}
+                        className={`bg-white p-3 rounded-lg border cursor-move transition-all ${
+                          dragOverCourse === course.id 
+                            ? 'border-blue-400 shadow-lg transform scale-105' 
+                            : 'border-green-200'
+                        } ${draggedCourse === course.id ? 'opacity-50' : ''}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {selectedCourseIds.length > 1 && (
+                              <div className="text-gray-400">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                              </div>
+                            )}
+                            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                              {courseSequences[course.id] || index + 1}
+                            </div>
                           </div>
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900 text-sm">{course.title}</div>
-                            <div className="text-xs text-gray-500">{course.categoryName}</div>
+                            <div className="font-medium text-gray-900 text-sm break-words">{course.title}</div>
+                            <div className="text-xs text-gray-500 break-words">{course.categoryName}</div>
                           </div>
                           <button
                             type="button"
                             onClick={() => toggleCourseSelection(course.id)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
                             title="Remove course"
                           >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                        {selectedCourseIds.length > 1 && (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <label className="text-xs text-gray-600">Sequence:</label>
-                              <input
-                                type="number"
-                                value={courseSequences[course.id] !== undefined ? courseSequences[course.id] : index}
-                                onChange={(e) => updateCourseSequence(course.id, e.target.value)}
-                                className={`w-16 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                                  sequenceErrors[course.id] 
-                                    ? 'border-red-300 bg-red-50' 
-                                    : 'border-gray-300'
-                                }`}
-                                min="0"
-                                max="99"
-                              />
-                            </div>
-                            {sequenceErrors[course.id] && (
-                              <div className="text-xs text-red-600 mt-1">
-                                {sequenceErrors[course.id]}
-                              </div>
-                            )}
-                          </>
-                        )}
                       </div>
                     ))}
                 </div>
-                <p className="text-xs text-gray-600 mt-3">
-                  {selectedCourseIds.length === 1 
-                    ? '💡 Only one course selected, no sequence needed.'
-                    : '💡 Set unique sequence numbers (0, 1, 2, etc.) to define the learning path order. Each sequence number can only be used once.'
-                  }
-                </p>
               </div>
             </div>
           )}

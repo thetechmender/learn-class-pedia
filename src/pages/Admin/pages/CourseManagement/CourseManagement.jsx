@@ -71,8 +71,8 @@ const CourseManagement = () => {
     categoryId: 0,
     courseLevelId: 0,
     isPaid: true,
-    price: 0,
-    discountedPrice: 0,
+    price: '',
+    discountedPrice: '',
     currencyCode: 'USD',
     thumbnailUrl: '',
     promoVideoUrl: '',
@@ -90,8 +90,8 @@ const CourseManagement = () => {
     categoryId: 0,
     courseLevelId: 0,
     isPaid: true,
-    price: 0,
-    discountedPrice: 0,
+    price: '',
+    discountedPrice: '',
     currencyCode: 'USD',
     thumbnailUrl: '',
     promoVideoUrl: '',
@@ -250,8 +250,8 @@ const CourseManagement = () => {
         categoryId: courseDetailData.categoryId || 0,
         courseLevelId: courseDetailData.courseLevelId || 0,
         isPaid: courseDetailData.isPaid ?? true,
-        price: courseDetailData.price || 0,
-        discountedPrice: courseDetailData.discountedPrice || 0,
+        price: courseDetailData.price !== null && courseDetailData.price !== undefined ? courseDetailData.price : '',
+        discountedPrice: courseDetailData.discountedPrice !== null && courseDetailData.discountedPrice !== undefined ? courseDetailData.discountedPrice : '',
         currencyCode: courseDetailData.currencyCode || 'USD',
         thumbnailUrl: courseDetailData.thumbnailUrl || '',
         promoVideoUrl: courseDetailData.promoVideoUrl || '',
@@ -269,10 +269,27 @@ const CourseManagement = () => {
   // Handle form input changes
   const handleUpdateFormChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setUpdateFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value
-    }));
+    
+    // Handle price fields with manual validation
+    if (name === 'price' || name === 'discountedPrice') {
+      // Allow only numbers and decimal point
+      const sanitizedValue = value.replace(/[^0-9.]/g, '');
+      // Ensure only one decimal point
+      const parts = sanitizedValue.split('.');
+      const finalValue = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitizedValue;
+      // Convert to number for storage, but keep as string for display
+      const numValue = finalValue === '' || finalValue === '.' ? '' : parseFloat(finalValue) || 0;
+      
+      setUpdateFormData(prev => ({
+        ...prev,
+        [name]: numValue
+      }));
+    } else {
+      setUpdateFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value
+      }));
+    }
   };
 
   // Handle update course submission
@@ -280,11 +297,27 @@ const CourseManagement = () => {
     e.preventDefault();
     if (!editingCourse) return;
     
+    // Validate price fields
+    const price = parseFloat(updateFormData.price) || 0;
+    const discountedPrice = parseFloat(updateFormData.discountedPrice) || 0;
+    
+    if (discountedPrice > 0 && price > 0 && discountedPrice > price) {
+      setUpdateError('Discounted price cannot be greater than the actual price');
+      return;
+    }
+    
     try {
       setUpdateLoading(true);
       setUpdateError('');
       
-      await updateCourse(editingCourse.id, updateFormData);
+      // Prepare data for backend - set discountedPrice to 0 if empty
+      const submissionData = {
+        ...updateFormData,
+        price: price,
+        discountedPrice: discountedPrice
+      };
+      
+      await updateCourse(editingCourse.id, submissionData);
       
       // Update the course details in expanded view if it's open
       if (expandedCourses[editingCourse.id]) {
@@ -297,6 +330,9 @@ const CourseManagement = () => {
       
       setShowUpdateModal(false);
       setEditingCourse(null);
+      
+      // Refresh course data
+      await applyFilters();
       
       // Show success message
       showToast('Course updated successfully!', 'success');
@@ -318,21 +354,54 @@ const CourseManagement = () => {
   // Handle create course form changes
   const handleCreateFormChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setCreateFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value
-    }));
+    
+    // Handle price fields with manual validation
+    if (name === 'price' || name === 'discountedPrice') {
+      // Allow only numbers and decimal point
+      const sanitizedValue = value.replace(/[^0-9.]/g, '');
+      // Ensure only one decimal point
+      const parts = sanitizedValue.split('.');
+      const finalValue = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitizedValue;
+      // Convert to number for storage, but keep as string for display
+      const numValue = finalValue === '' || finalValue === '.' ? '' : parseFloat(finalValue) || 0;
+      
+      setCreateFormData(prev => ({
+        ...prev,
+        [name]: numValue
+      }));
+    } else {
+      setCreateFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value
+      }));
+    }
   };
 
   // Handle create course submission
   const handleCreateCourse = async (e) => {
     e.preventDefault();
     
+    // Validate price fields
+    const price = parseFloat(createFormData.price) || 0;
+    const discountedPrice = parseFloat(createFormData.discountedPrice) || 0;
+    
+    if (discountedPrice > 0 && price > 0 && discountedPrice > price) {
+      setCreateError('Discounted price cannot be greater than the actual price');
+      return;
+    }
+    
     try {
       setCreateLoading(true);
       setCreateError('');
       
-      await createCourse(createFormData);
+      // Prepare data for backend - set discountedPrice to 0 if empty
+      const submissionData = {
+        ...createFormData,
+        price: price,
+        discountedPrice: discountedPrice
+      };
+      
+      await createCourse(submissionData);
       
       setShowCreateModal(false);
       setCreateFormData({
@@ -345,13 +414,16 @@ const CourseManagement = () => {
         categoryId: 0,
         courseLevelId: 0,
         isPaid: true,
-        price: 0,
-        discountedPrice: 0,
+        price: '',
+        discountedPrice: '',
         currencyCode: 'USD',
         thumbnailUrl: '',
         promoVideoUrl: '',
         badgeIds: []
       });
+      
+      // Refresh course data
+      await applyFilters();
       
       // Show success message
       showToast('Course created successfully!', 'success');
@@ -377,8 +449,8 @@ const CourseManagement = () => {
       categoryId: 0,
       courseLevelId: 0,
       isPaid: true,
-      price: 0,
-      discountedPrice: 0,
+      price: '',
+      discountedPrice: '',
       currencyCode: 'USD',
       thumbnailUrl: '',
       promoVideoUrl: '',
@@ -802,7 +874,7 @@ const CourseManagement = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
                 <input
-                  type="number"
+                  type="text"
                   value={filters.price}
                   onChange={(e) => handleFilterChange('price', e.target.value)}
                   placeholder="Enter price..."
@@ -812,7 +884,7 @@ const CourseManagement = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Discounted Price</label>
                 <input
-                  type="number"
+                  type="text"
                   value={filters.discountedPrice}
                   onChange={(e) => handleFilterChange('discountedPrice', e.target.value)}
                   placeholder="Enter discounted price..."
@@ -951,14 +1023,14 @@ const CourseManagement = () => {
                     <div>
                       <span className="text-xs text-gray-500 block mb-1">Price</span>
                       <div className="text-sm font-bold text-gray-900">
-                        {course.discountedPrice < course.price ? (
+                        {/* {course.discountedPrice < course.price ? (
                           <div className="flex items-center space-x-1">
                             <span className="text-green-600">{course.discountedPrice}</span>
                             <span className="text-gray-400 line-through text-xs">{course.price}</span>
                           </div>
-                        ) : (
+                        ) : ( */}
                           <span>{course.price}</span>
-                        )}
+                        {/* )} */}
                         <span className="text-gray-500 ml-1 text-xs">{course.currencyCode}</span>
                       </div>
                     </div>
@@ -1172,14 +1244,14 @@ const CourseManagement = () => {
                         <div className="flex items-center">
                           <DollarSign className="w-4 h-4 mr-1 text-green-500" />
                           <div className="text-sm font-bold">
-                            {course.discountedPrice < course.price ? (
+                            {/* {course.discountedPrice < course.price ? (
                               <div className="flex items-center space-x-2">
                                 <span className="text-green-600">{course.discountedPrice}</span>
                                 <span className="text-gray-400 line-through text-xs">{course.price}</span>
                               </div>
-                            ) : (
+                            ) : ( */}
                               <span className="text-gray-900">{course.price}</span>
-                            )}
+                            {/* )} */}
                             <span className="text-gray-500 ml-1 text-xs">{course.currencyCode}</span>
                           </div>
                         </div>
@@ -1548,20 +1620,20 @@ const CourseManagement = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Course Type</label>
-                    {dropdownLoading.courseTypes ? (
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Course Level</label>
+                    {dropdownLoading.courseLevels ? (
                       <div className="flex items-center">
                         <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
-                        <span className="text-gray-500">Loading course types...</span>
+                        <span className="text-gray-500">Loading course levels...</span>
                       </div>
-                    ) : dropdownError.courseTypes ? (
-                      <div className="text-red-500 text-sm">{dropdownError.courseTypes}</div>
+                    ) : dropdownError.courseLevels ? (
+                      <div className="text-red-500 text-sm">{dropdownError.courseLevels}</div>
                     ) : (
                       <GenericDropdown
-                        items={courseTypes}
-                        value={updateFormData.courseTypeId}
-                        onChange={(value) => setUpdateFormData(prev => ({ ...prev, courseTypeId: value }))}
-                        placeholder="Select a course type"
+                        items={courseLevels}
+                        value={updateFormData.courseLevelId}
+                        onChange={(value) => setUpdateFormData(prev => ({ ...prev, courseLevelId: value }))}
+                        placeholder="Select a course level"
                         className="w-full"
                       />
                     )}
@@ -1591,25 +1663,25 @@ const CourseManagement = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Course Level</label>
-                    {dropdownLoading.courseLevels ? (
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Course Type</label>
+                    {dropdownLoading.courseTypes ? (
                       <div className="flex items-center">
                         <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
-                        <span className="text-gray-500">Loading course levels...</span>
+                        <span className="text-gray-500">Loading course types...</span>
                       </div>
-                    ) : dropdownError.courseLevels ? (
-                      <div className="text-red-500 text-sm">{dropdownError.courseLevels}</div>
+                    ) : dropdownError.courseTypes ? (
+                      <div className="text-red-500 text-sm">{dropdownError.courseTypes}</div>
                     ) : (
                       <GenericDropdown
-                        items={courseLevels}
-                        value={updateFormData.courseLevelId}
-                        onChange={(value) => setUpdateFormData(prev => ({ ...prev, courseLevelId: value }))}
-                        placeholder="Select a course level"
+                        items={courseTypes}
+                        value={updateFormData.courseTypeId}
+                        onChange={(value) => setUpdateFormData(prev => ({ ...prev, courseTypeId: value }))}
+                        placeholder="Select a course type"
                         className="w-full"
                       />
                     )}
                   </div>
-                  
+                
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Is Paid</label>
                     <div className="flex items-center">
@@ -1627,7 +1699,6 @@ const CourseManagement = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
                     <input
-                      type="number"
                       name="price"
                       value={updateFormData.price}
                       onChange={handleUpdateFormChange}
@@ -1641,7 +1712,6 @@ const CourseManagement = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
                     <input
-                      type="number"
                       name="discountedPrice"
                       value={updateFormData.discountedPrice}
                       onChange={handleUpdateFormChange}
@@ -1805,6 +1875,26 @@ const CourseManagement = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Course Level</label>
+                  {dropdownLoading.courseLevels ? (
+                    <div className="flex items-center">
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
+                      <span className="text-gray-500">Loading course levels...</span>
+                    </div>
+                  ) : dropdownError.courseLevels ? (
+                    <div className="text-red-500 text-sm">{dropdownError.courseLevels}</div>
+                  ) : (
+                    <GenericDropdown
+                      items={courseLevels}
+                      value={createFormData.courseLevelId}
+                      onChange={(value) => setCreateFormData(prev => ({ ...prev, courseLevelId: value }))}
+                      placeholder="Select a course level"
+                      className="w-full"
+                    />
+                  )}
+                </div>
+                
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Course Type</label>
                   {dropdownLoading.courseTypes ? (
                     <div className="flex items-center">
@@ -1823,7 +1913,9 @@ const CourseManagement = () => {
                     />
                   )}
                 </div>
-                
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                   {dropdownLoading.categories ? (
@@ -1839,28 +1931,6 @@ const CourseManagement = () => {
                       value={createFormData.categoryId}
                       onChange={(value) => setCreateFormData(prev => ({ ...prev, categoryId: value }))}
                       placeholder="Select a category"
-                      className="w-full"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Course Level</label>
-                  {dropdownLoading.courseLevels ? (
-                    <div className="flex items-center">
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin text-gray-400" />
-                      <span className="text-gray-500">Loading course levels...</span>
-                    </div>
-                  ) : dropdownError.courseLevels ? (
-                    <div className="text-red-500 text-sm">{dropdownError.courseLevels}</div>
-                  ) : (
-                    <GenericDropdown
-                      items={courseLevels}
-                      value={createFormData.courseLevelId}
-                      onChange={(value) => setCreateFormData(prev => ({ ...prev, courseLevelId: value }))}
-                      placeholder="Select a course level"
                       className="w-full"
                     />
                   )}
@@ -1932,7 +2002,6 @@ const CourseManagement = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
                   <input
-                    type="number"
                     name="price"
                     value={createFormData.price}
                     onChange={handleCreateFormChange}
@@ -1946,7 +2015,6 @@ const CourseManagement = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
                   <input
-                    type="number"
                     name="discountedPrice"
                     value={createFormData.discountedPrice}
                     onChange={handleCreateFormChange}
