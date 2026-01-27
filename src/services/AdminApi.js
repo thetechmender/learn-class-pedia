@@ -1,6 +1,5 @@
 import { API_CONFIG, ENDPOINTS } from '../config/api';
 import routesData from '../data/routes.json';
-import reviewsData from '../data/reviews.json';
 
 class AdminApiService {
   constructor() {
@@ -172,6 +171,37 @@ class AdminApiService {
     return this.request(`${ENDPOINTS.ADMINCOURSE}?${queryParams}`);
   }
 
+  // GET all courses for admin (without pagination)
+  async getAllCoursesAdminNoPagination(filters = {}) {
+    const queryParams = new URLSearchParams();
+    
+    // Add filter parameters - only add if they have values
+    if (filters.CourseTypeId && filters.CourseTypeId !== '') {
+      queryParams.append('CourseTypeId', filters.CourseTypeId);
+    }
+    if (filters.CategoryId && filters.CategoryId !== '') {
+      queryParams.append('CategoryId', filters.CategoryId);
+    }
+    if (filters.CourseLevelId && filters.CourseLevelId !== '') {
+      queryParams.append('CourseLevelId', filters.CourseLevelId);
+    }
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${ENDPOINTS.ADMINCOURSE}?${queryString}` : ENDPOINTS.ADMINCOURSE;
+    
+    return this.request(url);
+  }
+
+  // GET all course types
+  async getAllCourseTypes() {
+    return this.request(ENDPOINTS.COURSE_TYPES);
+  }
+
+  // GET all course levels
+  async getAllCourseLevels() {
+    return this.request(ENDPOINTS.COURSE_LEVELS);
+  }
+
   // POST create new course
   async createCourse(courseData) {
     return this.request(ENDPOINTS.COURSES_ADMIN, {
@@ -205,6 +235,41 @@ class AdminApiService {
     return this.request(ENDPOINTS.COURSE_BADGES);
   }
 
+  // Course Badge Management methods
+  
+  // GET all course badges (new endpoint)
+  async getAllCourseBadgesNew() {
+    return this.request(ENDPOINTS.COURSE_BADGE_ALL);
+  }
+
+  // GET course badge by ID
+  async getCourseBadgeById(id) {
+    return this.request(ENDPOINTS.COURSE_BADGE_BY_ID(id));
+  }
+
+  // POST create new course badge
+  async createCourseBadge(badgeData) {
+    return this.request(ENDPOINTS.COURSE_BADGE_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(badgeData),
+    });
+  }
+
+  // PUT update course badge
+  async updateCourseBadge(badgeId, badgeData) {
+    return this.request(ENDPOINTS.COURSE_BADGE_UPDATE(badgeId), {
+      method: 'PUT',
+      body: JSON.stringify(badgeData),
+    });
+  }
+
+  // DELETE course badge
+  async deleteCourseBadge(badgeId) {
+    return this.request(ENDPOINTS.COURSE_BADGE_DELETE(badgeId), {
+      method: 'DELETE',
+    });
+  }
+
   // GET course badges for dropdown
   async getCourseBadges() {
     return this.request(ENDPOINTS.COURSE_BADGES_DROPDOWN);
@@ -228,8 +293,8 @@ class AdminApiService {
     });
   }
 
-  // UPDATE course badge
-  async updateCourseBadge(courseId, badgeId) {
+  // UPDATE course badge (for individual course badge assignment)
+  async updateCourseBadgeAssignment(courseId, badgeId) {
     return this.request(`${ENDPOINTS.COURSE_BY_ID_ADMIN(courseId)}/badge`, {
       method: 'PUT',
       body: JSON.stringify({ badgeId }),

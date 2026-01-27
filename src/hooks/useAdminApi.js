@@ -193,7 +193,7 @@ export const useAdminApi = (initialPage = 1, pageSize = 10) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCourseBadge(courseId, badgeId);
+      const data = await adminApiService.updateCourseBadgeAssignment(courseId, badgeId);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {

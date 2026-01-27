@@ -72,17 +72,13 @@ const CategoryManagement = () => {
       setLoading(true);
       // Build search term from filters for backend
       const searchTerm = Object.values(filters).filter(Boolean).join(' ') || '';
-      console.log('Fetching categories with search term:', searchTerm);
       const data = await getAllCategories(searchTerm, {});
-      console.log('Data received from backend:', data);
       const categories = data.items || data || [];
-      console.log('Categories length:', categories.length);
       setCategories(categories);
       setPagination(prev => ({ ...prev, totalCount: categories.length, page: 1 }));
       setError(null);
     } catch (err) {
       setError('Failed to fetch categories');
-      console.error('Error fetching categories:', err);
     } finally {
       setLoading(false);
     }
@@ -127,16 +123,11 @@ const CategoryManagement = () => {
 
   // Display categories based on search results
   const displayCategories = useMemo(() => {
-    console.log('Filters:', filters);
-    console.log('Has active filters:', filters.name || filters.slug || filters.description);
-    
     if (filters.name || filters.slug || filters.description) {
       // If there are search filters, show only matching categories
-      console.log('Showing filtered results only');
       return globalSearchResults;
     } else {
       // No search filters, show all categories with pagination
-      console.log('Showing all categories');
       return categories;
     }
   }, [globalSearchResults, filters.name, filters.slug, filters.description, categories]);
@@ -188,7 +179,6 @@ const CategoryManagement = () => {
 
   // CRUD operations
   const handleSubmit = useCallback(async (e) => {
-    debugger;
     e.preventDefault();
     setModalError(''); // Clear previous modal error
     
@@ -196,21 +186,15 @@ const CategoryManagement = () => {
       if (editingCategory) {
         await updateCategory(editingCategory.id, formData);
         setShowUpdateModal(false);
-        console.log('Showing update success toast');
         showSuccess('Category updated successfully!');
       } else {
         await createCategory(formData);
         setShowCreateModal(false);
-        console.log('Showing create success toast');
         showSuccess('Category created successfully!');
       }
       resetForm();
       fetchCategories();
     } catch (err) {
-      console.error('Full error object:', err);
-      console.error('Error response:', err.response);
-      console.error('Error data:', err.response?.data);
-      
       // Extract error message from API response structure
       let errorMessage = 'An unexpected error occurred';
       
@@ -246,7 +230,6 @@ const CategoryManagement = () => {
       
       setModalError(errorMessage);
       showError(errorMessage);
-      console.error('Final error message:', errorMessage);
     }
   }, [editingCategory, formData, updateCategory, createCategory, resetForm, fetchCategories, showSuccess, showError]);
 
@@ -270,13 +253,11 @@ const CategoryManagement = () => {
     if (!window.confirm('Are you sure you want to delete this category?')) return;
     try {
       await deleteCategory(categoryId);
-      console.log('Showing delete success toast');
       showSuccess('Category deleted successfully!');
       fetchCategories();
     } catch (err) {
       const errorMessage = err.response?.data?.error || err.message || 'Failed to delete category';
       showError(errorMessage);
-      console.error(err);
     }
   }, [deleteCategory, fetchCategories, showSuccess, showError]);
 

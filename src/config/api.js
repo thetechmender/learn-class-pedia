@@ -32,6 +32,12 @@ export const ENDPOINTS = {
   COURSE_LEVELS: '/admin/course-levels',
   COURSE_BADGES_DROPDOWN: '/admin/course-badges',
   CAREER_PATHS: '/career-paths',
+  // Course Badge Management endpoints
+  COURSE_BADGE_ALL: '/CourseBadge/GetAllCourseBadges',
+  COURSE_BADGE_BY_ID: (id) => `/CourseBadge/${id}`,
+  COURSE_BADGE_UPDATE: (id) => `/CourseBadge/UpdateCourseBadge/${id}`,
+  COURSE_BADGE_CREATE: '/CourseBadge/CreateCourseBadge',
+  COURSE_BADGE_DELETE: (id) => `/CourseBadge/${id}`,
 };
 
 // HTTP Status Codes

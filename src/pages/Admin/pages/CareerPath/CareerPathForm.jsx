@@ -53,7 +53,6 @@ const CareerPathForm = ({
 
   useEffect(() => {
     if (careerPath && levels.length > 0) {
-      console.log('Setting form data for career path:', careerPath);
       setFormData({
         title: careerPath.title || '',
         description: careerPath.description || '',
@@ -77,11 +76,9 @@ const CareerPathForm = ({
   }, [careerPath, levels]);
 
   useEffect(() => {
-    console.log('useEffect triggered - categoryId:', formData.categoryId, 'levelId:', formData.levelId);
     if (formData.categoryId && formData.levelId) {
       fetchCoursesByCategoryAndLevel(formData.categoryId, formData.levelId);
     } else {
-      console.log('Clearing filtered courses - missing categoryId or levelId');
       setFilteredCourses([]);
     }
   }, [formData.categoryId, formData.levelId]);
@@ -94,21 +91,15 @@ const CareerPathForm = ({
         adminApiService.getAllCategories()
       ]);
       
-      console.log("Categories API response:", categoriesRes);
-      console.log("Levels API response:", levelsRes);
-      
       // Handle categories response - it has items array
       const categoriesData = categoriesRes?.items || categoriesRes || [];
-      console.log("Processed categories:", categoriesData);
       
       // Handle levels response - it's an array directly
       const levelsData = levelsRes || [];
-      console.log("Processed levels:", levelsData);
       
       setLevels(levelsData);
       setCategories(categoriesData);
     } catch (error) {
-      console.error('Error fetching initial data:', error);
     } finally {
       setLoadingData(false);
     }
@@ -116,12 +107,9 @@ const CareerPathForm = ({
 
   const fetchCoursesByCategoryAndLevel = async (categoryId, levelId) => {
     try {
-      console.log(`Fetching courses for categoryId: ${categoryId}, levelId: ${levelId}`);
       const courses = await adminApiService.getCareerPathCoursesByCategoryAndLevel(categoryId, levelId);
-      console.log('Courses received:', courses);
       setFilteredCourses(courses || []);
     } catch (error) {
-      console.error('Error fetching courses by category and level:', error);
       setFilteredCourses([]);
     }
   };
