@@ -33,12 +33,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                <BookOpen className="w-4 h-4 text-white" />
-              </div>
-              {!isCollapsed && (
-                <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Classpedia</span>
-              )}
+              <img 
+                src="/logo.svg" 
+                alt="Classpedia" 
+                className="w-50 h-50"
+              />
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center">
@@ -57,12 +56,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                <BookOpen className="w-4 h-4 text-white" />
-              </div>
-              {!isCollapsed && (
-                <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Classpedia</span>
-              )}
+              <img 
+                src="/logo.svg" 
+                alt="Classpedia" 
+                className="w-50 h-50"
+              />
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center p-4">
@@ -100,12 +98,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
           {/* Logo and Collapse Toggle */}
           <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
-                <BookOpen className="w-4 h-4 text-white" />
-              </div>
-              {!isCollapsed && (
-                <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">Classpedia</span>
-              )}
+              <img 
+                src="/logo.svg" 
+                alt="Classpedia" 
+                className={`w-50 h-50 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`}
+              />
             </div>
             <div className="flex items-center gap-2">
               {/* Collapse Toggle - Desktop Only */}
