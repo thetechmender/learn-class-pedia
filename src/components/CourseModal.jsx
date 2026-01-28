@@ -7,8 +7,7 @@ import {
   Image,
   BookOpen,
   Plus,
-  ChevronUp,
-  ChevronDown
+  GripVertical
 } from 'lucide-react';
 
 import GenericDropdown from './GenericDropdown';
@@ -136,22 +135,41 @@ const CourseModal = ({
     }));
   };
 
-  const moveSection = (index, direction) => {
+  const moveSection = (dragIndex, dropIndex) => {
     const newSections = [...formData.sections];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const draggedSection = newSections[dragIndex];
     
-    if (targetIndex >= 0 && targetIndex < newSections.length) {
-      [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
-      
-      // Update sortOrder for all sections
-      newSections.forEach((section, i) => {
-        section.sortOrder = i;
-      });
-      
-      setFormData(prev => ({
-        ...prev,
-        sections: newSections
-      }));
+    // Remove the dragged section and insert it at the new position
+    newSections.splice(dragIndex, 1);
+    newSections.splice(dropIndex, 0, draggedSection);
+    
+    // Update sortOrder for all sections
+    newSections.forEach((section, i) => {
+      section.sortOrder = i;
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      sections: newSections
+    }));
+  };
+
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData('text/plain', index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    
+    if (dragIndex !== dropIndex) {
+      moveSection(dragIndex, dropIndex);
     }
   };
 
@@ -567,45 +585,58 @@ const CourseModal = ({
                     <p className="mb-2 text-sm text-red-600">{formErrors.sections}</p>
                   )}
 
+                  {/* Drag and Drop Guide */}
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <GripVertical className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-800">
+                        <p className="font-medium mb-1">How to reorder sections:</p>
+                        <ul className="text-xs space-y-1 text-blue-700">
+                          <li>• Click and hold the <span className="font-semibold">grip icon</span> on the left of any section</li>
+                          <li>• Drag the section to your desired position</li>
+                          <li>• Release to drop and reorder automatically</li>
+                          <li>• Section numbers will update automatically</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
                   {formData.sections.length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-                      <p className="text-gray-500">No sections added yet. Click "Add Section" to create your first section.</p>
+                      <GripVertical className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p className="text-gray-500 mb-2">No sections added yet.</p>
+                      <p className="text-sm text-gray-400">Click "Add Section" to create your first section, then drag to reorder.</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {formData.sections.map((section, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div
+                          key={index}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, index)}
+                          className="border border-gray-200 rounded-lg p-4 bg-gray-50 cursor-move hover:bg-gray-100 transition-colors"
+                        >
                           <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-medium text-gray-900">Section {index + 1}</h4>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                type="button"
-                                onClick={() => moveSection(index, 'up')}
-                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-                                disabled={index === 0 || loading}
-                              >
-                                <ChevronUp className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveSection(index, 'down')}
-                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-                                disabled={index === formData.sections.length - 1 || loading}
-                              >
-                                <ChevronDown className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeSection(index)}
-                                className="p-1 text-red-400 hover:text-red-600 disabled:opacity-50"
-                                disabled={loading}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-2">
+                                <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
+                                <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
+                              </div>
+                              <h4 className="text-sm font-medium text-gray-900">Section {index + 1}</h4>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => removeSection(index)}
+                              className="p-1 text-red-400 hover:text-red-600 disabled:opacity-50"
+                              disabled={loading}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-4">
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Section Title *</label>
                               <input
@@ -621,18 +652,6 @@ const CourseModal = ({
                               {formErrors[`section_title_${index}`] && (
                                 <p className="mt-1 text-xs text-red-600">{formErrors[`section_title_${index}`]}</p>
                               )}
-                            </div>
-                            
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Sort Order</label>
-                              <input
-                                type="number"
-                                value={section.sortOrder}
-                                onChange={(e) => updateSection(index, 'sortOrder', parseInt(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                disabled={loading}
-                                min="0"
-                              />
                             </div>
                           </div>
                           
