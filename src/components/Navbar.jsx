@@ -1,9 +1,10 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Home, User, GraduationCap } from 'lucide-react';
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path) => location.pathname === path;
 
@@ -52,7 +53,10 @@ export default function Navbar() {
               <span>Course</span>
             </Link>
 
-            <button className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">
+            <button 
+              onClick={() => navigate('/profile')}
+              className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
+            >
               <User className="h-4 w-4" />
               <span>Profile</span>
             </button>

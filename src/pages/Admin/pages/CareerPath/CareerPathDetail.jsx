@@ -39,7 +39,6 @@ const CareerPathDetail = () => {
       setError(null);
     } catch (err) {
       setError('Failed to fetch career path details. Please try again.');
-      console.error('Error fetching career path details:', err);
     } finally {
       setLoading(false);
     }

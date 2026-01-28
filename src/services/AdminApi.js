@@ -8,7 +8,10 @@ class AdminApiService {
   }
 
   async request(endpoint, options = {}) {
+    debugger;
     const url = `${this.baseURL}${endpoint}`;
+    console.log('API Request:', { url, endpoint, options });
+    
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -20,7 +23,9 @@ class AdminApiService {
     };
 
     try {
+      console.log('Making fetch request to:', url);
       const response = await fetch(url, config);
+      console.log('Response received:', response.status, response.statusText);
 
       if (!response.ok) {
         // Try to get error details from response body
@@ -159,6 +164,7 @@ class AdminApiService {
 
   // GET course by ID for admin
   async getCourseByIdAdmin(courseId) {
+    console.log('API: Getting course by ID:', courseId, 'Endpoint:', ENDPOINTS.COURSE_BY_ID_ADMIN(courseId));
     return this.request(`${ENDPOINTS.COURSE_BY_ID_ADMIN(courseId)}`);
   }
 
@@ -204,17 +210,29 @@ class AdminApiService {
 
   // POST create new course
   async createCourse(courseData) {
+    // Ensure sections are included in the request if provided
+    const requestData = {
+      ...courseData,
+      sections: courseData.sections || []
+    };
+    
     return this.request(ENDPOINTS.COURSES_ADMIN, {
       method: 'POST',
-      body: JSON.stringify(courseData),
+      body: JSON.stringify(requestData),
     });
   }
 
   // PUT update course
   async updateCourse(courseId, courseData) {
+    // Ensure sections are included in the request if provided
+    const requestData = {
+      ...courseData,
+      sections: courseData.sections || []
+    };
+    
     return this.request(`${ENDPOINTS.COURSE_BY_ID_ADMIN(courseId)}`, {
       method: 'PUT',
-      body: JSON.stringify(courseData),
+      body: JSON.stringify(requestData),
     });
   }
 

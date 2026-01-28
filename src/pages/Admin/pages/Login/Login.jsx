@@ -111,7 +111,6 @@ const Login = () => {
       }
     } catch (error) {
       setAuthError('Login failed. Please try again.');
-      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }

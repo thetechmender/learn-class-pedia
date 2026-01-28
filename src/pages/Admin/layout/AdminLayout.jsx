@@ -34,7 +34,7 @@ const AdminLayout = ({ children }) => {
 
 
   return (
-    <div className={`${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} min-h-screen flex`}>
+    <div className={`admin-dashboard ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} min-h-screen flex`}>
       {/* Sidebar */}
       <Sidebar
         isOpen={mobileMenuOpen}

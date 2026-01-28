@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { adminApiService } from '../../../services/AdminApi';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -64,7 +64,7 @@ export const ProtectedRoute = ({ children }) => {
 };
 
 const DynamicRoutes = () => {
-  
+  const location = useLocation();
   const { user } = useAuth();
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,20 +72,14 @@ const DynamicRoutes = () => {
 
   useEffect(() => {
     const loadRoutes = async () => {
-      console.log('DynamicRoutes - user:', user);
-      console.log('DynamicRoutes - user.roleId:', user?.roleId);
-      
       // Check if user exists and has roleId
       if (!user) {
-        console.log('DynamicRoutes - No user found, setting loading to false');
         setLoading(false);
         setError('No user authenticated');
         return;
       }
 
       if (!user.roleId) {
-        console.log('DynamicRoutes - No roleId found in user object');
-        console.log('DynamicRoutes - User object structure:', JSON.stringify(user, null, 2));
         setLoading(false);
         setError('User role not found');
         return;
@@ -95,9 +89,7 @@ const DynamicRoutes = () => {
       setError(null);
 
       try {
-        console.log('DynamicRoutes - Calling adminApiService.getRoutesByRole with roleId:', user.roleId);
         const userRoutes = await adminApiService.getRoutesByRole(user.roleId);
-        console.log('DynamicRoutes - Routes received:', userRoutes);
         
         if (!userRoutes || !Array.isArray(userRoutes)) {
           throw new Error('Invalid routes data received');
@@ -105,7 +97,6 @@ const DynamicRoutes = () => {
         
         setRoutes(userRoutes);
       } catch (err) {
-        console.error('DynamicRoutes - Error loading routes:', err);
         setError(`Failed to load routes: ${err.message}`);
       } finally {
         setLoading(false);
@@ -132,8 +123,10 @@ const DynamicRoutes = () => {
   }
 
   // Extract route path from full path (e.g., /admin/dashboard -> dashboard)
+  // But preserve the full path for navigation
   const getRoutePath = (fullPath) => {
-    return fullPath.split('/').pop();
+    // Remove /admin prefix and keep the rest
+    return fullPath.replace('/admin/', '');
   };
 
   return (
@@ -142,7 +135,11 @@ const DynamicRoutes = () => {
       <Route index element={<Navigate to="/admin/dashboard" replace />} />
       
       {/* Career Path Detail Route */}
-      <Route path="career-paths/:id" element={<CareerPathDetail />} />
+      <Route path="career-paths/:id" element={
+        <ProtectedRoute>
+          <CareerPathDetail />
+        </ProtectedRoute>
+      } />
       
       {/* Dynamic routes based on user role */}
       {routes.map((route) => {
@@ -158,7 +155,11 @@ const DynamicRoutes = () => {
           <Route
             key={route.id}
             path={routePath}
-            element={<Component />}
+            element={
+              <ProtectedRoute>
+                <Component />
+              </ProtectedRoute>
+            }
           />
         );
       })}

@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '../../../hooks/useAdmin';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { useToast } from '../../../hooks/useToast';
+import { CATEGORY_MANAGEMENT_CONSTANTS } from '../../../constants/categoryManagement';
+import { calculateCategoryStats, filterCategoriesBySearch, validateCategoryForm } from '../../../utils/categoryUtils';
 import Modal from '../../../components/Modal';
 import CategoryDropdown from '../../../components/CategoryDropdown';
-import { useToast } from '../../../components/ToastProvider';
+import VirtualizedCategoryTable from '../../../components/VirtualizedCategoryTable';
 import { 
   Plus, 
   Edit2, 
@@ -15,12 +19,16 @@ import {
   EyeOff,
   ChevronRight as ChevronRightIcon,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 
 const CategoryManagement = () => {
   // Toast notifications
-  const { showError, showSuccess } = useToast();
+  const { toast, showToast } = useToast();
+  
+  const showSuccess = (message) => showToast(message, 'success');
+  const showError = (message) => showToast(message, 'error');
   
   // CRUD operations from hook
   const {
@@ -75,19 +83,27 @@ const CategoryManagement = () => {
       const data = await getAllCategories(searchTerm, {});
       const categories = data.items || data || [];
       setCategories(categories);
-      setPagination(prev => ({ ...prev, totalCount: categories.length, page: 1 }));
       setError(null);
     } catch (err) {
       setError('Failed to fetch categories');
     } finally {
       setLoading(false);
     }
-  }, [getAllCategories, filters]);
+  }, [getAllCategories]);
 
   // Initialize data on mount
   useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+  }, []);
+
+  // Fetch categories when filters change (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchCategories();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [filters.name, filters.slug, filters.description, filters.parentCategoryId]);
 
   // Input handlers
   const handleInputChange = useCallback((e) => {
@@ -130,7 +146,7 @@ const CategoryManagement = () => {
       // No search filters, show all categories with pagination
       return categories;
     }
-  }, [globalSearchResults, filters.name, filters.slug, filters.description, categories]);
+  }, [globalSearchResults, filters.name, filters.slug, filters.description]);
 
   // Pagination for display categories
   const paginatedDisplayCategories = useMemo(() => {
@@ -140,13 +156,13 @@ const CategoryManagement = () => {
     );
   }, [displayCategories, pagination.page, pagination.pageSize]);
 
-  const categoryMap = new Map(displayCategories.map(cat => [cat.id, cat]));
+  const categoryMap = useMemo(() => new Map(displayCategories.map(cat => [cat.id, cat])), [displayCategories]);
   
   // Find root categories from displayed data (not paginated)
-  const parentCategories = displayCategories.filter(cat => {
+  const parentCategories = useMemo(() => displayCategories.filter(cat => {
     // A category is a parent if it has no parent
     return !cat.parentCategoryId;
-  });
+  }), [displayCategories]);
 
   // Update pagination total count
   useEffect(() => {
@@ -231,7 +247,7 @@ const CategoryManagement = () => {
       setModalError(errorMessage);
       showError(errorMessage);
     }
-  }, [editingCategory, formData, updateCategory, createCategory, resetForm, fetchCategories, showSuccess, showError]);
+  }, [editingCategory, formData, updateCategory, createCategory, resetForm, fetchCategories, showSuccess, showError, showToast]);
 
   const handleEdit = useCallback((category) => {
     setEditingCategory(category);
@@ -259,7 +275,7 @@ const CategoryManagement = () => {
       const errorMessage = err.response?.data?.error || err.message || 'Failed to delete category';
       showError(errorMessage);
     }
-  }, [deleteCategory, fetchCategories, showSuccess, showError]);
+  }, [deleteCategory, fetchCategories, showSuccess, showError, showToast]);
 
   // Expand/collapse child categories
   const toggleCategoryExpansion = useCallback((categoryId) => {
@@ -333,25 +349,25 @@ const CategoryManagement = () => {
               )}
               {!hasChildren && level > 0 && <span className="mr-6" />}
               <div>
-                <div className={`font-medium ${isMatching ? 'text-yellow-800 font-semibold' : ''}`}>
+                <div className={`font-medium ${isMatching ? 'text-yellow-800 font-semibold' : ''}`} style={{fontSize: '0.9rem'}}>
                   {category.name}
                 </div>
                 {category.parentCategoryName && (
-                  <div className="text-sm text-gray-500">Parent: {category.parentCategoryName}</div>
+                  <div className="text-sm text-gray-500" style={{fontSize: '0.8rem'}}>Parent: {category.parentCategoryName}</div>
                 )}
               </div>
             </div>
           </td>
-          <td className="px-4 py-3 text-sm text-gray-600 font-mono">{category.slug}</td>
-          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{category.description || 'No description'}</td>
-          <td className="px-4 py-3 text-center text-sm font-medium">{category.sortOrder || 0}</td>
+          <td className="px-4 py-3 text-sm text-gray-600 font-mono" style={{fontSize: '0.875rem'}}>{category.slug}</td>
+          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" style={{fontSize: '0.875rem'}}>{category.description || 'No description'}</td>
+          <td className="px-4 py-3 text-center text-sm font-medium" style={{fontSize: '0.875rem'}}>{category.sortOrder || 0}</td>
           <td className="px-4 py-3">
             <span className={`px-2 py-1 text-xs rounded-full ${
               category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>{category.isActive ? 'Active' : 'Inactive'}</span>
+            }`} style={{fontSize: '0.75rem'}}>{category.isActive ? 'Active' : 'Inactive'}</span>
           </td>
           <td className="px-4 py-3">
-            {category.iconUrl ? <img src={category.iconUrl} alt={category.name} className="w-6 h-6 rounded" /> : <span className="text-gray-400 text-sm">No icon</span>}
+            {category.iconUrl ? <img src={category.iconUrl} alt={category.name} className="w-6 h-6 rounded" /> : <span className="text-gray-400 text-sm" style={{fontSize: '0.8rem'}}>No icon</span>}
           </td>
           <td className="px-4 py-3 flex space-x-2">
             <button onClick={() => handleViewDetails(category)} className="text-green-600 hover:bg-green-50 p-1 rounded"><Eye size={16} /></button>
@@ -366,7 +382,23 @@ const CategoryManagement = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-2">Category Management</h1>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+          toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {toast.type === 'success' ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <AlertCircle className="w-5 h-5" />
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
+
+      <h1 className="text-2xl font-bold mb-2" style={{fontSize: '1.5rem'}}>Category Management</h1>
       <p className="text-gray-600 mb-4">Manage your course categories and subcategories</p>
 
       {/* Error message */}
@@ -381,25 +413,28 @@ const CategoryManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
               <input
                 type="text"
-                placeholder="Search categories..."
+                placeholder="Search by name..."
                 value={filters.name || ''}
                 onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{fontSize: '1rem'}}
               />
             </div>
             <input
               type="text"
-              placeholder="Slug..."
+              placeholder="Search by slug..."
               value={filters.slug || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, slug: e.target.value }))}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{fontSize: '1rem'}}
             />
             <input
               type="text"
-              placeholder="Description..."
+              placeholder="Search by description..."
               value={filters.description || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, description: e.target.value }))}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{fontSize: '1rem'}}
             />
             <CategoryDropdown
               categories={allCategoriesForDropdown}
@@ -414,6 +449,7 @@ const CategoryManagement = () => {
             <button
               onClick={applyFilters}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              style={{fontSize: '0.875rem'}}
             >
               <Filter size={16} className="mr-2" />
               Apply Filters
@@ -421,6 +457,7 @@ const CategoryManagement = () => {
             <button
               onClick={clearFilters}
               className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              style={{fontSize: '0.875rem'}}
             >
               Clear
             </button>
@@ -429,6 +466,7 @@ const CategoryManagement = () => {
         <button
           onClick={openCreateModal}
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          style={{fontSize: '0.875rem'}}
         >
           <Plus size={20} className="mr-2"/> Add Category
         </button>
@@ -439,26 +477,26 @@ const CategoryManagement = () => {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading categories...</span>
+            <span className="ml-3 text-gray-600" style={{fontSize: '0.875rem'}}>Loading categories...</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Sort Order</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Category</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Slug</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Description</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Sort Order</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Icon</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {parentCategories.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-4 py-8 text-center text-gray-500">No categories found.</td>
+                    <td colSpan="7" className="px-4 py-8 text-center text-gray-500" style={{fontSize: '0.875rem'}}>No categories found.</td>
                   </tr>
                 ) : (
                   parentCategories
@@ -474,7 +512,7 @@ const CategoryManagement = () => {
       {/* Pagination */}
       {pagination.totalCount > pagination.pageSize && (
         <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600" style={{fontSize: '0.875rem'}}>
             Showing {((pagination.page - 1) * pagination.pageSize) + 1} to {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of {pagination.totalCount} categories
           </div>
           <div className="flex items-center space-x-2">
@@ -485,7 +523,7 @@ const CategoryManagement = () => {
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="px-3 py-1 text-sm font-medium">
+            <span className="px-3 py-1 text-sm font-medium" style={{fontSize: '0.875rem'}}>
               Page {pagination.page} of {Math.ceil(pagination.totalCount / pagination.pageSize)}
             </span>
             <button 

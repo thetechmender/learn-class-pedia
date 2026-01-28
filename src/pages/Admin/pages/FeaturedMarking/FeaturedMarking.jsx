@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCourseBadgeManagement } from '../../../../hooks/useCourseBadgeManagement';
+import { useToast } from '../../../../hooks/useToast';
 import {
   Award,
   Search,
@@ -13,12 +14,16 @@ import {
   X,
   Check,
   BookOpen,
-  ChevronDown
+  ChevronDown,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 
 const FeaturedMarking = () => {
+  const { toast, showToast } = useToast();
+  const [formErrors, setFormErrors] = useState({});
   const {
     // Data
     badges,
@@ -53,6 +58,22 @@ const FeaturedMarking = () => {
     clearError
   } = useCourseBadgeManagement();
 
+  // Clear form errors when modal opens/closes
+  const handleOpenCreateModal = () => {
+    setFormErrors({});
+    openCreateModal();
+  };
+
+  const handleOpenEditModal = (badge) => {
+    setFormErrors({});
+    openEditModal(badge);
+  };
+
+  const handleCloseModals = () => {
+    setFormErrors({});
+    closeModals();
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBadge, setFilterBadge] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
@@ -76,21 +97,55 @@ const FeaturedMarking = () => {
     return matchesSearch && matchesBadge;
   }) : [];
 
+  // Validate form before submission
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.badgeKey || formData.badgeKey.trim() === '') {
+      errors.badgeKey = 'Badge Key is required';
+    }
+    
+    if (!formData.badgeName || formData.badgeName.trim() === '') {
+      errors.badgeName = 'Badge Name is required';
+    }
+    
+    if (!formData.badgeIcon || formData.badgeIcon.trim() === '') {
+      errors.badgeIcon = 'Badge Icon is required';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Handle badge creation
   const handleCreateBadge = async () => {
+    if (!validateForm()) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+    
     try {
       await createBadge(formData);
+      showToast('Badge created successfully!', 'success');
+      setFormErrors({}); // Clear errors on success
     } catch (err) {
-      // Error handling without console.log
+      showToast('Failed to create badge', 'error');
     }
   };
 
   // Handle badge update
   const handleUpdateBadge = async () => {
+    if (!validateForm()) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+    
     try {
       await updateBadge(selectedBadge.id, formData);
+      showToast('Badge updated successfully!', 'success');
+      setFormErrors({}); // Clear errors on success
     } catch (err) {
-      // Error handling without console.log
+      showToast('Failed to update badge', 'error');
     }
   };
 
@@ -99,8 +154,9 @@ const FeaturedMarking = () => {
     if (window.confirm('Are you sure you want to delete this badge?')) {
       try {
         await deleteBadge(badgeId);
+        showToast('Badge deleted successfully!', 'success');
       } catch (err) {
-        // Error handling without console.log
+        showToast('Failed to delete badge', 'error');
       }
     }
   };
@@ -111,8 +167,9 @@ const FeaturedMarking = () => {
       await assignCoursesToBadge(selectedBadge.id, selectedCourses);
       setSelectedCourses([]);
       closeModals();
+      showToast('Courses assigned to badge successfully!', 'success');
     } catch (err) {
-      // Error handling without console.log
+      showToast('Failed to assign courses to badge', 'error');
     }
   };
 
@@ -184,6 +241,22 @@ const FeaturedMarking = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+          toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {toast.type === 'success' ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <AlertCircle className="w-5 h-5" />
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
+      
       <div className="p-6 max-w-7xl mx-auto">
         {/* Enhanced Header */}
         <div className="mb-8">
@@ -208,7 +281,7 @@ const FeaturedMarking = () => {
               </div>
             </div>
             <button
-              onClick={openCreateModal}
+              onClick={handleOpenCreateModal}
               className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
@@ -425,7 +498,7 @@ const FeaturedMarking = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => openEditModal(badge)}
+                      onClick={() => handleOpenEditModal(badge)}
                       className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                       title="Edit Badge"
                     >
@@ -549,7 +622,7 @@ const FeaturedMarking = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => openEditModal(badge)}
+                          onClick={() => handleOpenEditModal(badge)}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                           title="Edit Badge"
                         >
@@ -591,7 +664,7 @@ const FeaturedMarking = () => {
               </p>
               {!searchTerm && filterBadge === 'all' && (
                 <button
-                  onClick={openCreateModal}
+                  onClick={handleOpenCreateModal}
                   className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -612,7 +685,7 @@ const FeaturedMarking = () => {
                 {showCreateModal ? 'Create New Badge' : 'Edit Badge'}
               </h2>
               <button
-                onClick={closeModals}
+                onClick={handleCloseModals}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-5 h-5" />
@@ -622,44 +695,68 @@ const FeaturedMarking = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Badge Key
+                  Badge Key <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="badgeKey"
                   value={formData.badgeKey}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.badgeKey 
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
+                  } text-gray-900 dark:text-white`}
                   placeholder="e.g., ALL, FEATURED, NEW"
+                  required
                 />
+                {formErrors.badgeKey && (
+                  <p className="mt-1 text-sm text-red-500">{formErrors.badgeKey}</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Badge Name
+                  Badge Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="badgeName"
                   value={formData.badgeName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.badgeName 
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
+                  } text-gray-900 dark:text-white`}
                   placeholder="e.g., All Courses, Featured Courses"
+                  required
                 />
+                {formErrors.badgeName && (
+                  <p className="mt-1 text-sm text-red-500">{formErrors.badgeName}</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Badge Icon
+                  Badge Icon <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="badgeIcon"
                   value={formData.badgeIcon}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    formErrors.badgeIcon 
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
+                  } text-gray-900 dark:text-white`}
                   placeholder="🏆"
+                  required
                 />
+                {formErrors.badgeIcon && (
+                  <p className="mt-1 text-sm text-red-500">{formErrors.badgeIcon}</p>
+                )}
               </div>
 
               <div>
@@ -705,7 +802,7 @@ const FeaturedMarking = () => {
 
             <div className="flex justify-end space-x-3 mt-6">
               <button
-                onClick={closeModals}
+                onClick={handleCloseModals}
                 className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancel

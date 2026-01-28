@@ -104,7 +104,6 @@ const CareerPath = () => {
       setError(null);
     } catch (err) {
       setError('Failed to fetch career paths. Please try again.');
-      console.error('Error fetching career paths:', err);
     } finally {
       setLoading(false);
     }
@@ -144,11 +143,9 @@ const CareerPath = () => {
       setFormLoading(true);
       // Fetch full career path details
       const careerPathDetails = await adminApiService.getCareerPathById(careerPath.id);
-      console.log('Fetched career path details:', careerPathDetails);
       setEditingCareerPath(careerPathDetails);
       setShowCreateForm(true);
     } catch (error) {
-      console.error('Error fetching career path details:', error);
       showToast('Failed to fetch career path details. Please try again.', 'error');
     } finally {
       setFormLoading(false);
@@ -173,7 +170,6 @@ const CareerPath = () => {
       setEditingCareerPath(null);
       fetchCareerPaths(); // Refresh the list
     } catch (error) {
-      console.error('Error saving career path:', error);
       
       // Extract specific error message from API response
       let errorMessage = editingCareerPath 
@@ -209,7 +205,6 @@ const CareerPath = () => {
       setDeleteConfirm(null);
       fetchCareerPaths(); // Refresh the list
     } catch (error) {
-      console.error('Error deleting career path:', error);
       showToast('Failed to delete career path. Please try again.', 'error');
     } finally {
       setFormLoading(false);

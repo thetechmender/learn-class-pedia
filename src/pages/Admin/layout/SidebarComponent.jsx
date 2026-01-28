@@ -1,18 +1,26 @@
 import { BookOpen, X, ChevronLeft, ChevronRight, LayoutDashboard, TrendingUp, User, LogOut, Star, MessageCircle, Link2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/useDynamicRoutes';
 import { useAuth } from '../../../context/AuthContext';
 
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, user } = useAuth();
   const { getMainNavItems, getManagementItems, loading, error } = useDynamicRoutes();
-  const [activeRoute, setActiveRoute] = useState('/admin/dashboard');
+  const [activeRoute, setActiveRoute] = useState(location.pathname);
+
+  // Update active route when location changes
+  useEffect(() => {
+    setActiveRoute(location.pathname);
+  }, [location.pathname]);
 
   const handleNavigation = (path) => {
-    setActiveRoute(path);
-    navigate(path);
+    // Ensure path is complete (add /admin prefix if missing)
+    const fullPath = path.startsWith('/admin/') ? path : `/admin/${path}`;
+    setActiveRoute(fullPath);
+    navigate(fullPath);
     if (isOpen) {
       onClose();
     }
@@ -50,7 +58,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
 
   // Handle error state
   if (error) {
-    console.error('Sidebar error:', error);
     return (
       <aside className={`fixed lg:sticky inset-y-0 left-0 z-50 top-0 ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}>
         <div className="flex flex-col h-full">
@@ -59,7 +66,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
               <img 
                 src="/logo.svg" 
                 alt="Classpedia" 
-                className="w-50 h-50"
+                className="w-40 h-40"
               />
             </div>
           </div>
@@ -73,8 +80,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
     );
   }
 
-  console.log('Sidebar - mainNavItems:', mainNavItems);
-  console.log('Sidebar - managementItems:', managementItems);
   return (
     <>
       {/* Mobile backdrop */}
@@ -131,58 +136,70 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             {/* Main Navigation */}
             <div>
               {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2" style={{fontSize: '0.75rem'}}>
                   Main Menu
                 </h3>
               )}
               <div className="space-y-1">
-                {mainNavItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavigation(item.path)}
-                    className={`
-                      w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
-                      transition-all duration-200 relative
-                      ${activeRoute === item.path
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }
-                    `}
-                    title={isCollapsed ? item.label : undefined}
-                  >
-                    <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-                    {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
-                  </button>
-                ))}
+                {mainNavItems.map((item) => {
+                  // Ensure we're comparing full paths
+                  const fullPath = item.path.startsWith('/admin/') ? item.path : `/admin/${item.path}`;
+                  const isActive = activeRoute === fullPath;
+                  
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavigation(item.path)}
+                      className={`
+                        w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
+                        transition-all duration-200 relative
+                        ${isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }
+                      `}
+                      title={isCollapsed ? item.label : undefined}
+                    >
+                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
+                      {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Management Section */}
             <div>
               {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2" style={{fontSize: '0.75rem'}}>
                   Management
                 </h3>
               )}
               <div className="space-y-1">
-                {managementItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavigation(item.path)}
-                    className={`
-                      w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
-                      transition-all duration-200 relative
-                      ${activeRoute === item.path
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }
-                    `}
-                    title={isCollapsed ? item.label : undefined}
-                  >
-                    <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-                    {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
-                  </button>
-                ))}
+                {managementItems.map((item) => {
+                  // Ensure we're comparing full paths
+                  const fullPath = item.path.startsWith('/admin/') ? item.path : `/admin/${item.path}`;
+                  const isActive = activeRoute === fullPath;
+                  
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavigation(item.path)}
+                      className={`
+                        w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
+                        transition-all duration-200 relative
+                        ${isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }
+                      `}
+                      title={isCollapsed ? item.label : undefined}
+                    >
+                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
+                      {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
