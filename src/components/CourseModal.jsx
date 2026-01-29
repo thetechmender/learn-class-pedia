@@ -94,10 +94,21 @@ const CourseModal = ({
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+      
+      // If course is unpaid, set default values for pricing fields
+      if (name === 'isPaid' && !checked) {
+        newData.price = '0';
+        newData.discountedPrice = '0';
+        newData.currencyCode = 'USD';
+      }
+      
+      return newData;
+    });
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -186,7 +197,7 @@ const CourseModal = ({
       errors.price = 'Price must be greater than 0';
     }
 
-    // Validate sections if course type is 1
+    // Validate sections only if course type is 1 (advance course)
     if (formData.courseTypeId === 1) {
       if (!formData.sections || formData.sections.length === 0) {
         errors.sections = 'At least one section is required for this course type';
@@ -565,7 +576,7 @@ const CourseModal = ({
                 />
               </div>
 
-              {/* Sections - Only show when courseTypeId === 1 */}
+              {/* Sections - Only show when courseTypeId === 1 (Advance Course) */}
               {formData.courseTypeId === 1 && (
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-4">

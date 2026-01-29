@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '../../../hooks/useAdmin';
-import { useDebounce } from '../../../hooks/useDebounce';
 import { useToast } from '../../../hooks/useToast';
-import { CATEGORY_MANAGEMENT_CONSTANTS } from '../../../constants/categoryManagement';
-import { calculateCategoryStats, filterCategoriesBySearch, validateCategoryForm } from '../../../utils/categoryUtils';
 import Modal from '../../../components/Modal';
 import CategoryDropdown from '../../../components/CategoryDropdown';
-import VirtualizedCategoryTable from '../../../components/VirtualizedCategoryTable';
 import { 
   Plus, 
   Edit2, 
@@ -16,15 +12,12 @@ import {
   Search,
   Filter,
   Eye,
-  EyeOff,
-  ChevronRight as ChevronRightIcon,
   ChevronDown,
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
 
 const CategoryManagement = () => {
-  // Toast notifications
   const { toast, showToast } = useToast();
   
   const showSuccess = (message) => showToast(message, 'success');
@@ -33,7 +26,6 @@ const CategoryManagement = () => {
   // CRUD operations from hook
   const {
     getAllCategories,
-    getCategoryById,
     createCategory,
     updateCategory,
     deleteCategory
@@ -73,8 +65,6 @@ const CategoryManagement = () => {
     iconUrl: '',
     parentCategoryId: 0
   });
-
-  // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
@@ -90,13 +80,9 @@ const CategoryManagement = () => {
       setLoading(false);
     }
   }, [getAllCategories]);
-
-  // Initialize data on mount
   useEffect(() => {
     fetchCategories();
   }, []);
-
-  // Fetch categories when filters change (debounced)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchCategories();

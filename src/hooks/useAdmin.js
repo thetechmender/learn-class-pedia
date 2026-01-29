@@ -144,7 +144,6 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
 
   // Update course
   const updateCourse = useCallback(async (courseId, courseData) => {
-    debugger;
     try {
       setLoading(true);
       setError(null);

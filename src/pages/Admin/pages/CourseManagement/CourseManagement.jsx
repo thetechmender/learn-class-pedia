@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import  { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '../../../../hooks/useAdmin';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { useCourseFilters } from '../../../../hooks/useCourseFilters';
@@ -15,10 +15,9 @@ import UniversalVirtualizedTable from '../../../../components/UniversalVirtualiz
 import { courseTableColumns } from '../../../../config/tableConfigurations';
 
 const CourseManagement = () => {
-  // Custom hooks
   const { 
     error, getCourseById, updateCourse,
-    getCourseTypes, getCourseLevels, getCourseBadges, getAllCategories, createCourse, deleteCourse, getAllCoursesAdmin
+    getCourseTypes, getCourseLevels, getAllCategories, createCourse, deleteCourse, getAllCoursesAdmin
   } = useAdmin();
   
   const { toast, showToast } = useToast();
@@ -220,7 +219,7 @@ const CourseManagement = () => {
 
   // Handle modal submission
   const handleModalSubmit = async (formData) => {
-    debugger;
+
     try {
       setModalLoading(true);
       setModalError('');

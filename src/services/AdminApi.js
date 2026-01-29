@@ -8,7 +8,6 @@ class AdminApiService {
   }
 
   async request(endpoint, options = {}) {
-    debugger;
     const url = `${this.baseURL}${endpoint}`;
     console.log('API Request:', { url, endpoint, options });
     
@@ -216,6 +215,13 @@ class AdminApiService {
       sections: courseData.sections || []
     };
     
+    // Set default values for unpaid courses
+    if (!requestData.isPaid) {
+      requestData.price = 0;
+      requestData.discountedPrice = 0;
+      requestData.currencyCode = 'USD';
+    }
+    
     return this.request(ENDPOINTS.COURSES_ADMIN, {
       method: 'POST',
       body: JSON.stringify(requestData),
@@ -229,6 +235,13 @@ class AdminApiService {
       ...courseData,
       sections: courseData.sections || []
     };
+    
+    // Set default values for unpaid courses
+    if (!requestData.isPaid) {
+      requestData.price = 0;
+      requestData.discountedPrice = 0;
+      requestData.currencyCode = 'USD';
+    }
     
     return this.request(`${ENDPOINTS.COURSE_BY_ID_ADMIN(courseId)}`, {
       method: 'PUT',
