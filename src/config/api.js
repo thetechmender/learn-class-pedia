@@ -38,6 +38,15 @@ export const ENDPOINTS = {
   COURSE_BADGE_UPDATE: (id) => `/CourseBadge/UpdateCourseBadge/${id}`,
   COURSE_BADGE_CREATE: '/CourseBadge/CreateCourseBadge',
   COURSE_BADGE_DELETE: (id) => `/CourseBadge/${id}`,
+  CAREER_ROLES: '/career-roles',
+  CAREER_ROLE_BY_ID: (id) => `/career-roles/${id}`,
+  CAREER_SKILLS: '/careerskills',
+  CAREER_SKILL_BY_ID: (id) => `/careerskills/${id}`,
+  CAREER_PATH_LEVELS: '/career-paths/levels',
+  ALL_SKILLS: '/skills',
+  COURSES_BY_TYPE: (typeId) => `/admin/courses?CourseTypeId=${typeId}`,
+  COURSE_TYPES: '/admin/course-types',
+  CAREER_SKILLS_ENDPOINT: '/careerskills', // Added career skills endpoint
 };
 
 // HTTP Status Codes

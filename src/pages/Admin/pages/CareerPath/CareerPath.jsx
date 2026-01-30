@@ -21,7 +21,9 @@ import {
   Trash2,
   Eye,
   CheckCircle,
-  XCircle
+  XCircle,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 
 const CareerPath = () => {
@@ -36,6 +38,10 @@ const CareerPath = () => {
   const [selectedDuration, setSelectedDuration] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [hoveredCard, setHoveredCard] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(9); // 3x3 grid for card layout
   
   // Form states
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -53,6 +59,11 @@ const CareerPath = () => {
   useEffect(() => {
     filterCareerPaths();
   }, [careerPaths, searchTerm, selectedLevel, selectedDuration, selectedCategory]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
 
   const filterCareerPaths = () => {
     let filtered = careerPaths;
@@ -95,6 +106,12 @@ const CareerPath = () => {
 
     setFilteredCareerPaths(filtered);
   };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCareerPaths.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCareerPaths = filteredCareerPaths.slice(startIndex, endIndex);
 
   const fetchCareerPaths = async () => {
     try {
@@ -230,10 +247,10 @@ const CareerPath = () => {
     };
 
     levels?.forEach(level => {
-      const levelKey = level.levelKey?.toLowerCase();
-      if (difficultyCount.hasOwnProperty(levelKey)) {
-        difficultyCount[levelKey] += level.courses?.length || 0;
-      }
+      const levelName = level.levelName?.toLowerCase();
+      if (levelName?.includes('beginner')) difficultyCount.beginner += level.courses?.length || 0;
+      else if (levelName?.includes('intermediate')) difficultyCount.intermediate += level.courses?.length || 0;
+      else if (levelName?.includes('advanced')) difficultyCount.advanced += level.courses?.length || 0;
     });
 
     const mix = [];
@@ -252,6 +269,13 @@ const CareerPath = () => {
       }
     });
     return allCourses.slice(0, count);
+  };
+
+  const getSkillsSummary = (skills) => {
+    if (!skills || skills.length === 0) return 'No skills specified';
+    const totalSkills = skills.length;
+    const avgProficiency = skills.reduce((sum, skill) => sum + (skill.proficiencyLevel || 0), 0) / totalSkills;
+    return `${totalSkills} skills (Avg: ${avgProficiency.toFixed(1)})`;
   };
 
   const formatDate = (dateString) => {
@@ -547,9 +571,9 @@ const CareerPath = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCareerPaths.map((path) => {
-              const totalCourses = path.courses?.length || 0;
-              const firstCourses = path.courses?.slice(0, 3) || [];
+            {paginatedCareerPaths.map((path) => {
+              const totalCourses = calculateTotalCourses(path.levels);
+              const firstCourses = getFirstFewCourses(path.levels, 3);
               const isHovered = hoveredCard === path.id;
               
               return (
@@ -572,14 +596,14 @@ const CareerPath = () => {
                           <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full flex-shrink-0">
                             {path.status || 'Active'}
                           </span>
-                          {path.categoryName && (
-                            <span className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full flex-shrink-0">
-                              {path.categoryName}
+                          {path.price && (
+                            <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full flex-shrink-0">
+                              ${path.price}
                             </span>
                           )}
-                          {path.outcome && (
-                            <span className="px-3 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
-                              {path.outcome.length > 20 ? `${path.outcome.substring(0, 20)}...` : path.outcome}
+                          {path.discountedPrice && path.discountedPrice < path.price && (
+                            <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full flex-shrink-0">
+                              ${path.discountedPrice}
                             </span>
                           )}
                         </div>
@@ -613,12 +637,12 @@ const CareerPath = () => {
                       </div>
                       <div className="text-center p-3 bg-purple-50 rounded-xl">
                         <div className="flex items-center justify-center text-purple-600 mb-2">
-                          <Target className="w-5 h-5" />
+                          <Users className="w-5 h-5" />
                         </div>
                         <div className="text-xl font-bold text-gray-900">
-                          {path.careerPathLevelName || 'N/A'}
+                          {path.levels?.length || 0}
                         </div>
-                        <div className="text-xs text-gray-600 font-medium">Level</div>
+                        <div className="text-xs text-gray-600 font-medium">Levels</div>
                       </div>
                       <div className="text-center p-3 bg-orange-50 rounded-xl">
                         <div className="flex items-center justify-center text-orange-600 mb-2">
@@ -631,6 +655,31 @@ const CareerPath = () => {
                       </div>
                     </div>
 
+                    {/* Skills Summary */}
+                    {path.skills && path.skills.length > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Skills</div>
+                          <Star className="w-4 h-4 text-yellow-500" />
+                        </div>
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                          <p className="text-sm text-blue-800 font-medium">{getSkillsSummary(path.skills)}</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {path.skills.slice(0, 3).map((skill, index) => (
+                              <span key={index} className="px-2 py-1 text-xs bg-blue-600 text-white rounded-full">
+                                Lvl {skill.proficiencyLevel}
+                              </span>
+                            ))}
+                            {path.skills.length > 3 && (
+                              <span className="px-2 py-1 text-xs bg-gray-400 text-white rounded-full">
+                                +{path.skills.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Learning Path */}
                     {firstCourses.length > 0 && (
                       <div className="mb-6">
@@ -641,13 +690,13 @@ const CareerPath = () => {
                         <div className="space-y-2">
                           {firstCourses.map((course, index) => (
                             <div key={course.courseId} className="flex items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0 ${
+                              {/* <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0 ${
                                 index === 0 ? 'bg-blue-600 text-white' :
                                 index === 1 ? 'bg-blue-500 text-white' :
                                 'bg-blue-400 text-white'
                               }`}>
                                 {course.courseSequence + 1 || index + 1}
-                              </div>
+                              </div> */}
                               <div className="flex-1 min-w-0 mr-2">
                                 <div className="text-gray-900 font-semibold text-sm truncate" title={course.title}>
                                   {course.title}
@@ -678,7 +727,7 @@ const CareerPath = () => {
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                       <div className="flex items-center text-xs text-gray-500 flex-shrink-0">
                         <Calendar className="w-3 h-3 mr-1" />
-                        {formatDate(path.createdAt)}
+                        {formatDate(path.creationTime || path.createdAt)}
                       </div>
                       <div className="flex items-center gap-1 ml-2">
                         <button 
@@ -711,6 +760,66 @@ const CareerPath = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredCareerPaths.length)} of{' '}
+              {filteredCareerPaths.length} results
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Previous
+              </button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-2 text-sm border rounded-md ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <ChevronRightIcon className="w-4 h-4 ml-1" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Form Modal */}
       {showCreateForm && (

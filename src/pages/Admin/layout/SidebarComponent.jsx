@@ -1,4 +1,4 @@
-import { BookOpen, X, ChevronLeft, ChevronRight, LayoutDashboard, TrendingUp, User, LogOut, Star, MessageCircle, Link2 } from 'lucide-react';
+import { BookOpen, X, ChevronLeft, ChevronRight, LayoutDashboard, TrendingUp, User, LogOut, Star, MessageCircle, Link2, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/useDynamicRoutes';
@@ -10,6 +10,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const { logout, user } = useAuth();
   const { getMainNavItems, getManagementItems, loading, error } = useDynamicRoutes();
   const [activeRoute, setActiveRoute] = useState(location.pathname);
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   // Update active route when location changes
   useEffect(() => {
@@ -26,6 +27,94 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
     }
   };
 
+  const toggleMenu = (menuId) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuId]: !prev[menuId]
+    }));
+  };
+
+  const isMenuExpanded = (menuId) => {
+    return expandedMenus[menuId] || false;
+  };
+
+  // Render menu item with submenu support
+  const renderMenuItem = (item, level = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const fullPath = item.path.startsWith('/admin/') ? item.path : `/admin/${item.path}`;
+    const isActive = activeRoute === fullPath || activeRoute.startsWith(fullPath + '/');
+    const isExpanded = isMenuExpanded(item.id);
+
+    if (hasChildren && !isCollapsed) {
+      return (
+        <div key={item.id}>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                // If item has a path, navigate to it
+                if (item.path) {
+                  handleNavigation(item.path);
+                }
+              }}
+              className={`
+                flex-1 flex items-center gap-2 px-3 py-3 rounded-l-lg
+                transition-all duration-200 relative
+                ${isActive
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }
+              `}
+              style={{ paddingLeft: `${level * 12 + 12}px` }}
+            >
+              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="font-medium text-sm truncate flex-1 text-left">{item.label}</span>
+            </button>
+            <button
+              onClick={() => toggleMenu(item.id)}
+              className={`
+                p-3 rounded-r-lg transition-all duration-200
+                ${isActive
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }
+              `}
+            >
+              <ChevronDown 
+                className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+              />
+            </button>
+          </div>
+          
+          {isExpanded && (
+            <div className="mt-1 space-y-1">
+              {item.children.map(child => renderMenuItem(child, level + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        key={item.id}
+        onClick={() => handleNavigation(item.path)}
+        className={`
+          w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
+          transition-all duration-200 relative
+          ${isActive
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
+            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+          }
+        `}
+        style={{ paddingLeft: `${level * 12 + (isCollapsed ? 12 : 12)}px` }}
+        title={isCollapsed ? item.label : undefined}
+      >
+        <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
+        {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
+      </button>
+    );
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/admin/login');
@@ -33,6 +122,35 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
 
   const mainNavItems = getMainNavItems();
   const managementItems = getManagementItems();
+  
+  // Modify existing Career Path menu to include submenus
+  const allManagementItems = managementItems.map(item => {
+    if (item.id === 'career-path' || item.label === 'Career Path') {
+      return {
+        ...item,
+        path: 'career-path', // Make parent clickable
+        children: [
+          {
+            id: 'career-roles',
+            label: 'Career Roles',
+            icon: User,
+            path: 'career-roles'
+          },
+          {
+            id: 'career-skills',
+            label: 'Career Skills',
+            icon: Star,
+            path: 'career-skills'
+          }
+        ]
+      };
+    }
+    // Filter out separate Career Roles item
+    if (item.id === 'career-roles' || item.label === 'Career Roles') {
+      return null;
+    }
+    return item;
+  }).filter(Boolean); // Remove null items
   
   // Handle loading state
   if (loading) {
@@ -144,7 +262,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                 {mainNavItems.map((item) => {
                   // Ensure we're comparing full paths
                   const fullPath = item.path.startsWith('/admin/') ? item.path : `/admin/${item.path}`;
-                  const isActive = activeRoute === fullPath;
+                  // Check if current route starts with the item path for sub-routes
+                  const isActive = activeRoute === fullPath || activeRoute.startsWith(fullPath + '/');
                   
                   return (
                     <button
@@ -176,30 +295,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                 </h3>
               )}
               <div className="space-y-1">
-                {managementItems.map((item) => {
-                  // Ensure we're comparing full paths
-                  const fullPath = item.path.startsWith('/admin/') ? item.path : `/admin/${item.path}`;
-                  const isActive = activeRoute === fullPath;
-                  
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavigation(item.path)}
-                      className={`
-                        w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
-                        transition-all duration-200 relative
-                        ${isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }
-                      `}
-                      title={isCollapsed ? item.label : undefined}
-                    >
-                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-                      {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
-                    </button>
-                  );
-                })}
+                {allManagementItems.map((item) => renderMenuItem(item))}
               </div>
             </div>
 

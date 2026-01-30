@@ -17,6 +17,8 @@ import Settings from '../pages/Settings/Settings';
 import Notifications from '../pages/Notifications/Notifications';
 import Support from '../pages/Support/Support';
 import CategoryManagement from '../pages/CategoryManagement';
+import CareerRoles from '../pages/CareerRoles';
+import CareerSkills from '../pages/CareerSkills';
 
 // Component mapping
 const componentMap = {
@@ -33,6 +35,8 @@ const componentMap = {
   Notifications,
   Support,
   CategoryManagement,
+  CareerRoles,
+  CareerSkills,
 };
 
 // Protected Route Component
@@ -138,6 +142,20 @@ const DynamicRoutes = () => {
       <Route path="career-paths/:id" element={
         <ProtectedRoute>
           <CareerPathDetail />
+        </ProtectedRoute>
+      } />
+      
+      {/* Career Roles Route */}
+      <Route path="career-roles" element={
+        <ProtectedRoute>
+          <CareerRoles />
+        </ProtectedRoute>
+      } />
+      
+      {/* Career Skills Route */}
+      <Route path="career-skills" element={
+        <ProtectedRoute>
+          <CareerSkills />
         </ProtectedRoute>
       } />
       

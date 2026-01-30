@@ -494,6 +494,7 @@ class AdminApiService {
 
   // PUT update career path
   async updateCareerPath(id, careerPathData) {
+    debugger;
     return this.request(`${ENDPOINTS.CAREER_PATHS}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(careerPathData),

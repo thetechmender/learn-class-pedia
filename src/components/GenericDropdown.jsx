@@ -11,7 +11,8 @@ const GenericDropdown = ({
   allowClear = true,
   displayField = 'name',
   valueField = 'id',
-  searchable = true
+  searchable = true,
+  multiple = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,22 +30,42 @@ const GenericDropdown = ({
   }, [items, searchTerm, searchable, displayField]);
 
   const getSelectedDisplayName = () => {
-   
-  if (value === null || value === undefined) return placeholder;
+    if (multiple) {
+      if (!value || value.length === 0) return placeholder;
+      
+      const selectedItems = items.filter(item => 
+        value.includes(item[valueField])
+      );
+      
+      if (selectedItems.length === 0) return placeholder;
+      if (selectedItems.length === 1) return selectedItems[0][displayField];
+      
+      return `${selectedItems.length} items selected`;
+    }
+    
+    if (value === null || value === undefined) return placeholder;
 
-  const selected = items.find(
-    item => String(item[valueField]) === String(value)
-  );
+    const selected = items.find(
+      item => String(item[valueField]) === String(value)
+    );
 
-  return selected ? selected : placeholder;
-};
+    return selected ? selected[displayField] : placeholder;
+  };
 
 
   // Handle item selection
   const handleSelect = (itemValue) => {
-    onChange(itemValue);
-    setIsOpen(false);
-    setSearchTerm('');
+    if (multiple) {
+      const currentValue = Array.isArray(value) ? value : [];
+      const newValue = currentValue.includes(itemValue)
+        ? currentValue.filter(v => v !== itemValue)
+        : [...currentValue, itemValue];
+      onChange(newValue);
+    } else {
+      onChange(itemValue);
+      setIsOpen(false);
+      setSearchTerm('');
+    }
   };
 
   // Handle click outside
@@ -69,17 +90,17 @@ const GenericDropdown = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <span className={`flex-1 truncate ${
-          value === null || value === '' ? 'text-gray-400' : 'text-gray-900'
+          (multiple && (!value || value.length === 0)) || (!multiple && (value === null || value === '')) ? 'text-gray-400' : 'text-gray-900'
         }`}>
-          {getSelectedDisplayName()?.description ? getSelectedDisplayName()?.description : getSelectedDisplayName()?.title}
+          {getSelectedDisplayName()}
         </span>
         <div className="flex items-center space-x-2">
-          {allowClear && value && (
+          {allowClear && ((multiple && value && value.length > 0) || (!multiple && value)) && (
             <button
               className="text-gray-400 hover:text-gray-600"
               onClick={(e) => {
                 e.stopPropagation();
-                handleSelect(null);
+                handleSelect(multiple ? [] : null);
               }}
             >
               ×
@@ -121,7 +142,10 @@ const GenericDropdown = ({
           <div className="overflow-y-auto max-h-60">
             {filteredItems.length > 0 ? (
               filteredItems.map(item => {
-                const isSelected = value === item[valueField];
+                const isSelected = multiple 
+                  ? (Array.isArray(value) && value.includes(item[valueField]))
+                  : (value === item[valueField]);
+                
                 return (
                   <div
                     key={item[valueField]}

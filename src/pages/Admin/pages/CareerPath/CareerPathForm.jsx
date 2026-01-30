@@ -12,10 +12,14 @@ import {
   Target,
   Award,
   Filter,
-  Search
+  Search,
+  DollarSign,
+  Users,
+  Star,
+  ChevronRight
 } from 'lucide-react';
-import CategoryDropdown from '../../../../components/CategoryDropdown';
 import GenericDropdown from '../../../../components/GenericDropdown';
+import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
 
 const CareerPathForm = ({ 
   careerPath = null, 
@@ -26,29 +30,43 @@ const CareerPathForm = ({
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    categoryId: '',
-    levelId: '',
+    price: '',
+    discountedPrice: '',
     durationMinMonths: '',
     durationMaxMonths: '',
     outcome: '',
     certificateCount: '',
-    courseIds: []
+    roleId: '',
+    levels: [],
+    skills: []
   });
 
   const [allCourses, setAllCourses] = useState([]);
   const [levels, setLevels] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [careerRoles, setCareerRoles] = useState([]);
+  const [courseTypes, setCourseTypes] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
-  const [selectedCourseIds, setSelectedCourseIds] = useState([]);
-  const [courseSequences, setCourseSequences] = useState({});
-  const [draggedCourse, setDraggedCourse] = useState(null);
-  const [dragOverCourse, setDragOverCourse] = useState(null);
-  const [sequenceErrors, setSequenceErrors] = useState({});
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedLevelForCourses, setSelectedLevelForCourses] = useState(null);
+  const [selectedCourseTypeForLevel, setSelectedCourseTypeForLevel] = useState('');
+  const [expandedCourses, setExpandedCourses] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [courseSearchTerm, setCourseSearchTerm] = useState('');
   const [errors, setErrors] = useState({});
   const [loadingData, setLoadingData] = useState(false);
+  const [draggedCourse, setDraggedCourse] = useState(null);
+  const [draggedLevelIndex, setDraggedLevelIndex] = useState(null);
+  const [expandedLevels, setExpandedLevels] = useState({});
 
+  // Cache management
+  const CACHE_KEY = 'careerPathForm_draft';
+  
   useEffect(() => {
     fetchInitialData();
+    // Always clear cache on mount to ensure fresh start
+    clearCache();
   }, []);
 
   useEffect(() => {
@@ -56,61 +74,198 @@ const CareerPathForm = ({
       setFormData({
         title: careerPath.title || '',
         description: careerPath.description || '',
-        categoryId: careerPath.categoryId || '',
-        levelId: careerPath.levelId || '',
+        price: careerPath.price || '',
+        discountedPrice: careerPath.discountedPrice || '',
         durationMinMonths: careerPath.durationMinMonths || '',
         durationMaxMonths: careerPath.durationMaxMonths || '',
         outcome: careerPath.outcome || '',
         certificateCount: careerPath.certificateCount || '',
-        courseIds: careerPath.courses?.map(course => course.courseId) || []
+        roleId: careerPath.roleId || '',
+        levels: careerPath.levels || [],
+        skills: careerPath.skills || []
       });
-      setSelectedCourseIds(careerPath.courses?.map(course => course.courseId) || []);
-      
-      // Set course sequences from API
-      const sequences = {};
-      careerPath.courses?.forEach(course => {
-        sequences[course.courseId] = course.courseSequence || 0;
-      });
-      setCourseSequences(sequences);
+      setSelectedSkills(careerPath.skills?.map(skill => skill.skillId) || []);
     }
   }, [careerPath, levels]);
 
+  // Auto-save to cache on form data changes (only for new forms, not editing)
   useEffect(() => {
-    if (formData.categoryId && formData.levelId) {
-      fetchCoursesByCategoryAndLevel(formData.categoryId, formData.levelId);
+    if (!careerPath && (formData.title || formData.description || formData.levels.length > 0)) {
+      saveToCache();
+    }
+  }, [formData, currentStep, careerPath]);
+
+  const loadCachedData = () => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached && !careerPath) {
+        const parsedData = JSON.parse(cached);
+        if (parsedData.timestamp && Date.now() - parsedData.timestamp < 24 * 60 * 60 * 1000) { // 24 hours
+          setFormData(parsedData.formData);
+          setCurrentStep(parsedData.currentStep || 1);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load cached data:', error);
+    }
+  };
+
+  const saveToCache = () => {
+    try {
+      const cacheData = {
+        formData,
+        currentStep,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      console.error('Failed to save to cache:', error);
+    }
+  };
+
+  const clearCache = () => {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+    } catch (error) {
+      console.error('Failed to clear cache:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCourseTypeForLevel && selectedLevelForCourses !== null) {
+      fetchCoursesByTypeForLevel(selectedCourseTypeForLevel);
     } else {
       setFilteredCourses([]);
     }
-  }, [formData.categoryId, formData.levelId]);
+  }, [selectedCourseTypeForLevel, selectedLevelForCourses]);
 
   const fetchInitialData = async () => {
     try {
       setLoadingData(true);
-      const [levelsRes, categoriesRes] = await Promise.all([
-        adminApiService.getCareerPathLevels(),
-        adminApiService.getAllCategories()
+      const [levelsRes, skillsRes, careerRolesRes, courseTypesRes] = await Promise.all([
+        fetchCareerPathLevels(),
+        fetchAllSkills(),
+        fetchCareerRoles(),
+        fetchCourseTypes()
       ]);
       
-      // Handle categories response - it has items array
-      const categoriesData = categoriesRes?.items || categoriesRes || [];
-      
-      // Handle levels response - it's an array directly
-      const levelsData = levelsRes || [];
-      
-      setLevels(levelsData);
-      setCategories(categoriesData);
+      setLevels(levelsRes);
+      setSkills(skillsRes);
+      setCareerRoles(careerRolesRes);
+      setCourseTypes(courseTypesRes);
     } catch (error) {
+      console.error('Failed to fetch initial data:', error);
     } finally {
       setLoadingData(false);
     }
   };
 
-  const fetchCoursesByCategoryAndLevel = async (categoryId, levelId) => {
+  const fetchCareerPathLevels = async () => {
     try {
-      const courses = await adminApiService.getCareerPathCoursesByCategoryAndLevel(categoryId, levelId);
-      setFilteredCourses(courses || []);
+      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/career-paths/levels`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     } catch (error) {
+      console.error('Failed to fetch career path levels:', error);
+      return [];
+    }
+  };
+
+  const fetchAllSkills = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/careerskills`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Failed to fetch skills:', error);
+      return [];
+    }
+  };
+
+  const fetchCourseTypes = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/admin/course-types`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Failed to fetch course types:', error);
+      return [];
+    }
+  };
+
+  const fetchCoursesByTypeForLevel = async (typeId) => {
+    try {
+      const data = await adminApiService.getAllCoursesAdminNoPagination({ CourseTypeId: typeId });
+      // Handle the response structure where courses are in an 'items' array
+      const courses = data.items || data || [];
+      setFilteredCourses(Array.isArray(courses) ? courses : []);
+    } catch (error) {
+      console.error('Failed to fetch courses by type for level:', error);
       setFilteredCourses([]);
+    }
+  };
+
+  const getFilteredCoursesWithSearch = () => {
+    let courses = [...filteredCourses];
+    
+    // Filter by course title search
+    if (courseSearchTerm) {
+      courses = courses.filter(course => 
+        course.title.toLowerCase().includes(courseSearchTerm.toLowerCase())
+      );
+    }
+    
+    return courses;
+  };
+
+  const fetchCareerRoles = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/career-roles`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Failed to fetch career roles:', error);
+      return [];
     }
   };
 
@@ -129,88 +284,266 @@ const CareerPathForm = ({
     }
   };
 
-  const toggleCourseSelection = (courseId) => {
-    setSelectedCourseIds(prev => {
-      const newSelection = prev.includes(courseId)
-        ? prev.filter(id => id !== courseId)
-        : [...prev, courseId];
+  const handleSkillSelection = (skillId, proficiencyLevel) => {
+    setFormData(prev => {
+      const existingSkillIndex = prev.skills.findIndex(skill => skill.skillId === skillId);
+      let newSkills;
       
-      // Initialize sequence for newly added course
-      if (!prev.includes(courseId) && newSelection.includes(courseId)) {
-        // Assign the next available sequence number
-        const existingSequences = Object.values(courseSequences);
-        const nextSequence = existingSequences.length > 0 ? Math.max(...existingSequences) + 1 : 1;
-        
-        setCourseSequences(prevSequences => ({
-          ...prevSequences,
-          [courseId]: nextSequence
-        }));
-      } else if (prev.includes(courseId) && !newSelection.includes(courseId)) {
-        // Remove sequence when course is deselected
-        setCourseSequences(prevSequences => {
-          const newSequences = { ...prevSequences };
-          delete newSequences[courseId];
-          return newSequences;
-        });
-        // Clear any sequence errors for this course
-        setSequenceErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[courseId];
-          return newErrors;
-        });
+      if (existingSkillIndex >= 0) {
+        if (proficiencyLevel > 0) {
+          newSkills = prev.skills.map((skill, index) => 
+            index === existingSkillIndex ? { skillId, proficiencyLevel } : skill
+          );
+        } else {
+          newSkills = prev.skills.filter((_, index) => index !== existingSkillIndex);
+        }
+      } else if (proficiencyLevel > 0) {
+        newSkills = [...prev.skills, { skillId, proficiencyLevel }];
+      } else {
+        newSkills = prev.skills;
       }
       
-      return newSelection;
+      return { ...prev, skills: newSkills };
     });
   };
 
-  const updateCourseSequence = (courseId, sequence) => {
-    const newSequence = parseInt(sequence) || 0;
+  const getAvailableLevels = () => {
+    const selectedLevelIds = formData.levels.map(level => level.levelId);
+    return levels.filter(level => !selectedLevelIds.includes(level.levelId));
+  };
+
+  const addLevelToPath = (levelId) => {
+    const levelData = levels.find(l => l.levelId === levelId);
+    if (!levelData) return;
     
-    // Only update the sequence value without validation
-    setCourseSequences(prev => ({
+    const newLevel = {
+      levelId: levelId,
+      levelName: levelData.levelName,
+      courses: []
+    };
+    
+    setFormData(prev => ({
       ...prev,
-      [courseId]: newSequence
+      levels: [...prev.levels, newLevel]
     }));
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (courseId) => {
-    setDraggedCourse(courseId);
+  const removeLevelFromPath = (levelIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      levels: prev.levels.filter((_, i) => i !== levelIndex)
+    }));
+  };
+
+  const selectLevelForCourses = (levelIndex) => {
+    setSelectedLevelForCourses(levelIndex);
+    setSelectedCourseTypeForLevel('');
+    setFilteredCourses([]);
+    setCourseSearchTerm('');
+  };
+
+  const addCourseToSelectedLevel = (courseId) => {
+    if (selectedLevelForCourses === null) return;
+    
+    const level = formData.levels[selectedLevelForCourses];
+    const courseExists = level.courses.some(c => c.courseId === courseId);
+    
+    if (!courseExists) {
+      // Find the course details from filteredCourses to get the title
+      const courseDetails = filteredCourses.find(c => c.id === courseId);
+      const newCourse = {
+        courseId: courseId,
+        courseSequence: level.courses.length + 1,
+        title: courseDetails?.title || `Course ID: ${courseId}`
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        levels: prev.levels.map((lvl, index) => 
+          index === selectedLevelForCourses 
+            ? { ...lvl, courses: [...lvl.courses, newCourse] }
+            : lvl
+        )
+      }));
+    }
+  };
+
+  const removeCourseFromLevel = (levelIndex, courseIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      levels: prev.levels.map((level, i) => 
+        i === levelIndex 
+          ? { 
+              ...level, 
+              courses: level.courses.filter((_, j) => j !== courseIndex)
+                .map((course, idx) => ({ ...course, courseSequence: idx + 1 }))
+            }
+          : level
+      )
+    }));
+  };
+
+  const handleDragStart = (e, levelIndex, courseIndex, course) => {
+    setDraggedCourse({ levelIndex, courseIndex, course });
+    setDraggedLevelIndex(levelIndex);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.outerHTML);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDragEnter = (courseId) => {
-    setDragOverCourse(courseId);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverCourse(null);
-  };
-
-  const handleDrop = (e, targetCourseId) => {
+  const handleDrop = (e, targetLevelIndex, targetCourseIndex) => {
     e.preventDefault();
-    setDragOverCourse(null);
     
-    if (draggedCourse && draggedCourse !== targetCourseId) {
-      reorderCourses(draggedCourse, targetCourseId);
+    if (draggedCourse === null || draggedLevelIndex !== targetLevelIndex) {
+      return;
     }
+
+    const { levelIndex, courseIndex } = draggedCourse;
+    
+    if (levelIndex === targetLevelIndex && courseIndex === targetCourseIndex) {
+      return;
+    }
+
+    setFormData(prev => {
+      const newLevels = [...prev.levels];
+      const level = { ...newLevels[levelIndex] };
+      const courses = [...level.courses];
+      
+      const [draggedCourseData] = courses.splice(courseIndex, 1);
+      courses.splice(targetCourseIndex, 0, draggedCourseData);
+      
+      const reorderedCourses = courses.map((course, idx) => ({
+        ...course,
+        courseSequence: idx + 1
+      }));
+      
+      level.courses = reorderedCourses;
+      newLevels[levelIndex] = level;
+      
+      return {
+        ...prev,
+        levels: newLevels
+      };
+    });
+
     setDraggedCourse(null);
+    setDraggedLevelIndex(null);
   };
 
-  const reorderCourses = (draggedCourseId, targetCourseId) => {
-    const draggedSequence = courseSequences[draggedCourseId] || 0;
-    const targetSequence = courseSequences[targetCourseId] || 0;
+  const handleDragEnd = () => {
+    setDraggedCourse(null);
+    setDraggedLevelIndex(null);
+  };
+
+  const toggleLevelExpansion = (levelIndex) => {
+    setExpandedLevels(prev => ({
+      ...prev,
+      [levelIndex]: !prev[levelIndex]
+    }));
+  };
+
+  const toggleCourseExpansion = (levelIndex, courseId) => {
+    const key = `${levelIndex}-${courseId}`;
+    setExpandedCourses(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const moveToNextStep = () => {
+    if (currentStep < 4) {
+      // Clear previous errors before moving to next step
+      setErrors({});
+      setCurrentStep(currentStep + 1);
+      saveToCache(); // Save step change to cache
+    }
+  };
+
+  const moveToPreviousStep = () => {
+    if (currentStep > 1) {
+      // Clear previous errors when moving back
+      setErrors({});
+      setCurrentStep(currentStep - 1);
+      saveToCache(); // Save step change to cache
+    }
+  };
+
+  const validateCurrentStep = () => {
+    const newErrors = {};
     
-    // Swap the sequences
-    const newSequences = { ...courseSequences };
-    newSequences[draggedCourseId] = targetSequence;
-    newSequences[targetCourseId] = draggedSequence;
+    console.log('Validating step:', currentStep);
+    console.log('Current form data:', formData);
     
-    setCourseSequences(newSequences);
+    switch (currentStep) {
+      case 1:
+        if (!formData.title.trim()) {
+          newErrors.title = 'Title is required';
+          console.log('Title validation failed');
+        }
+        if (!formData.description.trim()) {
+          newErrors.description = 'Description is required';
+          console.log('Description validation failed');
+        }
+        if (!formData.price || formData.price < 0) {
+          newErrors.price = 'Price must be greater than or equal to 0';
+          console.log('Price validation failed');
+        }
+        if (!formData.discountedPrice || formData.discountedPrice < 0) {
+          newErrors.discountedPrice = 'Discounted price must be greater than or equal to 0';
+          console.log('Discounted price validation failed');
+        }
+        if (formData.price && formData.discountedPrice && parseFloat(formData.discountedPrice) > parseFloat(formData.price)) {
+          newErrors.discountedPrice = 'Discounted price cannot be greater than regular price';
+          console.log('Discounted price comparison validation failed');
+        }
+        if (!formData.roleId) {
+          newErrors.roleId = 'Role is required';
+          console.log('Role validation failed');
+        }
+        break;
+        
+      case 2:
+        if (formData.levels.length === 0) {
+          newErrors.levels = 'At least one level is required';
+          console.log('Levels validation failed');
+        }
+        break;
+        
+      case 3:
+        if (formData.skills.length === 0) {
+          newErrors.skills = 'At least one skill is required';
+          console.log('Skills validation failed');
+        }
+        break;
+        
+      case 4:
+        if (!formData.durationMinMonths || formData.durationMinMonths <= 0) {
+          newErrors.durationMinMonths = 'Minimum duration must be greater than 0';
+          console.log('Duration min validation failed');
+        }
+        if (!formData.durationMaxMonths || formData.durationMaxMonths <= 0) {
+          newErrors.durationMaxMonths = 'Maximum duration must be greater than 0';
+          console.log('Duration max validation failed');
+        }
+        if (formData.durationMinMonths && formData.durationMaxMonths && 
+            parseInt(formData.durationMinMonths) > parseInt(formData.durationMaxMonths)) {
+          newErrors.durationMaxMonths = 'Maximum duration must be greater than minimum duration';
+          console.log('Duration comparison validation failed');
+        }
+        if (!formData.outcome.trim()) {
+          newErrors.outcome = 'Outcome is required';
+          console.log('Outcome validation failed');
+        }
+        break;
+    }
+    
+    console.log('Validation errors:', newErrors);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const validateForm = () => {
@@ -224,12 +557,16 @@ const CareerPathForm = ({
       newErrors.description = 'Description is required';
     }
     
-    if (!formData.categoryId) {
-      newErrors.categoryId = 'Category is required';
+    if (!formData.price || formData.price < 0) {
+      newErrors.price = 'Price must be greater than or equal to 0';
     }
     
-    if (!formData.levelId) {
-      newErrors.levelId = 'Level is required';
+    if (!formData.discountedPrice || formData.discountedPrice < 0) {
+      newErrors.discountedPrice = 'Discounted price must be greater than or equal to 0';
+    }
+    
+    if (formData.price && formData.discountedPrice && parseFloat(formData.discountedPrice) > parseFloat(formData.price)) {
+      newErrors.discountedPrice = 'Discounted price cannot be greater than regular price';
     }
     
     if (!formData.durationMinMonths || formData.durationMinMonths <= 0) {
@@ -249,7 +586,17 @@ const CareerPathForm = ({
       newErrors.outcome = 'Outcome is required';
     }
     
-    // Courses are now optional - remove validation
+    if (!formData.roleId) {
+      newErrors.roleId = 'Role is required';
+    }
+    
+    if (formData.levels.length === 0) {
+      newErrors.levels = 'At least one level is required';
+    }
+    
+    if (formData.skills.length === 0) {
+      newErrors.skills = 'At least one skill is required';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -257,29 +604,42 @@ const CareerPathForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('handleSubmit called - this should only happen on form submission');
     
     if (!validateForm()) {
+      console.log('Form validation failed');
       return;
     }
     
-    // Create courses array with sequences
-    const coursesWithSequences = selectedCourseIds.map(courseId => ({
-      courseId: courseId,
-      courseSequence: courseSequences[courseId] || 0
-    }));
+    console.log('Form validation passed, preparing submission data');
     
     const submitData = {
       title: formData.title,
       description: formData.description,
-      categoryId: parseInt(formData.categoryId),
-      levelId: parseInt(formData.levelId),
+      price: parseFloat(formData.price) || 0,
+      discountedPrice: parseFloat(formData.discountedPrice) || 0,
       durationMinMonths: parseInt(formData.durationMinMonths),
       durationMaxMonths: parseInt(formData.durationMaxMonths),
       outcome: formData.outcome,
-      certificateCount: formData.certificateCount ? parseInt(formData.certificateCount) : null,
-      courses: coursesWithSequences
+      certificateCount: formData.certificateCount ? parseInt(formData.certificateCount) : 0,
+      roleId: parseInt(formData.roleId),
+      levels: formData.levels.map(level => ({
+        levelId: parseInt(level.levelId),
+        courses: level.courses.map(course => ({
+          courseId: parseInt(course.courseId),
+          courseSequence: course.courseSequence || 0
+        }))
+      })),
+      skills: formData.skills.map(skill => ({
+        skillId: parseInt(skill.skillId),
+        proficiencyLevel: parseInt(skill.proficiencyLevel)
+      }))
     };
     
+    console.log('Clearing cache and calling onSave');
+    clearCache();
+    
+    // Pass data to parent - parent should handle create vs update logic
     onSave(submitData);
   };
 
@@ -297,9 +657,9 @@ const CareerPathForm = ({
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
-      {/* Header */}
+      {/* Header with Progress */}
       <div className="p-6 border-b border-gray-100">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
               <Target className="w-6 h-6 text-white" />
@@ -309,7 +669,7 @@ const CareerPathForm = ({
                 {careerPath ? 'Edit Career Path' : 'Create New Career Path'}
               </h2>
               <p className="text-gray-600">
-                {careerPath ? 'Update career path information' : 'Define a new learning path for students'}
+                {careerPath ? 'Update career path information' : 'Build a comprehensive learning path step by step'}
               </p>
             </div>
           </div>
@@ -320,309 +680,759 @@ const CareerPathForm = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Progress Steps */}
+        <div className="flex items-center justify-between">
+          {[1, 2, 3, 4].map((step) => (
+            <div key={step} className="flex items-center">
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm transition-all ${
+                currentStep >= step 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                {step}
+              </div>
+              <div className={`ml-3 text-sm font-medium ${
+                currentStep >= step ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                {step === 1 && 'Basic Info & Details'}
+                {step === 2 && 'Levels & Skills'}
+                {step === 3 && 'Skills Selection'}
+                {step === 4 && 'Additional Details'}
+              </div>
+              {step < 4 && (
+                <div className={`w-16 h-1 mx-4 ${
+                  currentStep > step ? 'bg-blue-600' : 'bg-gray-200'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Form */}
+      {/* Form Content */}
       <form onSubmit={handleSubmit} className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Career Path Title *
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                errors.title ? 'border-red-300 bg-red-50' : 'border-gray-200'
-              }`}
-              placeholder="e.g., Full Stack Web Development"
-            />
-            {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-            )}
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Category *
-            </label>
-            <CategoryDropdown
-              categories={categories}
-              value={formData.categoryId}
-              onChange={(value) => handleInputChange('categoryId', value)}
-              placeholder="Select category..."
-              className={`w-full ${errors.categoryId ? 'border-red-300 bg-red-50' : ''}`}
-            />
-            {errors.categoryId && (
-              <p className="mt-1 text-sm text-red-600">{errors.categoryId}</p>
-            )}
-          </div>
-
-          {/* Level */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Career Path Level *
-            </label>
-            <GenericDropdown
-              items={levels.map(level => ({
-                id: level.levelId,
-                name: level.levelName,
-                description: level.levelName
-              }))}
-              value={formData.levelId}
-              onChange={(value) => handleInputChange('levelId', value)}
-              placeholder="Select level..."
-              className={`w-full ${errors.levelId ? 'border-red-300 bg-red-50' : ''}`}
-            />
-            {errors.levelId && (
-              <p className="mt-1 text-sm text-red-600">{errors.levelId}</p>
-            )}
-          </div>
-
-          {/* Duration */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Duration Range (Months) *
-            </label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
+        {/* Step 1: Basic Information */}
+        {currentStep === 1 && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Career Path Title *
+                </label>
                 <input
-                  type="number"
-                  value={formData.durationMinMonths}
-                  onChange={(e) => handleInputChange('durationMinMonths', e.target.value)}
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                    errors.durationMinMonths ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                    errors.title ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
-                  placeholder="Min months"
-                  min="1"
+                  placeholder="e.g., Full Stack Web Development"
                 />
-                {errors.durationMinMonths && (
-                  <p className="mt-1 text-sm text-red-600">{errors.durationMinMonths}</p>
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
                 )}
               </div>
-              <span className="text-gray-500">to</span>
-              <div className="flex-1">
-                <input
-                  type="number"
-                  value={formData.durationMaxMonths}
-                  onChange={(e) => handleInputChange('durationMaxMonths', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                    errors.durationMaxMonths ? 'border-red-300 bg-red-50' : 'border-gray-200'
-                  }`}
-                  placeholder="Max months"
-                  min="1"
+
+              {/* Role */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Career Role *
+                </label>
+                <GenericDropdown
+                  items={careerRoles.map(role => ({
+                    id: role.id,
+                    name: role.name,
+                    description: role.description || role.name
+                  }))}
+                  value={formData.roleId}
+                  onChange={(value) => handleInputChange('roleId', value)}
+                  placeholder="Select career role..."
+                  className={`w-full ${errors.roleId ? 'border-red-300 bg-red-50' : ''}`}
                 />
-                {errors.durationMaxMonths && (
-                  <p className="mt-1 text-sm text-red-600">{errors.durationMaxMonths}</p>
+                {errors.roleId && (
+                  <p className="mt-1 text-sm text-red-600">{errors.roleId}</p>
+                )}
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Price *
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => handleInputChange('price', e.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.price ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                    }`}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                {errors.price && (
+                  <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+                )}
+              </div>
+
+              {/* Discounted Price */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Discounted Price *
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="number"
+                    value={formData.discountedPrice}
+                    onChange={(e) => handleInputChange('discountedPrice', e.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.discountedPrice ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                    }`}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                {errors.discountedPrice && (
+                  <p className="mt-1 text-sm text-red-600">{errors.discountedPrice}</p>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Outcome */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Learning Outcome *
-            </label>
-            <textarea
-              value={formData.outcome}
-              onChange={(e) => handleInputChange('outcome', e.target.value)}
-              rows={3}
-              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
-                errors.outcome ? 'border-red-300 bg-red-50' : 'border-gray-200'
-              }`}
-              placeholder="What will students achieve after completing this career path?"
-            />
-            {errors.outcome && (
-              <p className="mt-1 text-sm text-red-600">{errors.outcome}</p>
-            )}
-          </div>
-
-          {/* Certificate Count */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Certificate Count
-            </label>
-            <input
-              type="number"
-              value={formData.certificateCount}
-              onChange={(e) => handleInputChange('certificateCount', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="Number of certificates (optional)"
-              min="0"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Leave empty if no certificates are awarded
-            </p>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="mb-8">
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Description *
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            rows={4}
-            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
-              errors.description ? 'border-red-300 bg-red-50' : 'border-gray-200'
-            }`}
-            placeholder="Describe this career path and what makes it valuable..."
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-          )}
-        </div>
-
-        {/* Course Selection Section */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <BookOpen className="w-5 h-5 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Course Selection (Optional)</h3>
-          </div>
-
-          {/* Filter Info */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <div className="flex items-center gap-2 text-blue-800">
-              <Filter className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {formData.categoryId && formData.levelId 
-                  ? `Showing courses for selected category and level (${filteredCourses.length} courses)`
-                  : 'Please select both category and level to filter courses'
-                }
-              </span>
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Description *
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                rows={4}
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                  errors.description ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                }`}
+                placeholder="Describe this career path and what makes it valuable..."
+              />
+              {errors.description && (
+                <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+              )}
             </div>
           </div>
+        )}
 
-          {/* Available Courses */}
-          {filteredCourses.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Available Courses</h4>
-              <div className="border border-gray-200 rounded-xl max-h-64 overflow-y-auto">
-                <div className="divide-y divide-gray-200">
-                  {filteredCourses.map(course => (
-                    <div key={course.id} className="p-3 hover:bg-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedCourseIds.includes(course.id)}
-                          onChange={() => toggleCourseSelection(course.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <div>
-                          <div className="font-medium text-gray-900">{course.title}</div>
-                          <div className="text-sm text-gray-500">{course.categoryName}</div>
-                        </div>
-                      </div>
-                      {course.isPaid && (
-                        <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
-                          Paid
-                        </span>
-                      )}
-                    </div>
+        {/* Step 2: Levels Management */}
+        {currentStep === 2 && (
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Learning Levels</h3>
+                <span className="text-sm text-gray-600">
+                  {formData.levels.length} level{formData.levels.length !== 1 ? 's' : ''} added
+                </span>
+              </div>
+              
+              {errors.levels && (
+                <p className="mb-4 text-sm text-red-600">{errors.levels}</p>
+              )}
+
+              {/* Available Levels */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Add Levels to Career Path</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {getAvailableLevels().map(level => (
+                    <button
+                      key={level.levelId}
+                      type="button"
+                      onClick={() => addLevelToPath(level.levelId)}
+                      className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center"
+                    >
+                      <Target className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                      <div className="text-sm font-medium text-gray-900">{level.levelName}</div>
+                    </button>
                   ))}
                 </div>
+                {getAvailableLevels().length === 0 && (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl">
+                    <p className="text-gray-600">All available levels have been added</p>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
 
-          {/* Selected Courses */}
-          {selectedCourseIds.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                Selected Courses ({selectedCourseIds.length})
-              </h4>
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <p className="text-xs text-gray-600 mb-3">
-                  {selectedCourseIds.length === 1 
-                    ? '💡 Only one course selected.'
-                    : '🎯 Drag and drop courses to reorder them in the learning path sequence.'
-                  }
-                </p>
-                <div className="space-y-2">
-                  {filteredCourses
-                    .filter(course => selectedCourseIds.includes(course.id))
-                    .sort((a, b) => (courseSequences[a.id] || 0) - (courseSequences[b.id] || 0))
-                    .map((course, index) => (
-                      <div
-                        key={course.id}
-                        draggable={selectedCourseIds.length > 1}
-                        onDragStart={() => handleDragStart(course.id)}
-                        onDragOver={handleDragOver}
-                        onDragEnter={() => handleDragEnter(course.id)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, course.id)}
-                        className={`bg-white p-3 rounded-lg border cursor-move transition-all ${
-                          dragOverCourse === course.id 
-                            ? 'border-blue-400 shadow-lg transform scale-105' 
-                            : 'border-green-200'
-                        } ${draggedCourse === course.id ? 'opacity-50' : ''}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {selectedCourseIds.length > 1 && (
-                              <div className="text-gray-400">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
+              {/* Selected Levels Cards */}
+              <div className="space-y-4">
+                {formData.levels.map((level, levelIndex) => (
+                  <div key={levelIndex} className="border border-gray-200 rounded-xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-900">{level.levelName}</h4>
+                        <p className="text-sm text-gray-600">{level.courses.length} course{level.courses.length !== 1 ? 's' : ''} assigned</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleLevelExpansion(levelIndex)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            expandedLevels[levelIndex]
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          <ChevronDown 
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              expandedLevels[levelIndex] ? 'rotate-180' : ''
+                            }`}
+                          />
+                          {expandedLevels[levelIndex] ? 'Managing Courses' : 'Manage Courses'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeLevelFromPath(levelIndex)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Course Management for Selected Level - Accordion Style */}
+                    {expandedLevels[levelIndex] && (
+                      <div className="border-t border-gray-100 pt-4 animate-in slide-in-from-top duration-200">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Filter by Course Type
+                            </label>
+                            <GenericDropdown
+                              items={courseTypes.map(type => ({
+                                id: type.id,
+                                name: type.name,
+                                description: type.description || type.name
+                              }))}
+                              value={selectedCourseTypeForLevel}
+                              onChange={(value) => {
+                                setSelectedCourseTypeForLevel(value);
+                                setSelectedLevelForCourses(levelIndex);
+                              }}
+                              placeholder="Select course type..."
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+
+                        {filteredCourses.length > 0 && expandedLevels[levelIndex] && selectedLevelForCourses === levelIndex && (
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <h6 className="text-sm font-medium text-gray-700">Available Courses</h6>
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <input
+                                  type="text"
+                                  value={courseSearchTerm}
+                                  onChange={(e) => setCourseSearchTerm(e.target.value)}
+                                  placeholder="Search courses by title..."
+                                  className="pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-48"
+                                />
+                              </div>
+                            </div>
+                            <div className="border border-gray-200 rounded-xl max-h-48 overflow-y-auto">
+                              {getFilteredCoursesWithSearch().length === 0 ? (
+                                <div className="p-8 text-center">
+                                  <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                  <p className="text-sm text-gray-600">
+                                    {courseSearchTerm ? 'No courses found matching your search' : 'No courses available for this type'}
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="divide-y divide-gray-200">
+                                  {getFilteredCoursesWithSearch().map(course => {
+                                  const isAdded = level.courses.some(c => c.courseId === course.id);
+                                  const isExpanded = expandedCourses[`${levelIndex}-${course.id}`];
+                                  return (
+                                    <div key={course.id} className="border border-gray-200 rounded-xl overflow-hidden">
+                                      <div
+                                        className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                          isAdded ? 'bg-green-50 border-green-200' : 'bg-white'
+                                        }`}
+                                        onClick={() => toggleCourseExpansion(levelIndex, course.id)}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3">
+                                            <input
+                                              type="checkbox"
+                                              checked={isAdded}
+                                              onChange={() => {
+                                                if (isAdded) {
+                                                  const courseIndex = level.courses.findIndex(c => c.courseId === course.id);
+                                                  removeCourseFromLevel(levelIndex, courseIndex);
+                                                } else {
+                                                  setSelectedLevelForCourses(levelIndex);
+                                                  addCourseToSelectedLevel(course.id);
+                                                }
+                                              }}
+                                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <div className="flex-1">
+                                              <div className="font-medium text-gray-900 text-sm">{course.title}</div>
+                                              <div className="text-xs text-gray-500">{course.categoryName}</div>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            {course.isPaid && (
+                                              <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+                                                Paid
+                                              </span>
+                                            )}
+                                            <ChevronDown 
+                                              className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                                                isExpanded ? 'rotate-180' : ''
+                                              }`}
+                                            />
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Expandable Details */}
+                                        {isExpanded && (
+                                          <div className="border-t border-gray-200 p-4 bg-gray-50">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                              <div>
+                                                <span className="font-semibold text-gray-700">Type:</span>
+                                                <span className="text-gray-600">{course.courseTypeName}</span>
+                                              </div>
+                                              <div>
+                                                <span className="font-semibold text-gray-700">Level:</span>
+                                                <span className="text-gray-600">{course.courseLevelName}</span>
+                                              </div>
+                                              <div>
+                                                <span className="font-semibold text-gray-700">Language:</span>
+                                                <span className="text-gray-600">{course.languageCode}</span>
+                                              </div>
+                                              <div>
+                                                <span className="font-semibold text-gray-700">Price:</span>
+                                                <span className="text-gray-600">
+                                                  {course.isPaid ? `$${course.price}` : 'Free'}
+                                                  {course.discountedPrice < course.price && course.discountedPrice > 0 && (
+                                                    <span className="ml-2 text-green-600">(Was: ${course.discountedPrice})</span>
+                                                  )}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            {course.description && (
+                                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                                <span className="font-semibold text-gray-700">Description:</span>
+                                                <p className="text-gray-600 mt-1">{course.description}</p>
+                                              </div>
+                                            )}
+                                            {course.courseBadges && course.courseBadges.length > 0 && (
+                                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                                <span className="font-semibold text-gray-700">Badges:</span>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                  {course.courseBadges.map((badge, index) => (
+                                                    <span key={index} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                                      {badge}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
-                            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                              {courseSequences[course.id] || index + 1}
                             </div>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900 text-sm break-words">{course.title}</div>
-                            <div className="text-xs text-gray-500 break-words">{course.categoryName}</div>
+                        )}
+                        
+                        {/* Selected Courses */}
+                        {level.courses.length > 0 && (
+                          <div>
+                            <h6 className="text-sm font-medium text-gray-700 mb-2">Selected Courses</h6>
+                            <div className="space-y-2">
+                              {level.courses
+                                .sort((a, b) => a.courseSequence - b.courseSequence)
+                                .map((course, courseIndex) => {
+                                  const courseDetails = filteredCourses.find(c => c.id === course.courseId);
+                                  const isDragging = draggedCourse?.levelIndex === levelIndex && draggedCourse?.courseIndex === courseIndex;
+                                  return (
+                                    <div
+                                      key={courseIndex}
+                                      className={`flex items-center p-3 bg-green-50 border border-green-200 rounded-lg cursor-move transition-all ${
+                                        isDragging ? 'opacity-50 scale-95' : 'hover:shadow-md'
+                                      }`}
+                                      draggable
+                                      onDragStart={(e) => handleDragStart(e, levelIndex, courseIndex, course)}
+                                      onDragOver={handleDragOver}
+                                      onDrop={(e) => handleDrop(e, levelIndex, courseIndex)}
+                                      onDragEnd={handleDragEnd}
+                                    >
+                                      <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
+                                        {course.courseSequence}
+                                      </div>
+                                      <div className="flex-1">
+                                        <div className="font-medium text-gray-900 text-sm">
+                                          {course.title || `Course ID: ${course.courseId}`}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                          Drag to reorder
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeCourseFromLevel(levelIndex, courseIndex)}
+                                        className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {formData.levels.length === 0 && (
+                <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
+                  <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Levels Added Yet</h3>
+                  <p className="text-gray-600 mb-6">Start building your career path by adding learning levels</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Skills Selection */}
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Star className="w-5 h-5 text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Skills Selection</h3>
+              </div>
+              
+              {errors.skills && (
+                <p className="mb-4 text-sm text-red-600">{errors.skills}</p>
+              )}
+              
+              {/* Skills Search and Add */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Search and Add Skills
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search skills..."
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                {/* Available Skills Dropdown */}
+                {searchTerm && (
+                  <div className="mt-2 border border-gray-200 rounded-xl max-h-48 overflow-y-auto bg-white shadow-lg">
+                    {skills
+                      .filter(skill => 
+                        skill.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (skill.description && skill.description.toLowerCase().includes(searchTerm.toLowerCase()))
+                      )
+                      .map(skill => {
+                        const isSelected = formData.skills.some(s => s.skillId === skill.id);
+                        return (
+                          <div
+                            key={skill.id}
+                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center justify-between ${
+                              isSelected ? 'bg-blue-50' : 'bg-white'
+                            }`}
+                            onClick={() => handleSkillSelection(skill.id, isSelected ? 0 : 3)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                isSelected 
+                                  ? 'bg-blue-600 border-blue-600' 
+                                  : 'border-gray-300'
+                              }`}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{skill.title}</div>
+                                {skill.description && (
+                                  <div className="text-sm text-gray-500 truncate">{skill.description}</div>
+                                )}
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                Level {formData.skills.find(s => s.skillId === skill.id)?.proficiencyLevel}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    {skills.filter(skill => 
+                      skill.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      (skill.description && skill.description.toLowerCase().includes(searchTerm.toLowerCase()))
+                    ).length === 0 && (
+                      <div className="px-4 py-6 text-center text-gray-500">
+                        No skills found matching "{searchTerm}"
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Selected Skills as Tags */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Selected Skills ({formData.skills.length})
+                </label>
+                {formData.skills.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-xl">
+                    <Star className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600">No skills selected yet</p>
+                    <p className="text-sm text-gray-500 mt-1">Search and add skills from above</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.skills.map((skill, index) => {
+                      const skillDetails = skills.find(s => s.id === skill.skillId);
+                      return (
+                        <div key={skill.skillId} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">
+                                {skillDetails?.title || `Skill ID: ${skill.skillId}`}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Proficiency Level: {skill.proficiencyLevel}/5
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map(level => (
+                                <button
+                                  key={level}
+                                  type="button"
+                                  onClick={() => handleSkillSelection(skill.skillId, level)}
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                    level <= skill.proficiencyLevel
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                  }`}
+                                >
+                                  {level}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                           <button
                             type="button"
-                            onClick={() => toggleCourseSelection(course.id)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
-                            title="Remove course"
+                            onClick={() => handleSkillSelection(skill.skillId, 0)}
+                            className="ml-3 p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Additional Details */}
+        {currentStep === 4 && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Duration */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Duration Range (Months) *
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      value={formData.durationMinMonths}
+                      onChange={(e) => handleInputChange('durationMinMonths', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.durationMinMonths ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                      }`}
+                      placeholder="Min months"
+                      min="1"
+                    />
+                    {errors.durationMinMonths && (
+                      <p className="mt-1 text-sm text-red-600">{errors.durationMinMonths}</p>
+                    )}
+                  </div>
+                  <span className="text-gray-500">to</span>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      value={formData.durationMaxMonths}
+                      onChange={(e) => handleInputChange('durationMaxMonths', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.durationMaxMonths ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                      }`}
+                      placeholder="Max months"
+                      min="1"
+                    />
+                    {errors.durationMaxMonths && (
+                      <p className="mt-1 text-sm text-red-600">{errors.durationMaxMonths}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Certificate Count */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Certificate Count
+                </label>
+                <input
+                  type="number"
+                  value={formData.certificateCount}
+                  onChange={(e) => handleInputChange('certificateCount', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Number of certificates (optional)"
+                  min="0"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Leave empty if no certificates are awarded
+                </p>
+              </div>
+            </div>
+
+            {/* Outcome */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Learning Outcome *
+              </label>
+              <textarea
+                value={formData.outcome}
+                onChange={(e) => handleInputChange('outcome', e.target.value)}
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                  errors.outcome ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                }`}
+                placeholder="What will students achieve after completing this career path?"
+              />
+              {errors.outcome && (
+                <p className="mt-1 text-sm text-red-600">{errors.outcome}</p>
+              )}
+            </div>
+
+            {/* Summary */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+              <h4 className="text-lg font-semibold text-blue-900 mb-4">Career Path Summary</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{formData.levels.length}</div>
+                  <div className="text-sm text-blue-800">Levels</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {formData.levels.reduce((total, level) => total + level.courses.length, 0)}
+                  </div>
+                  <div className="text-sm text-blue-800">Courses</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{formData.skills.length}</div>
+                  <div className="text-sm text-blue-800">Skills</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">${formData.price || 0}</div>
+                  <div className="text-sm text-blue-800">Price</div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Form Actions */}
-        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                {careerPath ? 'Update Career Path' : 'Create Career Path'}
-              </>
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+          <div>
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={moveToPreviousStep}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+              >
+                Previous
+              </button>
             )}
-          </button>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            
+            {currentStep < 4 ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Next button clicked, current step:', currentStep);
+                  if (validateCurrentStep()) {
+                    console.log('Validation passed, moving to next step');
+                    moveToNextStep();
+                  } else {
+                    console.log('Validation failed');
+                  }
+                }}
+                className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+              >
+                Next Step
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {careerPath ? 'Update Career Path' : 'Create Career Path'}
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </form>
     </div>
@@ -630,3 +1440,4 @@ const CareerPathForm = ({
 };
 
 export default CareerPathForm;
+

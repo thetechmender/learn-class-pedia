@@ -71,6 +71,16 @@
       "order": 7
     },
     {
+      "id": "career-roles",
+      "path": "/admin/career-roles",
+      "component": "CareerRoles",
+      "label": "Career Roles",
+      "icon": "Briefcase",
+      "category": "management",
+      "allowedRoles": [1],
+      "order": 8
+    },
+    {
       "id": "my-courses",
       "path": "/admin/my-courses",
       "component": "MyCourses",
@@ -78,7 +88,7 @@
       "icon": "BookOpen",
       "category": "main",
       "allowedRoles": [2],
-      "order": 8
+      "order": 9
     },
     {
       "id": "my-profile",
@@ -88,7 +98,7 @@
       "icon": "User",
       "category": "main",
       "allowedRoles": [1, 2],
-      "order": 9
+      "order": 10
     }
   ],
   "roles": [
