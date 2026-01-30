@@ -66,9 +66,13 @@ const LinkedInStyleDemo = ({
     authenticatedCourseId, 
     initialLectureId 
 }) => {
-    // Use authenticated IDs if provided, otherwise fall back to defaults
+    // Parse URL parameters for courseId
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCourseId = urlParams.get('courseId');
+    
+    // Use authenticated IDs if provided, then URL params, otherwise fall back to defaults
     const STUDENT_ID = authenticatedStudentId || DEFAULT_STUDENT_ID;
-    const COURSE_ID = authenticatedCourseId || DEFAULT_COURSE_ID;
+    const COURSE_ID = authenticatedCourseId || (urlCourseId ? parseInt(urlCourseId, 10) : DEFAULT_COURSE_ID);
 
     const [courseData, setCourseData] = useState(null);
     const [loading, setLoading] = useState(true);
