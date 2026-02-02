@@ -64,10 +64,6 @@ const CareerRoles = () => {
     }
   }, [getAllCareerRoles, showError]);
 
-  useEffect(() => {
-    fetchCareerRoles();
-  }, [fetchCareerRoles]);
-
   // Filter career roles based on search
   const filteredCareerRoles = careerRoles.filter(role => 
     role.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,6 +167,10 @@ const CareerRoles = () => {
 
   const closeDetailsModal = useCallback(() => {
     setShowDetailsModal(false);
+  }, []);
+
+  useEffect(() => {
+    fetchCareerRoles();
   }, []);
 
   return (

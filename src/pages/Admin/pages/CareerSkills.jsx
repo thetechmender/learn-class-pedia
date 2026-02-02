@@ -65,7 +65,7 @@ const CareerSkills = () => {
 
   useEffect(() => {
     fetchCareerSkills();
-  }, [fetchCareerSkills]);
+  }, []);
 
   // Filter career skills based on search
   const filteredCareerSkills = careerSkills.filter(skill => 
