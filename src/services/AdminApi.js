@@ -508,6 +508,124 @@ class AdminApiService {
     });
   }
 
+  // Create career path with file upload (FormData)
+  async createCareerPathWithFile(formData) {
+    const url = `${this.baseURL}${ENDPOINTS.CAREER_PATHS}`;
+    
+    const config = {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      console.log('Creating career path with file:', url);
+      const response = await fetch(url, config);
+      console.log('Create with file response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`Create failed! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Create with file successful:', data);
+        return data;
+      } else {
+        const textData = await response.text();
+        console.log('Create with file successful (text response):', textData);
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Create career path with file failed:', error);
+      throw error;
+    }
+  }
+
+  // Update career path with file upload (FormData)
+  async updateCareerPathWithFile(id, formData) {
+    const url = `${this.baseURL}${ENDPOINTS.CAREER_PATHS}/${id}`;
+    
+    const config = {
+      method: 'PUT',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      console.log('Updating career path with file:', url);
+      const response = await fetch(url, config);
+      console.log('Update with file response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`Update failed! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Update with file successful:', data);
+        return data;
+      } else {
+        const textData = await response.text();
+        console.log('Update with file successful (text response):', textData);
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Update career path with file failed:', error);
+      throw error;
+    }
+  }
+
   // Routes and Roles Management
   
   // GET all routes

@@ -169,19 +169,118 @@ const CareerPath = () => {
     }
   };
 
-  const handleSaveCareerPath = async (careerPathData) => {
+  const handleSaveCareerPath = async (careerPathData, isFormData = false) => {
+    console.log('handleSaveCareerPath called - isFormData:', isFormData);
+    console.log('handleSaveCareerPath called - careerPathData type:', typeof careerPathData);
+    
     try {
       setFormLoading(true);
       
       let savedCareerPath;
       
       if (editingCareerPath) {
-        // Update existing career path
-        savedCareerPath = await adminApiService.updateCareerPath(editingCareerPath.id, careerPathData);
+        // Update existing career path - always use FormData to avoid 415 error
+        console.log('Updating existing career path, using FormData');
+        if (isFormData) {
+          // Use FormData for file uploads - need special handling
+          console.log('Calling updateCareerPathWithFile');
+          savedCareerPath = await adminApiService.updateCareerPathWithFile(editingCareerPath.id, careerPathData);
+        } else {
+          // Convert JSON to FormData for consistency
+          console.log('Converting JSON to FormData and calling updateCareerPathWithFile');
+          const formData = new FormData();
+          
+          // Add all fields to FormData
+          if (careerPathData.title) formData.append('Title', careerPathData.title);
+          if (careerPathData.description) formData.append('Description', careerPathData.description);
+          if (careerPathData.price !== undefined) formData.append('Price', careerPathData.price);
+          if (careerPathData.discountedPrice !== undefined) formData.append('DiscountedPrice', careerPathData.discountedPrice);
+          if (careerPathData.durationMinMonths !== undefined) formData.append('DurationMinMonths', careerPathData.durationMinMonths);
+          if (careerPathData.sortOrder !== undefined) formData.append('SortOrder', careerPathData.sortOrder);
+          if (careerPathData.durationMaxMonths !== undefined) formData.append('DurationMaxMonths', careerPathData.durationMaxMonths);
+          if (careerPathData.outcome) formData.append('Outcome', careerPathData.outcome);
+          if (careerPathData.certificateCount !== undefined) formData.append('CertificateCount', careerPathData.certificateCount);
+          if (careerPathData.roleId !== undefined) formData.append('RoleId', careerPathData.roleId);
+          
+          // Add arrays using proper notation
+          if (careerPathData.levels && careerPathData.levels.length > 0) {
+            careerPathData.levels.forEach((level, index) => {
+              formData.append(`Levels[${index}].levelId`, level.levelId);
+              level.courses.forEach((course, courseIndex) => {
+                formData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
+                formData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
+              });
+            });
+          }
+          
+          if (careerPathData.skills && careerPathData.skills.length > 0) {
+            careerPathData.skills.forEach((skill, index) => {
+              formData.append(`Skills[${index}].skillId`, skill.skillId);
+              formData.append(`Skills[${index}].proficiencyLevel`, skill.proficiencyLevel);
+            });
+          }
+          
+          if (careerPathData.careerPathBadges && careerPathData.careerPathBadges.length > 0) {
+            careerPathData.careerPathBadges.forEach((badgeId, index) => {
+              formData.append(`CareerPathBadges[${index}]`, badgeId);
+            });
+          }
+          // Don't include CareerPathBadges field at all when empty
+          
+          savedCareerPath = await adminApiService.updateCareerPathWithFile(editingCareerPath.id, formData);
+        }
         showToast('Career path updated successfully!', 'success');
       } else {
-        // Create new career path
-        savedCareerPath = await adminApiService.createCareerPath(careerPathData);
+        // Create new career path - always use FormData to avoid 415 error
+        console.log('Creating new career path, using FormData');
+        if (isFormData) {
+          // Use FormData for file uploads - need special handling
+          console.log('Calling createCareerPathWithFile');
+          savedCareerPath = await adminApiService.createCareerPathWithFile(careerPathData);
+        } else {
+          // Convert JSON to FormData for consistency
+          console.log('Converting JSON to FormData and calling createCareerPathWithFile');
+          const formData = new FormData();
+          
+          // Add all fields to FormData
+          if (careerPathData.title) formData.append('Title', careerPathData.title);
+          if (careerPathData.description) formData.append('Description', careerPathData.description);
+          if (careerPathData.price !== undefined) formData.append('Price', careerPathData.price);
+          if (careerPathData.discountedPrice !== undefined) formData.append('DiscountedPrice', careerPathData.discountedPrice);
+          if (careerPathData.durationMinMonths !== undefined) formData.append('DurationMinMonths', careerPathData.durationMinMonths);
+          if (careerPathData.sortOrder !== undefined) formData.append('SortOrder', careerPathData.sortOrder);
+          if (careerPathData.durationMaxMonths !== undefined) formData.append('DurationMaxMonths', careerPathData.durationMaxMonths);
+          if (careerPathData.outcome) formData.append('Outcome', careerPathData.outcome);
+          if (careerPathData.certificateCount !== undefined) formData.append('CertificateCount', careerPathData.certificateCount);
+          if (careerPathData.roleId !== undefined) formData.append('RoleId', careerPathData.roleId);
+          
+          // Add arrays using proper notation
+          if (careerPathData.levels && careerPathData.levels.length > 0) {
+            careerPathData.levels.forEach((level, index) => {
+              formData.append(`Levels[${index}].levelId`, level.levelId);
+              level.courses.forEach((course, courseIndex) => {
+                formData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
+                formData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
+              });
+            });
+          }
+          
+          if (careerPathData.skills && careerPathData.skills.length > 0) {
+            careerPathData.skills.forEach((skill, index) => {
+              formData.append(`Skills[${index}].skillId`, skill.skillId);
+              formData.append(`Skills[${index}].proficiencyLevel`, skill.proficiencyLevel);
+            });
+          }
+          
+          if (careerPathData.careerPathBadges && careerPathData.careerPathBadges.length > 0) {
+            careerPathData.careerPathBadges.forEach((badgeId, index) => {
+              formData.append(`CareerPathBadges[${index}]`, badgeId);
+            });
+          }
+          // Don't include CareerPathBadges field at all when empty
+          
+          savedCareerPath = await adminApiService.createCareerPathWithFile(formData);
+        }
         showToast('Career path created successfully!', 'success');
       }
       

@@ -14,7 +14,8 @@ import {
   DollarSign,
   Users,
   Star,
-  ChevronRight
+  ChevronRight,
+  Upload
 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import MultiSelectDropdown from '../../../../components/MultiSelectDropdown';
@@ -58,7 +59,9 @@ const CareerPathForm = ({
     roleId: '',
     levels: [],
     skills: [],
-    careerPathBadges: []
+    careerPathBadges: [],
+    iconUrl: '',
+    iconFile: null
   });
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [selectedSkills, setSelectedSkills] = useState([]);
@@ -85,7 +88,7 @@ const CareerPathForm = ({
   useEffect(() => {
     if (careerPath && levels.length > 0 && badges.length > 0) {
       // Map badge names from API to badge IDs for dropdown
-      const mappedBadgeIds = careerPath.careerBadges?.map(badgeName => {
+      const mappedBadgeIds = careerPath.careerPathBadges?.map(badgeName => {
         const foundBadge = badges.find(b => b.name === badgeName);
         return foundBadge ? foundBadge.id : null;
       }).filter(id => id !== null) || [];
@@ -102,7 +105,8 @@ const CareerPathForm = ({
         roleId: careerPath.roleId || '',
         levels: careerPath.levels || [],
         skills: careerPath.skills || [],
-        careerPathBadges: mappedBadgeIds
+        careerPathBadges: mappedBadgeIds,
+        iconUrl: careerPath.iconUrl || ''
       });
       setSelectedSkills(careerPath.skills?.map(skill => skill.skillId) || []);
       setInitialDataLoaded(true);
@@ -508,46 +512,112 @@ const CareerPathForm = ({
     
     console.log('Form validation passed, preparing submission data');
     
-    const submitData = {
-      title: formData.title,
-      description: formData.description,
-      price: parseFloat(formData.price) || 0,
-      discountedPrice: parseFloat(formData.discountedPrice) || 0,
-      durationMinMonths: parseInt(formData.durationMinMonths),
-      durationMaxMonths: parseInt(formData.durationMaxMonths),
-      outcome: formData.outcome,
-      certificateCount: formData.certificateCount ? parseInt(formData.certificateCount) : 0,
-      roleId: parseInt(formData.roleId),
-      levels: formData.levels.map(level => ({
+    let submitData;
+    let isFormData = false;
+    
+    // Debug: Check if iconFile exists
+    console.log('FormData check - iconFile:', formData.iconFile);
+    console.log('FormData check - iconFile type:', typeof formData.iconFile);
+    
+    // If there's a file, use FormData to avoid 415 error
+    if (formData.iconFile) {
+      console.log('Using FormData for file upload');
+      isFormData = true;
+      submitData = new FormData();
+      
+      // Add all fields to FormData
+      submitData.append('Title', formData.title);
+      submitData.append('Description', formData.description);
+      submitData.append('Price', parseFloat(formData.price) || 0);
+      submitData.append('DiscountedPrice', parseFloat(formData.discountedPrice) || 0);
+      submitData.append('DurationMinMonths', parseInt(formData.durationMinMonths));
+      submitData.append('SortOrder', 0);
+      submitData.append('DurationMaxMonths', parseInt(formData.durationMaxMonths));
+      submitData.append('Outcome', formData.outcome);
+      submitData.append('CertificateCount', formData.certificateCount ? parseInt(formData.certificateCount) : 0);
+      submitData.append('RoleId', parseInt(formData.roleId));
+      
+      // Add arrays using only proper form field notation
+      const levelsArray = formData.levels.map(level => ({
         levelId: parseInt(level.levelId),
         courses: level.courses.map(course => ({
           courseId: parseInt(course.courseId),
           courseSequence: course.courseSequence || 0
         }))
-      })),
-      skills: formData.skills.map(skill => ({
+      }));
+      
+      const skillsArray = formData.skills.map(skill => ({
         skillId: parseInt(skill.skillId),
         proficiencyLevel: parseInt(skill.proficiencyLevel)
-      })),
-      careerPathBadges: formData.careerPathBadges.map(badgeId => parseInt(badgeId))
-    };
+      }));
+      
+      const badgesArray = formData.careerPathBadges.map(badgeId => parseInt(badgeId));
+      
+      console.log('Debug - badgesArray:', badgesArray);
+      console.log('Debug - badgesArray length:', badgesArray.length);
+      
+      // Send arrays using proper array notation only
+      levelsArray.forEach((level, index) => {
+        submitData.append(`Levels[${index}].levelId`, level.levelId);
+        level.courses.forEach((course, courseIndex) => {
+          submitData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
+          submitData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
+        });
+      });
+      
+      skillsArray.forEach((skill, index) => {
+        submitData.append(`Skills[${index}].skillId`, skill.skillId);
+        submitData.append(`Skills[${index}].proficiencyLevel`, skill.proficiencyLevel);
+      });
+      
+      badgesArray.forEach((badgeId, index) => {
+        console.log(`Appending CareerPathBadges[${index}]:`, badgeId);
+        submitData.append(`CareerPathBadges[${index}]`, badgeId);
+      });
+      
+      // Don't include CareerPathBadges field at all when empty - only append if badgesArray has items
+      
+      // Debug: Log all FormData entries
+      console.log('FormData contents:');
+      for (let [key, value] of submitData.entries()) {
+        console.log(`${key}:`, value);
+      }
+      
+      // Add the file
+      submitData.append('File', formData.iconFile);
+    } else {
+      // No file, use regular JSON
+      submitData = {
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price) || 0,
+        discountedPrice: parseFloat(formData.discountedPrice) || 0,
+        durationMinMonths: parseInt(formData.durationMinMonths),
+        sortOrder: 0,
+        durationMaxMonths: parseInt(formData.durationMaxMonths),
+        outcome: formData.outcome,
+        certificateCount: formData.certificateCount ? parseInt(formData.certificateCount) : 0,
+        roleId: parseInt(formData.roleId),
+        levels: formData.levels.map(level => ({
+          levelId: parseInt(level.levelId),
+          courses: level.courses.map(course => ({
+            courseId: parseInt(course.courseId),
+            courseSequence: course.courseSequence || 0
+          }))
+        })),
+        skills: formData.skills.map(skill => ({
+          skillId: parseInt(skill.skillId),
+          proficiencyLevel: parseInt(skill.proficiencyLevel)
+        })),
+        careerPathBadges: formData.careerPathBadges.map(badgeId => parseInt(badgeId))
+      };
+    }
     
     console.log('Clearing cache and calling onSave');
     clearCache();
     
-    // Pass data to parent - parent should handle create vs update logic
-    await onSave(submitData);
-    
-    // For new career paths with icon files, we need to handle the upload after creation
-    // if (!careerPath && iconFile) {
-    //   try {
-    //     // The parent component should handle the creation and return the created career path
-    //     // We'll need to modify the onSave to return the created data
-    //     console.log('Icon file needs to be uploaded after career path creation');
-    //   } catch (error) {
-    //     console.error('Post-creation icon upload failed:', error);
-    //   }
-    // }
+    // Pass data to parent with flag indicating if it's FormData
+    await onSave(submitData, isFormData);
   };
 
  
@@ -729,6 +799,75 @@ const CareerPathForm = ({
               {errors.description && (
                 <p className="mt-1 text-sm text-red-600">{errors.description}</p>
               )}
+            </div>
+
+            {/* Icon Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Icon Upload
+              </label>
+              <div className="flex items-start gap-4">
+                {/* Icon Preview */}
+                <div className="flex-shrink-0">
+                  {formData.iconUrl ? (
+                    <div className="relative">
+                      <img
+                        src={formData.iconUrl}
+                        alt="Career path icon"
+                        className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('iconUrl', '')}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                      <Award className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Controls */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="icon-upload"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          // Create a temporary preview URL
+                          const previewUrl = URL.createObjectURL(file);
+                          handleInputChange('iconUrl', previewUrl);
+                          // Store the file for upload
+                          handleInputChange('iconFile', file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="icon-upload"
+                      className="inline-flex items-center px-4 py-2 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+                    >
+                      <Upload className="w-4 h-4 mr-2 text-blue-600" />
+                      <span className="text-sm text-blue-600 font-medium">
+                        {formData.iconUrl ? 'Change Icon' : 'Upload Icon'}
+                      </span>
+                    </label>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Upload an icon for this career path (JPEG, PNG, GIF, or WebP, max 5MB)
+                  </p>
+                  {errors.iconUrl && (
+                    <p className="mt-1 text-sm text-red-600">{errors.iconUrl}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Career Path Badges */}

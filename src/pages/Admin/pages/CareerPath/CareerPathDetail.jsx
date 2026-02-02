@@ -198,8 +198,22 @@ const CareerPathDetail = () => {
           <div className="p-8">
             <div className="flex items-start justify-between mb-6">
               <div className="flex-1">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">{careerPath.title}</h2>
-                <p className="text-lg text-gray-600 leading-relaxed mb-6">{careerPath.description}</p>
+                <div className="flex items-center gap-6 mb-4">
+                  {/* Career Path Icon */}
+                  {careerPath.iconUrl && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={careerPath.iconUrl}
+                        alt={`${careerPath.title} icon`}
+                        className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">{careerPath.title}</h2>
+                    <p className="text-lg text-gray-600 leading-relaxed">{careerPath.description}</p>
+                  </div>
+                </div>
                 
                 {careerPath.outcome && (
                   <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 mb-6">
