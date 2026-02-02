@@ -16,94 +16,53 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react';
+import { useReviewManagement } from '../../../hooks/useReviewManagement';
+import { useToast } from '../../../hooks/useToast';
 
 const ReviewManagement = () => {
+  const { toast, showToast } = useToast();
+  
+  // API operations from hook
+  const {
+    loading,
+    error,
+    clearError,
+    getAllReviews,
+    getReviewById,
+    updateReviewStatus,
+    respondToReview,
+    deleteReview,
+    markReviewHelpful
+  } = useReviewManagement();
   const [reviews, setReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRating, setFilterRating] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedReview, setSelectedReview] = useState(null);
 
+  // Fetch reviews
+  const fetchReviews = async () => {
+    try {
+      const filters = {
+        search: searchTerm,
+        rating: filterRating !== 'all' ? filterRating : undefined,
+        status: filterStatus !== 'all' ? filterStatus : undefined
+      };
+      const data = await getAllReviews(filters);
+      setReviews(data);
+    } catch (err) {
+      showToast('Failed to fetch reviews', 'error');
+    }
+  };
+
   useEffect(() => {
-    // Mock data - replace with actual API call
-    setReviews([
-      {
-        id: 1,
-        userName: 'Alice Johnson',
-        userEmail: 'alice@example.com',
-        courseTitle: 'React Fundamentals',
-        rating: 5,
-        comment: 'Excellent course! The instructor explains concepts clearly and the projects are very practical.',
-        date: '2024-01-15',
-        status: 'approved',
-        helpful: 23,
-        notHelpful: 2,
-        verified: true,
-        response: null
-      },
-      {
-        id: 2,
-        userName: 'Bob Smith',
-        userEmail: 'bob@example.com',
-        courseTitle: 'Advanced JavaScript',
-        rating: 3,
-        comment: 'Good content but the pacing could be better. Some topics felt rushed.',
-        date: '2024-01-14',
-        status: 'pending',
-        helpful: 8,
-        notHelpful: 5,
-        verified: true,
-        response: null
-      },
-      {
-        id: 3,
-        userName: 'Carol Davis',
-        userEmail: 'carol@example.com',
-        courseTitle: 'UI/UX Design Principles',
-        rating: 4,
-        comment: 'Great introduction to design principles. Would like more advanced topics covered.',
-        date: '2024-01-13',
-        status: 'approved',
-        helpful: 15,
-        notHelpful: 3,
-        verified: false,
-        response: 'Thank you for your feedback! We\'ll consider adding advanced topics in future updates.'
-      },
-      {
-        id: 4,
-        userName: 'David Wilson',
-        userEmail: 'david@example.com',
-        courseTitle: 'React Fundamentals',
-        rating: 2,
-        comment: 'Course content is outdated. Not covering latest React features.',
-        date: '2024-01-12',
-        status: 'flagged',
-        helpful: 3,
-        notHelpful: 12,
-        verified: true,
-        response: null
-      },
-      {
-        id: 5,
-        userName: 'Emma Brown',
-        userEmail: 'emma@example.com',
-        courseTitle: 'Python for Data Science',
-        rating: 5,
-        comment: 'Amazing course! Perfect for beginners in data science.',
-        date: '2024-01-11',
-        status: 'approved',
-        helpful: 31,
-        notHelpful: 1,
-        verified: true,
-        response: null
-      }
-    ]);
-  }, []);
+    fetchReviews();
+  }, [searchTerm, filterRating, filterStatus]);
 
   const filteredReviews = reviews.filter(review => {
-    const matchesSearch = review.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         review.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         review.comment.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = review.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         review.courseTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         review.comment?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRating = filterRating === 'all' || review.rating === parseInt(filterRating);
     const matchesStatus = filterStatus === 'all' || review.status === filterStatus;
     return matchesSearch && matchesRating && matchesStatus;
@@ -129,7 +88,7 @@ const ReviewManagement = () => {
     }
   };
 
-  const updateReviewStatus = (reviewId, newStatus) => {
+  const handleStatusUpdate = (reviewId, newStatus) => {
     setReviews(prev => prev.map(review => 
       review.id === reviewId ? { ...review, status: newStatus } : review
     ));

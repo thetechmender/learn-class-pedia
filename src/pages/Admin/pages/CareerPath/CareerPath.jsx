@@ -41,7 +41,7 @@ const CareerPath = () => {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(9); // 3x3 grid for card layout
+  const [itemsPerPage] = useState(9); 
   
   // Form states
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -173,13 +173,15 @@ const CareerPath = () => {
     try {
       setFormLoading(true);
       
+      let savedCareerPath;
+      
       if (editingCareerPath) {
         // Update existing career path
-        await adminApiService.updateCareerPath(editingCareerPath.id, careerPathData);
+        savedCareerPath = await adminApiService.updateCareerPath(editingCareerPath.id, careerPathData);
         showToast('Career path updated successfully!', 'success');
       } else {
         // Create new career path
-        await adminApiService.createCareerPath(careerPathData);
+        savedCareerPath = await adminApiService.createCareerPath(careerPathData);
         showToast('Career path created successfully!', 'success');
       }
       
@@ -237,28 +239,6 @@ const CareerPath = () => {
 
   const calculateTotalCourses = (levels) => {
     return levels?.reduce((total, level) => total + (level.courses?.length || 0), 0) || 0;
-  };
-
-  const getDifficultyMix = (levels) => {
-    const difficultyCount = {
-      beginner: 0,
-      intermediate: 0,
-      advanced: 0
-    };
-
-    levels?.forEach(level => {
-      const levelName = level.levelName?.toLowerCase();
-      if (levelName?.includes('beginner')) difficultyCount.beginner += level.courses?.length || 0;
-      else if (levelName?.includes('intermediate')) difficultyCount.intermediate += level.courses?.length || 0;
-      else if (levelName?.includes('advanced')) difficultyCount.advanced += level.courses?.length || 0;
-    });
-
-    const mix = [];
-    if (difficultyCount.beginner > 0) mix.push(`${difficultyCount.beginner} Beginner`);
-    if (difficultyCount.intermediate > 0) mix.push(`${difficultyCount.intermediate} Inter.`);
-    if (difficultyCount.advanced > 0) mix.push(`${difficultyCount.advanced} Adv.`);
-    
-    return mix.length > 0 ? mix.join(', ') : 'No courses';
   };
 
   const getFirstFewCourses = (levels, count = 3) => {
@@ -833,6 +813,7 @@ const CareerPath = () => {
                 setEditingCareerPath(null);
               }}
               loading={formLoading}
+              showToast={showToast}
             />
           </div>
         </div>

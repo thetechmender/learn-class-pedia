@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminApiService } from '../../../../services/AdminApi';
 import {
-  Plus,
   Trash2,
   Save,
   X,
@@ -19,14 +17,35 @@ import {
   ChevronRight
 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
-import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
+import MultiSelectDropdown from '../../../../components/MultiSelectDropdown';
+import { useCareerPath } from '../../../../hooks/useCareerPath';
+import { adminApiService } from '../../../../services/AdminApi';
 
 const CareerPathForm = ({ 
   careerPath = null, 
   onSave, 
   onCancel, 
-  loading = false 
+  loading = false,
+  showToast = () => {} 
 }) => {
+  const {
+    loading: hookLoading,
+    error: hookError,
+    clearError,
+    levels,
+    skills,
+    careerRoles,
+    courseTypes,
+    badges,
+    initializeDropdownData,
+    getCoursesByTypeForLevel,
+    createCareerPath,
+    updateCareerPath
+  } = useCareerPath();
+  
+  // Add a state to track if initial data is loaded
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -38,14 +57,9 @@ const CareerPathForm = ({
     certificateCount: '',
     roleId: '',
     levels: [],
-    skills: []
+    skills: [],
+    careerPathBadges: []
   });
-
-  const [allCourses, setAllCourses] = useState([]);
-  const [levels, setLevels] = useState([]);
-  const [skills, setSkills] = useState([]);
-  const [careerRoles, setCareerRoles] = useState([]);
-  const [courseTypes, setCourseTypes] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
@@ -55,7 +69,6 @@ const CareerPathForm = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [courseSearchTerm, setCourseSearchTerm] = useState('');
   const [errors, setErrors] = useState({});
-  const [loadingData, setLoadingData] = useState(false);
   const [draggedCourse, setDraggedCourse] = useState(null);
   const [draggedLevelIndex, setDraggedLevelIndex] = useState(null);
   const [expandedLevels, setExpandedLevels] = useState({});
@@ -64,13 +77,19 @@ const CareerPathForm = ({
   const CACHE_KEY = 'careerPathForm_draft';
   
   useEffect(() => {
-    fetchInitialData();
+    initializeDropdownData();
     // Always clear cache on mount to ensure fresh start
     clearCache();
   }, []);
 
   useEffect(() => {
-    if (careerPath && levels.length > 0) {
+    if (careerPath && levels.length > 0 && badges.length > 0) {
+      // Map badge names from API to badge IDs for dropdown
+      const mappedBadgeIds = careerPath.careerBadges?.map(badgeName => {
+        const foundBadge = badges.find(b => b.name === badgeName);
+        return foundBadge ? foundBadge.id : null;
+      }).filter(id => id !== null) || [];
+      
       setFormData({
         title: careerPath.title || '',
         description: careerPath.description || '',
@@ -82,11 +101,16 @@ const CareerPathForm = ({
         certificateCount: careerPath.certificateCount || '',
         roleId: careerPath.roleId || '',
         levels: careerPath.levels || [],
-        skills: careerPath.skills || []
+        skills: careerPath.skills || [],
+        careerPathBadges: mappedBadgeIds
       });
       setSelectedSkills(careerPath.skills?.map(skill => skill.skillId) || []);
+      setInitialDataLoaded(true);
+    } else if (!careerPath && levels.length > 0 && badges.length > 0) {
+      // For new forms, mark as loaded when dropdown data is ready
+      setInitialDataLoaded(true);
     }
-  }, [careerPath, levels]);
+  }, [careerPath, levels, badges]);
 
   // Auto-save to cache on form data changes (only for new forms, not editing)
   useEffect(() => {
@@ -95,20 +119,6 @@ const CareerPathForm = ({
     }
   }, [formData, currentStep, careerPath]);
 
-  const loadCachedData = () => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached && !careerPath) {
-        const parsedData = JSON.parse(cached);
-        if (parsedData.timestamp && Date.now() - parsedData.timestamp < 24 * 60 * 60 * 1000) { // 24 hours
-          setFormData(parsedData.formData);
-          setCurrentStep(parsedData.currentStep || 1);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load cached data:', error);
-    }
-  };
 
   const saveToCache = () => {
     try {
@@ -133,107 +143,20 @@ const CareerPathForm = ({
 
   useEffect(() => {
     if (selectedCourseTypeForLevel && selectedLevelForCourses !== null) {
-      fetchCoursesByTypeForLevel(selectedCourseTypeForLevel);
+      const fetchCourses = async () => {
+        try {
+          const courses = await getCoursesByTypeForLevel(selectedCourseTypeForLevel);
+          setFilteredCourses(courses);
+        } catch (error) {
+          console.error('Failed to fetch courses:', error);
+          setFilteredCourses([]);
+        }
+      };
+      fetchCourses();
     } else {
       setFilteredCourses([]);
     }
-  }, [selectedCourseTypeForLevel, selectedLevelForCourses]);
-
-  const fetchInitialData = async () => {
-    try {
-      setLoadingData(true);
-      const [levelsRes, skillsRes, careerRolesRes, courseTypesRes] = await Promise.all([
-        fetchCareerPathLevels(),
-        fetchAllSkills(),
-        fetchCareerRoles(),
-        fetchCourseTypes()
-      ]);
-      
-      setLevels(levelsRes);
-      setSkills(skillsRes);
-      setCareerRoles(careerRolesRes);
-      setCourseTypes(courseTypesRes);
-    } catch (error) {
-      console.error('Failed to fetch initial data:', error);
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
-  const fetchCareerPathLevels = async () => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/career-paths/levels`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error('Failed to fetch career path levels:', error);
-      return [];
-    }
-  };
-
-  const fetchAllSkills = async () => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/careerskills`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error('Failed to fetch skills:', error);
-      return [];
-    }
-  };
-
-  const fetchCourseTypes = async () => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/admin/course-types`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error('Failed to fetch course types:', error);
-      return [];
-    }
-  };
-
-  const fetchCoursesByTypeForLevel = async (typeId) => {
-    try {
-      const data = await adminApiService.getAllCoursesAdminNoPagination({ CourseTypeId: typeId });
-      // Handle the response structure where courses are in an 'items' array
-      const courses = data.items || data || [];
-      setFilteredCourses(Array.isArray(courses) ? courses : []);
-    } catch (error) {
-      console.error('Failed to fetch courses by type for level:', error);
-      setFilteredCourses([]);
-    }
-  };
+  }, [selectedCourseTypeForLevel, selectedLevelForCourses, getCoursesByTypeForLevel]);
 
   const getFilteredCoursesWithSearch = () => {
     let courses = [...filteredCourses];
@@ -246,27 +169,6 @@ const CareerPathForm = ({
     }
     
     return courses;
-  };
-
-  const fetchCareerRoles = async () => {
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/career-roles`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error('Failed to fetch career roles:', error);
-      return [];
-    }
   };
 
   const handleInputChange = (field, value) => {
@@ -333,13 +235,6 @@ const CareerPathForm = ({
       ...prev,
       levels: prev.levels.filter((_, i) => i !== levelIndex)
     }));
-  };
-
-  const selectLevelForCourses = (levelIndex) => {
-    setSelectedLevelForCourses(levelIndex);
-    setSelectedCourseTypeForLevel('');
-    setFilteredCourses([]);
-    setCourseSearchTerm('');
   };
 
   const addCourseToSelectedLevel = (courseId) => {
@@ -602,7 +497,7 @@ const CareerPathForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('handleSubmit called - this should only happen on form submission');
     
@@ -633,23 +528,35 @@ const CareerPathForm = ({
       skills: formData.skills.map(skill => ({
         skillId: parseInt(skill.skillId),
         proficiencyLevel: parseInt(skill.proficiencyLevel)
-      }))
+      })),
+      careerPathBadges: formData.careerPathBadges.map(badgeId => parseInt(badgeId))
     };
     
     console.log('Clearing cache and calling onSave');
     clearCache();
     
     // Pass data to parent - parent should handle create vs update logic
-    onSave(submitData);
+    await onSave(submitData);
+    
+    // For new career paths with icon files, we need to handle the upload after creation
+    // if (!careerPath && iconFile) {
+    //   try {
+    //     // The parent component should handle the creation and return the created career path
+    //     // We'll need to modify the onSave to return the created data
+    //     console.log('Icon file needs to be uploaded after career path creation');
+    //   } catch (error) {
+    //     console.error('Post-creation icon upload failed:', error);
+    //   }
+    // }
   };
 
  
-  if (loadingData) {
+  if (hookLoading || !initialDataLoaded) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading form data...</p>
+          <p className="text-gray-600">{careerPath ? 'Loading career path data...' : 'Loading form data...'}</p>
         </div>
       </div>
     );
@@ -822,6 +729,27 @@ const CareerPathForm = ({
               {errors.description && (
                 <p className="mt-1 text-sm text-red-600">{errors.description}</p>
               )}
+            </div>
+
+            {/* Career Path Badges */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Career Path Badges
+              </label>
+              <MultiSelectDropdown
+                items={badges}
+                values={formData.careerPathBadges}
+                onChange={(values) => handleInputChange('careerPathBadges', values)}
+                placeholder="Select badges..."
+                className="w-full"
+                disabled={hookLoading}
+              />
+              {hookError && (
+                <p className="mt-1 text-sm text-red-600">{hookError}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Select badges that will be awarded for completing this career path
+              </p>
             </div>
           </div>
         )}

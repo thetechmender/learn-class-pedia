@@ -25,6 +25,9 @@ const CategoryManagement = () => {
   
   // CRUD operations from hook
   const {
+    loading: hookLoading,
+    error: hookError,
+    clearError,
     getAllCategories,
     createCategory,
     updateCategory,
@@ -68,18 +71,18 @@ const CategoryManagement = () => {
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       // Build search term from filters for backend
       const searchTerm = Object.values(filters).filter(Boolean).join(' ') || '';
       const data = await getAllCategories(searchTerm, {});
       const categories = data.items || data || [];
       setCategories(categories);
-      setError(null);
     } catch (err) {
       setError('Failed to fetch categories');
     } finally {
       setLoading(false);
     }
-  }, [getAllCategories]);
+  }, [getAllCategories, filters]);
   useEffect(() => {
     fetchCategories();
   }, []);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../../hooks/useToast';
+import { useCareerRoles } from '../../../hooks/useCareerRoles';
 import Modal from '../../../components/Modal';
 import { 
   Plus, 
@@ -12,7 +13,6 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { API_CONFIG, ENDPOINTS } from '../../../config/api';
 
 const CareerRoles = () => {
   const { toast, showToast } = useToast();
@@ -20,10 +20,19 @@ const CareerRoles = () => {
   const showSuccess = (message) => showToast(message, 'success');
   const showError = (message) => showToast(message, 'error');
 
+  // API operations from hook
+  const {
+    loading,
+    error,
+    clearError,
+    getAllCareerRoles,
+    getCareerRoleById,
+    createCareerRole,
+    updateCareerRole,
+    deleteCareerRole
+  } = useCareerRoles();
   // State management
   const [careerRoles, setCareerRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Pagination state
@@ -45,121 +54,15 @@ const CareerRoles = () => {
     iconUrl: ''
   });
 
-  // API helper functions
-  const getApiUrl = () => API_CONFIG.BASE_URL_Local;
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('adminToken');
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
-    };
-  };
-
   // Fetch all career roles
   const fetchCareerRoles = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_ROLES}`, {
-        headers: getAuthHeaders()
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setCareerRoles(Array.isArray(data) ? data : []);
-      setError(null);
+      const data = await getAllCareerRoles();
+      setCareerRoles(data);
     } catch (err) {
-      setError('Failed to fetch career roles');
       showError('Failed to fetch career roles');
-    } finally {
-      setLoading(false);
     }
-  }, []);
-
-  // Create career role
-  const createCareerRole = async (careerRoleData) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_ROLES}`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(careerRoleData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      // Check if response has content before parsing JSON
-      const text = await response.text();
-      return text ? JSON.parse(text) : {};
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  // Update career role
-  const updateCareerRole = async (id, careerRoleData) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_ROLE_BY_ID(id)}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(careerRoleData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      // Check if response has content before parsing JSON
-      const text = await response.text();
-      return text ? JSON.parse(text) : {};
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  // Delete career role
-  const deleteCareerRole = async (id) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_ROLE_BY_ID(id)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      return true;
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  // Get career role by ID
-  const getCareerRoleById = async (id) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_ROLE_BY_ID(id)}`, {
-        headers: getAuthHeaders()
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      // Check if response has content before parsing JSON
-      const text = await response.text();
-      return text ? JSON.parse(text) : {};
-    } catch (err) {
-      throw err;
-    }
-  };
+  }, [getAllCareerRoles, showError]);
 
   useEffect(() => {
     fetchCareerRoles();

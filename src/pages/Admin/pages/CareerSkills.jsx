@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../../hooks/useToast';
+import { useCareerSkills } from '../../../hooks/useCareerSkills';
 import Modal from '../../../components/Modal';
 import { 
   Plus, 
@@ -12,7 +13,6 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { API_CONFIG, ENDPOINTS } from '../../../config/api';
 
 const CareerSkills = () => {
   const { toast, showToast } = useToast();
@@ -20,10 +20,19 @@ const CareerSkills = () => {
   const showSuccess = (message) => showToast(message, 'success');
   const showError = (message) => showToast(message, 'error');
 
+  // API operations from hook
+  const {
+    loading,
+    error,
+    clearError,
+    getAllCareerSkills,
+    getCareerSkillById,
+    createCareerSkill,
+    updateCareerSkill,
+    deleteCareerSkill
+  } = useCareerSkills();
   // State management
   const [careerSkills, setCareerSkills] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Pagination state
@@ -44,121 +53,15 @@ const CareerSkills = () => {
     description: ''
   });
 
-  // API helper functions
-  const getApiUrl = () => API_CONFIG.BASE_URL_Local;
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('adminToken');
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
-    };
-  };
-
   // Fetch all career skills
   const fetchCareerSkills = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_SKILLS}`, {
-        headers: getAuthHeaders()
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setCareerSkills(Array.isArray(data) ? data : []);
-      setError(null);
+      const data = await getAllCareerSkills();
+      setCareerSkills(data);
     } catch (err) {
-      setError('Failed to fetch career skills');
       showError('Failed to fetch career skills');
-    } finally {
-      setLoading(false);
     }
-  }, []);
-
-  // Create career skill
-  const createCareerSkill = async (careerSkillData) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_SKILLS}`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(careerSkillData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      // Check if response has content before parsing JSON
-      const text = await response.text();
-      return text ? JSON.parse(text) : {};
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  // Update career skill
-  const updateCareerSkill = async (id, careerSkillData) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_SKILL_BY_ID(id)}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(careerSkillData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      // Check if response has content before parsing JSON
-      const text = await response.text();
-      return text ? JSON.parse(text) : {};
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  // Delete career skill
-  const deleteCareerSkill = async (id) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_SKILL_BY_ID(id)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      return true;
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  // Get career skill by ID
-  const getCareerSkillById = async (id) => {
-    try {
-      const response = await fetch(`${getApiUrl()}${ENDPOINTS.CAREER_SKILL_BY_ID(id)}`, {
-        headers: getAuthHeaders()
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      // Check if response has content before parsing JSON
-      const text = await response.text();
-      return text ? JSON.parse(text) : {};
-    } catch (err) {
-      throw err;
-    }
-  };
+  }, [getAllCareerSkills, showError]);
 
   useEffect(() => {
     fetchCareerSkills();
