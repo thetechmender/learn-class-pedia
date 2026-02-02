@@ -17,7 +17,7 @@ export function useVideoExplainer(lessonText, audios, structuredOutline) {
     const [speechProgress, setSpeechProgress] = useState(0);
     const [userNotes, setUserNotes] = useState({});
     const [bookmarks, setBookmarks] = useState([]);
-    const [playbackRate, setPlaybackRate] = useState(1);
+    const [playbackRate, setPlaybackRate] = useState(0.90);
     const [selectedVoice, setSelectedVoice] = useState('');
     const [completedSlides, setCompletedSlides] = useState(new Set());
     const [timeSpent, setTimeSpent] = useState(0);
@@ -51,8 +51,9 @@ export function useVideoExplainer(lessonText, audios, structuredOutline) {
             if (availableVoices.length > 0 && !selectedVoice) {
                 // Filter English voices (same as dropdown)
                 const englishVoices = availableVoices.filter(v => v.lang.includes('en'));
-                // Select the 4th voice (index 3) if available, otherwise fall back
-                const preferredVoice = englishVoices[3] || englishVoices[0] || availableVoices[0];
+                // Look for David voice first, otherwise fall back
+                const davidVoice = englishVoices.find(v => v.name.toLowerCase().includes('david'));
+                const preferredVoice = davidVoice || englishVoices[0] || availableVoices[0];
                 setSelectedVoice(preferredVoice.name);
             }
         };

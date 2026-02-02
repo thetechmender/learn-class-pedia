@@ -43,7 +43,7 @@ import {
 
 // Default IDs for development/testing (overridden by authenticated props)
 const DEFAULT_STUDENT_ID = 1;
-const DEFAULT_COURSE_ID = 3466;
+const DEFAULT_COURSE_ID = 5;
 
 const parseDurationToSeconds = (duration) => {
     if (!duration) return 0;
@@ -94,7 +94,7 @@ const LinkedInStyleDemo = ({
 
     const [lectureNotes, setLectureNotes] = useState({});
     const [bookmarkedLectures, setBookmarkedLectures] = useState(new Set());
-    const [showChatBox, setShowChatBox] = useState(true);
+    const [showChatBox, setShowChatBox] = useState(false);
 
     // Fetch course data from API
     const fetchCourseData = useCallback(async () => {
@@ -308,8 +308,6 @@ const LinkedInStyleDemo = ({
                         <div className="hidden sm:block">
                             <h1 className="text-gray-900 dark:text-white font-semibold text-sm line-clamp-1">{courseData.title}</h1>
                             <div className="flex items-center gap-2">
-                                <span className="text-gray-600 dark:text-gray-400 text-xs">{courseData.instructor}</span>
-                                <span className="text-gray-400 dark:text-gray-500">•</span>
                                 <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
                                     {courseData.level}
                                 </span>
@@ -318,35 +316,8 @@ const LinkedInStyleDemo = ({
                     </div>
                 </div>
 
-                {/* Center Navigation */}
-                <div className="hidden md:flex items-center gap-6">
-                    <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                        <Home className="w-4 h-4" />
-                        <span className="text-sm font-medium">Overview</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-blue-500 dark:text-blue-400">
-                        <BookOpen className="w-4 h-4" />
-                        <span className="text-sm font-medium">Content</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                        <Users className="w-4 h-4" />
-                        <span className="text-sm font-medium">Community</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                        <Award className="w-4 h-4" />
-                        <span className="text-sm font-medium">Certificates</span>
-                    </button>
-                </div>
-
                 {/* Right Side */}
                 <div className="flex items-center gap-4">
-                    <button className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">
-                        <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    </button>
-                    <button className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors relative">
-                        <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
                     <div className="hidden md:flex items-center gap-3">
                         <div className="text-right">
                             <p className="text-gray-900 dark:text-white text-sm font-medium">{getProgress()}% Complete</p>
@@ -459,21 +430,7 @@ const LinkedInStyleDemo = ({
                     </div>
 
                     {/* Interactive Footer */}
-                    <div className="px-6 py-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                                <ThumbsUp className="w-5 h-5" />
-                                <span className="text-sm">Helpful</span>
-                            </button>
-                            <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                                <MessageSquare className="w-5 h-5" />
-                                <span className="text-sm">Ask Question</span>
-                            </button>
-                            <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                                <HelpCircle className="w-5 h-5" />
-                                <span className="text-sm">Need Help?</span>
-                            </button>
-                        </div>
+                    <div className="px-6 py-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 flex items-center justify-end">
                         <div className="flex items-center gap-3">
                             <button className="px-4 py-2 border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 text-sm transition-colors">
                                 Previous
@@ -502,10 +459,11 @@ const LinkedInStyleDemo = ({
                 {!showChatBox && (
                     <button 
                         onClick={() => setShowChatBox(true)}
-                        className="hidden lg:flex items-center justify-center w-12 flex-shrink-0 border-l border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
-                        title="Open Chat"
+                        className="hidden lg:flex items-center gap-2 px-4 py-2 flex-shrink-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-l-xl shadow-lg hover:shadow-xl transition-all duration-300 fixed right-0 top-1/2 -translate-y-1/2 z-30"
+                        title="Start Chat"
                     >
-                        <MessageSquare className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <MessageSquare className="w-5 h-5" />
+                        <span className="text-sm font-medium">Start Chat</span>
                     </button>
                 )}
 
@@ -700,25 +658,6 @@ const LinkedInStyleDemo = ({
                                         </div>
                                     );
                                 })}
-                            </div>
-
-                            {/* Instructor Info */}
-                            <div className="p-4 border-t border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <img 
-                                        src={courseData.instructorImage} 
-                                        alt={courseData.instructor}
-                                        className="w-12 h-12 rounded-full"
-                                    />
-                                    <div>
-                                        <h4 className="text-gray-900 dark:text-white font-medium text-sm">{courseData.instructor}</h4>
-                                        <p className="text-gray-600 dark:text-gray-400 text-xs">{courseData.instructorTitle}</p>
-                                    </div>
-                                </div>
-                                <button className="w-full py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-medium text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
-                                    <Play className="w-4 h-4" />
-                                    {getNextLecture() ? 'Continue Learning' : 'Course Complete!'}
-                                </button>
                             </div>
                         </>
                     )}
