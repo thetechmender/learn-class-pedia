@@ -1,3 +1,5 @@
+import { API_CONFIG } from '../config/api';
+
 /**
  * Send a message to the chat bot and get a response using the IntelligentChatbot API
  * @param {string} message - The user's question
@@ -10,7 +12,7 @@ export const sendChatMessage = async (message, context = '', courseId = 1, threa
     // Always use courseId as 1 for now
     courseId = 1;
     try {
-        const response = await fetch('https://chatbot.thetechmenders.com/api/IntelligentChatbot/question', {
+        const response = await fetch(`${API_CONFIG.CHATBOT_URL}/IntelligentChatbot/question`, {
             method: 'POST',
             headers: {
                 'accept': 'text/plain',
