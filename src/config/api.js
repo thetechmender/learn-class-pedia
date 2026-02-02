@@ -1,9 +1,12 @@
+import appSettings from './appSettings';
+
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'https://gptassistant.thetechmenders.com/api',
-  BASE_URL_Local: process.env.BASE_URL_Local || 'https://localhost:7043/api',
-  TIMEOUT: 10000, // 10 seconds
-  RETRY_ATTEMPTS: 3,
+  BASE_URL: process.env.REACT_APP_API_URL || appSettings.api.baseUrl,
+  BASE_URL_Local: process.env.BASE_URL_Local || appSettings.api.baseUrlLocal,
+  CHATBOT_URL: appSettings.api.chatbotUrl,
+  TIMEOUT: appSettings.api.timeout,
+  RETRY_ATTEMPTS: appSettings.api.retryAttempts,
 };
 
 // API Endpoints
