@@ -16,8 +16,8 @@ import { courseTableColumns } from '../../../../config/tableConfigurations';
 
 const CourseManagement = () => {
   const { 
-    error, getCourseById, updateCourse,
-    getCourseTypes, getCourseLevels, getAllCategories, createCourse, deleteCourse, getAllCoursesAdmin
+    error, getCourseById,
+    getCourseTypes, getCourseLevels, getAllCategories, deleteCourse, getAllCoursesAdmin
   } = useAdmin();
   
   const { toast, showToast } = useToast();
@@ -73,10 +73,8 @@ const CourseManagement = () => {
     calculateCourseStats(filteredCourses),
     [filteredCourses]
   );
-  // Fetch dropdown data only once on component mount
   useEffect(() => {
     const fetchDropdownData = async () => {
-      // Fetch Categories
       setDropdownLoading(prev => ({ ...prev, categories: true }));
       try {
         const data = await getAllCategories();
@@ -136,7 +134,7 @@ const CourseManagement = () => {
   }, []); // Empty dependency array - run only once on mount
 
   // Handle view details
-  const handleViewDetails = async (course) => {
+ const handleViewDetails = useCallback(async (course) => {
     // Handle both course object and courseId parameter
     const courseId = typeof course === 'object' ? course.id : course;
     
@@ -179,7 +177,7 @@ const CourseManagement = () => {
         setDetailsLoading(prev => ({ ...prev, [courseId]: false }));
       }
     }
-  };
+  }, [getCourseById, showToast]);
 
   // Handle toggle expand for universal table
   const handleToggleExpand = (courseOrId) => {
@@ -218,17 +216,100 @@ const CourseManagement = () => {
   };
 
   // Handle modal submission
-  const handleModalSubmit = async (formData) => {
+  const handleModalSubmit = async (formData, isFormData = false) => {
+    debugger;
 
     try {
       setModalLoading(true);
       setModalError('');
 
       if (modalState.mode === 'create') {
-        await createCourse(formData);
+        if (isFormData) {
+          // formData is already FormData, use it directly
+          await adminApiService.createCourseWithFile(formData);
+        } else {
+          // Convert JSON to FormData for consistency
+          const convertedFormData = new FormData();
+          
+          // Add all fields to FormData (using lowercase field names like JSON)
+          if (formData.title) convertedFormData.append('title', formData.title);
+          if (formData.subtitle) convertedFormData.append('subtitle', formData.subtitle);
+          if (formData.description) convertedFormData.append('description', formData.description);
+          if (formData.overview) convertedFormData.append('overview', formData.overview);
+          if (formData.languageCode) convertedFormData.append('languageCode', formData.languageCode);
+          if (formData.courseTypeId !== undefined) convertedFormData.append('courseTypeId', parseInt(formData.courseTypeId));
+          if (formData.categoryId !== undefined) convertedFormData.append('categoryId', parseInt(formData.categoryId));
+          if (formData.courseLevelId !== undefined) convertedFormData.append('courseLevelId', parseInt(formData.courseLevelId));
+          if (formData.isPaid !== undefined) convertedFormData.append('isPaid', formData.isPaid);
+          if (formData.price !== undefined) convertedFormData.append('price', parseFloat(formData.price) || 0);
+          if (formData.discountedPrice !== undefined) convertedFormData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
+          if (formData.currencyCode) convertedFormData.append('currencyCode', formData.currencyCode);
+          if (formData.promoVideoUrl) convertedFormData.append('promoVideoUrl', formData.promoVideoUrl);
+          
+          // Add badges array (always include, even if empty)
+          if (formData.badgeIds && formData.badgeIds.length > 0) {
+            formData.badgeIds.forEach((badgeId, index) => {
+              convertedFormData.append(`badgeIds[${index}]`, parseInt(badgeId));
+            });
+          } else {
+            convertedFormData.append('badgeIds', JSON.stringify([]));
+          }
+          
+          // Add sections array (always include, even if empty)
+          if (formData.sections && formData.sections.length > 0) {
+            formData.sections.forEach((section, index) => {
+              convertedFormData.append(`sections[${index}].title`, section.title || '');
+              convertedFormData.append(`sections[${index}].description`, section.description || '');
+              convertedFormData.append(`sections[${index}].sortOrder`, section.sortOrder || index);
+            });
+          }
+          
+          await adminApiService.createCourseWithFile(convertedFormData);
+        }
         showToast('Course created successfully!', 'success');
       } else if (modalState.mode === 'edit') {
-        await updateCourse(modalState.course.id, formData);
+        if (isFormData) {
+          // formData is already FormData, use it directly
+          await adminApiService.updateCourseWithFile(modalState.course.id, formData);
+        } else {
+          // Convert JSON to FormData for consistency
+          const convertedFormData = new FormData();
+          
+          // Add all fields to FormData (using lowercase field names like JSON)
+          if (formData.title) convertedFormData.append('title', formData.title);
+          if (formData.subtitle) convertedFormData.append('subtitle', formData.subtitle);
+          if (formData.description) convertedFormData.append('description', formData.description);
+          if (formData.overview) convertedFormData.append('overview', formData.overview);
+          if (formData.languageCode) convertedFormData.append('languageCode', formData.languageCode);
+          if (formData.courseTypeId !== undefined) convertedFormData.append('courseTypeId', parseInt(formData.courseTypeId));
+          if (formData.categoryId !== undefined) convertedFormData.append('categoryId', parseInt(formData.categoryId));
+          if (formData.courseLevelId !== undefined) convertedFormData.append('courseLevelId', parseInt(formData.courseLevelId));
+          if (formData.isPaid !== undefined) convertedFormData.append('isPaid', formData.isPaid);
+          if (formData.price !== undefined) convertedFormData.append('price', parseFloat(formData.price) || 0);
+          if (formData.discountedPrice !== undefined) convertedFormData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
+          if (formData.currencyCode) convertedFormData.append('currencyCode', formData.currencyCode);
+          if (formData.promoVideoUrl) convertedFormData.append('promoVideoUrl', formData.promoVideoUrl);
+          
+          // Add badges array (always include, even if empty)
+          if (formData.badgeIds && formData.badgeIds.length > 0) {
+            formData.badgeIds.forEach((badgeId, index) => {
+              convertedFormData.append(`badgeIds[${index}]`, parseInt(badgeId));
+            });
+          } else {
+            convertedFormData.append('badgeIds', JSON.stringify([]));
+          }
+          
+          // Add sections array (always include, even if empty)
+          if (formData.sections && formData.sections.length > 0) {
+            formData.sections.forEach((section, index) => {
+              convertedFormData.append(`sections[${index}].title`, section.title || '');
+              convertedFormData.append(`sections[${index}].description`, section.description || '');
+              convertedFormData.append(`sections[${index}].sortOrder`, section.sortOrder || index);
+            });
+          }
+          
+          await adminApiService.updateCourseWithFile(modalState.course.id, convertedFormData);
+        }
         showToast('Course updated successfully!', 'success');
       } else if (modalState.mode === 'delete') {
         await deleteCourse(modalState.course.id);
@@ -275,8 +356,6 @@ const CourseManagement = () => {
       setFiltersLoading(false);
     }
   }, [filtersLoading, getActiveFilters, getAllCoursesAdmin, showToast]);
-
-  // Handle page changes
   const handlePageChange = useCallback(async (newPage) => {
     if (newPage < 1) return;
     
@@ -313,6 +392,7 @@ const CourseManagement = () => {
   // Load filtered courses on component mount and when filters change
   useEffect(() => {
     applyFilters();
+   
   }, []); // Only run on mount
 
   if (filtersLoading) {
@@ -584,8 +664,6 @@ const CourseManagement = () => {
           </div>
         </div>
       )}
-
-      {/* Optimized Courses Table with Virtual Scrolling */}
       <UniversalVirtualizedTable
         data={searchFilteredCourses}
         columns={courseTableColumns}

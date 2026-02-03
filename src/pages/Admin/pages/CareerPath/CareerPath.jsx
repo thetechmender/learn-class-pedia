@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApiService } from '../../../../services/AdminApi';
 import CareerPathForm from './CareerPathForm';
@@ -55,7 +55,6 @@ const CareerPath = () => {
   useEffect(() => {
     fetchCareerPaths();
   }, []);
-
   useEffect(() => {
     filterCareerPaths();
   }, [careerPaths, searchTerm, selectedLevel, selectedDuration, selectedCategory]);
@@ -170,8 +169,7 @@ const CareerPath = () => {
   };
 
   const handleSaveCareerPath = async (careerPathData, isFormData = false) => {
-    console.log('handleSaveCareerPath called - isFormData:', isFormData);
-    console.log('handleSaveCareerPath called - careerPathData type:', typeof careerPathData);
+   
     
     try {
       setFormLoading(true);
@@ -179,18 +177,11 @@ const CareerPath = () => {
       let savedCareerPath;
       
       if (editingCareerPath) {
-        // Update existing career path - always use FormData to avoid 415 error
-        console.log('Updating existing career path, using FormData');
         if (isFormData) {
-          // Use FormData for file uploads - need special handling
-          console.log('Calling updateCareerPathWithFile');
+         
           savedCareerPath = await adminApiService.updateCareerPathWithFile(editingCareerPath.id, careerPathData);
-        } else {
-          // Convert JSON to FormData for consistency
-          console.log('Converting JSON to FormData and calling updateCareerPathWithFile');
-          const formData = new FormData();
-          
-          // Add all fields to FormData
+        } else {   
+        const formData = new FormData();
           if (careerPathData.title) formData.append('Title', careerPathData.title);
           if (careerPathData.description) formData.append('Description', careerPathData.description);
           if (careerPathData.price !== undefined) formData.append('Price', careerPathData.price);

@@ -3,6 +3,7 @@ import { useAdmin } from '../../../hooks/useAdmin';
 import { useToast } from '../../../hooks/useToast';
 import Modal from '../../../components/Modal';
 import CategoryDropdown from '../../../components/CategoryDropdown';
+import { adminApiService } from '../../../services/AdminApi';
 import { 
   Plus, 
   Edit2, 
@@ -14,7 +15,9 @@ import {
   Eye,
   ChevronDown,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Upload,
+  X
 } from 'lucide-react';
 
 const CategoryManagement = () => {
@@ -65,8 +68,9 @@ const CategoryManagement = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    parentCategoryId: 0,
     iconUrl: '',
-    parentCategoryId: 0
+    iconFile: null
   });
   const fetchCategories = useCallback(async () => {
     try {
@@ -176,8 +180,9 @@ const CategoryManagement = () => {
     setFormData({
       name: '',
       description: '',
+      parentCategoryId: 0,
       iconUrl: '',
-      parentCategoryId: 0
+      iconFile: null
     });
     setEditingCategory(null);
   }, []);
@@ -188,12 +193,35 @@ const CategoryManagement = () => {
     setModalError(''); // Clear previous modal error
     
     try {
+      let isFormData = false;
+      let submitData = formData;
+      
+      // If there's a file, use FormData
+      if (formData.iconFile) {
+        isFormData = true;
+        submitData = new FormData();
+        submitData.append('name', formData.name);
+        submitData.append('description', formData.description || '');
+        submitData.append('parentCategoryId', formData.parentCategoryId || 0);
+        
+        // Add the file
+        submitData.append('File', formData.iconFile);
+      }
+      
       if (editingCategory) {
-        await updateCategory(editingCategory.id, formData);
+        if (isFormData) {
+          await adminApiService.updateCategoryWithFile(editingCategory.id, submitData);
+        } else {
+          await updateCategory(editingCategory.id, formData);
+        }
         setShowUpdateModal(false);
         showSuccess('Category updated successfully!');
       } else {
-        await createCategory(formData);
+        if (isFormData) {
+          await adminApiService.createCategoryWithFile(submitData);
+        } else {
+          await createCategory(formData);
+        }
         setShowCreateModal(false);
         showSuccess('Category created successfully!');
       }
@@ -243,8 +271,9 @@ const CategoryManagement = () => {
     setFormData({
       name: category.name || '',
       description: category.description || '',
+      parentCategoryId: category.parentCategoryId || 0,
       iconUrl: category.iconUrl || '',
-      parentCategoryId: category.parentCategoryId || 0
+      iconFile: null
     });
     setShowUpdateModal(true);
   }, []);
@@ -582,15 +611,72 @@ const CategoryManagement = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Icon URL</label>
-              <input
-                type="url"
-                name="iconUrl"
-                value={formData.iconUrl}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/icon.png"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+              <div className="space-y-3">
+                {/* File Upload */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="icon-upload"
+                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const previewUrl = URL.createObjectURL(file);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              iconUrl: previewUrl,
+                              iconFile: file
+                            }));
+                          }
+                        }}
+                        className="hidden"
+                        disabled={modalError ? true : false}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('icon-upload').click()}
+                        className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center space-x-2 text-gray-600 hover:text-blue-600"
+                        disabled={modalError ? true : false}
+                      >
+                        <Upload size={20} />
+                        <span>Upload Icon Image</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Icon Preview */}
+                {(formData.iconUrl || formData.iconFile) && (
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <img 
+                        src={formData.iconUrl} 
+                        alt="Icon preview" 
+                        className="w-16 h-16 rounded-lg border border-gray-200 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null }))}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                        disabled={modalError ? true : false}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600">
+                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                      </p>
+                      {formData.iconFile && (
+                        <p className="text-xs text-gray-500">{formData.iconFile.name}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           
@@ -669,15 +755,72 @@ const CategoryManagement = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Icon URL</label>
-              <input
-                type="url"
-                name="iconUrl"
-                value={formData.iconUrl}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/icon.png"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+              <div className="space-y-3">
+                {/* File Upload */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="icon-upload-update"
+                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const previewUrl = URL.createObjectURL(file);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              iconUrl: previewUrl,
+                              iconFile: file
+                            }));
+                          }
+                        }}
+                        className="hidden"
+                        disabled={modalError ? true : false}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('icon-upload-update').click()}
+                        className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center space-x-2 text-gray-600 hover:text-blue-600"
+                        disabled={modalError ? true : false}
+                      >
+                        <Upload size={20} />
+                        <span>Upload New Icon</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Icon Preview */}
+                {(formData.iconUrl || formData.iconFile) && (
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <img 
+                        src={formData.iconUrl} 
+                        alt="Icon preview" 
+                        className="w-16 h-16 rounded-lg border border-gray-200 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null }))}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                        disabled={modalError ? true : false}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600">
+                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                      </p>
+                      {formData.iconFile && (
+                        <p className="text-xs text-gray-500">{formData.iconFile.name}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           

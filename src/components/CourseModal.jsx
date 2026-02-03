@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import {
   XCircle,
   Trash2,
@@ -7,7 +7,8 @@ import {
   Image,
   BookOpen,
   Plus,
-  GripVertical
+  GripVertical,
+  Upload
 } from 'lucide-react';
 
 import GenericDropdown from './GenericDropdown';
@@ -17,8 +18,8 @@ import CategoryDropdown from './CategoryDropdown';
 const CourseModal = ({
   isOpen,
   onClose,
-  mode, // 'edit' | 'delete' | 'create'
-  course, // For edit mode
+  mode, 
+  course, 
   categories,
   courseLevels,
   courseTypes,
@@ -45,7 +46,8 @@ const CourseModal = ({
     thumbnailUrl: '',
     promoVideoUrl: '',
     badgeIds: [],
-    sections: []
+    sections: [],
+    thumbnailFile: null
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -68,7 +70,8 @@ const CourseModal = ({
         thumbnailUrl: course.thumbnailUrl || '',
         promoVideoUrl: course.promoVideoUrl || '',
         badgeIds: course.badgeIds || [],
-        sections: course.sections || []
+        sections: course.sections || [],
+        thumbnailFile: null
       });
     } else if (mode === 'create') {
       setFormData({
@@ -87,7 +90,8 @@ const CourseModal = ({
         thumbnailUrl: '',
         promoVideoUrl: '',
         badgeIds: [],
-        sections: []
+        sections: [],
+        thumbnailFile: null
       });
     }
   }, [course, mode]);
@@ -99,8 +103,6 @@ const CourseModal = ({
         ...prev,
         [name]: type === 'checkbox' ? checked : value
       };
-      
-      // If course is unpaid, set default values for pricing fields
       if (name === 'isPaid' && !checked) {
         newData.price = '0';
         newData.discountedPrice = '0';
@@ -113,8 +115,6 @@ const CourseModal = ({
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
-
-  // Sections management functions
   const addSection = () => {
     const newSection = {
       title: '',
@@ -126,7 +126,6 @@ const CourseModal = ({
       sections: [...prev.sections, newSection]
     }));
   };
-
   const updateSection = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -149,12 +148,8 @@ const CourseModal = ({
   const moveSection = (dragIndex, dropIndex) => {
     const newSections = [...formData.sections];
     const draggedSection = newSections[dragIndex];
-    
-    // Remove the dragged section and insert it at the new position
     newSections.splice(dragIndex, 1);
     newSections.splice(dropIndex, 0, draggedSection);
-    
-    // Update sortOrder for all sections
     newSections.forEach((section, i) => {
       section.sortOrder = i;
     });
@@ -196,8 +191,6 @@ const CourseModal = ({
     if (formData.isPaid && (!formData.price || parseFloat(formData.price) <= 0)) {
       errors.price = 'Price must be greater than 0';
     }
-
-    // Validate sections only if course type is 1 (advance course)
     if (formData.courseTypeId === 1) {
       if (!formData.sections || formData.sections.length === 0) {
         errors.sections = 'At least one section is required for this course type';
@@ -217,14 +210,73 @@ const CourseModal = ({
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (mode === 'delete') {
       onSubmit();
       return;
     }
     if (validateForm()) {
-      onSubmit(formData);
+      let submitData;
+      let isFormData = false;
+      
+      // If there's a file, use FormData
+      if (formData.thumbnailFile) {
+        isFormData = true;
+        submitData = new FormData();
+        submitData.append('title', formData.title);
+        submitData.append('subtitle', formData.subtitle);
+        submitData.append('description', formData.description);
+        submitData.append('overview', formData.overview);
+        submitData.append('languageCode', formData.languageCode);
+        submitData.append('courseTypeId', parseInt(formData.courseTypeId));
+        submitData.append('categoryId', parseInt(formData.categoryId));
+        submitData.append('courseLevelId', parseInt(formData.courseLevelId));
+        submitData.append('isPaid', formData.isPaid);
+        submitData.append('price', parseFloat(formData.price) || 0);
+        submitData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
+        submitData.append('currencyCode', formData.currencyCode);
+        submitData.append('promoVideoUrl', formData.promoVideoUrl);
+        
+        // Add badges array (always include, even if empty)
+        if (formData.badgeIds && formData.badgeIds.length > 0) {
+          formData.badgeIds.forEach((badgeId, index) => {
+            submitData.append(`badgeIds[${index}]`, parseInt(badgeId));
+          });
+        } else {
+          // Always include badges, even if empty array
+          submitData.append('badgeIds', JSON.stringify([]));
+        }
+        
+        // Add sections array (always include, even if empty)
+        if (formData.sections && formData.sections.length > 0) {
+          formData.sections.forEach((section, index) => {
+            submitData.append(`sections[${index}].title`, section.title || '');
+            submitData.append(`sections[${index}].description`, section.description || '');
+            submitData.append(`sections[${index}].sortOrder`, section.sortOrder || index);
+          });
+        }
+        
+        // Add the file
+        submitData.append('File', formData.thumbnailFile);
+      } else {
+        // No file, use regular JSON
+        submitData = {
+          ...formData,
+          courseTypeId: parseInt(formData.courseTypeId),
+          categoryId: parseInt(formData.categoryId),
+          courseLevelId: parseInt(formData.courseLevelId),
+          price: parseFloat(formData.price) || 0,
+          discountedPrice: parseFloat(formData.discountedPrice) || 0,
+          badgeIds: formData.badgeIds.map(id => parseInt(id))
+        };
+        // Don't send blob URLs
+        if (submitData.thumbnailUrl && submitData.thumbnailUrl.startsWith('blob:')) {
+          submitData.thumbnailUrl = '';
+        }
+      }
+      
+      onSubmit(submitData, isFormData);
     }
   };
 
@@ -527,20 +579,71 @@ const CourseModal = ({
 
               {/* Media */}
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Thumbnail */}
+                {/* Thumbnail Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Thumbnail URL</label>
-                  <div className="relative">
-                    <Image className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="url"
-                      name="thumbnailUrl"
-                      value={formData.thumbnailUrl}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="https://example.com/image.jpg"
-                      disabled={loading}
-                    />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Course Thumbnail</label>
+                  <div className="flex items-start gap-4">
+                    {/* Thumbnail Preview */}
+                    <div className="flex-shrink-0">
+                      {formData.thumbnailUrl ? (
+                        <div className="relative">
+                          <img
+                            src={formData.thumbnailUrl}
+                            alt="Course thumbnail"
+                            className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, thumbnailUrl: '', thumbnailFile: null }))}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                            disabled={loading}
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                          <Image className="w-8 h-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload Controls */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <input
+                          type="file"
+                          id="thumbnail-upload"
+                          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              // Create a temporary preview URL
+                              const previewUrl = URL.createObjectURL(file);
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                thumbnailUrl: previewUrl,
+                                thumbnailFile: file
+                              }));
+                            }
+                          }}
+                          className="hidden"
+                          disabled={loading}
+                        />
+                        <label
+                          htmlFor="thumbnail-upload"
+                          className="inline-flex items-center px-4 py-2 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+                        >
+                          <Upload className="w-4 h-4 mr-2 text-blue-600" />
+                          <span className="text-sm text-blue-600 font-medium">
+                            {formData.thumbnailUrl ? 'Change Thumbnail' : 'Upload Thumbnail'}
+                          </span>
+                        </label>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Upload a course thumbnail (JPEG, PNG, GIF, or WebP, max 5MB)
+                      </p>
+                    </div>
                   </div>
                 </div>
 

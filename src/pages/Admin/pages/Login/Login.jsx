@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
 import { adminApiService } from '../../../../services/AdminApi';
 import './Login.css';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login ,isAuthenticated} = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -115,7 +115,13 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
+  useEffect(() => {
+    debugger;
+   if(isAuthenticated)
+   {
+     navigate('/admin/');
+   }
+  }, []);
   return (
     <div className="login-container">
       <div className="login-background">

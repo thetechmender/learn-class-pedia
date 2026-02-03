@@ -626,6 +626,242 @@ class AdminApiService {
     }
   }
 
+  // Create course with file upload (FormData)
+  async createCourseWithFile(formData) {
+    const url = `${this.baseURL}${ENDPOINTS.COURSES_ADMIN}`;
+    
+    const config = {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      console.log('Creating course with file:', url);
+      const response = await fetch(url, config);
+      console.log('Create course with file response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`Create course failed! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Create course with file successful:', data);
+        return data;
+      } else {
+        const textData = await response.text();
+        console.log('Create course with file successful (text response):', textData);
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Create course with file failed:', error);
+      throw error;
+    }
+  }
+
+  // Update course with file upload (FormData)
+  async updateCourseWithFile(id, formData) {
+    const url = `${this.baseURL}${ENDPOINTS.COURSE_BY_ID_ADMIN(id)}`;
+    
+    const config = {
+      method: 'PUT',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      console.log('Updating course with file:', url);
+      const response = await fetch(url, config);
+      console.log('Update course with file response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`Update course failed! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Update course with file successful:', data);
+        return data;
+      } else {
+        const textData = await response.text();
+        console.log('Update course with file successful (text response):', textData);
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Update course with file failed:', error);
+      throw error;
+    }
+  }
+
+  // Create category with file upload (FormData)
+  async createCategoryWithFile(formData) {
+    const url = `${this.baseURL}${ENDPOINTS.CATEGORIES_Admin}`;
+    
+    const config = {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      console.log('Creating category with file:', url);
+      const response = await fetch(url, config);
+      console.log('Create category with file response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`Create category failed! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Create category with file successful:', data);
+        return data;
+      } else {
+        const textData = await response.text();
+        console.log('Create category with file successful (text response):', textData);
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Create category with file failed:', error);
+      throw error;
+    }
+  }
+
+  // Update category with file upload (FormData)
+  async updateCategoryWithFile(id, formData) {
+    const url = `${this.baseURL}${ENDPOINTS.CATEGORIES_Admin}/${id}`;
+    
+    const config = {
+      method: 'PUT',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      console.log('Updating category with file:', url);
+      const response = await fetch(url, config);
+      console.log('Update category with file response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`Update category failed! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Update category with file successful:', data);
+        return data;
+      } else {
+        const textData = await response.text();
+        console.log('Update category with file successful (text response):', textData);
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Update category with file failed:', error);
+      throw error;
+    }
+  }
+
   // Routes and Roles Management
   
   // GET all routes
