@@ -862,6 +862,42 @@ class AdminApiService {
     }
   }
 
+  // Course Skill Mapping methods
+  
+  // GET all skills
+  async getAllSkills() {
+    return this.request(ENDPOINTS.COURSE_SKILL_MAP_ALL);
+  }
+
+  // GET skill by ID with course mappings
+  async getSkillById(skillId) {
+    return this.request(ENDPOINTS.COURSE_SKILL_MAP_BY_ID(skillId));
+  }
+
+  // POST sync courses to skill
+  async syncCoursesToSkill(skillId, courseIds) {
+    return this.request(ENDPOINTS.COURSE_SKILL_MAP_SYNC, {
+      method: 'POST',
+      body: JSON.stringify({
+        skillId: skillId,
+        courseIds: courseIds
+      })
+    });
+  }
+
+  // GET filtered courses
+  async getFilteredCourses(filters = {}) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) queryParams.append(key, value);
+    });
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${ENDPOINTS.COURSE_FILTER}?${queryString}` : ENDPOINTS.COURSE_FILTER;
+    
+    return this.request(url);
+  }
+
   // Routes and Roles Management
   
   // GET all routes

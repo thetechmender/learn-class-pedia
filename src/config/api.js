@@ -48,8 +48,11 @@ export const ENDPOINTS = {
   CAREER_PATH_LEVELS: '/career-paths/levels',
   ALL_SKILLS: '/skills',
   COURSES_BY_TYPE: (typeId) => `/admin/courses?CourseTypeId=${typeId}`,
-  COURSE_TYPES: '/admin/course-types',
   CAREER_SKILLS_ENDPOINT: '/careerskills', // Added career skills endpoint
+  // Course Skill Mapping endpoints
+  COURSE_SKILL_MAP_ALL: '/CourseSkillMap/all',
+  COURSE_SKILL_MAP_BY_ID: (id) => `/CourseSkillMap/skill/${id}`,
+  COURSE_SKILL_MAP_SYNC: '/CourseSkillMap/sync',
 };
 
 // HTTP Status Codes

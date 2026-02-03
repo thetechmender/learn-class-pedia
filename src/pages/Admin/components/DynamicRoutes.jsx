@@ -19,6 +19,7 @@ import Support from '../pages/Support/Support';
 import CategoryManagement from '../pages/CategoryManagement';
 import CareerRoles from '../pages/CareerRoles';
 import CareerSkills from '../pages/CareerSkills';
+import CourseSkillMapping from '../pages/CourseSkillMapping/CourseSkillMapping';
 
 // Component mapping
 const componentMap = {
@@ -37,6 +38,7 @@ const componentMap = {
   CategoryManagement,
   CareerRoles,
   CareerSkills,
+  CourseSkillMapping,
 };
 
 // Protected Route Component
@@ -156,6 +158,13 @@ const DynamicRoutes = () => {
       <Route path="career-skills" element={
         <ProtectedRoute>
           <CareerSkills />
+        </ProtectedRoute>
+      } />
+      
+      {/* Course Skill Mapping Route */}
+      <Route path="course-skill-mapping" element={
+        <ProtectedRoute>
+          <CourseSkillMapping />
         </ProtectedRoute>
       } />
       
