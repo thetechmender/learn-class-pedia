@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { appSettings } from '../../config/appSettings';
 
 // Helper function to get audio stream URL
 const getAudioStreamUrl = (audioId) => {
-    const baseUrl = process.env.REACT_APP_API_URL || 'https://localhost:7043/api';
-    return `${baseUrl}/media/audio/${audioId}`;
+    return `${appSettings.apiUrl}/media/audio/${audioId}`;
 };
 
 export function useVideoExplainer(lessonText, audios, structuredOutline) {

@@ -1,8 +1,10 @@
+import { appSettings } from './appSettings';
+
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'https://gptassistant.thetechmenders.com/api',
-  TIMEOUT: 10000, // 10 seconds
-  RETRY_ATTEMPTS: 3,
+  BASE_URL: appSettings.apiUrl,
+  TIMEOUT: appSettings.timeout,
+  RETRY_ATTEMPTS: appSettings.retryAttempts,
 };
 
 // API Endpoints

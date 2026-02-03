@@ -1,6 +1,7 @@
 import { getAuthHeaders } from './authService';
+import { appSettings } from '../config/appSettings';
 
-const BASE_URL = `${process.env.REACT_APP_API_URL}/Assesment`;
+const BASE_URL = `${appSettings.apiUrl}/Assesment`;
 
 /**
  * Get assessment questions for a lecture

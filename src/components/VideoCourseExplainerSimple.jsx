@@ -397,46 +397,14 @@ export default function VideoCourseExplainerSimple({
                         </button>
                     </div>
 
-                    {/* Speed Control */}
+                    {/* Speed & Voice Display (Locked) */}
                     <div className="flex items-center gap-3">
-                        <select
-                            value={videoState.playbackRate}
-                            onChange={(e) => videoState.setPlaybackRate(parseFloat(e.target.value))}
-                            className="bg-slate-800 text-white text-sm px-3 py-1.5 rounded-lg border-none outline-none cursor-pointer"
-                        >
-                            <option value="0.75">0.75x</option>
-                            <option value="0.9">0.90x</option>
-                            <option value="1">1x</option>
-                            <option value="1.25">1.25x</option>
-                            <option value="1.5">1.5x</option>
-                            <option value="2">2x</option>
-                        </select>
-
-                        {/* Voice Selector */}
-                        <select
-                            value={videoState.selectedVoice}
-                            onChange={(e) => {
-                                videoState.setSelectedVoice(e.target.value);
-                                // Restart speech with new voice if playing
-                                if (videoState.isPlaying) {
-                                    window.speechSynthesis.cancel();
-                                    videoState.setSpeechProgress(0);
-                                }
-                            }}
-                            className="bg-slate-800 text-white text-sm px-3 py-1.5 rounded-lg border-none outline-none cursor-pointer max-w-[140px]"
-                        >
-                            <option value="">Auto Voice</option>
-                            {videoState.voices
-                                .filter(v => v.lang.includes('en'))
-                                .slice(0, 6)
-                                .map((voice, idx) => (
-                                    <option key={idx} value={voice.name}>
-                                        {voice.name.replace('Microsoft ', '').replace('Google ', '').substring(0, 20)}
-                                    </option>
-                                ))
-                            }
-                        </select>
-
+                        <span className="bg-slate-800 text-white text-sm px-3 py-1.5 rounded-lg">
+                            0.90x
+                        </span>
+                        <span className="bg-slate-800 text-white text-sm px-3 py-1.5 rounded-lg">
+                            David
+                        </span>
                     </div>
                 </div>
             </div>

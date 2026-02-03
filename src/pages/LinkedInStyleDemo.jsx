@@ -291,24 +291,24 @@ const LinkedInStyleDemo = ({
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950 flex flex-col">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col">
             {/* Top Navigation Bar */}
-            <header className="h-16 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-6 flex-shrink-0 shadow-sm">
-                <div className="flex items-center gap-4">
+            <header className="h-14 sm:h-16 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-800/50 flex items-center justify-between px-3 sm:px-6 flex-shrink-0 sticky top-0 z-40">
+                <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                     <button
                         onClick={() => setShowSidebar(!showSidebar)}
-                        className="lg:hidden w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+                        className="lg:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-105"
                     >
                         {showSidebar ? <X className="w-5 h-5 text-gray-700 dark:text-white" /> : <Menu className="w-5 h-5 text-gray-700 dark:text-white" />}
                     </button>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md">
-                            <BookOpen className="w-5 h-5 text-white" />
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
+                            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                         </div>
-                        <div className="hidden sm:block">
-                            <h1 className="text-gray-900 dark:text-white font-semibold text-sm line-clamp-1">{courseData.title}</h1>
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-gray-900 dark:text-white font-semibold text-xs sm:text-sm truncate">{courseData.title}</h1>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
+                                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-400 rounded-full font-medium">
                                     {courseData.level}
                                 </span>
                             </div>
@@ -320,14 +320,17 @@ const LinkedInStyleDemo = ({
                 <div className="flex items-center gap-4">
                     <div className="hidden md:flex items-center gap-3">
                         <div className="text-right">
-                            <p className="text-gray-900 dark:text-white text-sm font-medium">{getProgress()}% Complete</p>
+                            <p className="text-gray-900 dark:text-white text-sm font-semibold">{getProgress()}% Complete</p>
                             <p className="text-gray-500 dark:text-gray-400 text-xs">{completedLectures.size} of {getTotalLectures()} lectures</p>
                         </div>
-                        <div className="relative">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center">
-                                <span className="text-white text-sm font-bold">{getProgress()}%</span>
-                            </div>
-                            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white border-r-white animate-spin"></div>
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-green-500/25">
+                            <span className="text-white text-xs font-bold">{getProgress()}%</span>
+                        </div>
+                    </div>
+                    {/* Mobile Progress Circle */}
+                    <div className="flex md:hidden items-center">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center shadow-md">
+                            <span className="text-white text-[10px] font-bold">{getProgress()}%</span>
                         </div>
                     </div>
                 </div>
@@ -345,70 +348,41 @@ const LinkedInStyleDemo = ({
             <div className="flex-1 flex overflow-hidden">
                 {/* Video/Content Area */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    {/* Course Info Bar */}
-                    <div className="px-6 py-3 bg-white dark:bg-slate-900/50 border-b border-gray-200 dark:border-slate-800">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
+                    {/* Lecture Header - Combined Info */}
+                    <div className="px-3 sm:px-6 py-3 sm:py-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border-b border-gray-200/50 dark:border-slate-800/50">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1.5">
                                     <div className="flex items-center gap-1">
-                                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                        <span className="text-gray-900 dark:text-white font-semibold">{courseData.rating}</span>
+                                        <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                                        <span className="text-gray-900 dark:text-white font-semibold text-xs sm:text-sm">{courseData.rating}</span>
                                     </div>
-                                    <span className="text-gray-500 dark:text-gray-400 text-sm">({courseData.reviews} reviews)</span>
+                                    <span className="text-gray-400 dark:text-gray-500">•</span>
+                                    <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{courseData.reviews} reviews</span>
                                 </div>
-                                {/* <div className="flex items-center gap-2">
-                                    {courseData.badges.map((badge, index) => (
-                                        <span key={index} className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded-full">
-                                            {badge}
-                                        </span>
-                                    ))}
-                                </div> */}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Lecture Header */}
-                    <div className="px-6 py-4 bg-white dark:bg-slate-900/50 border-b border-gray-200 dark:border-slate-800">
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-1">
-                                        <Clock className="w-4 h-4" />
-                                        {selectedLecture.duration}
-                                    </span>
-                                    {selectedLecture.hasVideo && (
-                                        <>
-                                            <span className="text-gray-500 dark:text-gray-400 text-sm">•</span>
-                                            <span className="text-purple-600 dark:text-purple-400 text-sm flex items-center gap-1">
-                                                <Video className="w-4 h-4" />
-                                                Video
-                                            </span>
-                                        </>
-                                    )}
-                                </div>
-                                <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-2">{selectedLecture.title}</h2>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                                <h2 className="text-gray-900 dark:text-white text-base sm:text-lg lg:text-xl font-bold mb-1 line-clamp-2">{selectedLecture.title}</h2>
+                                <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
                                     Lecture {selectedLecture.lectureNumber} • {selectedLecture.studentCount.toLocaleString()} students viewed
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                 <button
                                     onClick={() => toggleBookmark(selectedLecture.id)}
-                                    className="p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                    className="p-2 sm:p-2.5 rounded-xl bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105"
                                 >
-                                    <Bookmark className={`w-5 h-5 ${bookmarkedLectures.has(selectedLecture.id) ? 'text-blue-500 fill-blue-500' : 'text-gray-500 dark:text-gray-400'}`} />
+                                    <Bookmark className={`w-4 h-4 sm:w-5 sm:h-5 ${bookmarkedLectures.has(selectedLecture.id) ? 'text-blue-500 fill-blue-500' : 'text-gray-500 dark:text-gray-400'}`} />
                                 </button>
                                 {!completedLectures.has(selectedLecture.id) ? (
                                     <button
                                         onClick={() => markAsComplete(selectedLecture.id)}
-                                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg text-sm font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-xl hover:scale-105"
                                     >
                                         Mark Complete
                                     </button>
                                 ) : (
-                                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-medium px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                        <CheckCircle2 className="w-5 h-5" />
-                                        Completed
+                                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs sm:text-sm font-medium px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        <span className="hidden sm:inline">Completed</span>
                                     </span>
                                 )}
                             </div>
@@ -430,14 +404,22 @@ const LinkedInStyleDemo = ({
                     </div>
 
                     {/* Interactive Footer */}
-                    <div className="px-6 py-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 flex items-center justify-end">
-                        <div className="flex items-center gap-3">
-                            <button className="px-4 py-2 border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 text-sm transition-colors">
+                    <div className="px-3 sm:px-6 py-2.5 sm:py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-gray-200/50 dark:border-slate-800/50 flex items-center justify-between sm:justify-end gap-2">
+                        {/* Mobile Chat Button */}
+                        <button 
+                            onClick={() => setShowChatBox(true)}
+                            className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl text-xs font-medium shadow-lg shadow-purple-500/25"
+                        >
+                            <MessageSquare className="w-4 h-4" />
+                            <span>Chat</span>
+                        </button>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <button className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl text-gray-700 dark:text-gray-300 text-xs sm:text-sm transition-all duration-200 hover:scale-105">
                                 Previous
                             </button>
                             <button 
                                 onClick={() => handleLectureSelect(getNextLecture())}
-                                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-medium text-sm transition-all duration-300 shadow-md hover:shadow-lg"
+                                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:scale-105"
                             >
                                 Next Lesson
                             </button>
@@ -516,24 +498,6 @@ const LinkedInStyleDemo = ({
                                         <span>{completedLectures.size} completed</span>
                                         <span>{getTotalLectures() - completedLectures.size} remaining</span>
                                     </div>
-                                </div>
-
-                                {/* Achievements */}
-                                <div className="flex items-center gap-2">
-                                    {courseData.achievements.slice(0, 2).map((achievement, index) => {
-                                        const Icon = achievement.icon;
-                                        return (
-                                            <div key={index} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg">
-                                                <Icon className={`w-4 h-4 ${achievement.color}`} />
-                                                <span className="text-xs text-gray-700 dark:text-gray-300">{achievement.name}</span>
-                                            </div>
-                                        );
-                                    })}
-                                    {courseData.achievements.length > 2 && (
-                                        <div className="px-2.5 py-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg">
-                                            <span className="text-xs text-gray-700 dark:text-gray-300">+{courseData.achievements.length - 2} more</span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 

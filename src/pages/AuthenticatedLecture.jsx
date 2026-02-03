@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertCircle, Lock, RefreshCw, GraduationCap } from 'lucide-react';
 import useAuthenticatedAccess from '../hooks/useAuthenticatedAccess';
 import LinkedInStyleDemo from './LinkedInStyleDemo';
+import { appSettings } from '../config/appSettings';
 
 /**
  * AuthenticatedLecture - Wrapper component for secure cross-app lecture access
@@ -66,7 +67,7 @@ const AuthenticatedLecture = () => {
                             Try Again
                         </button>
                         <a
-                            href={process.env.REACT_APP_MAIN_PORTAL_URL || '/'}
+                            href={appSettings.mainPortalUrl}
                             className="px-6 py-3 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 justify-center"
                         >
                             <GraduationCap className="w-4 h-4" />
