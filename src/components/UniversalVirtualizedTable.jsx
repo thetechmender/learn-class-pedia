@@ -1,8 +1,8 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { Eye, EyeOff, Search, Edit2, Trash2, AlertCircle, Database } from 'lucide-react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { Eye, EyeOff, Edit2, Trash2, AlertCircle, Database } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
-const UniversalVirtualizedTable = ({ 
+const UniversalVirtualizedTable = React.forwardRef(({ 
   data = [],
   columns = [],
   onEdit,
@@ -10,6 +10,7 @@ const UniversalVirtualizedTable = ({
   onViewDetails,
   onCustomAction,
   onToggleExpand,
+  onScroll,
   expandedItems = {},
   itemDetails = {},
   detailsLoading = {},
@@ -23,33 +24,57 @@ const UniversalVirtualizedTable = ({
   emptyMessage = 'No data found',
   loadingMessage = 'Loading...',
   className = ''
-}) => {
+}, ref) => {
   const { theme } = useTheme();
   const [scrollTop, setScrollTop] = useState(0);
-  const containerRef = useRef(null);
+  const internalContainerRef = useRef(null);
+  const scrollPositionRef = useRef(0);
+  
+  // Use forwarded ref or internal ref
+  const containerRef = ref || internalContainerRef;
+  
+  // Preserve scroll position during re-renders
+  const preserveScrollPosition = useCallback(() => {
+    if (containerRef.current && scrollPositionRef.current !== scrollTop) {
+      containerRef.current.scrollTop = scrollPositionRef.current;
+    }
+  }, [scrollTop]);
+  
+  // Update scroll position ref when scroll changes
+  const handleScroll = useCallback((e) => {
+    const newScrollTop = e.target.scrollTop;
+    scrollPositionRef.current = newScrollTop;
+    setScrollTop(newScrollTop);
+    
+    // Call external onScroll handler if provided
+    if (onScroll) {
+      onScroll(e);
+    }
+  }, [onScroll, containerRef]);
+  
+  // Preserve scroll position after data changes
+  useEffect(() => {
+    preserveScrollPosition();
+  }, [data, preserveScrollPosition]);
   
   // Debug: Log theme to console
   console.log('UniversalVirtualizedTable theme:', theme);
   
-  // Calculate visible range
+  // Calculate visible range with stable dependencies
   const visibleRange = useMemo(() => {
-    const start = Math.max(0, Math.floor(scrollTop / itemHeight) - bufferSize);
+    const currentScrollTop = scrollPositionRef.current;
+    const start = Math.max(0, Math.floor(currentScrollTop / itemHeight) - bufferSize);
     const end = Math.min(
       data.length,
       start + Math.ceil(containerHeight / itemHeight) + bufferSize * 2
     );
     return { start, end };
-  }, [scrollTop, data.length, containerHeight, itemHeight, bufferSize]);
+  }, [data.length, containerHeight, itemHeight, bufferSize]);
   
   // Get visible items
   const visibleItems = useMemo(() => {
     return data.slice(visibleRange.start, visibleRange.end);
   }, [data, visibleRange]);
-  
-  // Handle scroll
-  const handleScroll = (e) => {
-    setScrollTop(e.target.scrollTop);
-  };
   
   // Render cell content based on column configuration
   const renderCell = (item, column, index) => {
@@ -322,6 +347,8 @@ const UniversalVirtualizedTable = ({
       </div>
     </div>
   );
-};
+});
+
+UniversalVirtualizedTable.displayName = 'UniversalVirtualizedTable';
 
 export default UniversalVirtualizedTable;

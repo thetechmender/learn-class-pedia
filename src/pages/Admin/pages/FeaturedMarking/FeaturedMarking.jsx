@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useCourseBadgeManagement } from '../../../../hooks/useCourseBadgeManagement';
 import { useToast } from '../../../../hooks/useToast';
 import {
@@ -28,11 +28,14 @@ const FeaturedMarking = () => {
     // Data
     badges,
     courses,
+    setCourses,
     courseTypes,
     courseLevels,
     categories,
-    loading,
-    error,
+    loadingBadges,
+    badgesError,
+    loadingcourse,
+    Courseerror,
     selectedBadge,
     showCreateModal,
     showEditModal,
@@ -49,6 +52,7 @@ const FeaturedMarking = () => {
     
     // Form handlers
     handleInputChange,
+    resetForm,
     
     // Modal handlers
     openCreateModal,
@@ -59,10 +63,10 @@ const FeaturedMarking = () => {
   } = useCourseBadgeManagement();
 
   // Clear form errors when modal opens/closes
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = useCallback(() => {
     setFormErrors({});
     openCreateModal();
-  };
+  }, [openCreateModal]);
 
   const handleOpenEditModal = (badge) => {
     setFormErrors({});
@@ -85,6 +89,8 @@ const FeaturedMarking = () => {
     categoryId: '',
     courseLevelId: ''
   });
+  const [coursesFiltersApplied, setCoursesFiltersApplied] = useState(false);
+  // Removed local isFiltering state - now using loadingcourse from hook
 
   // Filter badges
   const filteredBadges = Array.isArray(badges) ? badges.filter(badge => {
@@ -192,11 +198,10 @@ const FeaturedMarking = () => {
   };
 
   // Handle course filter changes
-  const handleCourseFilterChange = (filterType, value) => {
+  const handleCourseFilterChange = useCallback(async (filterType, value) => {
     const newFilters = { ...courseFilters, [filterType]: value };
     setCourseFilters(newFilters);
-    
-    // Apply filters to load courses
+    setCoursesFiltersApplied(true); // Mark that filters have been applied courses
     const apiFilters = {};
     if (newFilters.courseTypeId && newFilters.courseTypeId !== '') {
       apiFilters.CourseTypeId = newFilters.courseTypeId;
@@ -208,8 +213,12 @@ const FeaturedMarking = () => {
       apiFilters.CourseLevelId = newFilters.courseLevelId;
     }
     
-    loadCoursesWithFilters(apiFilters);
-  };
+    try {
+      await loadCoursesWithFilters(apiFilters);
+    } finally {
+      // setLoading is handled by the hook
+    }
+  }, [loadCoursesWithFilters, courseFilters]);
 
   // Get badge display
   const getBadgeDisplay = (badge) => {
@@ -230,7 +239,7 @@ const FeaturedMarking = () => {
     );
   };
 
-  if (loading) {
+  if (loadingBadges) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
@@ -292,7 +301,7 @@ const FeaturedMarking = () => {
         </div>
 
       {/* Enhanced Error Message */}
-      {error && (
+      {badgesError && (
         <div className="mb-6 relative">
           <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 rounded-xl p-4 shadow-lg">
             <div className="flex items-start gap-3">
@@ -303,7 +312,7 @@ const FeaturedMarking = () => {
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-1">{badgesError}</p>
               </div>
               <button
                 onClick={clearError}
@@ -841,13 +850,15 @@ const FeaturedMarking = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter Courses</h3>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     setCourseFilters({
                       courseTypeId: '',
                       categoryId: '',
                       courseLevelId: ''
                     });
-                    loadCoursesWithFilters({});
+                    // Clear courses instead of loading all
+                    setCourses([]);
+                    setCoursesFiltersApplied(false);
                   }}
                   className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                 >
@@ -901,51 +912,71 @@ const FeaturedMarking = () => {
               </div>
 
               <div className="space-y-2 flex-1 overflow-y-auto mb-4">
-                {Array.isArray(courses) && courses.map(course => {
-                  const isAssigned = getBadgeCourses(selectedBadge.id).includes(course.id);
-                  const isSelected = selectedCourses.includes(course.id);
-                  // Determine the actual current state: selected if it's assigned and not in selection for deselection, or if it's newly selected
-                  const isCurrentlySelected = (isAssigned && !isSelected) || (!isAssigned && isSelected);
-                  
-                  return (
-                    <div
-                      key={course.id}
-                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                        isCurrentlySelected
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-                          : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
-                      onClick={() => toggleCourseSelection(course.id)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isCurrentlySelected}
-                        onChange={() => toggleCourseSelection(course.id)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900 dark:text-white">{course.name || 'Unknown Course'}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {course.instructor || 'Unknown Instructor'} • {course.category || 'Uncategorized'}
-                        </div>
-                      </div>
-                      {isAssigned && !isSelected && (
-                        <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
-                          Assigned
-                        </span>
-                      )}
-                      {isSelected && (
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
-                          {isAssigned ? 'Deselected' : 'Selected'}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-                {!Array.isArray(courses) && (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No courses available
+                {loadingcourse ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="w-6 h-6 animate-spin text-blue-500 mr-2" />
+                    <span className="text-gray-600 dark:text-gray-300">Applying filters...</span>
                   </div>
+                ) : (
+                  <>
+                    {Array.isArray(courses) && courses.map(course => {
+                      const isAssigned = getBadgeCourses(selectedBadge.id).includes(course.id);
+                      const isSelected = selectedCourses.includes(course.id);
+                      // Determine the actual current state: selected if it's assigned and not in selection for deselection, or if it's newly selected
+                      const isCurrentlySelected = (isAssigned && !isSelected) || (!isAssigned && isSelected);
+                      
+                      return (
+                        <div
+                          key={course.id}
+                          className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                            isCurrentlySelected
+                              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                              : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                          }`}
+                          onClick={() => toggleCourseSelection(course.id)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isCurrentlySelected}
+                            onChange={() => toggleCourseSelection(course.id)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900 dark:text-white">{course.title || course.name || 'Unknown Course'}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {(() => {
+                                const courseType = courseTypes.find(ct => ct.id === course.courseTypeId);
+                                const category = categories.find(cat => cat.id === course.categoryId);
+                                const courseLevel = courseLevels.find(cl => cl.id === course.courseLevelId);
+                                
+                                const parts = [];
+                                if (courseType?.name) parts.push(courseType.name);
+                                if (category?.name) parts.push(category.name);
+                                if (courseLevel?.name) parts.push(courseLevel.name);
+                                
+                                return parts.length > 0 ? parts.join(' • ') : 'No additional info';
+                              })()}
+                            </div>
+                          </div>
+                          {isAssigned && !isSelected && (
+                            <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+                              Assigned
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
+                              {isAssigned ? 'Deselected' : 'Selected'}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {!Array.isArray(courses) && (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        No courses available
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

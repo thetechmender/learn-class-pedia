@@ -7,8 +7,10 @@ export const useCourseBadgeManagement = () => {
   const [courseTypes, setCourseTypes] = useState([]);
   const [courseLevels, setCourseLevels] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loadingBadges, setLoadingBadges] = useState(true);
+  const [badgesError, setBadgesError] = useState(null);
+  const [loadingcourse, setLoadingCourse] = useState(false);
+  const [Courseerror, setCourseError] = useState(null);
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -22,136 +24,106 @@ export const useCourseBadgeManagement = () => {
     isActive: true,
     courseIds: []
   });
-
-  // Load initial data
-  const loadData = useCallback(async (filters = {}) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const [badgesData, coursesResponse, courseTypesData, courseLevelsData, categoriesData] = await Promise.all([
-        adminApiService.getAllCourseBadgesNew(),
-        adminApiService.getAllCoursesAdminNoPagination(filters),
-        adminApiService.getAllCourseTypes(),
-        adminApiService.getAllCourseLevels(),
-        adminApiService.getAllCategories()
-      ]);
-      
-      console.log('Badges response:', badgesData);
-      console.log('Courses response with filters:', coursesResponse);
-      console.log('Course types response:', courseTypesData);
-      console.log('Course levels response:', courseLevelsData);
-      console.log('Categories response:', categoriesData);
-      
-      // Handle badges data
-      const badgesArray = Array.isArray(badgesData) ? badgesData : [];
-      
-      // Handle courses response structure - items is directly in the response
-      let coursesArray = [];
-      if (coursesResponse && coursesResponse.items) {
-        coursesArray = coursesResponse.items;
-      } else if (coursesResponse && coursesResponse.data && coursesResponse.data.items) {
-        coursesArray = coursesResponse.data.items;
-      } else if (Array.isArray(coursesResponse)) {
-        coursesArray = coursesResponse;
-      }
-      
-      coursesArray = Array.isArray(coursesArray) ? coursesArray : [];
-      
-      // Handle filter options
-      let courseTypesArray = [];
-      let courseLevelsArray = [];
-      let categoriesArray = [];
-      
-      // Handle course types response
-      if (courseTypesData) {
-        if (Array.isArray(courseTypesData)) {
-          courseTypesArray = courseTypesData;
-        } else if (courseTypesData.items && Array.isArray(courseTypesData.items)) {
-          courseTypesArray = courseTypesData.items;
-        } else if (courseTypesData.data && Array.isArray(courseTypesData.data)) {
-          courseTypesArray = courseTypesData.data;
-        }
-      }
-      
-      // Handle course levels response
-      if (courseLevelsData) {
-        if (Array.isArray(courseLevelsData)) {
-          courseLevelsArray = courseLevelsData;
-        } else if (courseLevelsData.items && Array.isArray(courseLevelsData.items)) {
-          courseLevelsArray = courseLevelsData.items;
-        } else if (courseLevelsData.data && Array.isArray(courseLevelsData.data)) {
-          courseLevelsArray = courseLevelsData.data;
-        }
-      }
-      
-      // Handle categories response
-      if (categoriesData) {
-        if (Array.isArray(categoriesData)) {
-          categoriesArray = categoriesData;
-        } else if (categoriesData.items && Array.isArray(categoriesData.items)) {
-          categoriesArray = categoriesData.items;
-        } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
-          categoriesArray = categoriesData.data;
-        }
-      }
-      
-      console.log('Processed course types:', courseTypesArray);
-      console.log('Processed course levels:', courseLevelsArray);
-      console.log('Processed categories:', categoriesArray);
-      
-      // Map course data to match expected structure
-      const mappedCourses = coursesArray.map(course => ({
-        id: course.id,
-        name: course.title || course.name,
-        title: course.title,
-        subtitle: course.subtitle,
-        description: course.description,
-        instructor: course.instructor || 'Unknown Instructor',
-        category: course.categoryName || course.category || 'Uncategorized',
-        courseLevel: course.courseLevelName,
-        courseType: course.courseTypeName,
-        price: course.price,
-        discountedPrice: course.discountedPrice,
-        isPaid: course.isPaid,
-        thumbnail: course.thumbnailUrl,
-        promoVideoUrl: course.promoVideoUrl,
-        languageCode: course.languageCode,
-        courseBadges: course.courseBadges || [],
-        courseTypeId: course.courseTypeId,
-        courseLevelId: course.courseLevelId,
-        categoryId: course.categoryId
-      }));
-      
-      setBadges(badgesArray);
-      setCourses(mappedCourses);
-      setCourseTypes(courseTypesArray);
-      setCourseLevels(courseLevelsArray);
-      setCategories(categoriesArray);
-      
-      console.log('Final badges array:', badgesArray);
-      console.log('Final mapped courses array:', mappedCourses);
-      console.log('Final course types array:', courseTypesArray);
-      console.log('Final course levels array:', courseLevelsArray);
-      console.log('Final categories array:', categoriesArray);
-    } catch (err) {
-      setError(err.message || 'Failed to load badge data');
-      console.error('Error loading badge data:', err);
-      // Set empty arrays on error to prevent map errors
-      setBadges([]);
-      setCourses([]);
-      setCourseTypes([]);
-      setCourseLevels([]);
-      setCategories([]);
-    } finally {
-      setLoading(false);
+  const loadDropdowns = useCallback(async () => {
+  try {
+    // prevent re-fetch if already loaded
+    if (
+      courseTypes.length &&
+      courseLevels.length &&
+      categories.length
+    ) {
+      return;
     }
-  }, []);
+
+    setLoadingBadges(true);
+
+    const [
+      courseTypesData,
+      courseLevelsData,
+      categoriesData
+    ] = await Promise.all([
+      adminApiService.getAllCourseTypes(),
+      adminApiService.getAllCourseLevels(),
+      adminApiService.getAllCategories()
+    ]);
+
+    const normalize = (data) => {
+      if (Array.isArray(data)) return data;
+      if (data?.items) return data.items;
+      if (data?.data) return data.data;
+      return [];
+    };
+
+    setCourseTypes(normalize(courseTypesData));
+    setCourseLevels(normalize(courseLevelsData));
+    setCategories(normalize(categoriesData));
+  } catch (err) {
+    console.error('Dropdown load error:', err);
+    setBadgesError('Failed to load dropdown data');
+  } finally {
+    setLoadingBadges(false);
+  }
+}, [courseTypes, courseLevels, categories]);
+
+
+const loadData = useCallback(async () => {
+  try {
+    setLoadingBadges(true);
+    setBadgesError(null);
+
+    const badgesData = await adminApiService.getAllCourseBadgesNew();
+    setBadges(Array.isArray(badgesData) ? badgesData : []);
+  } catch (err) {
+    setBadgesError(err.message || 'Failed to load data');
+    setBadges([]);
+  } finally {
+    setLoadingBadges(false);
+  }
+}, []);
+const loadCourses = useCallback(async (filters = {}) => {
+  try {
+    setLoadingCourse(true);
+    setCourseError(null);
+
+    const coursesResponse =
+      await adminApiService.getAllCoursesAdminNoPagination(filters);
+
+    let coursesArray = [];
+    if (coursesResponse?.items) coursesArray = coursesResponse.items;
+    else if (coursesResponse?.data?.items) coursesArray = coursesResponse.data.items;
+    else if (Array.isArray(coursesResponse)) coursesArray = coursesResponse;
+
+    const mappedCourses = coursesArray.map(course => ({
+      id: course.id,
+      title: course.title || course.name,
+      name: course.name || course.title,
+      categoryId: course.categoryId,
+      courseTypeId: course.courseTypeId,
+      courseLevelId: course.courseLevelId,
+      instructor: course.instructor,
+      description: course.description,
+      courseBadges: course.courseBadges || []
+    }));
+
+    setCourses(mappedCourses);
+  } catch (err) {
+    setCourseError(err.message || 'Failed to load courses');
+    setCourses([]);
+  } finally {
+    setLoadingCourse(false);
+  }
+}, []);
+
+const loadCoursesWithFilters = useCallback(async (filters = {}) => {
+  return await loadCourses(filters);
+}, [loadCourses]);
+
 
   // Initial load
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    loadDropdowns();
+  }, [loadData, loadDropdowns]);
 
   // Create badge
   const createBadge = useCallback(async (badgeData) => {
@@ -162,7 +134,7 @@ export const useCourseBadgeManagement = () => {
       resetForm();
       return newBadge;
     } catch (err) {
-      setError(err.message || 'Failed to create badge');
+      setBadgesError(err.message || 'Failed to create badge');
       throw err;
     }
   }, []);
@@ -210,7 +182,7 @@ export const useCourseBadgeManagement = () => {
       setSelectedBadge(null);
       return updatedBadge;
     } catch (err) {
-      setError(err.message || 'Failed to update badge');
+      setBadgesError(err.message || 'Failed to update badge');
       console.error('Badge update error:', err);
       throw err;
     }
@@ -222,7 +194,7 @@ export const useCourseBadgeManagement = () => {
       await adminApiService.deleteCourseBadge(badgeId);
       setBadges(prev => prev.filter(badge => badge.id !== badgeId));
     } catch (err) {
-      setError(err.message || 'Failed to delete badge');
+      setBadgesError(err.message || 'Failed to delete badge');
       throw err;
     }
   }, []);
@@ -232,7 +204,7 @@ export const useCourseBadgeManagement = () => {
     try {
       return await adminApiService.getCourseBadgeById(badgeId);
     } catch (err) {
-      setError(err.message || 'Failed to get badge');
+      setBadgesError(err.message || 'Failed to get badge');
       throw err;
     }
   }, []);
@@ -293,7 +265,7 @@ export const useCourseBadgeManagement = () => {
       
       return updatedBadge;
     } catch (err) {
-      setError(err.message || 'Failed to assign courses to badge');
+      setBadgesError(err.message || 'Failed to assign courses to badge');
       console.error('Course assignment error:', err);
       throw err;
     }
@@ -310,60 +282,6 @@ export const useCourseBadgeManagement = () => {
     const assignedCourseIds = getBadgeCourses(badgeId);
     return courses.filter(course => !assignedCourseIds.includes(course.id));
   }, [courses, getBadgeCourses]);
-
-  // Load courses with filters
-  const loadCoursesWithFilters = useCallback(async (filters = {}) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const coursesResponse = await adminApiService.getAllCoursesAdminNoPagination(filters);
-      
-      // Handle courses response structure - items is directly in the response
-      let coursesArray = [];
-      if (coursesResponse && coursesResponse.items) {
-        coursesArray = coursesResponse.items;
-      } else if (coursesResponse && coursesResponse.data && coursesResponse.data.items) {
-        coursesArray = coursesResponse.data.items;
-      } else if (Array.isArray(coursesResponse)) {
-        coursesArray = coursesResponse;
-      }
-      
-      coursesArray = Array.isArray(coursesArray) ? coursesArray : [];
-      
-      // Map course data to match expected structure
-      const mappedCourses = coursesArray.map(course => ({
-        id: course.id,
-        name: course.title || course.name,
-        title: course.title,
-        subtitle: course.subtitle,
-        description: course.description,
-        instructor: course.instructor || 'Unknown Instructor',
-        category: course.categoryName || course.category || 'Uncategorized',
-        courseLevel: course.courseLevelName,
-        courseType: course.courseTypeName,
-        price: course.price,
-        discountedPrice: course.discountedPrice,
-        isPaid: course.isPaid,
-        thumbnail: course.thumbnailUrl,
-        promoVideoUrl: course.promoVideoUrl,
-        languageCode: course.languageCode,
-        courseBadges: course.courseBadges || [],
-        courseTypeId: course.courseTypeId,
-        courseLevelId: course.courseLevelId,
-        categoryId: course.categoryId
-      }));
-      
-      setCourses(mappedCourses);
-    } catch (err) {
-      setError(err.message || 'Failed to load filtered courses');
-      setCourses([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Form handlers
   const resetForm = useCallback(() => {
     setFormData({
       badgeKey: '',
@@ -383,31 +301,44 @@ export const useCourseBadgeManagement = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   }, []);
+const openCreateModal = useCallback(async () => {
+  resetForm();
+  await Promise.all([
+  
+  ]);
+  setShowCreateModal(true);
+}, [resetForm]);
 
-  // Modal handlers
-  const openCreateModal = useCallback(() => {
-    resetForm();
-    setShowCreateModal(true);
-  }, [resetForm]);
 
-  const openEditModal = useCallback((badge) => {
-    setSelectedBadge(badge);
-    setFormData({
-      badgeKey: badge.badgeKey || '',
-      badgeName: badge.badgeName || '',
-      badgeColor: badge.badgeColor || '#3B82F6',
-      badgeIcon: badge.badgeIcon || '',
-      description: badge.description || '',
-      isActive: badge.isActive ?? true,
-      courseIds: badge.courseIds || []
-    });
-    setShowEditModal(true);
-  }, []);
 
-  const openCourseAssignmentModal = useCallback((badge) => {
-    setSelectedBadge(badge);
-    setShowCourseAssignmentModal(true);
-  }, []);
+const openEditModal = useCallback(async (badge) => {
+  setSelectedBadge(badge);
+
+  setFormData({
+    badgeKey: badge.badgeKey || '',
+    badgeName: badge.badgeName || '',
+    badgeColor: badge.badgeColor || '#3B82F6',
+    badgeIcon: badge.badgeIcon || '',
+    description: badge.description || '',
+    isActive: badge.isActive ?? true,
+    courseIds: badge.courseIds || []
+  });
+
+  await Promise.all([
+  
+  ]);
+
+  setShowEditModal(true);
+}, []);
+
+
+
+const openCourseAssignmentModal = useCallback(async (badge) => {
+  setSelectedBadge(badge);
+  // Don't load courses automatically - wait for user to apply filters
+  setShowCourseAssignmentModal(true);
+}, []);
+
 
   const closeModals = useCallback(() => {
     setShowCreateModal(false);
@@ -419,18 +350,21 @@ export const useCourseBadgeManagement = () => {
 
   // Clear error
   const clearError = useCallback(() => {
-    setError(null);
+    setBadgesError(null);
   }, []);
 
   return {
     // Data
     badges,
     courses,
+    setCourses,
     courseTypes,
     courseLevels,
     categories,
-    loading,
-    error,
+    loadingBadges,
+    badgesError,
+    loadingcourse,
+    Courseerror,
     selectedBadge,
     showCreateModal,
     showEditModal,
@@ -459,6 +393,7 @@ export const useCourseBadgeManagement = () => {
     closeModals,
     
     // Utilities
-    clearError
+    clearError,
+    loadDropdowns
   };
 };
