@@ -603,12 +603,29 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
     }
   }, []);
 
-  const getAllCourseBadgesNew = useCallback(async () => {
+  const getAllCourseBadgesNew = useCallback(async (filters = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCourseBadgesNew();
-      return data;
+      
+      // Build query parameters for pagination
+      const queryParams = new URLSearchParams();
+      
+      // Add pagination parameters
+      if (filters.page !== undefined) queryParams.append('page', filters.page);
+      if (filters.pageSize !== undefined) queryParams.append('pageSize', filters.pageSize);
+      
+      const queryString = queryParams.toString();
+      const response = await adminApiService.getAllCourseBadgesNew(queryString);
+      const data = response.items || response || [];
+    
+      return {
+        items: data,
+        totalCount: response.totalCount || data.length,
+        page: response.page || filters.page || 1,
+        pageSize: response.pageSize || filters.pageSize || 10,
+        totalPages: Math.ceil((response.totalCount || data.length) / (response.pageSize || filters.pageSize || 10))
+      };
     } catch (err) {
       setError('Failed to fetch course badges');
       throw err;

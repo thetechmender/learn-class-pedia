@@ -44,12 +44,16 @@ const AdminLayout = ({ children }) => {
       />
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col lg:ml-0 transition-all duration-300">
-        {/* Top Navbar */}
-        <Navbar onMenuClick={handleMenuClick} />
+      <div className="flex-1 transition-all duration-300">
+        {/* Top Navbar - Fixed */}
+        <div className={`fixed top-0 right-0 z-50 transition-all duration-300 ${
+          isCollapsed ? 'lg:left-20' : 'lg:left-64'
+        } left-0`}>
+          <Navbar onMenuClick={handleMenuClick} />
+        </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-4 lg:p-8">
+        <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-8 pt-20 lg:pt-16">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

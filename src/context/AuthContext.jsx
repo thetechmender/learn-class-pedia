@@ -16,8 +16,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    debugger;
-    // Check if user is authenticated on mount
     const authStatus = localStorage.getItem('isAdminAuthenticated');
     const userData = localStorage.getItem('userData');
     

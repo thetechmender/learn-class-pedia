@@ -20,19 +20,19 @@ export function Navbar({ onMenuClick }) {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-5 py-2 shadow-sm">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-5 py-2 shadow-sm">
       <div className="flex items-center justify-between">
         {/* Left: Menu button and search */}
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
           >
             <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </button>
           
-          <div className="relative max-w-md w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+          <div className="relative flex-1 max-w-xs sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
             <input
               type="text"
               placeholder="Type to search..."
@@ -40,19 +40,15 @@ export function Navbar({ onMenuClick }) {
             />
           </div>
 
-          {/* <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-            <Star className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </button> */}
-
           {/* Theme Toggle Button */}
       
         </div>
 
         {/* Right: Notifications, messages and user info */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
             onClick={handleToggle}
-            className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 dark:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 dark:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hidden sm:flex"
           >
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`}
@@ -63,12 +59,25 @@ export function Navbar({ onMenuClick }) {
               <Sun className="absolute right-1 w-3 h-3 text-yellow-500" />
             )}
           </button>
-          <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+          
+          {/* Mobile theme toggle */}
+          <button
+            onClick={handleToggle}
+            className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            {theme === 'dark' ? (
+              <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            ) : (
+              <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            )}
+          </button>
+          
+          <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors hidden sm:flex">
             <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">2</span>
           </button>
           
-          <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+          <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors hidden sm:flex">
             <Mail className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">1</span>
           </button>
@@ -77,18 +86,18 @@ export function Navbar({ onMenuClick }) {
           <div className="relative">
             <button
               onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors min-w-0"
             >
-              <div className="text-left">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="text-left hidden sm:block min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                   {user?.name || 'Admin User'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {user?.role?.name || 'UI Designer'}
                 </p>
               </div>
               
-              <div className="w-10 h-10 rounded-full overflow-hidden">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0">
                 {user?.profileImage ? (
                   <img 
                     src={user.profileImage} 
@@ -96,13 +105,13 @@ export function Navbar({ onMenuClick }) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
                     {user?.name?.charAt(0).toUpperCase() || 'A'}
                   </div>
                 )}
               </div>
               
-              <ChevronDown className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform flex-shrink-0 ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Menu */}

@@ -257,7 +257,9 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const [levelsRes, skillsRes, careerRolesRes, courseTypesRes, badgesRes] = await Promise.all([
+      
+      // Try to load all data, but don't fail completely if one fails
+      const results = await Promise.allSettled([
         getCareerPathLevels(),
         getAllSkills(),
         getCareerRoles(),
@@ -265,16 +267,26 @@ export const useCareerPath = () => {
         getBadges()
       ]);
       
+      // Log any failures but don't throw
+      results.forEach((result, index) => {
+        const apiNames = ['levels', 'skills', 'careerRoles', 'courseTypes', 'badges'];
+        if (result.status === 'rejected') {
+          console.warn(`Failed to load ${apiNames[index]}:`, result.reason);
+        }
+      });
+      
+      // Return successful results
       return {
-        levels: levelsRes,
-        skills: skillsRes,
-        careerRoles: careerRolesRes,
-        courseTypes: courseTypesRes,
-        badges: badgesRes
+        levels: results[0].status === 'fulfilled' ? results[0].value : [],
+        skills: results[1].status === 'fulfilled' ? results[1].value : [],
+        careerRoles: results[2].status === 'fulfilled' ? results[2].value : [],
+        courseTypes: results[3].status === 'fulfilled' ? results[3].value : [],
+        badges: results[4].status === 'fulfilled' ? results[4].value : []
       };
     } catch (err) {
-      handleError('Failed to initialize dropdown data', err);
-      throw err;
+      console.error('Critical error in initializeDropdownData:', err);
+      setError('Failed to initialize form data');
+      // Don't throw - allow form to render with empty dropdowns
     } finally {
       setLoading(false);
     }

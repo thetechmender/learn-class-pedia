@@ -15,6 +15,8 @@ import {
   Check,
   BookOpen,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
@@ -41,6 +43,7 @@ const FeaturedMarking = () => {
     showEditModal,
     showCourseAssignmentModal,
     formData,
+    badgePagination,
     
     // Actions
     loadCoursesWithFilters,
@@ -49,6 +52,12 @@ const FeaturedMarking = () => {
     deleteBadge,
     assignCoursesToBadge,
     getBadgeCourses,
+    
+    // Pagination actions
+    goToBadgePage,
+    nextBadgePage,
+    prevBadgePage,
+    setBadgePageSize,
     
     // Form handlers
     handleInputChange,
@@ -682,6 +691,34 @@ const FeaturedMarking = () => {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {badgePagination.totalCount > badgePagination.pageSize && (
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {((badgePagination.page - 1) * badgePagination.pageSize) + 1} to {Math.min(badgePagination.page * badgePagination.pageSize, badgePagination.totalCount)} of {badgePagination.totalCount} badges
+          </div>
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={prevBadgePage} 
+              disabled={badgePagination.page <= 1}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-3 py-1 text-sm font-medium text-gray-900 dark:text-white">
+              Page {badgePagination.page} of {badgePagination.totalPages}
+            </span>
+            <button 
+              onClick={nextBadgePage} 
+              disabled={badgePagination.page >= badgePagination.totalPages}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

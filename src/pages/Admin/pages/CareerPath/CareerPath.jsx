@@ -36,7 +36,6 @@ const CareerPath = () => {
     deleteCareerPath
   } = useAdmin();
   const [careerPaths, setCareerPaths] = useState([]);
-  const [filteredCareerPaths, setFilteredCareerPaths] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -48,7 +47,9 @@ const CareerPath = () => {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(9); 
+  const [itemsPerPage] = useState(10); // Match API pageSize
+  const [totalItems, setTotalItems] = useState(0);
+  const [serverTotalPages, setServerTotalPages] = useState(0); 
   
   // Form states
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -61,72 +62,90 @@ const CareerPath = () => {
 
   useEffect(() => {
     fetchCareerPaths();
-  }, []);
-  useEffect(() => {
-    filterCareerPaths();
-  }, [careerPaths, searchTerm, selectedLevel, selectedDuration, selectedCategory]);
+  }, [currentPage]); // Refetch when page changes
 
-  // Reset to page 1 when filters change
   useEffect(() => {
+    // Reset to page 1 when filters change
     setCurrentPage(1);
   }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
 
-  const filterCareerPaths = () => {
-    let filtered = careerPaths;
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(path => 
-        path.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        path.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  // Fetch data when filters change (after page reset)
+  useEffect(() => {
+    if (currentPage === 1) {
+      fetchCareerPaths();
     }
+  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
 
-    // Filter by level
-    if (selectedLevel !== 'all') {
-      filtered = filtered.filter(path => 
-        path.careerPathLevelName?.toLowerCase() === selectedLevel
-      );
-    }
-
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(path => 
-        path.categoryName?.toLowerCase() === selectedCategory
-      );
-    }
-
-    // Filter by duration
-    if (selectedDuration !== 'all') {
-      filtered = filtered.filter(path => {
-        const maxMonths = path.durationMaxMonths || 0;
-        switch (selectedDuration) {
-          case 'short': return maxMonths <= 3;
-          case 'medium': return maxMonths > 3 && maxMonths <= 6;
-          case 'long': return maxMonths > 6 && maxMonths <= 12;
-          case 'extended': return maxMonths > 12;
-          default: return true;
-        }
-      });
-    }
-
-    setFilteredCareerPaths(filtered);
-  };
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredCareerPaths.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedCareerPaths = filteredCareerPaths.slice(startIndex, endIndex);
+  // Pagination calculations (now using server-side data)
+  const totalPages = serverTotalPages;
+  const paginatedCareerPaths = Array.isArray(careerPaths) ? careerPaths : [];
 
   const fetchCareerPaths = async () => {
     try {
       setLoading(true);
-      const response = await getAllCareerPaths();
-      setCareerPaths(response);
+      
+      // Build API parameters for server-side pagination and filtering
+      const params = {
+        page: currentPage,
+        pageSize: itemsPerPage
+      };
+      
+      // Add search parameter if exists
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+      
+      // Add filter parameters if they're not 'all'
+      if (selectedLevel !== 'all') {
+        params.level = selectedLevel;
+      }
+      if (selectedDuration !== 'all') {
+        params.duration = selectedDuration;
+      }
+      if (selectedCategory !== 'all') {
+        params.category = selectedCategory;
+      }
+      
+      const response = await getAllCareerPaths(params);
+      
+      // Handle paginated response structure
+      if (response && typeof response === 'object') {
+        // If response has pagination structure
+        if (response.data && Array.isArray(response.data)) {
+          setCareerPaths(response.data);
+          setTotalItems(response.totalCount || response.total || response.data.length);
+          setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.data.length) / itemsPerPage));
+        } 
+        // If response is directly an array (fallback)
+        else if (Array.isArray(response)) {
+          setCareerPaths(response);
+          setTotalItems(response.length);
+          setServerTotalPages(Math.ceil(response.length / itemsPerPage));
+        }
+        // If response has items property
+        else if (response.items && Array.isArray(response.items)) {
+          setCareerPaths(response.items);
+          setTotalItems(response.totalCount || response.total || response.items.length);
+          setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.items.length) / itemsPerPage));
+        }
+        // Fallback to empty array
+        else {
+          setCareerPaths([]);
+          setTotalItems(0);
+          setServerTotalPages(0);
+        }
+      } else {
+        setCareerPaths([]);
+        setTotalItems(0);
+        setServerTotalPages(0);
+      }
+      
       setError(null);
     } catch (err) {
       setError('Failed to fetch career paths. Please try again.');
+      setCareerPaths([]);
+      setTotalItems(0);
+      setServerTotalPages(0);
     } finally {
       setLoading(false);
     }
@@ -457,9 +476,9 @@ const CareerPath = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100">
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div>
@@ -468,8 +487,8 @@ const CareerPath = () => {
                   <Target className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Career Paths</h1>
-                  <p className="text-sm text-gray-600 mt-1">Discover your perfect learning journey</p>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">Career Paths</h1>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Discover your perfect learning journey</p>
                 </div>
               </div>
             </div>
@@ -478,21 +497,21 @@ const CareerPath = () => {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 font-medium ${
                   getActiveFiltersCount() > 0
-                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
-                    : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
+                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
                 {getActiveFiltersCount() > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                  <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
                     {getActiveFiltersCount()}
                   </span>
                 )}
               </button>
               <button 
                 onClick={handleCreateCareerPath}
-                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Career Path
@@ -506,21 +525,21 @@ const CareerPath = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="relative max-w-2xl mx-auto">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
           </div>
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search career paths by title or description..."
-            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500"
+            className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
               className="absolute inset-y-0 right-0 pr-4 flex items-center"
             >
-              <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              <X className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
             </button>
           )}
         </div>
@@ -528,24 +547,24 @@ const CareerPath = () => {
 
       {/* Filters Section */}
       {showFilters && (
-        <div className="bg-white/60 backdrop-blur-sm border-b border-gray-100">
+        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Filter Options</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
               <button
                 onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Clear All
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 >
                   <option value="all">All Levels</option>
                   <option value="beginner">Beginner</option>
@@ -554,11 +573,11 @@ const CareerPath = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration</label>
                 <select
                   value={selectedDuration}
                   onChange={(e) => setSelectedDuration(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 >
                   <option value="all">All Durations</option>
                   <option value="short">0-3 months</option>
@@ -568,11 +587,11 @@ const CareerPath = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 >
                   <option value="all">All Categories</option>
                   {getUniqueCategories().map(category => (
@@ -585,7 +604,7 @@ const CareerPath = () => {
               <div className="flex items-end">
                 <button
                   onClick={() => setShowFilters(false)}
-                  className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                  className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
                 >
                   Apply Filters
                 </button>
@@ -598,46 +617,46 @@ const CareerPath = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Results Summary */}
-        {filteredCareerPaths.length !== careerPaths.length && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        {searchTerm || selectedLevel !== 'all' || selectedDuration !== 'all' || selectedCategory !== 'all' ? (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-blue-800">
-                Showing <span className="font-semibold">{filteredCareerPaths.length}</span> of {careerPaths.length} career paths
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Showing <span className="font-semibold">{careerPaths.length}</span> of {totalItems} career paths
               </p>
               <button
                 onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
               >
                 Clear filters
               </button>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {filteredCareerPaths.length === 0 ? (
+        {careerPaths.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Target className="w-12 h-12 text-gray-400" />
+            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               {careerPaths.length === 0 ? 'No career paths found' : 'No matching career paths'}
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               {careerPaths.length === 0 
                 ? 'Create your first career path to get started' 
                 : 'Try adjusting your search or filters to find what you\'re looking for'
               }
             </p>
             {careerPaths.length === 0 && (
-              <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+              <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
                 <Plus className="w-4 h-4 mr-2 inline" />
                 Create Your First Career Path
               </button>
             )}
-            {careerPaths.length > 0 && filteredCareerPaths.length === 0 && (
+            {(searchTerm || selectedLevel !== 'all' || selectedDuration !== 'all' || selectedCategory !== 'all') && (
               <button
                 onClick={clearFilters}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
               >
                 Clear All Filters
               </button>
@@ -653,7 +672,7 @@ const CareerPath = () => {
               return (
                 <div 
                   key={path.id} 
-                  className={`group bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden ${
+                  className={`group bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer overflow-hidden ${
                     isHovered ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
                   }`}
                   onMouseEnter={() => setHoveredCard(path.id)}
@@ -663,7 +682,7 @@ const CareerPath = () => {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1 pr-4 min-w-0">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors leading-tight">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">
                           <span className="line-clamp-2">{path.title}</span>
                         </h3>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -682,50 +701,50 @@ const CareerPath = () => {
                           )}
                         </div>
                       </div>
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Award className="w-7 h-7 text-blue-600" />
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Award className="w-7 h-7 text-blue-600 dark:text-blue-400" />
                       </div>
                     </div>
                     
-                    <p className="text-gray-600 text-sm mb-6 leading-relaxed line-clamp-3">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 leading-relaxed line-clamp-3">
                       {path.description}
                     </p>
 
                     {/* Stats */}
                     <div className="grid grid-cols-4 gap-2 mb-6">
-                      <div className="text-center p-3 bg-blue-50 rounded-xl">
-                        <div className="flex items-center justify-center text-blue-600 mb-2">
+                      <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                        <div className="flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2">
                           <BookOpen className="w-5 h-5" />
                         </div>
-                        <div className="text-xl font-bold text-gray-900">{totalCourses}</div>
-                        <div className="text-xs text-gray-600 font-medium">Courses</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">{totalCourses}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Courses</div>
                       </div>
-                      <div className="text-center p-3 bg-green-50 rounded-xl">
-                        <div className="flex items-center justify-center text-green-600 mb-2">
+                      <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                        <div className="flex items-center justify-center text-green-600 dark:text-green-400 mb-2">
                           <Clock className="w-5 h-5" />
                         </div>
-                        <div className="text-xl font-bold text-gray-900">
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">
                           {path.durationMinMonths}-{path.durationMaxMonths}
                         </div>
-                        <div className="text-xs text-gray-600 font-medium">Months</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Months</div>
                       </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-xl">
-                        <div className="flex items-center justify-center text-purple-600 mb-2">
+                      <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                        <div className="flex items-center justify-center text-purple-600 dark:text-purple-400 mb-2">
                           <Users className="w-5 h-5" />
                         </div>
-                        <div className="text-xl font-bold text-gray-900">
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">
                           {path.levels?.length || 0}
                         </div>
-                        <div className="text-xs text-gray-600 font-medium">Levels</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Levels</div>
                       </div>
-                      <div className="text-center p-3 bg-orange-50 rounded-xl">
-                        <div className="flex items-center justify-center text-orange-600 mb-2">
+                      <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                        <div className="flex items-center justify-center text-orange-600 dark:text-orange-400 mb-2">
                           <Award className="w-5 h-5" />
                         </div>
-                        <div className="text-xl font-bold text-gray-900">
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">
                           {path.certificateCount || 0}
                         </div>
-                        <div className="text-xs text-gray-600 font-medium">Certificates</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Certificates</div>
                       </div>
                     </div>
 
@@ -733,11 +752,11 @@ const CareerPath = () => {
                     {path.skills && path.skills.length > 0 && (
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
-                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Skills</div>
+                          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Skills</div>
                           <Star className="w-4 h-4 text-yellow-500" />
                         </div>
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                          <p className="text-sm text-blue-800 font-medium">{getSkillsSummary(path.skills)}</p>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
+                          <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">{getSkillsSummary(path.skills)}</p>
                           <div className="flex flex-wrap gap-1 mt-2">
                             {path.skills.slice(0, 3).map((skill, index) => (
                               <span key={index} className="px-2 py-1 text-xs bg-blue-600 text-white rounded-full">
@@ -758,24 +777,17 @@ const CareerPath = () => {
                     {firstCourses.length > 0 && (
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
-                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Learning Path</div>
-                          <Sparkles className="w-4 h-4 text-blue-500" />
+                          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Learning Path</div>
+                          <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                         </div>
                         <div className="space-y-2">
                           {firstCourses.map((course, index) => (
-                            <div key={course.courseId} className="flex items-center p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200">
-                              {/* <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0 ${
-                                index === 0 ? 'bg-blue-600 text-white' :
-                                index === 1 ? 'bg-blue-500 text-white' :
-                                'bg-blue-400 text-white'
-                              }`}>
-                                {course.courseSequence + 1 || index + 1}
-                              </div> */}
+                            <div key={course.courseId} className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                               <div className="flex-1 min-w-0 mr-2">
-                                <div className="text-gray-900 font-semibold text-sm truncate" title={course.title}>
+                                <div className="text-gray-900 dark:text-gray-100 font-semibold text-sm truncate" title={course.title}>
                                   {course.title}
                                 </div>
-                                <div className="text-xs text-gray-500 truncate" title={course.categoryName}>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={course.categoryName}>
                                   {course.categoryName}
                                 </div>
                               </div>
@@ -789,7 +801,7 @@ const CareerPath = () => {
                         </div>
                         {totalCourses > 3 && (
                           <div className="text-center mt-3">
-                            <span className="text-xs text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-full">
+                            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full">
                               +{totalCourses - 3} more courses
                             </span>
                           </div>
@@ -798,29 +810,29 @@ const CareerPath = () => {
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center text-xs text-gray-500 flex-shrink-0">
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                         <Calendar className="w-3 h-3 mr-1" />
                         {formatDate(path.creationTime || path.createdAt)}
                       </div>
                       <div className="flex items-center gap-1 ml-2">
                         <button 
                           onClick={() => navigate(`/admin/career-paths/${path.id}`)}
-                          className="flex items-center px-2 py-1.5 text-xs text-blue-600 hover:text-blue-700 font-semibold group whitespace-nowrap"
+                          className="flex items-center px-2 py-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold group whitespace-nowrap"
                         >
                           <Eye className="w-3 h-3 mr-1" />
                           View
                         </button>
                         <button 
                           onClick={() => handleEditCareerPath(path)}
-                          className="flex items-center px-2 py-1.5 text-xs text-green-600 hover:text-green-700 font-semibold group whitespace-nowrap"
+                          className="flex items-center px-2 py-1.5 text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-semibold group whitespace-nowrap"
                         >
                           <Edit2 className="w-3 h-3 mr-1" />
                           Edit
                         </button>
                         <button 
                           onClick={() => handleDeleteClick(path)}
-                          className="flex items-center px-2 py-1.5 text-xs text-red-600 hover:text-red-700 font-semibold group whitespace-nowrap"
+                          className="flex items-center px-2 py-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold group whitespace-nowrap"
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
                           Delete
@@ -839,15 +851,15 @@ const CareerPath = () => {
       {totalPages > 1 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredCareerPaths.length)} of{' '}
-              {filteredCareerPaths.length} results
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of{' '}
+              {totalItems} results
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Previous
@@ -873,7 +885,7 @@ const CareerPath = () => {
                       className={`px-3 py-2 text-sm border rounded-md ${
                         currentPage === pageNum
                           ? 'bg-blue-600 text-white border-blue-600'
-                          : 'border-gray-300 hover:bg-gray-50'
+                          : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                     >
                       {pageNum}
@@ -885,7 +897,7 @@ const CareerPath = () => {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
               >
                 Next
                 <ChevronRightIcon className="w-4 h-4 ml-1" />
@@ -898,7 +910,7 @@ const CareerPath = () => {
       {/* Create/Edit Form Modal */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             <CareerPathForm
               careerPath={editingCareerPath}
               onSave={handleSaveCareerPath}
@@ -916,21 +928,21 @@ const CareerPath = () => {
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-600" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">
               Delete Career Path
             </h3>
-            <p className="text-gray-600 text-center mb-6">
+            <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
               Are you sure you want to delete "{deleteConfirm.title}"? This action cannot be undone.
             </p>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 disabled={formLoading}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium disabled:opacity-50"
               >
                 Cancel
               </button>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Search } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const CategoryDropdown = ({
   categories = [],
@@ -13,6 +14,7 @@ const CategoryDropdown = ({
   disabled = false,
   allowClear = true
 }) => {
+  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState(new Set());
@@ -137,15 +139,17 @@ const CategoryDropdown = ({
       return (
         <div key={category.id}>
           <div
-            className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-              isSelected ? 'bg-blue-50 text-blue-600' : ''
+            className={`flex items-center px-3 py-2 cursor-pointer ${
+              isSelected 
+                ? (theme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600')
+                : (theme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900')
             }`}
             style={{ paddingLeft: `${level * 20 + 12}px` }}
             onClick={() => handleSelect(category.id)}
           >
             {hasChildren && (
               <button
-                className="mr-2 p-0.5 hover:bg-gray-200 rounded"
+                className={`mr-2 p-0.5 rounded ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -154,21 +158,21 @@ const CategoryDropdown = ({
                 type="button"
               >
                 {isExpanded ? (
-                  <ChevronDown size={14} className="text-gray-500" />
+                  <ChevronDown size={14} className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} />
                 ) : (
-                  <ChevronRight size={14} className="text-gray-500" />
+                  <ChevronRight size={14} className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} />
                 )}
               </button>
             )}
             {!hasChildren && <span className="mr-6" />}
             <div className="flex items-center flex-1">
               <span className={`w-2 h-2 rounded-full mr-2 ${
-                isSelected ? 'bg-blue-500' : 'bg-gray-400'
+                isSelected ? 'bg-blue-500' : (theme === 'dark' ? 'bg-gray-500' : 'bg-gray-400')
               }`} />
               <div>
-                <div className="font-medium text-sm">{category.name}</div>
+                <div className={`font-medium text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{category.name}</div>
                 {category.slug && (
-                  <div className="text-xs text-gray-500">{category.slug}</div>
+                  <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{category.slug}</div>
                 )}
               </div>
             </div>
@@ -187,20 +191,27 @@ const CategoryDropdown = ({
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Trigger Button */}
       <div
-        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between cursor-pointer ${
-          disabled ? 'bg-gray-100 cursor-not-allowed' : 'hover:border-gray-400'
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between cursor-pointer ${
+          disabled 
+            ? (theme === 'dark' ? 'bg-gray-700 cursor-not-allowed' : 'bg-gray-100 cursor-not-allowed')
+            : (theme === 'dark' 
+                ? 'bg-gray-800 border-gray-600 text-white hover:border-gray-500' 
+                : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'
+              )
         }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <span className={`flex-1 truncate ${
-          value === null || value === '' ? 'text-gray-400' : 'text-gray-900'
+          value === null || value === '' 
+            ? (theme === 'dark' ? 'text-gray-400' : 'text-gray-400') 
+            : (theme === 'dark' ? 'text-white' : 'text-gray-900')
         }`}>
           {getSelectedDisplayName()}
         </span>
         <div className="flex items-center space-x-2">
           {allowClear && value && value !== 'all' && value !== 'root' && (
             <button
-              className="text-gray-400 hover:text-gray-600"
+              className={`${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleSelect(null);
@@ -211,21 +222,23 @@ const CategoryDropdown = ({
           )}
           <ChevronDown 
             size={16} 
-            className={`text-gray-400 transition-transform ${
+            className={`transition-transform ${
               isOpen ? 'rotate-180' : ''
-            }`} 
+            } ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} 
           />
         </div>
       </div>
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
+        <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-80 overflow-hidden ${
+          theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-300'
+        }`}>
           {/* Search Input */}
-          <div className="p-3 border-b border-gray-200">
+          <div className={`p-3 border-b ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
             <div className="relative">
               <Search 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} 
                 size={16} 
               />
               <input
@@ -233,7 +246,11 @@ const CategoryDropdown = ({
                 placeholder="Search categories..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className={`w-full pl-10 pr-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
@@ -246,28 +263,32 @@ const CategoryDropdown = ({
               <div>
                 {showAllOption && (
                   <div
-                    className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                      value === 'all' ? 'bg-blue-50 text-blue-600' : ''
+                    className={`flex items-center px-3 py-2 cursor-pointer ${
+                      value === 'all' 
+                        ? (theme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600')
+                        : (theme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900')
                     }`}
                     onClick={() => handleSelect('all')}
                   >
-                    <span className="w-2 h-2 rounded-full mr-2 bg-gray-400" />
-                    <span className="text-sm">All Categories</span>
+                    <span className={`w-2 h-2 rounded-full mr-2 ${theme === 'dark' ? 'bg-gray-500' : 'bg-gray-400'}`} />
+                    <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>All Categories</span>
                   </div>
                 )}
                 {showRootOnlyOption && (
                   <div
-                    className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                      value === 'root' ? 'bg-blue-50 text-blue-600' : ''
+                    className={`flex items-center px-3 py-2 cursor-pointer ${
+                      value === 'root' 
+                        ? (theme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600')
+                        : (theme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900')
                     }`}
                     onClick={() => handleSelect('root')}
                   >
-                    <span className="w-2 h-2 rounded-full mr-2 bg-gray-400" />
-                    <span className="text-sm">Root Categories Only</span>
+                    <span className={`w-2 h-2 rounded-full mr-2 ${theme === 'dark' ? 'bg-gray-500' : 'bg-gray-400'}`} />
+                    <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Root Categories Only</span>
                   </div>
                 )}
                 {(showAllOption || showRootOnlyOption) && (
-                  <div className="border-t border-gray-200 my-1" />
+                  <div className={`border-t my-1 ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`} />
                 )}
               </div>
             )}
@@ -276,22 +297,24 @@ const CategoryDropdown = ({
             {categoryTree.length > 0 ? (
               renderCategoryTree(categoryTree)
             ) : (
-              <div className="px-3 py-8 text-center text-gray-500 text-sm">
+              <div className={`px-3 py-8 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 {searchTerm ? 'No categories found' : 'No categories available'}
               </div>
             )}
 
             {/* No Parent Option */}
             {value !== null && value !== '' && value !== 'all' && value !== 'root' && (
-              <div className="border-t border-gray-200 mt-2 pt-2">
+              <div className={`border-t mt-2 pt-2 ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}>
                 <div
-                  className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                    value === 0 ? 'bg-blue-50 text-blue-600' : ''
+                  className={`flex items-center px-3 py-2 cursor-pointer ${
+                    value === 0 
+                      ? (theme === 'dark' ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600')
+                      : (theme === 'dark' ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900')
                   }`}
                   onClick={() => handleSelect(0)}
                 >
-                  <span className="w-2 h-2 rounded-full mr-2 bg-gray-400" />
-                  <span className="text-sm text-gray-600">No Parent (Root Category)</span>
+                  <span className={`w-2 h-2 rounded-full mr-2 ${theme === 'dark' ? 'bg-gray-500' : 'bg-gray-400'}`} />
+                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>No Parent (Root Category)</span>
                 </div>
               </div>
             )}

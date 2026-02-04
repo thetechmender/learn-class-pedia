@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAdmin } from './useAdmin';
 import { adminApiService } from '../services/AdminApi';
 
 export const useCourseBadgeManagement = () => {
+  const { getAllCourseBadgesNew } = useAdmin();
+  
   const [badges, setBadges] = useState([]);
   const [courses, setCourses] = useState([]);
   const [courseTypes, setCourseTypes] = useState([]);
@@ -15,6 +18,15 @@ export const useCourseBadgeManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCourseAssignmentModal, setShowCourseAssignmentModal] = useState(false);
+  
+  // Pagination state for badges
+  const [badgePagination, setBadgePagination] = useState({
+    page: 1,
+    pageSize: 10,
+    totalCount: 0,
+    totalPages: 0
+  });
+  
   const [formData, setFormData] = useState({
     badgeKey: '',
     badgeName: '',
@@ -26,15 +38,6 @@ export const useCourseBadgeManagement = () => {
   });
   const loadDropdowns = useCallback(async () => {
   try {
-    // prevent re-fetch if already loaded
-    if (
-      courseTypes.length &&
-      courseLevels.length &&
-      categories.length
-    ) {
-      return;
-    }
-
     setLoadingBadges(true);
 
     const [
@@ -61,25 +64,41 @@ export const useCourseBadgeManagement = () => {
     console.error('Dropdown load error:', err);
     setBadgesError('Failed to load dropdown data');
   } finally {
-    setLoadingBadges(false);
+    // Only set loading to false if badges are not loading
+    // This prevents interfering with the main badge loading state
+    if (!loadingBadges) {
+      setLoadingBadges(false);
+    }
   }
-}, [courseTypes, courseLevels, categories]);
+}, []);
 
 
-const loadData = useCallback(async () => {
+const loadData = useCallback(async (page = 1, pageSize = 10) => {
   try {
     setLoadingBadges(true);
     setBadgesError(null);
 
-    const badgesData = await adminApiService.getAllCourseBadgesNew();
-    setBadges(Array.isArray(badgesData) ? badgesData : []);
+    // Build query parameters for pagination
+    const filters = { page, pageSize };
+    
+    const response = await getAllCourseBadgesNew(filters);
+    
+    // Use the structured response from the API
+    setBadges(response.items || []);
+    setBadgePagination(prev => ({
+      ...prev,
+      page: response.page || page,
+      pageSize: response.pageSize || pageSize,
+      totalCount: response.totalCount || 0,
+      totalPages: response.totalPages || 0
+    }));
   } catch (err) {
     setBadgesError(err.message || 'Failed to load data');
     setBadges([]);
   } finally {
     setLoadingBadges(false);
   }
-}, []);
+}, [getAllCourseBadgesNew]);
 const loadCourses = useCallback(async (filters = {}) => {
   try {
     setLoadingCourse(true);
@@ -119,11 +138,54 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
 }, [loadCourses]);
 
 
-  // Initial load
+  // Initial load - only run once on mount
   useEffect(() => {
-    loadData();
-    loadDropdowns();
-  }, [loadData, loadDropdowns]);
+    // Load both badges and dropdowns in parallel
+    const loadInitialData = async () => {
+      try {
+        setLoadingBadges(true);
+        setBadgesError(null);
+
+        // Load badges and dropdowns in parallel for better performance
+        const [badgesResponse, courseTypesData, courseLevelsData, categoriesData] = await Promise.all([
+          getAllCourseBadgesNew({ page: 1, pageSize: 10 }),
+          adminApiService.getAllCourseTypes(),
+          adminApiService.getAllCourseLevels(),
+          adminApiService.getAllCategories()
+        ]);
+
+        // Process badges response
+        setBadges(badgesResponse.items || []);
+        setBadgePagination({
+          page: badgesResponse.page || 1,
+          pageSize: badgesResponse.pageSize || 10,
+          totalCount: badgesResponse.totalCount || 0,
+          totalPages: badgesResponse.totalPages || 0
+        });
+
+        // Process dropdown data
+        const normalize = (data) => {
+          if (Array.isArray(data)) return data;
+          if (data?.items) return data.items;
+          if (data?.data) return data.data;
+          return [];
+        };
+
+        setCourseTypes(normalize(courseTypesData));
+        setCourseLevels(normalize(courseLevelsData));
+        setCategories(normalize(categoriesData));
+
+      } catch (err) {
+        console.error('Initial load error:', err);
+        setBadgesError('Failed to load data');
+        setBadges([]);
+      } finally {
+        setLoadingBadges(false);
+      }
+    };
+
+    loadInitialData();
+  }, [getAllCourseBadgesNew]); // Add dependency
 
   // Create badge
   const createBadge = useCallback(async (badgeData) => {
@@ -336,6 +398,29 @@ const openCourseAssignmentModal = useCallback(async (badge) => {
     setBadgesError(null);
   }, []);
 
+  // Pagination helper functions
+  const goToBadgePage = useCallback((page) => {
+    if (page >= 1 && page <= badgePagination.totalPages) {
+      loadData(page, badgePagination.pageSize);
+    }
+  }, [loadData, badgePagination.pageSize, badgePagination.totalPages]);
+
+  const nextBadgePage = useCallback(() => {
+    if (badgePagination.page < badgePagination.totalPages) {
+      goToBadgePage(badgePagination.page + 1);
+    }
+  }, [badgePagination, goToBadgePage]);
+
+  const prevBadgePage = useCallback(() => {
+    if (badgePagination.page > 1) {
+      goToBadgePage(badgePagination.page - 1);
+    }
+  }, [badgePagination, goToBadgePage]);
+
+  const setBadgePageSize = useCallback((newPageSize) => {
+    loadData(1, newPageSize);
+  }, [loadData]);
+
   return {
     // Data
     badges,
@@ -353,6 +438,7 @@ const openCourseAssignmentModal = useCallback(async (badge) => {
     showEditModal,
     showCourseAssignmentModal,
     formData,
+    badgePagination,
     
     // Actions
     loadData,
@@ -364,6 +450,12 @@ const openCourseAssignmentModal = useCallback(async (badge) => {
     assignCoursesToBadge,
     getBadgeCourses,
     getUnassignedCourses,
+    
+    // Pagination actions
+    goToBadgePage,
+    nextBadgePage,
+    prevBadgePage,
+    setBadgePageSize,
     
     // Form handlers
     handleInputChange,

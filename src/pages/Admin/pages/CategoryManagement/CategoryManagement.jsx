@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '../../../../hooks/useAdmin';
 import { useToast } from '../../../../hooks/useToast';
+import { useTheme } from '../../../../context/ThemeContext';
 import Modal from '../../../../components/Modal';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 import { 
@@ -21,6 +22,7 @@ import {
 
 const CategoryManagement = () => {
   const { toast, showToast } = useToast();
+  const { theme } = useTheme();
   
   const showSuccess = (message) => showToast(message, 'success');
   const showError = (message) => showToast(message, 'error');
@@ -355,43 +357,45 @@ const CategoryManagement = () => {
 
     return (
       <React.Fragment key={category.id}>
-        <tr className={`border-b hover:bg-gray-50 ${isMatching ? 'bg-yellow-100' : ''}`}>
+        <tr className={`border-b ${theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-50 border-gray-200'} ${isMatching ? 'bg-yellow-100' : ''}`}>
           <td className="px-4 py-3">
             <div className="flex items-center" style={{ paddingLeft: `${level * 20}px` }}>
               {hasChildren && (
                 <button
                   onClick={() => toggleCategoryExpansion(category.id)}
-                  className="mr-2 p-1 hover:bg-gray-200 rounded"
+                  className={`mr-2 p-1 rounded ${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
                 >
                   {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </button>
               )}
               {!hasChildren && level > 0 && <span className="mr-6" />}
               <div>
-                <div className={`font-medium ${isMatching ? 'text-yellow-800 font-semibold' : ''}`} style={{fontSize: '0.9rem'}}>
+                <div className={`font-medium ${isMatching ? 'text-yellow-800 font-semibold' : theme === 'dark' ? 'text-white' : 'text-gray-900'}`} style={{fontSize: '0.9rem'}}>
                   {category.name}
                 </div>
                 {category.parentCategoryName && (
-                  <div className="text-sm text-gray-500" style={{fontSize: '0.8rem'}}>Parent: {category.parentCategoryName}</div>
+                  <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} style={{fontSize: '0.8rem'}}>Parent: {category.parentCategoryName}</div>
                 )}
               </div>
             </div>
           </td>
-          <td className="px-4 py-3 text-sm text-gray-600 font-mono" style={{fontSize: '0.875rem'}}>{category.slug}</td>
-          <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" style={{fontSize: '0.875rem'}}>{category.description || 'No description'}</td>
-          <td className="px-4 py-3 text-center text-sm font-medium" style={{fontSize: '0.875rem'}}>{category.sortOrder || 0}</td>
+          <td className={`px-4 py-3 text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} style={{fontSize: '0.875rem'}}>{category.slug}</td>
+          <td className={`px-4 py-3 text-sm max-w-xs truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} style={{fontSize: '0.875rem'}}>{category.description || 'No description'}</td>
+          <td className={`px-4 py-3 text-center text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`} style={{fontSize: '0.875rem'}}>{category.sortOrder || 0}</td>
           <td className="px-4 py-3">
             <span className={`px-2 py-1 text-xs rounded-full ${
-              category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              category.isActive 
+                ? (theme === 'dark' ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800')
+                : (theme === 'dark' ? 'bg-red-900 text-red-300' : 'bg-red-100 text-red-800')
             }`} style={{fontSize: '0.75rem'}}>{category.isActive ? 'Active' : 'Inactive'}</span>
           </td>
           <td className="px-4 py-3">
-            {category.iconUrl ? <img src={category.iconUrl} alt={category.name} className="w-6 h-6 rounded" /> : <span className="text-gray-400 text-sm" style={{fontSize: '0.8rem'}}>No icon</span>}
+            {category.iconUrl ? <img src={category.iconUrl} alt={category.name} className="w-6 h-6 rounded" /> : <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} style={{fontSize: '0.8rem'}}>No icon</span>}
           </td>
           <td className="px-4 py-3 flex space-x-2">
-            <button onClick={() => handleViewDetails(category)} className="text-green-600 hover:bg-green-50 p-1 rounded"><Eye size={16} /></button>
-            <button onClick={() => handleEdit(category)} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Edit2 size={16} /></button>
-            <button onClick={() => handleDelete(category.id)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 size={16} /></button>
+            <button onClick={() => handleViewDetails(category)} className={`p-1 rounded ${theme === 'dark' ? 'text-green-400 hover:bg-green-900' : 'text-green-600 hover:bg-green-50'}`}><Eye size={16} /></button>
+            <button onClick={() => handleEdit(category)} className={`p-1 rounded ${theme === 'dark' ? 'text-blue-400 hover:bg-blue-900' : 'text-blue-600 hover:bg-blue-50'}`}><Edit2 size={16} /></button>
+            <button onClick={() => handleDelete(category.id)} className={`p-1 rounded ${theme === 'dark' ? 'text-red-400 hover:bg-red-900' : 'text-red-600 hover:bg-red-50'}`}><Trash2 size={16} /></button>
           </td>
         </tr>
         {isExpanded && children.map(child => renderCategoryRow(child, level + 1))}
@@ -400,7 +404,7 @@ const CategoryManagement = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className={`p-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
@@ -418,7 +422,7 @@ const CategoryManagement = () => {
       )}
 
       <h1 className="text-2xl font-bold mb-2" style={{fontSize: '1.5rem'}}>Category Management</h1>
-      <p className="text-gray-600 mb-4">Manage your course categories and subcategories</p>
+      <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-4`}>Manage your course categories and subcategories</p>
 
       {/* Error message */}
       {error && <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded">{error}</div>}
@@ -429,13 +433,17 @@ const CategoryManagement = () => {
         <div className="flex-1 w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} size={16} />
               <input
                 type="text"
                 placeholder="Search by name..."
                 value={filters.name || ''}
                 onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-2 pl-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  theme === 'dark' 
+                    ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 style={{fontSize: '1rem'}}
               />
             </div>
@@ -444,7 +452,11 @@ const CategoryManagement = () => {
               placeholder="Search by slug..."
               value={filters.slug || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, slug: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
               style={{fontSize: '1rem'}}
             />
             <input
@@ -452,7 +464,11 @@ const CategoryManagement = () => {
               placeholder="Search by description..."
               value={filters.description || ''}
               onChange={(e) => setFilters(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
               style={{fontSize: '1rem'}}
             />
             <CategoryDropdown
@@ -475,7 +491,11 @@ const CategoryManagement = () => {
             </button>
             <button
               onClick={clearFilters}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className={`px-6 py-2 border rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-800' 
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
               style={{fontSize: '0.875rem'}}
             >
               Clear
@@ -492,30 +512,30 @@ const CategoryManagement = () => {
       </div>
 
       {/* Category table */}
-      <div className="bg-white border rounded-lg overflow-hidden">
+      <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600" style={{fontSize: '0.875rem'}}>Loading categories...</span>
+            <span className={`ml-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} style={{fontSize: '0.875rem'}}>Loading categories...</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b`}>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Slug</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Description</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Sort Order</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Icon</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" style={{fontSize: '0.75rem'}}>Actions</th>
+                  <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} style={{fontSize: '0.75rem'}}>Category</th>
+                  <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} style={{fontSize: '0.75rem'}}>Slug</th>
+                  <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} style={{fontSize: '0.75rem'}}>Description</th>
+                  <th className={`px-4 py-3 text-center text-xs font-medium uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} style={{fontSize: '0.75rem'}}>Sort Order</th>
+                  <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} style={{fontSize: '0.75rem'}}>Status</th>
+                  <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} style={{fontSize: '0.75rem'}}>Icon</th>
+                  <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`} style={{fontSize: '0.75rem'}}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {parentCategories.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-4 py-8 text-center text-gray-500" style={{fontSize: '0.875rem'}}>No categories found.</td>
+                    <td colSpan="7" className={`px-4 py-8 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} style={{fontSize: '0.875rem'}}>No categories found.</td>
                   </tr>
                 ) : (
                   parentCategories
@@ -531,24 +551,24 @@ const CategoryManagement = () => {
       {/* Pagination */}
       {pagination.totalCount > pagination.pageSize && (
         <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-600" style={{fontSize: '0.875rem'}}>
+          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} style={{fontSize: '0.875rem'}}>
             Showing {((pagination.page - 1) * pagination.pageSize) + 1} to {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of {pagination.totalCount} categories
           </div>
           <div className="flex items-center space-x-2">
             <button 
               onClick={prevPage} 
               disabled={pagination.page <= 1}
-              className="p-2 border rounded disabled:opacity-50"
+              className={`p-2 border rounded disabled:opacity-50 ${theme === 'dark' ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="px-3 py-1 text-sm font-medium" style={{fontSize: '0.875rem'}}>
+            <span className={`px-3 py-1 text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} style={{fontSize: '0.875rem'}}>
               Page {pagination.page} of {Math.ceil(pagination.totalCount / pagination.pageSize)}
             </span>
             <button 
               onClick={nextPage} 
               disabled={pagination.page >= Math.ceil(pagination.totalCount / pagination.pageSize)}
-              className="p-2 border rounded disabled:opacity-50"
+              className={`p-2 border rounded disabled:opacity-50 ${theme === 'dark' ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             >
               <ChevronRight size={16} />
             </button>
@@ -576,32 +596,40 @@ const CategoryManagement = () => {
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category Name *</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Category Name *</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter category name"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter category description"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Parent Category</label>
               <CategoryDropdown
                 categories={allCategoriesForDropdown}
                 value={formData.parentCategoryId}
@@ -612,7 +640,7 @@ const CategoryManagement = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
               <div className="space-y-3">
                 {/* File Upload */}
                 <div className="flex items-center space-x-3">
@@ -639,7 +667,11 @@ const CategoryManagement = () => {
                       <button
                         type="button"
                         onClick={() => document.getElementById('icon-upload').click()}
-                        className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center space-x-2 text-gray-600 hover:text-blue-600"
+                        className={`w-full px-4 py-3 border-2 border-dashed rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center space-x-2 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 text-gray-400 hover:text-blue-400 hover:bg-gray-700' 
+                            : 'border-gray-300 text-gray-600 hover:text-blue-600'
+                        }`}
                         disabled={modalError ? true : false}
                       >
                         <Upload size={20} />
@@ -656,7 +688,7 @@ const CategoryManagement = () => {
                       <img 
                         src={formData.iconUrl} 
                         alt="Icon preview" 
-                        className="w-16 h-16 rounded-lg border border-gray-200 object-cover"
+                        className={`w-16 h-16 rounded-lg border object-cover ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}
                       />
                       <button
                         type="button"
@@ -668,11 +700,11 @@ const CategoryManagement = () => {
                       </button>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-600">
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                         {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
                       </p>
                       {formData.iconFile && (
-                        <p className="text-xs text-gray-500">{formData.iconFile.name}</p>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
                       )}
                     </div>
                   </div>
@@ -726,25 +758,33 @@ const CategoryManagement = () => {
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter category name"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter category description"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Parent Category</label>
               <CategoryDropdown
                 categories={allCategoriesForDropdown}
                 value={formData.parentCategoryId}
@@ -756,7 +796,7 @@ const CategoryManagement = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
               <div className="space-y-3">
                 {/* File Upload */}
                 <div className="flex items-center space-x-3">
@@ -783,7 +823,11 @@ const CategoryManagement = () => {
                       <button
                         type="button"
                         onClick={() => document.getElementById('icon-upload-update').click()}
-                        className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center space-x-2 text-gray-600 hover:text-blue-600"
+                        className={`w-full px-4 py-3 border-2 border-dashed rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center space-x-2 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 text-gray-400 hover:text-blue-400 hover:bg-gray-700' 
+                            : 'border-gray-300 text-gray-600 hover:text-blue-600'
+                        }`}
                         disabled={modalError ? true : false}
                       >
                         <Upload size={20} />
@@ -800,7 +844,7 @@ const CategoryManagement = () => {
                       <img 
                         src={formData.iconUrl} 
                         alt="Icon preview" 
-                        className="w-16 h-16 rounded-lg border border-gray-200 object-cover"
+                        className={`w-16 h-16 rounded-lg border object-cover ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}
                       />
                       <button
                         type="button"
@@ -812,11 +856,11 @@ const CategoryManagement = () => {
                       </button>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-600">
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                         {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
                       </p>
                       {formData.iconFile && (
-                        <p className="text-xs text-gray-500">{formData.iconFile.name}</p>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
                       )}
                     </div>
                   </div>

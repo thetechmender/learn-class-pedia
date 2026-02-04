@@ -265,8 +265,9 @@ class AdminApiService {
   // Course Badge Management methods
   
   // GET all course badges (new endpoint)
-  async getAllCourseBadgesNew() {
-    return this.request(ENDPOINTS.COURSE_BADGE_ALL);
+  async getAllCourseBadgesNew(queryString = '') {
+    const endpoint = queryString ? `${ENDPOINTS.COURSE_BADGE_ALL}?${queryString}` : ENDPOINTS.COURSE_BADGE_ALL;
+    return this.request(endpoint);
   }
 
   // GET course badge by ID
@@ -451,8 +452,12 @@ class AdminApiService {
   // Career Paths Management methods
   
   // GET all career paths
-  async getAllCareerPaths() {
-    return this.request(ENDPOINTS.CAREER_PATHS);
+  async getAllCareerPaths(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `${ENDPOINTS.CAREER_PATHS}?${queryString}` : ENDPOINTS.CAREER_PATHS;
+    console.log('AdminApi.getAllCareerPaths - Final URL:', `${this.baseURL}${url}`);
+    console.log('AdminApi.getAllCareerPaths - Params:', params);
+    return this.request(url);
   }
 
   // GET all courses for career path

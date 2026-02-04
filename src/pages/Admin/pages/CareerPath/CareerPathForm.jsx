@@ -86,13 +86,9 @@ const CareerPathForm = ({
   }, []);
 
   useEffect(() => {
-    if (careerPath && levels.length > 0 && badges.length > 0) {
-      // Map badge names from API to badge IDs for dropdown
-      const mappedBadgeIds = careerPath.careerPathBadges?.map(badgeName => {
-        const foundBadge = badges.find(b => b.name === badgeName);
-        return foundBadge ? foundBadge.id : null;
-      }).filter(id => id !== null) || [];
-      
+    if (careerPath) {
+      // For editing, populate form data immediately when careerPath is available
+      // Don't wait for dropdown data to load completely
       setFormData({
         title: careerPath.title || '',
         description: careerPath.description || '',
@@ -105,16 +101,31 @@ const CareerPathForm = ({
         roleId: careerPath.roleId || '',
         levels: careerPath.levels || [],
         skills: careerPath.skills || [],
-        careerPathBadges: mappedBadgeIds,
+        careerPathBadges: [], // Initialize empty, will be updated when badges load
         iconUrl: careerPath.iconUrl || ''
       });
       setSelectedSkills(careerPath.skills?.map(skill => skill.skillId) || []);
       setInitialDataLoaded(true);
-    } else if (!careerPath && levels.length > 0 && badges.length > 0) {
-      // For new forms, mark as loaded when dropdown data is ready
+    } else {
+      // For new forms, show immediately and let dropdowns load in background
       setInitialDataLoaded(true);
     }
-  }, [careerPath, levels, badges]);
+  }, [careerPath]);
+
+  // Update badge mappings when badges data becomes available (for editing)
+  useEffect(() => {
+    if (careerPath && badges.length > 0) {
+      const mappedBadgeIds = careerPath.careerPathBadges?.map(badgeName => {
+        const foundBadge = badges.find(b => b.name === badgeName);
+        return foundBadge ? foundBadge.id : null;
+      }).filter(id => id !== null) || [];
+      
+      setFormData(prev => ({
+        ...prev,
+        careerPathBadges: mappedBadgeIds
+      }));
+    }
+  }, [careerPath, badges]);
 
   // Auto-save to cache on form data changes (only for new forms, not editing)
   useEffect(() => {
@@ -585,38 +596,38 @@ const CareerPathForm = ({
   };
 
  
-  if (hookLoading || !initialDataLoaded) {
+  if (!initialDataLoaded) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">{careerPath ? 'Loading career path data...' : 'Loading form data...'}</p>
+          <p className="text-gray-600 dark:text-gray-300">{careerPath ? 'Loading career path data...' : 'Loading form data...'}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
       {/* Header with Progress */}
-      <div className="p-6 border-b border-gray-100">
+      <div className="p-6 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
               <Target className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {careerPath ? 'Edit Career Path' : 'Create New Career Path'}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 {careerPath ? 'Update career path information' : 'Build a comprehensive learning path step by step'}
               </p>
             </div>
           </div>
           <button
             onClick={onCancel}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -681,17 +692,28 @@ const CareerPathForm = ({
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Career Role *
                 </label>
-                <GenericDropdown
-                  items={careerRoles.map(role => ({
-                    id: role.id,
-                    name: role.name,
-                    description: role.description || role.name
-                  }))}
-                  value={formData.roleId}
-                  onChange={(value) => handleInputChange('roleId', value)}
-                  placeholder="Select career role..."
-                  className={`w-full ${errors.roleId ? 'border-red-300 bg-red-50' : ''}`}
-                />
+                {hookLoading && careerRoles.length === 0 ? (
+                  <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 flex items-center">
+                    <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mr-2"></div>
+                    <span className="text-gray-500">Loading career roles...</span>
+                  </div>
+                ) : careerRoles.length === 0 ? (
+                  <div className="w-full px-4 py-3 border border-red-200 rounded-xl bg-red-50">
+                    <span className="text-red-600">Failed to load career roles</span>
+                  </div>
+                ) : (
+                  <GenericDropdown
+                    items={careerRoles.map(role => ({
+                      id: role.id,
+                      name: role.name,
+                      description: role.description || role.name
+                    }))}
+                    value={formData.roleId}
+                    onChange={(value) => handleInputChange('roleId', value)}
+                    placeholder="Select career role..."
+                    className={`w-full ${errors.roleId ? 'border-red-300 bg-red-50' : ''}`}
+                  />
+                )}
                 {errors.roleId && (
                   <p className="mt-1 text-sm text-red-600">{errors.roleId}</p>
                 )}
@@ -839,14 +861,24 @@ const CareerPathForm = ({
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Career Path Badges
               </label>
-              <MultiSelectDropdown
-                items={badges}
-                values={formData.careerPathBadges}
-                onChange={(values) => handleInputChange('careerPathBadges', values)}
-                placeholder="Select badges..."
-                className="w-full"
-                disabled={hookLoading}
-              />
+              {hookLoading && badges.length === 0 ? (
+                <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 flex items-center">
+                  <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mr-2"></div>
+                  <span className="text-gray-500">Loading badges...</span>
+                </div>
+              ) : badges.length === 0 ? (
+                <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50">
+                  <span className="text-gray-600">No badges available</span>
+                </div>
+              ) : (
+                <MultiSelectDropdown
+                  items={badges}
+                  values={formData.careerPathBadges}
+                  onChange={(values) => handleInputChange('careerPathBadges', values)}
+                  placeholder="Select badges..."
+                  className="w-full"
+                />
+              )}
               {hookError && (
                 <p className="mt-1 text-sm text-red-600">{hookError}</p>
               )}
@@ -875,23 +907,36 @@ const CareerPathForm = ({
               {/* Available Levels */}
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Add Levels to Career Path</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {getAvailableLevels().map(level => (
-                    <button
-                      key={level.levelId}
-                      type="button"
-                      onClick={() => addLevelToPath(level.levelId)}
-                      className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center"
-                    >
-                      <Target className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                      <div className="text-sm font-medium text-gray-900">{level.levelName}</div>
-                    </button>
-                  ))}
-                </div>
-                {getAvailableLevels().length === 0 && (
+                {hookLoading && levels.length === 0 ? (
                   <div className="text-center py-8 bg-gray-50 rounded-xl">
-                    <p className="text-gray-600">All available levels have been added</p>
+                    <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
+                    <p className="text-gray-600">Loading levels...</p>
                   </div>
+                ) : levels.length === 0 ? (
+                  <div className="text-center py-8 bg-red-50 rounded-xl">
+                    <p className="text-red-600">Failed to load levels</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {getAvailableLevels().map(level => (
+                        <button
+                          key={level.levelId}
+                          type="button"
+                          onClick={() => addLevelToPath(level.levelId)}
+                          className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center"
+                        >
+                          <Target className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                          <div className="text-sm font-medium text-gray-900">{level.levelName}</div>
+                        </button>
+                      ))}
+                    </div>
+                    {getAvailableLevels().length === 0 && (
+                      <div className="text-center py-8 bg-gray-50 rounded-xl">
+                        <p className="text-gray-600">All available levels have been added</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -1162,100 +1207,113 @@ const CareerPathForm = ({
               
               {/* Skills Search and Add */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Search and Add Skills
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search skills..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
                 
                 {/* Available Skills Dropdown */}
                 {searchTerm && (
-                  <div className="mt-2 border border-gray-200 rounded-xl max-h-48 overflow-y-auto bg-white shadow-lg">
-                    {skills
-                      .filter(skill => 
-                        skill.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (skill.description && skill.description.toLowerCase().includes(searchTerm.toLowerCase()))
-                      )
-                      .map(skill => {
-                        const isSelected = formData.skills.some(s => s.skillId === skill.id);
-                        return (
-                          <div
-                            key={skill.id}
-                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center justify-between ${
-                              isSelected ? 'bg-blue-50' : 'bg-white'
-                            }`}
-                            onClick={() => handleSkillSelection(skill.id, isSelected ? 0 : 3)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                                isSelected 
-                                  ? 'bg-blue-600 border-blue-600' 
-                                  : 'border-gray-300'
-                              }`}>
-                                {isSelected && (
-                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                )}
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-900">{skill.title}</div>
-                                {skill.description && (
-                                  <div className="text-sm text-gray-500 truncate">{skill.description}</div>
-                                )}
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                Level {formData.skills.find(s => s.skillId === skill.id)?.proficiencyLevel}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    {skills.filter(skill => 
-                      skill.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      (skill.description && skill.description.toLowerCase().includes(searchTerm.toLowerCase()))
-                    ).length === 0 && (
-                      <div className="px-4 py-6 text-center text-gray-500">
-                        No skills found matching "{searchTerm}"
+                  <div className="mt-2 border border-gray-200 dark:border-gray-600 rounded-xl max-h-48 overflow-y-auto bg-white dark:bg-gray-800 shadow-lg">
+                    {hookLoading && skills.length === 0 ? (
+                      <div className="px-4 py-6 text-center">
+                        <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                        <p className="text-gray-500 dark:text-gray-400">Loading skills...</p>
                       </div>
+                    ) : skills.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-red-500">
+                        Failed to load skills
+                      </div>
+                    ) : (
+                      <>
+                        {skills
+                          .filter(skill => 
+                            skill.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (skill.description && skill.description.toLowerCase().includes(searchTerm.toLowerCase()))
+                          )
+                          .map(skill => {
+                            const isSelected = formData.skills.some(s => s.skillId === skill.id);
+                            return (
+                              <div
+                                key={skill.id}
+                                className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 flex items-center justify-between ${
+                                  isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                                }`}
+                                onClick={() => handleSkillSelection(skill.id, isSelected ? 0 : 3)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                    isSelected 
+                                      ? 'bg-blue-600 border-blue-600' 
+                                      : 'border-gray-300 dark:border-gray-600'
+                                  }`}>
+                                    {isSelected && (
+                                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-900 dark:text-gray-100">{skill.title}</div>
+                                    {skill.description && (
+                                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate">{skill.description}</div>
+                                    )}
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+                                    Level {formData.skills.find(s => s.skillId === skill.id)?.proficiencyLevel}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        {skills.filter(skill => 
+                          skill.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (skill.description && skill.description.toLowerCase().includes(searchTerm.toLowerCase()))
+                        ).length === 0 && (
+                          <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                            No skills found matching "{searchTerm}"
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
-              </div>
+            </div>
 
-              {/* Selected Skills as Tags */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Selected Skills ({formData.skills.length})
-                </label>
-                {formData.skills.length === 0 ? (
-                  <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-xl">
-                    <Star className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">No skills selected yet</p>
-                    <p className="text-sm text-gray-500 mt-1">Search and add skills from above</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {formData.skills.map((skill, index) => {
-                      const skillDetails = skills.find(s => s.id === skill.skillId);
-                      return (
-                        <div key={skill.skillId} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-900">
-                                {skillDetails?.title || `Skill ID: ${skill.skillId}`}
-                              </div>
-                              <div className="text-sm text-gray-600">
+            {/* Selected Skills as Tags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Selected Skills ({formData.skills.length})
+              </label>
+              {formData.skills.length === 0 ? (
+                <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+                  <Star className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                  <p className="text-gray-600 dark:text-gray-300">No skills selected yet</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Search and add skills from above</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {formData.skills.map((skill, index) => {
+                    const skillDetails = skills.find(s => s.id === skill.skillId);
+                    return (
+                      <div key={skill.skillId} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {skillDetails?.title || `Skill ID: ${skill.skillId}`}
+                            </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-300">
                                 Proficiency Level: {skill.proficiencyLevel}/5
                               </div>
                             </div>
@@ -1268,7 +1326,7 @@ const CareerPathForm = ({
                                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                                     level <= skill.proficiencyLevel
                                       ? 'bg-blue-600 text-white'
-                                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                   }`}
                                 >
                                   {level}
@@ -1279,7 +1337,7 @@ const CareerPathForm = ({
                           <button
                             type="button"
                             onClick={() => handleSkillSelection(skill.skillId, 0)}
-                            className="ml-3 p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            className="ml-3 p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </button>

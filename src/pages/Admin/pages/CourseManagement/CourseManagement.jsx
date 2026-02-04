@@ -7,7 +7,7 @@ import { useToast } from '../../../../hooks/useToast';
 import { COURSE_MANAGEMENT_CONSTANTS } from '../../../../constants/courseManagement';
 import { calculateCourseStats, filterCoursesBySearch } from '../../../../utils/courseUtils';
 import { adminApiService } from '../../../../services/AdminApi';
-import { Search, ChevronDown,Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X } from 'lucide-react';
+import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Target, Layers, Award } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 import CourseModal from '../../../../components/CourseModal';
@@ -396,29 +396,29 @@ const CourseManagement = () => {
 
   if (filtersLoading) {
     return (
-      <div className="p-4 lg:p-6 max-w-full mx-auto bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+      <div className="p-4 lg:p-6 max-w-full mx-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">
         {/* Header Skeleton */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
             <div>
-              <div className="h-10 lg:h-12 bg-gray-200 rounded-lg w-64 mb-3 animate-pulse"></div>
-              <div className="h-6 bg-gray-200 rounded-lg w-96 animate-pulse"></div>
+              <div className="h-10 lg:h-12 bg-gray-200 dark:bg-gray-700 rounded-lg w-64 mb-3 animate-pulse"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg w-96 animate-pulse"></div>
             </div>
             <div className="mt-4 lg:mt-0">
-              <div className="h-12 bg-gray-200 rounded-xl w-40 animate-pulse"></div>
+              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-40 animate-pulse"></div>
             </div>
           </div>
           
           {/* Stats Cards Skeleton */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse"></div>
-                    <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2 animate-pulse"></div>
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
                   </div>
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
                 </div>
               </div>
             ))}
@@ -426,28 +426,28 @@ const CourseManagement = () => {
         </div>
 
         {/* Search Bar Skeleton */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
-            <div className="h-12 bg-gray-200 rounded-xl w-32 animate-pulse"></div>
+            <div className="flex-1 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-32 animate-pulse"></div>
           </div>
         </div>
 
         {/* Table Skeleton */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="p-6">
             <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center space-x-4 p-4 border-b border-gray-100">
-                  <div className="w-14 h-14 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div key={i} className="flex items-center space-x-4 p-4 border-b border-gray-100 dark:border-gray-700">
+                  <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse"></div>
                   </div>
                   <div className="flex space-x-2">
-                    <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
-                    <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
-                    <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
                   </div>
                 </div>
               ))}
@@ -465,7 +465,7 @@ const CourseManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950">
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
@@ -483,43 +483,44 @@ const CourseManagement = () => {
       )}
 
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100">
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between h-auto sm:h-20 py-4 sm:py-0">
+            <div className="mb-4 sm:mb-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <BookOpen className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Course Management</h1>
-                  <p className="text-sm text-gray-600 mt-1">Manage and monitor all your courses in one place</p>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">Course Management</h1>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">Manage and monitor all your courses in one place</p>
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={() => setFiltersExpanded(!filtersExpanded)}
-                className={`flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 font-medium ${
+                className={`flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 font-medium text-sm ${
                   (filtersExpanded || searchTerm) 
-                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
-                    : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
+                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
+                <Filter className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Filters</span>
                 {(filtersExpanded || searchTerm) && (
-                  <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                  <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
                     Active
                   </span>
                 )}
               </button>
               <button 
                 onClick={() => openModal('create')}
-                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Course
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Create Course</span>
+                <span className="sm:hidden">Create</span>
               </button>
             </div>
           </div>
@@ -527,24 +528,24 @@ const CourseManagement = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="relative max-w-2xl mx-auto">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="relative max-w-4xl mx-auto">
+          <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
           </div>
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search courses by title, subtitle, category, level, or type..."
-            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500"
+            className="w-full pl-10 sm:pl-12 pr-10 sm:pr-4 py-3 sm:py-4 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center"
+              className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center"
             >
-              <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
             </button>
           )}
         </div>
@@ -552,41 +553,41 @@ const CourseManagement = () => {
 
       {/* Filters Section */}
       {filtersExpanded && (
-        <div className="bg-white/60 backdrop-blur-sm border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Filter Options</h3>
+        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
               <button
                 onClick={resetFilters}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Clear All
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
                 <input
                   type="text"
                   value={filters.title}
                   onChange={(e) => handleFilterChange('title', e.target.value)}
                   placeholder="Search by title..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subtitle</label>
                 <input
                   type="text"
                   value={filters.subtitle}
                   onChange={(e) => handleFilterChange('subtitle', e.target.value)}
                   placeholder="Search by subtitle..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                 <CategoryDropdown
                   categories={categories}
                   value={filters.categoryId}
@@ -596,7 +597,7 @@ const CourseManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Course Type</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Type</label>
                 <GenericDropdown
                   items={courseTypes.map(type => ({ value: type.id, label: type.description }))}
                   value={filters.courseTypeId}
@@ -608,7 +609,7 @@ const CourseManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Course Level</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Level</label>
                 <GenericDropdown
                   items={courseLevels.map(level => ({ value: level.id, label: level.title }))}
                   value={filters.courseLevelId}
@@ -620,11 +621,11 @@ const CourseManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Is Paid</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Is Paid</label>
                 <select
                   value={filters.isPaid}
                   onChange={(e) => handleFilterChange('isPaid', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
                 >
                   <option value="">All</option>
                   <option value="true">Yes</option>
@@ -632,30 +633,30 @@ const CourseManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price</label>
                 <input
                   type="text"
                   value={filters.price}
                   onChange={(e) => handleFilterChange('price', e.target.value)}
                   placeholder="Enter price..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Discounted Price</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Discounted Price</label>
                 <input
                   type="text"
                   value={filters.discountedPrice}
                   onChange={(e) => handleFilterChange('discountedPrice', e.target.value)}
                   placeholder="Enter discounted price..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
                 />
               </div>
             </div>
             <div className="flex justify-end mt-4">
               <button
                 onClick={applyFilters}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
               >
                 Apply Filters
               </button>
@@ -677,139 +678,165 @@ const CourseManagement = () => {
         searchTerm={debouncedSearchTerm}
         expandable={true}
         renderExpandedContent={(course, details) => (
-          <div className="space-y-6">
-            {/* Course Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-              <div className="flex items-start space-x-4">
-                {details?.thumbnailUrl ? (
-                  <div className="relative group">
+          <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+            {/* Compact Course Header */}
+            <div className="flex items-start gap-4">
+              {/* Compact Thumbnail */}
+              <div className="relative flex-shrink-0">
+                {details?.thumbnailUrl || details?.imageUrl || details?.image || details?.courseImage || course?.thumbnailUrl || course?.imageUrl || course?.image || course?.courseImage ? (
+                  <div className="relative overflow-hidden rounded-lg shadow-md">
                     <img 
-                      src={details?.thumbnailUrl} 
-                      alt={details?.title}
-                      className="w-20 h-20 rounded-lg object-cover border-2 border-white shadow-md transition-transform duration-200 group-hover:scale-105"
+                      src={details?.thumbnailUrl || details?.imageUrl || details?.image || details?.courseImage || course?.thumbnailUrl || course?.imageUrl || course?.image || course?.courseImage} 
+                      alt={details?.title || course?.title}
+                      className="w-16 h-16 object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.style.display = 'none';
+                        e.target.parentElement.nextElementSibling.style.display = 'flex';
+                      }}
                     />
                   </div>
-                ) : (
-                  <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md border-2 border-white">
-                    <Image className="w-10 h-10 text-white" />
+                ) : null}
+                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md border border-gray-200 dark:border-gray-600"
+                     style={{ display: (details?.thumbnailUrl || details?.imageUrl || details?.image || details?.courseImage || course?.thumbnailUrl || course?.imageUrl || course?.image || course?.courseImage) ? 'none' : 'flex' }}>
+                  <Image className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              
+              {/* Course Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
+                      {details?.title || course?.title || 'Untitled Course'}
+                    </h4>
+                    {details?.subtitle && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{details.subtitle}</p>
+                    )}
                   </div>
-                )}
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                        {details?.title || course?.title || 'Untitled Course'}
-                      </h4>
-                      {details?.subtitle && (
-                        <p className="text-gray-600 text-sm mt-1">{details.subtitle}</p>
-                      )}
+                  <div className="flex-shrink-0 ml-2">
+                    {details?.isPaid || course?.isPaid ? (
+                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                        <DollarSign className="w-3 h-3 mr-1" />
+                        Paid
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                        <Users className="w-3 h-3 mr-1" />
+                        Free
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Compact Tags */}
+                <div className="flex flex-wrap gap-2">
+                  <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                    <BookOpen className="w-3 h-3 mr-1" />
+                    {details?.categoryName || course?.categoryName || 'Unknown'}
+                  </div>
+                  <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
+                    <Globe className="w-3 h-3 mr-1" />
+                    {details?.courseLevelName || course?.courseLevelName || 'Unknown'}
+                  </div>
+                  {details?.badges?.map((badge, index) => (
+                    <div key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                      <Award className="w-3 h-3 mr-1" />
+                      {badge?.badgeName}
                     </div>
-                    <div className="flex-shrink-0">
-                      {details?.isPaid || course?.isPaid ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          Paid
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">
-                          Free
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
-                      <BookOpen className="w-3 h-3 mr-1" />
-                      {details?.categoryName || course?.categoryName || 'Unknown Category'}
-                    </span>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800">
-                      <Globe className="w-3 h-3 mr-1" />
-                      {details?.courseLevelName || course?.courseLevelName || 'Unknown Level'}
-                    </span>
-                    {details?.badges?.map((badge, index) => (
-                      <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
-                        {badge?.badgeName}
-                      </span>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Description and Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-3">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
-                    <BookOpen className="w-4 h-4 text-indigo-600" />
+            {/* Compact Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Description Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="flex items-center mb-2">
+                  <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mr-2">
+                    <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                  <h5 className="text-sm font-bold text-gray-900">Description</h5>
+                  <div>
+                    <h5 className="text-sm font-bold text-gray-900 dark:text-white">Description</h5>
+                  </div>
                 </div>
-                <p className="text-gray-700 leading-relaxed text-sm">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm line-clamp-3">
                   {details?.description || course?.description || 'No description available'}
                 </p>
               </div>
+              
+              {/* Overview Card */}
               {details?.overview && (
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
-                      <Globe className="w-4 h-4 text-purple-600" />
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+                  <div className="flex items-center mb-2">
+                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-2">
+                      <Globe className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <h5 className="text-sm font-bold text-gray-900">Overview</h5>
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Overview</h5>
+                    </div>
                   </div>
-                  <p className="text-gray-700 leading-relaxed text-sm">
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm line-clamp-3">
                     {details.overview}
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Promo Video */}
+            {/* Compact Promo Video */}
             {(details?.promoVideoUrl || course?.promoVideoUrl) && (
-              <div className="bg-green-50 p-4 rounded-xl border border-green-200 shadow">
-                <div className="flex items-center mb-4">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                <div className="flex items-center mb-3">
                   <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-2">
-                    <BookOpen className="w-4 h-4 text-white" />
+                    <Play className="w-4 h-4 text-white" />
                   </div>
-                  <h5 className="text-sm font-bold text-gray-900">Promo Video</h5>
+                  <div>
+                    <h5 className="text-sm font-bold text-gray-900 dark:text-white">Promo Video</h5>
+                  </div>
                 </div>
                 <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="lg:w-96">
-                    <div className="relative rounded-lg overflow-hidden bg-gray-900 shadow-lg">
+                  <div className="lg:w-64">
+                    <div className="relative rounded-lg overflow-hidden bg-gray-900 shadow-md">
                       <video
                         src={details?.promoVideoUrl || course?.promoVideoUrl}
-                        className="w-full h-auto rounded-lg max-h-48 object-cover"
+                        className="w-full h-auto rounded-lg max-h-32 object-cover"
                         controls
                         preload="metadata"
                       >
                         Your browser does not support the video tag.
                       </video>
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                        Promo
-                      </div>
                     </div>
                   </div>
-                  <div className="lg:w-64">
-                    <div className="bg-white p-4 rounded-lg border border-green-200">
-                      <h6 className="text-xs font-bold text-gray-500 uppercase mb-2">Video Information</h6>
-                      <div className="space-y-3">
+                  <div className="flex-1">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-green-200 dark:border-green-800">
+                      <div className="space-y-2">
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Video URL</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Video URL</p>
                           <a
                             href={details?.promoVideoUrl || course?.promoVideoUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 hover:underline text-xs font-medium flex items-center break-all"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline text-xs font-medium flex items-center break-all"
                           >
-                            {details?.promoVideoUrl || course?.promoVideoUrl}
+                            {/* Clean up the URL by removing folder structure */}
+                            {(() => {
+                              const videoUrl = details?.promoVideoUrl || course?.promoVideoUrl;
+                              if (!videoUrl) return 'No URL available';
+                              
+                              // Extract just the filename from the S3 URL
+                              const urlParts = videoUrl.split('/');
+                              const filename = urlParts[urlParts.length - 1];
+                              return filename;
+                            })()}
                             <svg className="w-3 h-3 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
                           </a>
                         </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                          <span className="text-xs text-gray-500">Status</span>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Status</span>
+                          <span className="text-xs font-bold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
                             Available
                           </span>
                         </div>
@@ -820,57 +847,68 @@ const CourseManagement = () => {
               </div>
             )}
 
-            {/* Course Sections - Only show if course type is 1 and sections exist */}
+            {/* Compact Course Sections */}
             {(details?.courseTypeId === 1 || course?.courseTypeId === 1) && 
              (details?.sections?.length > 0 || course?.sections?.length > 0) && (
-              <div className="bg-purple-50 p-4 rounded-xl border border-purple-200 shadow">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-2">
-                    <BookOpen className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h5 className="text-sm font-bold text-gray-900">Course Sections</h5>
-                    <p className="text-gray-600 text-xs mt-1">Learning modules</p>
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-2">
+                      <BookOpen className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Modules</h5>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {details?.sections?.length || course?.sections?.length || 0} modules
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  {(details?.sections || course?.sections || []).map((section, index) => (
-                    <div key={section.id || index} className="bg-white rounded-lg border border-purple-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow">
-                            <span className="text-sm font-bold text-white">{index + 1}</span>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {(details?.sections || course?.sections || []).slice(0, 3).map((section, index) => (
+                    <div key={section.id || index} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded flex items-center justify-center">
+                            <span className="text-xs font-bold text-white">{index + 1}</span>
                           </div>
-                          <div>
-                            <h6 className="text-base font-bold text-gray-900">
-                              {section.title || `Section ${index + 1}`}
+                          <div className="flex-1 min-w-0">
+                            <h6 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                              {section.title || `Module ${index + 1}`}
                             </h6>
-                            <div className="flex items-center mt-1 space-x-2">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">
-                                Module {index + 1}
-                              </span>
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
-                                Order: {section.sortOrder !== undefined ? section.sortOrder : index}
-                              </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                                {index + 1}
+                              </div>
+                              <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                {section.sortOrder !== undefined ? section.sortOrder : index}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                      <div className="ml-11">
-                        <p className="text-gray-700 leading-relaxed text-sm">
-                          {section.description || 'No description available for this section.'}
+                      <div className="ml-8 mt-2">
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-xs line-clamp-2">
+                          {section.description || 'No description available.'}
                         </p>
                       </div>
                     </div>
                   ))}
+                  {(details?.sections?.length > 3 || course?.sections?.length > 3) && (
+                    <div className="text-center py-2">
+                      <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                        +{(details?.sections?.length || course?.sections?.length || 0) - 3} more modules
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {(!details?.sections?.length && !course?.sections?.length) && (
-                  <div className="text-center py-8 bg-white rounded-lg border border-purple-200">
-                    <div className="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                      <BookOpen className="w-8 h-8 text-purple-400" />
+                  <div className="text-center py-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <BookOpen className="w-6 h-6 text-purple-400 dark:text-purple-400" />
                     </div>
-                    <h6 className="text-lg font-bold text-gray-900 mb-1">No Sections Available</h6>
-                    <p className="text-gray-600 text-sm">This course doesn't have any learning sections yet.</p>
+                    <h6 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No Modules</h6>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">This course doesn't have any modules yet.</p>
                   </div>
                 )}
               </div>
@@ -884,50 +922,50 @@ const CourseManagement = () => {
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Courses</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalCourses}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Courses</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalCourses}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <BookOpen className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Courses</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{stats.activeCourses}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Courses</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.activeCourses}</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Paid Courses</p>
-                <p className="text-2xl font-bold text-purple-600 mt-1">{stats.paidCourses}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Paid Courses</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{stats.paidCourses}</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-purple-600" />
+              <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Free Courses</p>
-                <p className="text-2xl font-bold text-orange-600 mt-1">{stats.freeCourses}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Free Courses</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{stats.freeCourses}</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Users className="w-6 h-6 text-orange-600" />
+              <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                <Users className="w-6 h-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </div>
@@ -935,12 +973,12 @@ const CourseManagement = () => {
       </div>
 
       {/* Enhanced Pagination */}
-      <div className="mt-8 flex flex-col sm:flex-row items-center justify-between bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-        <div className="text-sm text-gray-700 mb-4 sm:mb-0">
-          <span className="font-medium text-gray-900">{searchFilteredCourses?.length || 0}</span> of{' '}
-          <span className="font-medium text-gray-900">{paginationInfo.totalCount || 0}</span> courses
+      <div className="mt-8 flex flex-col sm:flex-row items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="text-sm text-gray-700 dark:text-gray-300 mb-4 sm:mb-0">
+          <span className="font-medium text-gray-900 dark:text-white">{searchFilteredCourses?.length || 0}</span> of{' '}
+          <span className="font-medium text-gray-900 dark:text-white">{paginationInfo.totalCount || 0}</span> courses
           {searchTerm && (
-            <span className="ml-2 text-blue-600">
+            <span className="ml-2 text-blue-600 dark:text-blue-400">
               (filtered)
             </span>
           )}
@@ -951,8 +989,8 @@ const CourseManagement = () => {
             disabled={paginationInfo.page === 1}
             className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
               paginationInfo.page === 1 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 shadow-sm'
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm'
             }`}
           >
             <div className="flex items-center space-x-1">
@@ -961,7 +999,7 @@ const CourseManagement = () => {
             </div>
           </button>
           
-          <div className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-xl font-medium">
+          <div className="flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl font-medium">
             <span>Page {paginationInfo.page}</span>
           </div>
           
@@ -970,8 +1008,8 @@ const CourseManagement = () => {
             disabled={searchFilteredCourses?.length < paginationInfo.pageSize}
             className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
               searchFilteredCourses?.length < paginationInfo.pageSize
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 shadow-sm'
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm'
             }`}
           >
             <div className="flex items-center space-x-1">

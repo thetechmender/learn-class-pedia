@@ -7,28 +7,58 @@ export const courseTableColumns = [
     title: 'Course',
     width: '300px',
     type: 'image',
-    render: (value, item, index) => (
-      <div className="flex items-center">
-        {item.thumbnailUrl ? (
-          <img 
-            src={item.thumbnailUrl} 
-            alt={item.title}
-            className="w-10 h-10 rounded-lg object-cover mr-3 border border-gray-200"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-3">
+    render: (value, item, index) => {
+      // Debug: Log available image fields
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Course item data:', item);
+        console.log('Available image fields:', {
+          thumbnailUrl: item.thumbnailUrl,
+          imageUrl: item.imageUrl,
+          image: item.image,
+          courseImage: item.courseImage,
+          thumbnail: item.thumbnail,
+          courseThumbnail: item.courseThumbnail
+        });
+      }
+      
+      const handleImageError = (e) => {
+        console.warn('Image failed to load:', e.target.src);
+        e.target.style.display = 'none';
+        e.target.nextSibling.style.display = 'flex';
+      };
+      
+      const handleImageLoad = () => {
+        console.log('Image loaded successfully');
+      };
+      
+      const imageUrl = item.thumbnailUrl || item.imageUrl || item.image || item.courseImage || item.thumbnail || item.courseThumbnail;
+      const hasImage = !!imageUrl;
+      
+      return (
+        <div className="flex items-center">
+          {hasImage ? (
+            <img 
+              src={imageUrl}
+              alt={item.title}
+              className="w-10 h-10 rounded-lg object-cover mr-3 border border-gray-200 dark:border-gray-600"
+              loading="lazy"
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+            />
+          ) : null}
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-3 border border-gray-200 dark:border-gray-600" 
+               style={{ display: hasImage ? 'none' : 'flex' }}>
             <span className="text-white text-xs font-bold">
-              {item.title.charAt(0).toUpperCase()}
+              {item.title?.charAt(0)?.toUpperCase() || 'C'}
             </span>
           </div>
-        )}
-        <div>
-          <div className="text-sm font-medium text-gray-900">{item.title}</div>
-          <div className="text-xs text-gray-500">{item.subtitle}</div>
+          <div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{item.subtitle}</div>
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
     highlightSearch: true
   },
   {
@@ -62,7 +92,7 @@ export const courseTableColumns = [
         {item.discountedPrice < item.price ? (
           <div className="flex items-center space-x-1">
             <span className="text-green-600 dark:text-green-400">{item.discountedPrice}</span>
-            <span className="text-gray-400 line-through text-xs">{item.price}</span>
+            <span className="text-gray-400 dark:text-gray-500 line-through text-xs">{item.price}</span>
           </div>
         ) : (
           <span className="font-medium">{item.price}</span>

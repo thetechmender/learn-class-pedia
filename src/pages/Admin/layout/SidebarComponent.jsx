@@ -3,11 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/useDynamicRoutes';
 import { useAuth } from '../../../context/AuthContext';
+import { useTheme } from '../../../context/ThemeContext';
 
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
+  const { theme } = useTheme();
   const { getMainNavItems, getManagementItems, loading, error } = useDynamicRoutes();
   const [activeRoute, setActiveRoute] = useState(location.pathname);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -123,16 +125,49 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const mainNavItems = getMainNavItems();
   const managementItems = getManagementItems();
   
-  // Modify existing Career Path menu to include submenus
+  // Modify existing items to create Skill as main navbar with Course Skill Mapping as child
   const allManagementItems = [
     ...managementItems,
+    // Fallback items to ensure they always appear
     {
-      id: 'course-skill-mapping',
-      label: 'Course Skill Mapping',
-      icon: Brain,
-      path: 'course-skill-mapping'
+      id: 'skill',
+      label: 'Skill',
+      icon: Star,
+      path: 'career-skills',
+      children: [
+        {
+          id: 'course-skill-mapping',
+          label: 'Course Skill Mapping',
+          icon: Brain,
+          path: 'course-skill-mapping'
+        }
+      ]
     }
   ].map(item => {
+    // Filter out separate Course Skill Mapping item
+    if (item.id === 'course-skill-mapping' || item.label === 'Course Skill Mapping') {
+      return null;
+    }
+    
+    // Create Skill as main navbar with Course Skill Mapping as child
+    if (item.id === 'career-skills' || item.label === 'Career Skills') {
+      return {
+        ...item,
+        id: 'skill',
+        label: 'Skill',
+        path: 'career-skills', // Make parent clickable
+        children: [
+          {
+            id: 'course-skill-mapping',
+            label: 'Course Skill Mapping',
+            icon: Brain,
+            path: 'course-skill-mapping'
+          }
+        ]
+      };
+    }
+    
+    // Handle Career Path with existing children (if it comes from API)
     if (item.id === 'career-path' || item.label === 'Career Path') {
       return {
         ...item,
@@ -143,34 +178,30 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             label: 'Career Roles',
             icon: User,
             path: 'career-roles'
-          },
-          {
-            id: 'career-skills',
-            label: 'Career Skills',
-            icon: Star,
-            path: 'career-skills'
           }
         ]
       };
     }
+    
     // Filter out separate Career Roles item
     if (item.id === 'career-roles' || item.label === 'Career Roles') {
       return null;
     }
+    
     return item;
   }).filter(Boolean); // Remove null items
   
   // Handle loading state
   if (loading) {
     return (
-      <aside className={`fixed lg:sticky inset-y-0 left-0 z-50 top-0 ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}>
+      <aside className={`fixed lg:sticky inset-y-0 left-0 z-50 top-0 h-screen ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <img 
                 src="/logo.svg" 
                 alt="Classpedia" 
-                className="w-50 h-50"
+                className={`w-50 h-50 ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
               />
             </div>
           </div>
@@ -185,14 +216,14 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   // Handle error state
   if (error) {
     return (
-      <aside className={`fixed lg:sticky inset-y-0 left-0 z-50 top-0 ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}>
+      <aside className={`fixed lg:sticky inset-y-0 left-0 z-50 top-0 h-screen ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <img 
                 src="/logo.svg" 
                 alt="Classpedia" 
-                className="w-40 h-40"
+                className={`w-40 h-40 ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
               />
             </div>
           </div>
@@ -211,7 +242,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
       {/* Mobile backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -219,20 +250,20 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:sticky inset-y-0 left-0 z-50 top-0
-          ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
+          fixed lg:sticky inset-y-0 left-0 z-50 top-0 h-screen
+          ${isCollapsed ? 'w-16 lg:w-20' : 'w-64 lg:w-64'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
           transform transition-all duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         <div className="flex flex-col h-full">
           {/* Logo and Collapse Toggle */}
-          <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between p-3 lg:p-5 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2 min-w-0">
               <img 
                 src="/logo.svg" 
                 alt="Classpedia" 
-                className={`w-50 h-50 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`}
+                className={`w-50 h-50 lg:w-50 lg:h-50 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''} ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
               />
             </div>
             <div className="flex items-center gap-2">
@@ -258,11 +289,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+          <nav className="flex-1 p-2 lg:p-4 space-y-4 lg:space-y-6 overflow-hidden">
             {/* Main Navigation */}
             <div>
               {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2" style={{fontSize: '0.75rem'}}>
+                <h3 className={`px-3 text-xs font-semibold uppercase tracking-wider mb-2 lg:mb-2 text-xs lg:text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} hidden lg:block`} style={{fontSize: '0.75rem'}}>
                   Main Menu
                 </h3>
               )}
@@ -278,7 +309,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                       key={item.id}
                       onClick={() => handleNavigation(item.path)}
                       className={`
-                        w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
+                        w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-2 lg:px-3 py-2 lg:py-3 rounded-lg
                         transition-all duration-200 relative
                         ${isActive
                           ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
@@ -287,8 +318,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                       `}
                       title={isCollapsed ? item.label : undefined}
                     >
-                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-                      {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
+                      <item.icon className={`w-4 h-4 lg:w-4 lg:h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
+                      {!isCollapsed && <span className="font-medium text-xs lg:text-sm truncate  lg:block">{item.label}</span>}
                     </button>
                   );
                 })}
@@ -298,7 +329,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             {/* Management Section */}
             <div>
               {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2" style={{fontSize: '0.75rem'}}>
+                <h3 className={`px-3 text-xs  lg:text-sm font-semibold uppercase tracking-wider mb-2 lg:mb-2 text-xs lg:text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} hidden lg:block`} style={{fontSize: '0.75rem'}}>
                   Management
                 </h3>
               )}
@@ -308,18 +339,18 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             </div>
 
             {/* Logout Button */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+            <div className="p-2 lg:p-4 border-t border-gray-200 dark:border-gray-800">
               <button
                 onClick={handleLogout}
                 className={`
-                  w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
+                  w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-2 lg:px-3 py-2 lg:py-3 rounded-lg
                   transition-all duration-200 relative
                   text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
                 `}
                 title={isCollapsed ? 'Logout' : undefined}
               >
-                <LogOut className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-                {!isCollapsed && <span className="font-medium text-sm">Logout</span>}
+                <LogOut className={`w-4 h-4 lg:w-4 lg:h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
+                {!isCollapsed && <span className="font-medium text-xs lg:text-sm hidden lg:block">Logout</span>}
               </button>
             </div>
           </nav>
