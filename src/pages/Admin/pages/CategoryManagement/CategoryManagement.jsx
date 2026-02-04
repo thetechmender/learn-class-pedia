@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAdmin } from '../../../hooks/useAdmin';
-import { useToast } from '../../../hooks/useToast';
-import Modal from '../../../components/Modal';
-import CategoryDropdown from '../../../components/CategoryDropdown';
-import { adminApiService } from '../../../services/AdminApi';
+import { useAdmin } from '../../../../hooks/useAdmin';
+import { useToast } from '../../../../hooks/useToast';
+import Modal from '../../../../components/Modal';
+import CategoryDropdown from '../../../../components/CategoryDropdown';
 import { 
   Plus, 
   Edit2, 
@@ -34,7 +33,9 @@ const CategoryManagement = () => {
     getAllCategories,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    createCategoryWithFile,
+    updateCategoryWithFile
   } = useAdmin();
 
   // Pagination state
@@ -210,7 +211,7 @@ const CategoryManagement = () => {
       
       if (editingCategory) {
         if (isFormData) {
-          await adminApiService.updateCategoryWithFile(editingCategory.id, submitData);
+          await updateCategoryWithFile(editingCategory.id, submitData);
         } else {
           await updateCategory(editingCategory.id, formData);
         }
@@ -218,7 +219,7 @@ const CategoryManagement = () => {
         showSuccess('Category updated successfully!');
       } else {
         if (isFormData) {
-          await adminApiService.createCategoryWithFile(submitData);
+          await createCategoryWithFile(submitData);
         } else {
           await createCategory(formData);
         }

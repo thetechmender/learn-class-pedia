@@ -1,6 +1,6 @@
 import  { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminApiService } from '../../../../services/AdminApi';
+import { useAdmin } from '../../../../hooks/useAdmin';
 import CareerPathForm from './CareerPathForm';
 import {
   Plus,
@@ -28,6 +28,13 @@ import {
 
 const CareerPath = () => {
   const navigate = useNavigate();
+  const {
+    getAllCareerPaths,
+    getCareerPathById,
+    createCareerPathWithFile,
+    updateCareerPathWithFile,
+    deleteCareerPath
+  } = useAdmin();
   const [careerPaths, setCareerPaths] = useState([]);
   const [filteredCareerPaths, setFilteredCareerPaths] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +122,7 @@ const CareerPath = () => {
   const fetchCareerPaths = async () => {
     try {
       setLoading(true);
-      const response = await adminApiService.getAllCareerPaths();
+      const response = await getAllCareerPaths();
       setCareerPaths(response);
       setError(null);
     } catch (err) {
@@ -158,7 +165,7 @@ const CareerPath = () => {
     try {
       setFormLoading(true);
       // Fetch full career path details
-      const careerPathDetails = await adminApiService.getCareerPathById(careerPath.id);
+      const careerPathDetails = await getCareerPathById(careerPath.id);
       setEditingCareerPath(careerPathDetails);
       setShowCreateForm(true);
     } catch (error) {
@@ -179,7 +186,7 @@ const CareerPath = () => {
       if (editingCareerPath) {
         if (isFormData) {
          
-          savedCareerPath = await adminApiService.updateCareerPathWithFile(editingCareerPath.id, careerPathData);
+          savedCareerPath = await updateCareerPathWithFile(editingCareerPath.id, careerPathData);
         } else {   
         const formData = new FormData();
           if (careerPathData.title) formData.append('Title', careerPathData.title);
@@ -218,19 +225,16 @@ const CareerPath = () => {
           }
           // Don't include CareerPathBadges field at all when empty
           
-          savedCareerPath = await adminApiService.updateCareerPathWithFile(editingCareerPath.id, formData);
+          savedCareerPath = await updateCareerPathWithFile(editingCareerPath.id, formData);
         }
         showToast('Career path updated successfully!', 'success');
       } else {
         // Create new career path - always use FormData to avoid 415 error
-        console.log('Creating new career path, using FormData');
         if (isFormData) {
           // Use FormData for file uploads - need special handling
-          console.log('Calling createCareerPathWithFile');
-          savedCareerPath = await adminApiService.createCareerPathWithFile(careerPathData);
+          savedCareerPath = await createCareerPathWithFile(careerPathData);
         } else {
           // Convert JSON to FormData for consistency
-          console.log('Converting JSON to FormData and calling createCareerPathWithFile');
           const formData = new FormData();
           
           // Add all fields to FormData
@@ -270,7 +274,7 @@ const CareerPath = () => {
           }
           // Don't include CareerPathBadges field at all when empty
           
-          savedCareerPath = await adminApiService.createCareerPathWithFile(formData);
+          savedCareerPath = await createCareerPathWithFile(formData);
         }
         showToast('Career path created successfully!', 'success');
       }
@@ -309,7 +313,7 @@ const CareerPath = () => {
     
     try {
       setFormLoading(true);
-      await adminApiService.deleteCareerPath(deleteConfirm.id);
+      await deleteCareerPath(deleteConfirm.id);
       showToast('Career path deleted successfully!', 'success');
       setDeleteConfirm(null);
       fetchCareerPaths(); // Refresh the list

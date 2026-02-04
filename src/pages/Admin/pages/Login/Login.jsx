@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
-import { adminApiService } from '../../../../services/AdminApi';
+import { useAdmin } from '../../../../hooks/useAdmin';
 import './Login.css';
 
 const Login = () => {
   const { login ,isAuthenticated} = useAuth();
+  const { login: adminLogin } = useAdmin();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -101,7 +102,7 @@ const Login = () => {
 
     try {
     
-      const response = await adminApiService.login(formData.email, formData.password);
+      const response = await adminLogin(formData.email, formData.password);
       
       if (response.success) {
         login(response.user);
@@ -116,7 +117,6 @@ const Login = () => {
     }
   };
   useEffect(() => {
-    debugger;
    if(isAuthenticated)
    {
      navigate('/admin/');

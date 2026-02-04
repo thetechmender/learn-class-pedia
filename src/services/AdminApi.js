@@ -9,7 +9,6 @@ class AdminApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    console.log('API Request:', { url, endpoint, options });
     
     const config = {
       headers: {
@@ -22,9 +21,7 @@ class AdminApiService {
     };
 
     try {
-      console.log('Making fetch request to:', url);
       const response = await fetch(url, config);
-      console.log('Response received:', response.status, response.statusText);
 
       if (!response.ok) {
         // Try to get error details from response body
@@ -163,7 +160,6 @@ class AdminApiService {
 
   // GET course by ID for admin
   async getCourseByIdAdmin(courseId) {
-    console.log('API: Getting course by ID:', courseId, 'Endpoint:', ENDPOINTS.COURSE_BY_ID_ADMIN(courseId));
     return this.request(`${ENDPOINTS.COURSE_BY_ID_ADMIN(courseId)}`);
   }
 
@@ -409,22 +405,18 @@ class AdminApiService {
 
   // Authentication methods
    async getAllRoles() {
-    console.log('API - Using mock data for roles (development mode)');
     await new Promise(resolve => setTimeout(resolve, 200));
     return routesData.roles;
   }
 
   // GET role by ID
   async getRoleById(roleId) {
-    console.log('API - Using mock data for role by ID (development mode)');
     await new Promise(resolve => setTimeout(resolve, 200));
     return routesData.roles.find(role => role.id === roleId);
   }
 
   // POST login authentication
   async login(email, password) {
-    console.log('API - Using mock data for login (development mode)');
-    
     await new Promise(resolve => setTimeout(resolve, 500)); // simulate network delay
 
     // Filter user from mock data
@@ -452,7 +444,6 @@ class AdminApiService {
 
   // GET user by email
   async getUserByEmail(email) {
-    console.log('API - Using mock data for user by email (development mode)');
     await new Promise(resolve => setTimeout(resolve, 300));
     return routesData.users.find(user => user.email === email);
   }
@@ -494,7 +485,6 @@ class AdminApiService {
 
   // PUT update career path
   async updateCareerPath(id, careerPathData) {
-    debugger;
     return this.request(`${ENDPOINTS.CAREER_PATHS}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(careerPathData),
@@ -523,9 +513,7 @@ class AdminApiService {
     };
 
     try {
-      console.log('Creating career path with file:', url);
       const response = await fetch(url, config);
-      console.log('Create with file response:', response.status, response.statusText);
 
       if (!response.ok) {
         let errorDetails = '';
@@ -554,11 +542,9 @@ class AdminApiService {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('Create with file successful:', data);
         return data;
       } else {
         const textData = await response.text();
-        console.log('Create with file successful (text response):', textData);
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (error) {
@@ -582,9 +568,7 @@ class AdminApiService {
     };
 
     try {
-      console.log('Updating career path with file:', url);
       const response = await fetch(url, config);
-      console.log('Update with file response:', response.status, response.statusText);
 
       if (!response.ok) {
         let errorDetails = '';
@@ -613,11 +597,9 @@ class AdminApiService {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('Update with file successful:', data);
         return data;
       } else {
         const textData = await response.text();
-        console.log('Update with file successful (text response):', textData);
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (error) {
@@ -641,9 +623,7 @@ class AdminApiService {
     };
 
     try {
-      console.log('Creating course with file:', url);
       const response = await fetch(url, config);
-      console.log('Create course with file response:', response.status, response.statusText);
 
       if (!response.ok) {
         let errorDetails = '';
@@ -672,11 +652,9 @@ class AdminApiService {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('Create course with file successful:', data);
         return data;
       } else {
         const textData = await response.text();
-        console.log('Create course with file successful (text response):', textData);
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (error) {
@@ -700,9 +678,7 @@ class AdminApiService {
     };
 
     try {
-      console.log('Updating course with file:', url);
       const response = await fetch(url, config);
-      console.log('Update course with file response:', response.status, response.statusText);
 
       if (!response.ok) {
         let errorDetails = '';
@@ -731,11 +707,9 @@ class AdminApiService {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('Update course with file successful:', data);
         return data;
       } else {
         const textData = await response.text();
-        console.log('Update course with file successful (text response):', textData);
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (error) {
@@ -759,9 +733,7 @@ class AdminApiService {
     };
 
     try {
-      console.log('Creating category with file:', url);
       const response = await fetch(url, config);
-      console.log('Create category with file response:', response.status, response.statusText);
 
       if (!response.ok) {
         let errorDetails = '';
@@ -790,11 +762,9 @@ class AdminApiService {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('Create category with file successful:', data);
         return data;
       } else {
         const textData = await response.text();
-        console.log('Create category with file successful (text response):', textData);
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (error) {
@@ -818,9 +788,7 @@ class AdminApiService {
     };
 
     try {
-      console.log('Updating category with file:', url);
       const response = await fetch(url, config);
-      console.log('Update category with file response:', response.status, response.statusText);
 
       if (!response.ok) {
         let errorDetails = '';
@@ -849,11 +817,9 @@ class AdminApiService {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('Update category with file successful:', data);
         return data;
       } else {
         const textData = await response.text();
-        console.log('Update category with file successful (text response):', textData);
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (error) {
@@ -902,52 +868,36 @@ class AdminApiService {
   
   // GET all routes
   async getAllRoutes() {
-    console.log('API - Using mock data for routes (development mode)');
     await new Promise(resolve => setTimeout(resolve, 300));
     return routesData.routes;
   }
 
   // GET routes filtered by user role
   async getRoutesByRole(roleId) {
-    console.log('AdminApi - getRoutesByRole called with roleId:', roleId);
-    console.log('AdminApi - routesData available:', !!routesData);
-    console.log('AdminApi - routesData.routes:', routesData?.routes);
-    
     if (!roleId) {
       console.error('AdminApi - roleId is required but not provided');
       throw new Error('Role ID is required');
     }
     
     if (!routesData || !routesData.routes) {
-      console.error('AdminApi - routesData or routesData.routes is undefined');
       throw new Error('Routes data not available');
     }
-    
-    console.log('API - Using mock data for routes by role (development mode)');
-    console.log('API - Available routes in mock data:', routesData.routes);
-    console.log('API - Filtering routes for roleId:', roleId);
     
     await new Promise(resolve => setTimeout(resolve, 300));
     const filteredRoutes = routesData.routes.filter(route => 
       route.allowedRoles && route.allowedRoles.includes(parseInt(roleId))
     ).sort((a, b) => a.order - b.order);
     
-    console.log('API - Filtered routes:', filteredRoutes);
     return filteredRoutes;
   }
 
   // GET routes by category
   async getRoutesByCategory(category, roleId) {
-    console.log('API - Using mock data for routes by category (development mode)');
-    console.log('API - Available routes in mock data:', routesData.routes);
-    console.log('API - Filtering routes for category:', category, 'and roleId:', roleId);
-    
     await new Promise(resolve => setTimeout(resolve, 300));
     const filteredRoutes = routesData.routes.filter(route => 
       route.category === category && route.allowedRoles.includes(roleId)
     ).sort((a, b) => a.order - b.order);
     
-    console.log('API - Filtered routes:', filteredRoutes);
     return filteredRoutes;
   }
 }

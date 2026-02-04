@@ -11,20 +11,14 @@ export const useDynamicRoutes = () => {
 
   useEffect(() => {
     const loadRoutes = async () => {
-      console.log('useDynamicRoutes - user:', user);
-      console.log('useDynamicRoutes - user.roleId:', user?.roleId);
-      
       // Check if user exists and has roleId
       if (!user) {
-        console.log('useDynamicRoutes - No user found, setting loading to false');
         setLoading(false);
         setError('No user authenticated');
         return;
       }
 
       if (!user.roleId) {
-        console.log('useDynamicRoutes - No roleId found in user object');
-        console.log('useDynamicRoutes - User object structure:', JSON.stringify(user, null, 2));
         setLoading(false);
         setError('User role not found');
         return;
@@ -34,9 +28,7 @@ export const useDynamicRoutes = () => {
       setError(null);
 
       try {
-        console.log('useDynamicRoutes - Calling adminApiService.getRoutesByRole with roleId:', user.roleId);
         const userRoutes = await adminApiService.getRoutesByRole(user.roleId);
-        console.log('useDynamicRoutes - Routes received:', userRoutes);
         
         if (!userRoutes || !Array.isArray(userRoutes)) {
           throw new Error('Invalid routes data received');

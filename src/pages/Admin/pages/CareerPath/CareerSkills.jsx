@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useToast } from '../../../hooks/useToast';
-import { useCareerSkills } from '../../../hooks/useCareerSkills';
-import Modal from '../../../components/Modal';
+import { useToast } from '../../../../hooks/useToast';
+import { useCareerSkills } from '../../../../hooks/useCareerSkills';
+import Modal from '../../../../components/Modal';
 import { 
   Plus, 
   Edit2, 

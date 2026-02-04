@@ -397,6 +397,168 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
     }
   }, []);
 
+  const createCategoryWithFile = useCallback(async (formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.createCategoryWithFile(formData);
+      return data;
+    } catch (err) {
+      setError('Failed to create category');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateCategoryWithFile = useCallback(async (id, formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.updateCategoryWithFile(id, formData);
+      return data;
+    } catch (err) {
+      setError('Failed to update category');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ==================== CAREER PATH OPERATIONS ====================
+
+  const getAllCareerPaths = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.getAllCareerPaths();
+      return data;
+    } catch (err) {
+      setError('Failed to fetch career paths');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getCareerPathById = useCallback(async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.getCareerPathById(id);
+      return data;
+    } catch (err) {
+      setError('Failed to fetch career path');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const createCareerPathWithFile = useCallback(async (formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.createCareerPathWithFile(formData);
+      return data;
+    } catch (err) {
+      setError('Failed to create career path');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateCareerPathWithFile = useCallback(async (id, formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.updateCareerPathWithFile(id, formData);
+      return data;
+    } catch (err) {
+      setError('Failed to update career path');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteCareerPath = useCallback(async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.deleteCareerPath(id);
+      return data;
+    } catch (err) {
+      setError('Failed to delete career path');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ==================== COURSE FILE UPLOAD OPERATIONS ====================
+
+  const createCourseWithFile = useCallback(async (formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.createCourseWithFile(formData);
+      return data;
+    } catch (err) {
+      setError('Failed to create course');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateCourseWithFile = useCallback(async (id, formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.updateCourseWithFile(id, formData);
+      return data;
+    } catch (err) {
+      setError('Failed to update course');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ==================== AUTHENTICATION OPERATIONS ====================
+
+  const login = useCallback(async (email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.login(email, password);
+      return data;
+    } catch (err) {
+      setError('Failed to login');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ==================== ROUTE OPERATIONS ====================
+
+  const getRoutesByRole = useCallback(async (roleId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.getRoutesByRole(roleId);
+      return data;
+    } catch (err) {
+      setError('Failed to fetch routes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // ==================== DROPDOWN DATA ====================
 
   const getCourseTypes = useCallback(async () => {
@@ -432,6 +594,20 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
       setLoading(true);
       setError(null);
       const data = await adminApiService.getCourseBadges();
+      return data;
+    } catch (err) {
+      setError('Failed to fetch course badges');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getAllCourseBadgesNew = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.getAllCourseBadgesNew();
       return data;
     } catch (err) {
       setError('Failed to fetch course badges');
@@ -502,10 +678,30 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
     createCategory,
     updateCategory,
     deleteCategory,
+    createCategoryWithFile,
+    updateCategoryWithFile,
+
+    // Career path operations
+    getAllCareerPaths,
+    getCareerPathById,
+    createCareerPathWithFile,
+    updateCareerPathWithFile,
+    deleteCareerPath,
+
+    // Course file upload operations
+    createCourseWithFile,
+    updateCourseWithFile,
+
+    // Authentication operations
+    login,
+
+    // Route operations
+    getRoutesByRole,
 
     // Dropdown data
     getCourseTypes,
     getCourseLevels,
     getCourseBadges,
+    getAllCourseBadgesNew,
   };
 };

@@ -17,7 +17,8 @@ import { courseTableColumns } from '../../../../config/tableConfigurations';
 const CourseManagement = () => {
   const { 
     error, getCourseById,
-    getCourseTypes, getCourseLevels, getAllCategories, deleteCourse, getAllCoursesAdmin
+    getCourseTypes, getCourseLevels, getAllCategories, deleteCourse, getAllCoursesAdmin,
+    createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew
   } = useAdmin();
   
   const { toast, showToast } = useToast();
@@ -114,7 +115,7 @@ const CourseManagement = () => {
       // Fetch Badges
       setDropdownLoading(prev => ({ ...prev, badges: true }));
       try {
-        const data = await adminApiService.getAllCourseBadgesNew();
+        const data = await getAllCourseBadgesNew();
         // Transform badge data to match MultiSelectDropdown expectations
         const transformedBadges = Array.isArray(data) ? data.map(badge => ({
           id: badge.id,
@@ -217,8 +218,6 @@ const CourseManagement = () => {
 
   // Handle modal submission
   const handleModalSubmit = async (formData, isFormData = false) => {
-    debugger;
-
     try {
       setModalLoading(true);
       setModalError('');
@@ -226,7 +225,7 @@ const CourseManagement = () => {
       if (modalState.mode === 'create') {
         if (isFormData) {
           // formData is already FormData, use it directly
-          await adminApiService.createCourseWithFile(formData);
+          await createCourseWithFile(formData);
         } else {
           // Convert JSON to FormData for consistency
           const convertedFormData = new FormData();
@@ -264,13 +263,13 @@ const CourseManagement = () => {
             });
           }
           
-          await adminApiService.createCourseWithFile(convertedFormData);
+          await createCourseWithFile(convertedFormData);
         }
         showToast('Course created successfully!', 'success');
       } else if (modalState.mode === 'edit') {
         if (isFormData) {
           // formData is already FormData, use it directly
-          await adminApiService.updateCourseWithFile(modalState.course.id, formData);
+          await updateCourseWithFile(modalState.course.id, formData);
         } else {
           // Convert JSON to FormData for consistency
           const convertedFormData = new FormData();
@@ -308,7 +307,7 @@ const CourseManagement = () => {
             });
           }
           
-          await adminApiService.updateCourseWithFile(modalState.course.id, convertedFormData);
+          await updateCourseWithFile(modalState.course.id, convertedFormData);
         }
         showToast('Course updated successfully!', 'success');
       } else if (modalState.mode === 'delete') {

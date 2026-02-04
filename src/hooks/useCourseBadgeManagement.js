@@ -166,12 +166,6 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         courseIds: existingBadge.courseIds || []
       };
       
-      console.log('Updating badge:', {
-        badgeId,
-        badgeData,
-        updateData
-      });
-      
       const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
       setBadges(prev => 
         prev.map(badge => 
@@ -183,7 +177,6 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
       return updatedBadge;
     } catch (err) {
       setBadgesError(err.message || 'Failed to update badge');
-      console.error('Badge update error:', err);
       throw err;
     }
   }, [badges]);
@@ -225,13 +218,6 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
       const finalCourseIds = existingCourseIds.filter(id => !selectedCourseIds.includes(id)) // Remove deselected
         .concat(selectedCourseIds.filter(id => !existingCourseIds.includes(id))); // Add new ones
       
-      console.log('Updating courses for badge:', {
-        badgeId,
-        existingCourseIds,
-        selectedCourseIds,
-        finalCourseIds
-      });
-      
       // Prepare the complete request body as expected by the API
       const updateData = {
         id: existingBadge.id,
@@ -252,9 +238,6 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
       
       // Update the badge with complete data
       const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
-      
-      console.log('API Response - Updated badge:', updatedBadge);
-      console.log('Course count from API:', updatedBadge.courseIds?.length || 0);
       
       // Update local state with the API response to ensure consistency
       setBadges(prev => 

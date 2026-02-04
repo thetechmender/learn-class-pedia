@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { adminApiService } from '../../../services/AdminApi';
+import { useAdmin } from '../../../hooks/useAdmin';
 import { useAuth } from '../../../context/AuthContext';
 
 // Import all existing components
@@ -16,9 +16,9 @@ import MyProfile from '../pages/MyProfile/MyProfile';
 import Settings from '../pages/Settings/Settings';
 import Notifications from '../pages/Notifications/Notifications';
 import Support from '../pages/Support/Support';
-import CategoryManagement from '../pages/CategoryManagement';
-import CareerRoles from '../pages/CareerRoles';
-import CareerSkills from '../pages/CareerSkills';
+import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
+import CareerRoles from '../pages/CareerPath/CareerRoles';
+import CareerSkills from '../pages/CareerPath/CareerSkills';
 import CourseSkillMapping from '../pages/CourseSkillMapping/CourseSkillMapping';
 
 // Component mapping
@@ -72,6 +72,7 @@ export const ProtectedRoute = ({ children }) => {
 const DynamicRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const { getRoutesByRole } = useAdmin();
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,7 +96,7 @@ const DynamicRoutes = () => {
       setError(null);
 
       try {
-        const userRoutes = await adminApiService.getRoutesByRole(user.roleId);
+        const userRoutes = await getRoutesByRole(user.roleId);
         
         if (!userRoutes || !Array.isArray(userRoutes)) {
           throw new Error('Invalid routes data received');

@@ -374,73 +374,57 @@ const CareerPathForm = ({
   const validateCurrentStep = () => {
     const newErrors = {};
     
-    console.log('Validating step:', currentStep);
-    console.log('Current form data:', formData);
-    
     switch (currentStep) {
       case 1:
         if (!formData.title.trim()) {
           newErrors.title = 'Title is required';
-          console.log('Title validation failed');
         }
         if (!formData.description.trim()) {
           newErrors.description = 'Description is required';
-          console.log('Description validation failed');
         }
         if (!formData.price || formData.price < 0) {
           newErrors.price = 'Price must be greater than or equal to 0';
-          console.log('Price validation failed');
         }
         if (!formData.discountedPrice || formData.discountedPrice < 0) {
           newErrors.discountedPrice = 'Discounted price must be greater than or equal to 0';
-          console.log('Discounted price validation failed');
         }
         if (formData.price && formData.discountedPrice && parseFloat(formData.discountedPrice) > parseFloat(formData.price)) {
           newErrors.discountedPrice = 'Discounted price cannot be greater than regular price';
-          console.log('Discounted price comparison validation failed');
         }
         if (!formData.roleId) {
           newErrors.roleId = 'Role is required';
-          console.log('Role validation failed');
         }
         break;
         
       case 2:
         if (formData.levels.length === 0) {
           newErrors.levels = 'At least one level is required';
-          console.log('Levels validation failed');
         }
         break;
         
       case 3:
         if (formData.skills.length === 0) {
           newErrors.skills = 'At least one skill is required';
-          console.log('Skills validation failed');
         }
         break;
         
       case 4:
         if (!formData.durationMinMonths || formData.durationMinMonths <= 0) {
           newErrors.durationMinMonths = 'Minimum duration must be greater than 0';
-          console.log('Duration min validation failed');
         }
         if (!formData.durationMaxMonths || formData.durationMaxMonths <= 0) {
           newErrors.durationMaxMonths = 'Maximum duration must be greater than 0';
-          console.log('Duration max validation failed');
         }
         if (formData.durationMinMonths && formData.durationMaxMonths && 
             parseInt(formData.durationMinMonths) > parseInt(formData.durationMaxMonths)) {
           newErrors.durationMaxMonths = 'Maximum duration must be greater than minimum duration';
-          console.log('Duration comparison validation failed');
         }
         if (!formData.outcome.trim()) {
           newErrors.outcome = 'Outcome is required';
-          console.log('Outcome validation failed');
         }
         break;
     }
     
-    console.log('Validation errors:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -503,25 +487,16 @@ const CareerPathForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('handleSubmit called - this should only happen on form submission');
     
     if (!validateForm()) {
-      console.log('Form validation failed');
       return;
     }
-    
-    console.log('Form validation passed, preparing submission data');
     
     let submitData;
     let isFormData = false;
     
-    // Debug: Check if iconFile exists
-    console.log('FormData check - iconFile:', formData.iconFile);
-    console.log('FormData check - iconFile type:', typeof formData.iconFile);
-    
     // If there's a file, use FormData to avoid 415 error
     if (formData.iconFile) {
-      console.log('Using FormData for file upload');
       isFormData = true;
       submitData = new FormData();
       
@@ -553,9 +528,6 @@ const CareerPathForm = ({
       
       const badgesArray = formData.careerPathBadges.map(badgeId => parseInt(badgeId));
       
-      console.log('Debug - badgesArray:', badgesArray);
-      console.log('Debug - badgesArray length:', badgesArray.length);
-      
       // Send arrays using proper array notation only
       levelsArray.forEach((level, index) => {
         submitData.append(`Levels[${index}].levelId`, level.levelId);
@@ -571,17 +543,10 @@ const CareerPathForm = ({
       });
       
       badgesArray.forEach((badgeId, index) => {
-        console.log(`Appending CareerPathBadges[${index}]:`, badgeId);
         submitData.append(`CareerPathBadges[${index}]`, badgeId);
       });
       
       // Don't include CareerPathBadges field at all when empty - only append if badgesArray has items
-      
-      // Debug: Log all FormData entries
-      console.log('FormData contents:');
-      for (let [key, value] of submitData.entries()) {
-        console.log(`${key}:`, value);
-      }
       
       // Add the file
       submitData.append('File', formData.iconFile);
@@ -613,7 +578,6 @@ const CareerPathForm = ({
       };
     }
     
-    console.log('Clearing cache and calling onSave');
     clearCache();
     
     // Pass data to parent with flag indicating if it's FormData
@@ -1467,12 +1431,8 @@ const CareerPathForm = ({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Next button clicked, current step:', currentStep);
                   if (validateCurrentStep()) {
-                    console.log('Validation passed, moving to next step');
                     moveToNextStep();
-                  } else {
-                    console.log('Validation failed');
                   }
                 }}
                 className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"

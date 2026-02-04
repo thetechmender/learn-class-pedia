@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { adminApiService } from '../../../../services/AdminApi';
+import { useAdmin } from '../../../../hooks/useAdmin';
 import {
   ArrowLeft,
   Clock,
@@ -16,6 +16,7 @@ import {
 const CareerPathDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getCareerPathById } = useAdmin();
   const [careerPath, setCareerPath] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +30,7 @@ const CareerPathDetail = () => {
   const fetchCareerPathDetails = async () => {
     try {
       setLoading(true);
-      const response = await adminApiService.getCareerPathById(id);
+      const response = await getCareerPathById(id);
       setCareerPath(response);
       setError(null);
     } catch (err) {
