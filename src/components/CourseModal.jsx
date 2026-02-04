@@ -47,7 +47,8 @@ const CourseModal = ({
     promoVideoUrl: '',
     badgeIds: [],
     sections: [],
-    thumbnailFile: null
+    thumbnailFile: null,
+    promoVideoFile: null
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -71,7 +72,8 @@ const CourseModal = ({
         promoVideoUrl: course.promoVideoUrl || '',
         badgeIds: course.badgeIds || [],
         sections: course.sections || [],
-        thumbnailFile: null
+        thumbnailFile: null,
+        promoVideoFile: null
       });
     } else if (mode === 'create') {
       setFormData({
@@ -91,7 +93,8 @@ const CourseModal = ({
         promoVideoUrl: '',
         badgeIds: [],
         sections: [],
-        thumbnailFile: null
+        thumbnailFile: null,
+        promoVideoFile: null
       });
     }
   }, [course, mode]);
@@ -179,6 +182,32 @@ const CourseModal = ({
     }
   };
 
+  const validateVideoDuration = (file) => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        const duration = video.duration;
+        if (duration > 180) { // 180 seconds = 3 minutes
+          reject(new Error('Video duration must be less than 3 minutes'));
+        } else if (duration < 10) { // Minimum 10 seconds
+          reject(new Error('Video duration must be at least 10 seconds'));
+        } else {
+          resolve(duration);
+        }
+      };
+      
+      video.onerror = () => {
+        window.URL.revokeObjectURL(video.src);
+        reject(new Error('Invalid video file'));
+      };
+      
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const validateForm = () => {
     const errors = {};
 
@@ -206,6 +235,21 @@ const CourseModal = ({
       }
     }
 
+    // Validate promo video file if present
+    if (formData.promoVideoFile) {
+      // Check file size (max 50MB for promo video)
+      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+      if (formData.promoVideoFile.size > maxSize) {
+        errors.promoVideoFile = 'Promo video size must be less than 50MB';
+      }
+      
+      // Check file type
+      const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+      if (!allowedTypes.includes(formData.promoVideoFile.type)) {
+        errors.promoVideoFile = 'Invalid video format. Please upload MP4, WebM, or OGG format';
+      }
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -216,12 +260,23 @@ const CourseModal = ({
       onSubmit();
       return;
     }
+    
+    // Validate video duration if promo video file is present
+    if (formData.promoVideoFile) {
+      try {
+        await validateVideoDuration(formData.promoVideoFile);
+      } catch (error) {
+        setFormErrors({ promoVideoFile: error.message });
+        return;
+      }
+    }
+    
     if (validateForm()) {
       let submitData;
       let isFormData = false;
       
       // If there's a file, use FormData
-      if (formData.thumbnailFile) {
+      if (formData.thumbnailFile || formData.promoVideoFile) {
         isFormData = true;
         submitData = new FormData();
         submitData.append('title', formData.title);
@@ -257,8 +312,13 @@ const CourseModal = ({
           });
         }
         
-        // Add the file
-        submitData.append('File', formData.thumbnailFile);
+        // Add the files
+        if (formData.thumbnailFile) {
+          submitData.append('File', formData.thumbnailFile);
+        }
+        if (formData.promoVideoFile) {
+          submitData.append('PromoVideoFile', formData.promoVideoFile);
+        }
       } else {
         // No file, use regular JSON
         submitData = {
@@ -647,7 +707,96 @@ const CourseModal = ({
                   </div>
                 </div>
 
-                {/* Promo Video */}
+                {/* Promo Video Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Promo Video</label>
+                  <div className="flex items-start gap-4">
+                    {/* Video Preview */}
+                    <div className="flex-shrink-0">
+                      {formData.promoVideoFile ? (
+                        <div className="relative">
+                          <video
+                            src={URL.createObjectURL(formData.promoVideoFile)}
+                            className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
+                            muted
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, promoVideoFile: null }))}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                            disabled={loading}
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : formData.promoVideoUrl ? (
+                        <div className="relative">
+                          <video
+                            src={formData.promoVideoUrl}
+                            className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
+                            muted
+                          />
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">
+                            <BookOpen className="w-3 h-3" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                          <BookOpen className="w-8 h-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload Controls */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <input
+                          type="file"
+                          id="promo-video-upload"
+                          accept="video/mp4,video/webm,video/ogg"
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              try {
+                                // Validate video duration
+                                await validateVideoDuration(file);
+                                setFormData(prev => ({ 
+                                  ...prev, 
+                                  promoVideoFile: file
+                                }));
+                                // Clear any existing errors
+                                if (formErrors.promoVideoFile) {
+                                  setFormErrors(prev => ({ ...prev, promoVideoFile: '' }));
+                                }
+                              } catch (error) {
+                                setFormErrors(prev => ({ ...prev, promoVideoFile: error.message }));
+                              }
+                            }
+                          }}
+                          className="hidden"
+                          disabled={loading}
+                        />
+                        <label
+                          htmlFor="promo-video-upload"
+                          className="inline-flex items-center px-4 py-2 border-2 border-dashed border-green-300 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all"
+                        >
+                          <Upload className="w-4 h-4 mr-2 text-green-600" />
+                          <span className="text-sm text-green-600 font-medium">
+                            {formData.promoVideoFile ? 'Change Promo Video' : formData.promoVideoUrl ? 'Replace Promo Video' : 'Upload Promo Video'}
+                          </span>
+                        </label>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">
+                        {formData.promoVideoUrl ? 'Current video from URL. Upload new file to replace.' : 'Upload a promo video (MP4, WebM, or OGG, max 50MB, 10 seconds to 3 minutes)'}
+                      </p>
+                      {formErrors.promoVideoFile && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.promoVideoFile}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Promo Video URL */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Promo Video URL</label>
                   <div className="relative">

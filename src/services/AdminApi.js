@@ -900,6 +900,35 @@ class AdminApiService {
     
     return filteredRoutes;
   }
+
+  // Email Template CRUD Operations
+  async getEmailTemplates(page = 1, pageSize = 10) {
+    return this.request(`${ENDPOINTS.EMAIL_TEMPLATE_ALL}?page=${page}&pageSize=${pageSize}`);
+  }
+
+  async getEmailTemplateById(id) {
+    return this.request(ENDPOINTS.EMAIL_TEMPLATE_BY_ID(id));
+  }
+
+  async createEmailTemplate(templateData) {
+    return this.request(ENDPOINTS.EMAIL_TEMPLATE_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async updateEmailTemplate(id, templateData) {
+    return this.request(ENDPOINTS.EMAIL_TEMPLATE_UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async deleteEmailTemplate(id) {
+    return this.request(ENDPOINTS.EMAIL_TEMPLATE_DELETE(id), {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const adminApiService = new AdminApiService();

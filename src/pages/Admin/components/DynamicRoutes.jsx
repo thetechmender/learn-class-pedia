@@ -20,6 +20,7 @@ import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
 import CareerRoles from '../pages/CareerPath/CareerRoles';
 import CareerSkills from '../pages/CareerPath/CareerSkills';
 import CourseSkillMapping from '../pages/CourseSkillMapping/CourseSkillMapping';
+import EmailTemplateManagement from '../pages/EmailTemplateManagement/EmailTemplateManagement';
 
 // Component mapping
 const componentMap = {
@@ -39,6 +40,7 @@ const componentMap = {
   CareerRoles,
   CareerSkills,
   CourseSkillMapping,
+  EmailTemplateManagement,
 };
 
 // Protected Route Component

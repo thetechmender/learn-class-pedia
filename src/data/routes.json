@@ -71,6 +71,16 @@
       "order": 7
     },
     {
+      "id": "email-templates",
+      "path": "/admin/email-templates",
+      "component": "EmailTemplateManagement",
+      "label": "Email Templates",
+      "icon": "Mail",
+      "category": "management",
+      "allowedRoles": [1],
+      "order": 8
+    },
+    {
       "id": "career-roles",
       "path": "/admin/career-roles",
       "component": "CareerRoles",
@@ -78,7 +88,7 @@
       "icon": "Briefcase",
       "category": "management",
       "allowedRoles": [1],
-      "order": 8
+      "order": 9
     },
     {
       "id": "my-courses",
@@ -88,7 +98,7 @@
       "icon": "BookOpen",
       "category": "main",
       "allowedRoles": [2],
-      "order": 9
+      "order": 10
     },
     {
       "id": "my-profile",
@@ -98,7 +108,7 @@
       "icon": "User",
       "category": "main",
       "allowedRoles": [1, 2],
-      "order": 10
+      "order": 11
     }
   ],
   "roles": [

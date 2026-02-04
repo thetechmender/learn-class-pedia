@@ -32,6 +32,7 @@ export const COURSE_MANAGEMENT_CONSTANTS = {
     slug: '',
     thumbnailUrl: '',
     promoVideoUrl: '',
+    promoVideoFile: '',
     price: '',
     discountedPrice: '',
     currencyCode: '',

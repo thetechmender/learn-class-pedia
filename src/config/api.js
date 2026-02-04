@@ -53,6 +53,12 @@ export const ENDPOINTS = {
   COURSE_SKILL_MAP_ALL: '/CourseSkillMap/all',
   COURSE_SKILL_MAP_BY_ID: (id) => `/CourseSkillMap/skill/${id}`,
   COURSE_SKILL_MAP_SYNC: '/CourseSkillMap/sync',
+  // Email Template endpoints
+  EMAIL_TEMPLATE_ALL: '/EmailTemplate',
+  EMAIL_TEMPLATE_BY_ID: (id) => `/EmailTemplate/${id}`,
+  EMAIL_TEMPLATE_CREATE: '/EmailTemplate',
+  EMAIL_TEMPLATE_UPDATE: (id) => `/EmailTemplate/${id}`,
+  EMAIL_TEMPLATE_DELETE: (id) => `/EmailTemplate/${id}`,
 };
 
 // HTTP Status Codes
