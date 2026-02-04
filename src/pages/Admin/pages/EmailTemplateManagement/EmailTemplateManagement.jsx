@@ -16,7 +16,8 @@ const EmailTemplateManagement = () => {
     title: '',
     subject: '',
     htmlBody: '',
-    textBody: ''
+    textBody: '',
+    dynamicVariables: ''
   });
 
   const { templates, loading, error, pagination, refetch } = useEmailTemplates(currentPage, pageSize);
@@ -33,7 +34,8 @@ const EmailTemplateManagement = () => {
         title: '',
         subject: '',
         htmlBody: '',
-        textBody: ''
+        textBody: '',
+        dynamicVariables: ''
       });
       refetch();
     } catch (err) {
@@ -48,6 +50,7 @@ const EmailTemplateManagement = () => {
         subject: formData.subject,
         htmlBody: formData.htmlBody,
         textBody: formData.textBody,
+        dynamicVariables: formData.dynamicVariables,
         isActive: true
       });
       showToast('Email template updated successfully!', 'success');
@@ -58,7 +61,8 @@ const EmailTemplateManagement = () => {
         title: '',
         subject: '',
         htmlBody: '',
-        textBody: ''
+        textBody: '',
+        dynamicVariables: ''
       });
       refetch();
     } catch (err) {
@@ -84,7 +88,8 @@ const EmailTemplateManagement = () => {
       title: '',
       subject: '',
       htmlBody: '',
-      textBody: ''
+      textBody: '',
+      dynamicVariables: ''
     });
     setSelectedTemplate(null);
   };
@@ -106,7 +111,8 @@ const EmailTemplateManagement = () => {
       title: template.title,
       subject: template.subject,
       htmlBody: template.htmlBody,
-      textBody: template.textBody
+      textBody: template.textBody,
+      dynamicVariables: template.dynamicVariables || ''
     });
     setIsEditModalOpen(true);
   };
@@ -158,14 +164,6 @@ const EmailTemplateManagement = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <button
-                onClick={() => refetch()}
-                className="flex items-center px-4 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 font-medium"
-                title="Refresh templates"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                Refresh
-              </button>
               <button
                 onClick={openCreateModal}
                 className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
@@ -574,6 +572,23 @@ const EmailTemplateManagement = () => {
                   />
                   <p className="mt-1 text-xs text-gray-500">Plain text version for email clients that don't support HTML</p>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Hash className="w-4 h-4" />
+                      Dynamic Variables <span className="text-gray-400">(Optional)</span>
+                    </div>
+                  </label>
+                  <textarea
+                    value={formData.dynamicVariables}
+                    onChange={(e) => setFormData({ ...formData, dynamicVariables: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm"
+                    placeholder='[&#34;StudentName&#34;, &#34;CourseName&#34;, &#34;EnrollmentDate&#34;]'
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Enter dynamic variables as a JSON array of strings. These variables can be used in templates as {'{{variable}}'}</p>
+                </div>
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 flex-shrink-0">
@@ -626,8 +641,8 @@ const EmailTemplateManagement = () => {
                     <input
                       type="text"
                       value={formData.templateKey}
-                      disabled
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                      
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                     <p className="mt-1 text-xs text-gray-500">Template key cannot be modified</p>
                   </div>
@@ -689,6 +704,23 @@ const EmailTemplateManagement = () => {
                     placeholder="Plain text version of the email (optional)"
                   />
                   <p className="mt-1 text-xs text-gray-500">Plain text version for email clients that don't support HTML</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Hash className="w-4 h-4" />
+                      Dynamic Variables <span className="text-gray-400">(Optional)</span>
+                    </div>
+                  </label>
+                  <textarea
+                    value={formData.dynamicVariables}
+                    onChange={(e) => setFormData({ ...formData, dynamicVariables: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all font-mono text-sm"
+                    placeholder='[&#34;StudentName&#34;, &#34;CourseName&#34;, &#34;EnrollmentDate&#34;]'
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Enter dynamic variables as a JSON array of strings. These variables can be used in templates as {'{{variable}}'}</p>
                 </div>
               </div>
             </div>
@@ -788,6 +820,22 @@ const EmailTemplateManagement = () => {
                       <div className="max-h-32 overflow-y-auto">
                         <pre className="p-4 text-sm text-gray-800 whitespace-pre-wrap">
                           {selectedTemplate.textBody}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedTemplate.dynamicVariables && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Hash className="w-4 h-4" />
+                      Dynamic Variables
+                    </h3>
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="max-h-32 overflow-y-auto">
+                        <pre className="p-4 text-sm text-gray-800 whitespace-pre-wrap font-mono bg-gray-50">
+                          {selectedTemplate.dynamicVariables}
                         </pre>
                       </div>
                     </div>

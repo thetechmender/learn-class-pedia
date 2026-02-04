@@ -65,11 +65,37 @@ const CourseSkillMapping = () => {
 
   // Initialize data is now handled by the custom hook
 
-  // Filter skills
+  // Filter skills from allSkills for search functionality
   const filteredSkills = Array.isArray(allSkills) ? allSkills.filter(skill => {
     const matchesSearch = skill.title?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   }) : [];
+
+  // Apply pagination to filtered skills
+  const paginatedFilteredSkills = Array.isArray(filteredSkills) ? filteredSkills.slice(
+    ((skillsPagination.currentPage - 1) * skillsPagination.pageSize),
+    (skillsPagination.currentPage * skillsPagination.pageSize)
+  ) : [];
+
+  // Calculate pagination info for filtered skills
+  const filteredPagination = {
+    ...skillsPagination,
+    totalItems: filteredSkills.length,
+    totalPages: Math.ceil(filteredSkills.length / skillsPagination.pageSize)
+  };
+
+  // Handle pagination for filtered skills
+  const handlePaginateSkills = (page) => {
+    const totalPages = Math.ceil(filteredSkills.length / skillsPagination.pageSize);
+    if (page >= 1 && page <= totalPages) {
+      paginateSkills(page);
+    }
+  };
+
+  // Handle page size change for filtered skills
+  const handleChangeSkillsPageSize = (newPageSize) => {
+    changeSkillsPageSize(newPageSize);
+  };
 
   // Handle course filter changes
   const handleCourseFilterChange = useCallback(async (filterType, value) => {
@@ -369,7 +395,7 @@ const CourseSkillMapping = () => {
         {viewMode === 'grid' ? (
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSkills.map(skill => (
+            {paginatedFilteredSkills.map(skill => (
               <div key={skill.skillId} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Skill Header */}
                 <div className="relative h-32 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
@@ -453,7 +479,7 @@ const CourseSkillMapping = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredSkills.map((skill, index) => (
+                  {paginatedFilteredSkills.map((skill, index) => (
                     <tr key={skill.skillId} className={`hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors ${
                       index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-900/20'
                     }`}>
@@ -514,7 +540,7 @@ const CourseSkillMapping = () => {
             </div>
 
             {/* Empty State */}
-            {filteredSkills.length === 0 && (
+            {paginatedFilteredSkills.length === 0 && (
               <div className="px-6 py-12 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Brain className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -691,7 +717,7 @@ const CourseSkillMapping = () => {
                       {loadingCourses ? (
                         <div className="flex items-center justify-center py-8">
                           <RefreshCw className="w-6 h-6 animate-spin text-purple-500 mr-2" />
-                          <span className="text-gray-600 dark:text-gray-300">Applying filters...</span>
+                          <span className="text-gray-600 dark:text-gray-300">loading courses...</span>
                         </div>
                       ) : (
                         <>
