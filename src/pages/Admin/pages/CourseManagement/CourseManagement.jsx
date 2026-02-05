@@ -6,12 +6,12 @@ import { useModalState } from '../../../../hooks/useModalState';
 import { useToast } from '../../../../hooks/useToast';
 import { COURSE_MANAGEMENT_CONSTANTS } from '../../../../constants/courseManagement';
 import { calculateCourseStats, filterCoursesBySearch } from '../../../../utils/courseUtils';
-import { adminApiService } from '../../../../services/AdminApi';
-import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Target, Layers, Award } from 'lucide-react';
+import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 import CourseModal from '../../../../components/CourseModal';
 import UniversalVirtualizedTable from '../../../../components/UniversalVirtualizedTable';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 import { courseTableColumns } from '../../../../config/tableConfigurations';
 
 const CourseManagement = () => {
@@ -115,9 +115,10 @@ const CourseManagement = () => {
       // Fetch Badges
       setDropdownLoading(prev => ({ ...prev, badges: true }));
       try {
-        const data = await getAllCourseBadgesNew();
-        // Transform badge data to match MultiSelectDropdown expectations
-        const transformedBadges = Array.isArray(data) ? data.map(badge => ({
+        const response = await getAllCourseBadgesNew();
+        // Handle the API response structure where badges are in items array
+        const badgesData = response.items || response || [];
+        const transformedBadges = Array.isArray(badgesData) ? badgesData.map(badge => ({
           id: badge.id,
           name: badge.badgeName,
           description: badge.description
@@ -132,7 +133,7 @@ const CourseManagement = () => {
     };
 
     fetchDropdownData();
-  }, []); // Empty dependency array - run only once on mount
+  }, [getAllCategories, getCourseTypes, getCourseLevels, getAllCourseBadgesNew]);
 
   // Handle view details
  const handleViewDetails = useCallback(async (course) => {
@@ -178,7 +179,7 @@ const CourseManagement = () => {
         setDetailsLoading(prev => ({ ...prev, [courseId]: false }));
       }
     }
-  }, [getCourseById, showToast]);
+  }, [getCourseById, showToast, expandedCourses, courseDetails]);
 
   // Handle toggle expand for universal table
   const handleToggleExpand = (courseOrId) => {
@@ -354,7 +355,7 @@ const CourseManagement = () => {
     } finally {
       setFiltersLoading(false);
     }
-  }, [filtersLoading, getActiveFilters, getAllCoursesAdmin, showToast]);
+  }, [filtersLoading, getActiveFilters, getAllCoursesAdmin, showToast, setFiltersLoading, setFilters, setFilteredCourses, setPaginationInfo]);
   const handlePageChange = useCallback(async (newPage) => {
     if (newPage < 1) return;
     
@@ -395,77 +396,59 @@ const CourseManagement = () => {
   }, []); // Only run on mount
 
   if (filtersLoading) {
-    return (
-      <div className="p-4 lg:p-6 max-w-full mx-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">
-        {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-            <div>
-              <div className="h-10 lg:h-12 bg-gray-200 dark:bg-gray-700 rounded-lg w-64 mb-3 animate-pulse"></div>
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg w-96 animate-pulse"></div>
-            </div>
-            <div className="mt-4 lg:mt-0">
-              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-40 animate-pulse"></div>
-            </div>
-          </div>
-          
-          {/* Stats Cards Skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2 animate-pulse"></div>
-                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
-                  </div>
-                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Search Bar Skeleton */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
-            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-32 animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Table Skeleton */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-6">
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center space-x-4 p-4 border-b border-gray-100 dark:border-gray-700">
-                  <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse"></div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <AdminPageLayout loading={true} skeletonType="table" />;
   }
 
   if (error) {
     return (
-      <div className="text-red-500 p-4">{error}</div>
+      <AdminPageLayout
+        title="Course Management"
+        subtitle="Manage and monitor all your courses in one place"
+        icon={BookOpen}
+        loading={false}
+        skeletonType="table"
+      >
+        <div className="text-red-500 p-4">{error}</div>
+      </AdminPageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950">
+    <AdminPageLayout
+      title="Course Management"
+      subtitle="Manage and monitor all your courses in one place"
+      icon={BookOpen}
+      loading={false}
+      skeletonType="table"
+      actions={
+        <>
+          <button
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+            className={`flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 font-medium text-sm ${
+              (filtersExpanded || searchTerm) 
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
+                : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Filter className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Filters</span>
+            {(filtersExpanded || searchTerm) && (
+              <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
+                Active
+              </span>
+            )}
+          </button>
+          <button 
+            onClick={() => openModal('create')}
+            className="flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
+          >
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Create Course</span>
+            <span className="sm:hidden">Create</span>
+          </button>
+        </>
+      }
+    >
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
@@ -482,79 +465,32 @@ const CourseManagement = () => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between h-auto sm:h-20 py-4 sm:py-0">
-            <div className="mb-4 sm:mb-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">Course Management</h1>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">Manage and monitor all your courses in one place</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-              <button
-                onClick={() => setFiltersExpanded(!filtersExpanded)}
-                className={`flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 font-medium text-sm ${
-                  (filtersExpanded || searchTerm) 
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
-                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Filter className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Filters</span>
-                {(filtersExpanded || searchTerm) && (
-                  <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
-                    Active
-                  </span>
-                )}
-              </button>
-              <button 
-                onClick={() => openModal('create')}
-                className="flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
-              >
-                <Plus className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Create Course</span>
-                <span className="sm:hidden">Create</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="relative max-w-4xl mx-auto">
-          <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
-          </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search courses by title, subtitle, category, level, or type..."
-            className="w-full pl-10 sm:pl-12 pr-10 sm:pr-4 py-3 sm:py-4 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center"
-            >
-              <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-            </button>
-          )}
+      <div className="relative max-w-4xl mx-auto">
+        <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
         </div>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search courses by title, subtitle, category, level, or type..."
+          className="w-full pl-10 sm:pl-12 pr-10 sm:pr-4 py-3 sm:py-4 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center"
+          >
+            <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+          </button>
+        )}
       </div>
 
       {/* Filters Section */}
       {filtersExpanded && (
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="py-4 sm:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
               <button
@@ -1037,7 +973,7 @@ const CourseManagement = () => {
         dropdownError={dropdownError}
       />
 
-    </div>
+    </AdminPageLayout>
   );
 };
 

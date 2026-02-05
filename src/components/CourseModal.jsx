@@ -228,9 +228,9 @@ const CourseModal = ({
           if (!section || !section.title || !section.title.trim()) {
             errors[`section_title_${index}`] = 'Section title is required';
           }
-          if (!section || !section.description || !section.description.trim()) {
-            errors[`section_description_${index}`] = 'Section description is required';
-          }
+          // if (!section || !section.description || !section.description.trim()) {
+          //   errors[`section_description_${index}`] = 'Section description is required';
+          // }
         });
       }
     }

@@ -1,13 +1,19 @@
 import React from 'react';
 import { useAuth } from '../../../../context/AuthContext';
+import { User as UserIcon } from 'lucide-react';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 
 const MyProfile = () => {
   const { user } = useAuth();
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">My Profile</h1>
-      
+    <AdminPageLayout
+      title="My Profile"
+      subtitle="View and manage your personal information"
+      icon={UserIcon}
+      loading={false}
+      skeletonType="cards"
+    >
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <div className="flex items-center space-x-6 mb-6">
           <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
@@ -62,7 +68,7 @@ const MyProfile = () => {
           </p>
         </div>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 

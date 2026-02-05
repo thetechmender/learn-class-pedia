@@ -2,6 +2,7 @@ import  { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../../../hooks/useAdmin';
 import CareerPathForm from './CareerPathForm';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 import {
   Plus,
   Filter,
@@ -23,7 +24,8 @@ import {
   CheckCircle,
   XCircle,
   ChevronLeft,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Route as RouteIcon
 } from 'lucide-react';
 
 const CareerPath = () => {
@@ -382,173 +384,85 @@ const CareerPath = () => {
   };
 
   if (loading) {
-    return (
-      <div className="p-4 lg:p-6 max-w-full mx-auto bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-        {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-            <div>
-              <div className="h-10 lg:h-12 bg-gray-200 rounded-lg w-64 mb-3 animate-pulse"></div>
-              <div className="h-6 bg-gray-200 rounded-lg w-96 animate-pulse"></div>
-            </div>
-            <div className="mt-4 lg:mt-0">
-              <div className="h-12 bg-gray-200 rounded-xl w-40 animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Search Bar Skeleton */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
-            <div className="h-12 bg-gray-200 rounded-xl w-32 animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Cards Grid Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                    <div className="flex gap-2">
-                      <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
-                      <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
-                    </div>
-                  </div>
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
-                </div>
-                
-                <div className="space-y-2 mb-4">
-                  <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-4/6 animate-pulse"></div>
-                </div>
-
-                {/* Stats Skeleton */}
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  {[1, 2, 3, 4].map((j) => (
-                    <div key={j} className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="h-4 bg-gray-200 rounded w-8 mx-auto mb-1 animate-pulse"></div>
-                      <div className="h-6 bg-gray-200 rounded w-12 mx-auto animate-pulse"></div>
-                      <div className="h-3 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Learning Path Skeleton */}
-                <div className="space-y-2 mb-4">
-                  <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
-                  {[1, 2].map((j) => (
-                    <div key={j} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse mr-3"></div>
-                      <div className="flex-1 space-y-1">
-                        <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Footer Skeleton */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
-                  <div className="flex gap-2">
-                    <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
-                    <div className="h-8 bg-gray-200 rounded w-12 animate-pulse"></div>
-                    <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <AdminPageLayout loading={true} skeletonType="cards" />;
   }
 
   if (error) {
     return (
-      <div className="text-red-500 p-4">{error}</div>
+      <AdminPageLayout
+        title="Career Paths"
+        subtitle="Discover your perfect learning journey"
+        icon={RouteIcon}
+        loading={false}
+        skeletonType="cards"
+      >
+        <div className="text-red-500 p-4">{error}</div>
+      </AdminPageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Target className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">Career Paths</h1>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Discover your perfect learning journey</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 font-medium ${
-                  getActiveFiltersCount() > 0
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
-                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-                {getActiveFiltersCount() > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
-                    {getActiveFiltersCount()}
-                  </span>
-                )}
-              </button>
-              <button 
-                onClick={handleCreateCareerPath}
-                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Career Path
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <AdminPageLayout
+      title="Career Paths"
+      subtitle="Discover your perfect learning journey"
+      icon={RouteIcon}
+      loading={false}
+      skeletonType="cards"
+      actions={
+        <>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 font-medium ${
+              getActiveFiltersCount() > 0
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
+                : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+            {getActiveFiltersCount() > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
+                {getActiveFiltersCount()}
+              </span>
+            )}
+          </button>
+          <button 
+            onClick={handleCreateCareerPath}
+            className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Career Path
+          </button>
+        </>
+      }
+    >
 
       {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="relative max-w-2xl mx-auto">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-          </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search career paths by title or description..."
-            className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center"
-            >
-              <X className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-            </button>
-          )}
+      <div className="relative max-w-2xl mx-auto">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
         </div>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search career paths by title or description..."
+          className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center"
+          >
+            <X className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+          </button>
+        )}
       </div>
 
       {/* Filters Section */}
       {showFilters && (
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="py-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
               <button
@@ -980,7 +894,8 @@ const CareerPath = () => {
           </div>
         </div>
       )}
-    </div>
+
+    </AdminPageLayout>
   );
 };
 

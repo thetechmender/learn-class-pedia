@@ -143,9 +143,11 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCourseBadgesNew();
+      const response = await adminApiService.getAllCourseBadgesNew();
+      // Handle the API response structure where badges are in items array
+      const badgesData = response.items || response || [];
       // Transform badge data to match MultiSelectDropdown expectations
-      const transformedBadges = Array.isArray(data) ? data.map(badge => ({
+      const transformedBadges = Array.isArray(badgesData) ? badgesData.map(badge => ({
         id: badge.id,
         name: badge.badgeName,
         description: badge.description

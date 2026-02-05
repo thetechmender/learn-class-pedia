@@ -14,10 +14,12 @@ import {
   Flag,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  MessageSquare as MessageSquareIcon
 } from 'lucide-react';
 import { useReviewManagement } from '../../../hooks/useReviewManagement';
 import { useToast } from '../../../hooks/useToast';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 
 const ReviewManagement = () => {
   const { toast, showToast } = useToast();
@@ -103,78 +105,46 @@ const ReviewManagement = () => {
     ));
   };
 
+  if (loading) {
+    return <AdminPageLayout loading={true} skeletonType="table" />;
+  }
+
+  const statsData = [
+    {
+      icon: <MessageSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
+      iconBg: "bg-blue-100 dark:bg-blue-900",
+      value: reviews.length,
+      label: "Total Reviews"
+    },
+    {
+      icon: <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />,
+      iconBg: "bg-yellow-100 dark:bg-yellow-900",
+      value: reviews.filter(r => r.status === 'pending').length,
+      label: "Pending"
+    },
+    {
+      icon: <Flag className="w-6 h-6 text-red-600 dark:text-red-400" />,
+      iconBg: "bg-red-100 dark:bg-red-900",
+      value: reviews.filter(r => r.status === 'flagged').length,
+      label: "Flagged"
+    },
+    {
+      icon: <Star className="w-6 h-6 text-green-600 dark:text-green-400" />,
+      iconBg: "bg-green-100 dark:bg-green-900",
+      value: reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : '0.0',
+      label: "Avg Rating"
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Review Management</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">Manage and moderate course reviews</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Reviews</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{reviews.length}</p>
-            </div>
-            <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
-              <MessageSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {reviews.filter(r => r.status === 'pending').length}
-              </p>
-            </div>
-            <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Flagged</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {reviews.filter(r => r.status === 'flagged').length}
-              </p>
-            </div>
-            <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg">
-              <Flag className="w-6 h-6 text-red-600 dark:text-red-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Rating</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {reviews.length > 0 
-                  ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-                  : '0.0'
-                }
-              </p>
-            </div>
-            <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
-              <Star className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <AdminPageLayout
+      title="Review Management"
+      subtitle="Manage and moderate course reviews"
+      icon={MessageSquareIcon}
+      stats={statsData}
+      loading={false}
+      skeletonType="table"
+    >
       {/* Filters and Search */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -330,7 +300,7 @@ const ReviewManagement = () => {
           <p className="text-gray-500 dark:text-gray-400">Try adjusting your search or filter criteria</p>
         </div>
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

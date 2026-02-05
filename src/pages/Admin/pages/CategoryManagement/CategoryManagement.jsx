@@ -4,6 +4,7 @@ import { useToast } from '../../../../hooks/useToast';
 import { useTheme } from '../../../../context/ThemeContext';
 import Modal from '../../../../components/Modal';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 import { 
   Plus, 
   Edit2, 
@@ -17,7 +18,8 @@ import {
   AlertCircle,
   CheckCircle,
   Upload,
-  X
+  X,
+  FolderOpen as FolderIcon
 } from 'lucide-react';
 
 const CategoryManagement = () => {
@@ -99,7 +101,7 @@ const CategoryManagement = () => {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [filters.name, filters.slug, filters.description, filters.parentCategoryId]);
+  }, [filters.name, filters.slug, filters.description, filters.parentCategoryId, fetchCategories]);
 
   // Input handlers
   const handleInputChange = useCallback((e) => {
@@ -110,7 +112,8 @@ const CategoryManagement = () => {
   const handleFilterChange = useCallback((e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
-  }, []);
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Handle dropdown changes separately to prevent form submission
     const handleParentCategoryChange = useCallback((value) => {
@@ -142,7 +145,7 @@ const CategoryManagement = () => {
       // No search filters, show all categories with pagination
       return categories;
     }
-  }, [globalSearchResults, filters.name, filters.slug, filters.description]);
+  }, [globalSearchResults, filters.name, filters.slug, filters.description, categories]);
 
   // Pagination for display categories
   const paginatedDisplayCategories = useMemo(() => {
@@ -267,7 +270,7 @@ const CategoryManagement = () => {
       setModalError(errorMessage);
       showError(errorMessage);
     }
-  }, [editingCategory, formData, updateCategory, createCategory, resetForm, fetchCategories, showSuccess, showError, showToast]);
+  }, [editingCategory, formData, updateCategory, createCategoryWithFile, updateCategoryWithFile, resetForm, fetchCategories, showSuccess, showError]);
 
   const handleEdit = useCallback((category) => {
     setEditingCategory(category);
@@ -296,7 +299,7 @@ const CategoryManagement = () => {
       const errorMessage = err.response?.data?.error || err.message || 'Failed to delete category';
       showError(errorMessage);
     }
-  }, [deleteCategory, fetchCategories, showSuccess, showError, showToast]);
+  }, [deleteCategory, fetchCategories, showSuccess, showError]);
 
   // Expand/collapse child categories
   const toggleCategoryExpansion = useCallback((categoryId) => {
@@ -404,7 +407,23 @@ const CategoryManagement = () => {
   };
 
   return (
-    <div className={`p-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <AdminPageLayout
+      title="Category Management"
+      subtitle="Manage your course categories and subcategories"
+      icon={FolderIcon}
+      loading={loading}
+      skeletonType="table"
+      actions={
+        <button
+          onClick={openCreateModal}
+          className="flex items-center px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
+        >
+          <Plus className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Add Category</span>
+          <span className="sm:hidden">Add</span>
+        </button>
+      }
+    >
       {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
@@ -421,94 +440,65 @@ const CategoryManagement = () => {
         </div>
       )}
 
-      <h1 className="text-2xl font-bold mb-2" style={{fontSize: '1.5rem'}}>Category Management</h1>
-      <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-4`}>Manage your course categories and subcategories</p>
-
       {/* Error message */}
       {error && <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded">{error}</div>}
 
-      {/* Controls */}
-      <div className="mb-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        {/* Consolidated Filter Section */}
-        <div className="flex-1 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="relative">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} size={16} />
-              <input
-                type="text"
-                placeholder="Search by name..."
-                value={filters.name || ''}
-                onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
-                className={`w-full px-4 py-2 pl-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  theme === 'dark' 
-                    ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-                style={{fontSize: '1rem'}}
-              />
-            </div>
+      {/* Search and Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             <input
               type="text"
-              placeholder="Search by slug..."
-              value={filters.slug || ''}
-              onChange={(e) => setFilters(prev => ({ ...prev, slug: e.target.value }))}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                theme === 'dark' 
-                  ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
+              placeholder="Search by name..."
+              value={filters.name || ''}
+              onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-4 py-2 pl-10 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               style={{fontSize: '1rem'}}
             />
-            <input
-              type="text"
-              placeholder="Search by description..."
-              value={filters.description || ''}
-              onChange={(e) => setFilters(prev => ({ ...prev, description: e.target.value }))}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                theme === 'dark' 
-                  ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              style={{fontSize: '1rem'}}
-            />
-            <CategoryDropdown
-              categories={allCategoriesForDropdown}
-              value={filters.parentCategoryId || ''}
-              onChange={(value) => setFilters(prev => ({ ...prev, parentCategoryId: value || '' }))}
-              placeholder="Parent category..."
-              className="w-full"
-              allowClear={true}
-            />
           </div>
-          <div className="flex gap-3 mt-3">
-            <button
-              onClick={applyFilters}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-              style={{fontSize: '0.875rem'}}
-            >
-              <Filter size={16} className="mr-2" />
-              Apply Filters
-            </button>
-            <button
-              onClick={clearFilters}
-              className={`px-6 py-2 border rounded-lg transition-colors ${
-                theme === 'dark' 
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-800' 
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-              style={{fontSize: '0.875rem'}}
-            >
-              Clear
-            </button>
-          </div>
+          <input
+            type="text"
+            placeholder="Search by slug..."
+            value={filters.slug || ''}
+            onChange={(e) => setFilters(prev => ({ ...prev, slug: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            style={{fontSize: '1rem'}}
+          />
+          <input
+            type="text"
+            placeholder="Search by description..."
+            value={filters.description || ''}
+            onChange={(e) => setFilters(prev => ({ ...prev, description: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            style={{fontSize: '1rem'}}
+          />
+          <CategoryDropdown
+            categories={allCategoriesForDropdown}
+            value={filters.parentCategoryId || ''}
+            onChange={(value) => setFilters(prev => ({ ...prev, parentCategoryId: value || '' }))}
+            placeholder="Parent category..."
+            className="w-full"
+            allowClear={true}
+          />
         </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          style={{fontSize: '0.875rem'}}
-        >
-          <Plus size={20} className="mr-2"/> Add Category
-        </button>
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={applyFilters}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            style={{fontSize: '0.875rem'}}
+          >
+            <Filter size={16} className="mr-2" />
+            Apply Filters
+          </button>
+          <button
+            onClick={clearFilters}
+            className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            style={{fontSize: '0.875rem'}}
+          >
+            Clear
+          </button>
+        </div>
       </div>
 
       {/* Category table */}
@@ -955,7 +945,7 @@ const CategoryManagement = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </AdminPageLayout>
   );
 };
 

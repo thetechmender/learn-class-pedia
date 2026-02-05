@@ -6,8 +6,10 @@ import {
   TrendingUp,
   Activity
 } from 'lucide-react';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 
 const Dashboard = () => {
+  const [loading, setLoading] = useState(true);
   const [stats] = useState({
     activeCourses: 12,
     hoursLearned: 48,
@@ -29,59 +31,66 @@ const Dashboard = () => {
     { id: 4, action: 'Earned certificate in React Basics', time: '2 days ago', type: 'certificate' }
   ]);
 
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const statsData = [
+    {
+      icon: <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
+      iconBg: "bg-blue-100 dark:bg-blue-900",
+      value: stats.activeCourses,
+      label: "Active Courses",
+      change: "+12%",
+      changeColor: "text-green-500 dark:text-green-400"
+    },
+    {
+      icon: <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />,
+      iconBg: "bg-green-100 dark:bg-green-900",
+      value: stats.hoursLearned,
+      label: "Hours Learned",
+      change: "+8%",
+      changeColor: "text-green-500 dark:text-green-400"
+    },
+    {
+      icon: <Award className="w-6 h-6 text-purple-600 dark:text-purple-400" />,
+      iconBg: "bg-purple-100 dark:bg-purple-900",
+      value: stats.completed,
+      label: "Completed",
+      change: "+15%",
+      changeColor: "text-green-500 dark:text-green-400"
+    },
+    {
+      icon: <TrendingUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />,
+      iconBg: "bg-orange-100 dark:bg-orange-900",
+      value: `${stats.averageScore}%`,
+      label: "Average Score",
+      change: "+5%",
+      changeColor: "text-green-500 dark:text-green-400"
+    }
+  ];
+
+  if (loading) {
+    return <AdminPageLayout loading={true} skeletonType="cards" />;
+  }
+
   return (
-    <div className="space-y-6">
+    <AdminPageLayout
+      title="Dashboard"
+      subtitle="Welcome back! Here's what's happening with your courses today."
+      icon={Activity}
+      stats={statsData}
+      loading={false}
+      skeletonType="cards"
+    >
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-8 text-white">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-8 text-white mb-6">
         <h1 className="text-2xl font-bold mb-2" style={{fontSize: '1.8rem'}}>Welcome back, John! 👋</h1>
         <p className="text-blue-100 text-lg" style={{fontSize: '1rem'}}>Here's what's happening with your courses today.</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg">
-              <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <span className="text-green-500 dark:text-green-400 text-sm font-medium">+12%</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white" style={{fontSize: '1.5rem'}}>{stats.activeCourses}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm" style={{fontSize: '0.875rem'}}>Active Courses</p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-green-100 dark:bg-green-900 p-3 rounded-lg">
-              <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-            <span className="text-green-500 dark:text-green-400 text-sm font-medium">+8%</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white" style={{fontSize: '1.5rem'}}>{stats.hoursLearned}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm" style={{fontSize: '0.875rem'}}>Hours Learned</p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-lg">
-              <Award className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-            </div>
-            <span className="text-green-500 dark:text-green-400 text-sm font-medium">+15%</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white" style={{fontSize: '1.5rem'}}>{stats.completed}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm" style={{fontSize: '0.875rem'}}>Completed</p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="bg-orange-100 dark:bg-orange-900 p-3 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <span className="text-green-500 dark:text-green-400 text-sm font-medium">+5%</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white" style={{fontSize: '1.5rem'}}>{stats.averageScore}%</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm" style={{fontSize: '0.875rem'}}>Average Score</p>
-        </div>
       </div>
 
       {/* Main Content Grid */}
@@ -147,7 +156,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 
