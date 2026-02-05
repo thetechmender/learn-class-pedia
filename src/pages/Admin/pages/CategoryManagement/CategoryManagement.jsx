@@ -202,24 +202,23 @@ const CategoryManagement = () => {
       let isFormData = false;
       let submitData = formData;
       
-      // If there's a file, use FormData
-      if (formData.iconFile) {
+      // Always use FormData for updates to avoid 415 error, even if no file is provided
+      if (editingCategory || formData.iconFile) {
         isFormData = true;
         submitData = new FormData();
         submitData.append('name', formData.name);
         submitData.append('description', formData.description || '');
         submitData.append('parentCategoryId', formData.parentCategoryId || 0);
         
-        // Add the file
-        submitData.append('File', formData.iconFile);
+        // Add the file only if it exists
+        if (formData.iconFile) {
+          submitData.append('File', formData.iconFile);
+        }
       }
       
       if (editingCategory) {
-        if (isFormData) {
-          await updateCategoryWithFile(editingCategory.id, submitData);
-        } else {
-          await updateCategory(editingCategory.id, formData);
-        }
+        // Always use FormData for updates to avoid 415 error
+        await updateCategoryWithFile(editingCategory.id, submitData);
         setShowUpdateModal(false);
         showSuccess('Category updated successfully!');
       } else {
