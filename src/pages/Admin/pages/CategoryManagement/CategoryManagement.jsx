@@ -195,14 +195,13 @@ const CategoryManagement = () => {
 
   // CRUD operations
   const handleSubmit = useCallback(async (e) => {
+    debugger;
     e.preventDefault();
     setModalError(''); // Clear previous modal error
     
     try {
       let isFormData = false;
       let submitData = formData;
-      
-      // Always use FormData for updates to avoid 415 error, even if no file is provided
       if (editingCategory || formData.iconFile) {
         isFormData = true;
         submitData = new FormData();

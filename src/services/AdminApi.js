@@ -783,7 +783,7 @@ class AdminApiService {
     const url = `${this.baseURL}${ENDPOINTS.CATEGORIES_Admin}/${id}`;
     
     const config = {
-      method: 'PUT',
+      method: 'PUT', // Revert back to PUT
       body: formData,
       // Don't set Content-Type header when using FormData, browser sets it automatically
       headers: {

@@ -2,8 +2,6 @@ import  { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../../hooks/useAdmin';
 import { useAuth } from '../../../context/AuthContext';
-
-// Import all existing components
 import Dashboard from '../pages/Dashboard/Dashboard';
 import CourseManagement from '../pages/CourseManagement/CourseManagement';
 import CareerPath from '../pages/CareerPath/CareerPath';
@@ -15,7 +13,6 @@ import MyCourses from '../pages/MyCourses/MyCourses';
 import MyProfile from '../pages/MyProfile/MyProfile';
 import Settings from '../pages/Settings/Settings';
 import Notifications from '../pages/Notifications/Notifications';
-import Support from '../pages/Support/Support';
 import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
 import CareerRoles from '../pages/CareerPath/CareerRoles';
 import CareerSkills from '../pages/CareerPath/CareerSkills';
@@ -35,7 +32,6 @@ const componentMap = {
   MyProfile,
   Settings,
   Notifications,
-  Support,
   CategoryManagement,
   CareerRoles,
   CareerSkills,
@@ -72,7 +68,6 @@ export const ProtectedRoute = ({ children }) => {
 };
 
 const DynamicRoutes = () => {
-  const location = useLocation();
   const { user } = useAuth();
   const { getRoutesByRole } = useAdmin();
   const [routes, setRoutes] = useState([]);
@@ -142,29 +137,21 @@ const DynamicRoutes = () => {
     <Routes>
       {/* Default redirect to dashboard */}
       <Route index element={<Navigate to="/admin/dashboard" replace />} />
-      
-      {/* Career Path Detail Route */}
       <Route path="career-paths/:id" element={
         <ProtectedRoute>
           <CareerPathDetail />
         </ProtectedRoute>
       } />
-      
-      {/* Career Roles Route */}
       <Route path="career-roles" element={
         <ProtectedRoute>
           <CareerRoles />
         </ProtectedRoute>
       } />
-      
-      {/* Career Skills Route */}
       <Route path="career-skills" element={
         <ProtectedRoute>
           <CareerSkills />
         </ProtectedRoute>
       } />
-      
-      {/* Course Skill Mapping Route */}
       <Route path="course-skill-mapping" element={
         <ProtectedRoute>
           <CourseSkillMapping />

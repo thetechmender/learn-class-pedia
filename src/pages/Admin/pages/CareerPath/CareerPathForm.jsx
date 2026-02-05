@@ -55,6 +55,7 @@ const CareerPathForm = ({
     durationMinMonths: '',
     durationMaxMonths: '',
     outcome: '',
+    overview: '',
     certificateCount: '',
     roleId: '',
     levels: [],
@@ -97,12 +98,14 @@ const CareerPathForm = ({
         durationMinMonths: careerPath.durationMinMonths || '',
         durationMaxMonths: careerPath.durationMaxMonths || '',
         outcome: careerPath.outcome || '',
+        overview: careerPath.overview || '',
         certificateCount: careerPath.certificateCount || '',
         roleId: careerPath.roleId || '',
         levels: careerPath.levels || [],
         skills: careerPath.skills || [],
-        careerPathBadges: [], // Initialize empty, will be updated when badges load
-        iconUrl: careerPath.iconUrl || ''
+        careerPathBadges: careerPath.careerPathBadges || [],
+        iconUrl: careerPath.iconUrl || '',
+        iconFile: null
       });
       setSelectedSkills(careerPath.skills?.map(skill => skill.skillId) || []);
       setInitialDataLoaded(true);
@@ -520,6 +523,7 @@ const CareerPathForm = ({
       submitData.append('SortOrder', 0);
       submitData.append('DurationMaxMonths', parseInt(formData.durationMaxMonths));
       submitData.append('Outcome', formData.outcome);
+      submitData.append('Overview', formData.overview);
       submitData.append('CertificateCount', formData.certificateCount ? parseInt(formData.certificateCount) : 0);
       submitData.append('RoleId', parseInt(formData.roleId));
       
@@ -572,6 +576,7 @@ const CareerPathForm = ({
         sortOrder: 0,
         durationMaxMonths: parseInt(formData.durationMaxMonths),
         outcome: formData.outcome,
+        overview: formData.overview,
         certificateCount: formData.certificateCount ? parseInt(formData.certificateCount) : 0,
         roleId: parseInt(formData.roleId),
         levels: formData.levels.map(level => ({
@@ -1430,6 +1435,25 @@ const CareerPathForm = ({
               />
               {errors.outcome && (
                 <p className="mt-1 text-sm text-red-600">{errors.outcome}</p>
+              )}
+            </div>
+
+            {/* Overview */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Overview
+              </label>
+              <textarea
+                value={formData.overview}
+                onChange={(e) => handleInputChange('overview', e.target.value)}
+                rows={4}
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                  errors.overview ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                }`}
+                placeholder="Provide a brief overview of this career path..."
+              />
+              {errors.overview && (
+                <p className="mt-1 text-sm text-red-600">{errors.overview}</p>
               )}
             </div>
 

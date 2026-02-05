@@ -292,6 +292,9 @@ const CourseModal = ({
         submitData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
         submitData.append('currencyCode', formData.currencyCode);
         submitData.append('promoVideoUrl', formData.promoVideoUrl);
+        submitData.append('IsThumbnailRemoved', formData.IsThumbnailRemoved || false);
+        submitData.append('IsPromoVideoRemoved', formData.IsPromoVideoRemoved || false);
+   
         
         // Add badges array (always include, even if empty)
         if (formData.badgeIds && formData.badgeIds.length > 0) {
@@ -328,7 +331,10 @@ const CourseModal = ({
           courseLevelId: parseInt(formData.courseLevelId),
           price: parseFloat(formData.price) || 0,
           discountedPrice: parseFloat(formData.discountedPrice) || 0,
-          badgeIds: formData.badgeIds.map(id => parseInt(id))
+          badgeIds: formData.badgeIds.map(id => parseInt(id)),
+           IsThumbnailRemoved: formData.IsThumbnailRemoved || false,
+  IsPromoVideoRemoved: formData.IsPromoVideoRemoved || false
+          
         };
         // Don't send blob URLs
         if (submitData.thumbnailUrl && submitData.thumbnailUrl.startsWith('blob:')) {
@@ -654,7 +660,7 @@ const CourseModal = ({
                           />
                           <button
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, thumbnailUrl: '', thumbnailFile: null }))}
+                            onClick={() => setFormData(prev => ({ ...prev, thumbnailUrl: '', thumbnailFile: null, IsThumbnailRemoved: true }))}
                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                             disabled={loading}
                           >
@@ -680,11 +686,12 @@ const CourseModal = ({
                             if (file) {
                               // Create a temporary preview URL
                               const previewUrl = URL.createObjectURL(file);
-                              setFormData(prev => ({ 
-                                ...prev, 
-                                thumbnailUrl: previewUrl,
-                                thumbnailFile: file
-                              }));
+                            setFormData(prev => ({
+  ...prev,
+  thumbnailUrl: previewUrl,
+  thumbnailFile: file,
+  IsThumbnailRemoved: false
+}));
                             }
                           }}
                           className="hidden"
@@ -722,7 +729,12 @@ const CourseModal = ({
                           />
                           <button
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, promoVideoFile: null }))}
+                            onClick={() => setFormData(prev => ({
+  ...prev,
+  promoVideoFile: null,
+  promoVideoUrl: '',
+  IsPromoVideoRemoved: true
+}))}
                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                             disabled={loading}
                           >

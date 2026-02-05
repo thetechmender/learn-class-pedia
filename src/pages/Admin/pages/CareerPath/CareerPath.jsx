@@ -624,6 +624,7 @@ const CareerPath = () => {
                       {path.description}
                     </p>
 
+
                     {/* Stats */}
                     <div className="grid grid-cols-4 gap-2 mb-6">
                       <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">

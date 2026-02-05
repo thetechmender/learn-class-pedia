@@ -212,7 +212,16 @@ const CareerPathDetail = () => {
                   )}
                   <div>
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">{careerPath.title}</h2>
-                    <p className="text-lg text-gray-600 leading-relaxed">{careerPath.description}</p>
+                    <p className="text-lg text-gray-600 leading-relaxed mb-4">{careerPath.description}</p>
+                    {careerPath.overview && (
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Target className="w-6 h-6 text-blue-600" />
+                          <h3 className="text-lg font-semibold text-gray-900">Overview</h3>
+                        </div>
+                        <p className="text-gray-700">{careerPath.overview}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
