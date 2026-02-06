@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { API_CONFIG } from '../config/api';
+import { isProduction } from '../config/appSettings';
 
 export const useCareerRoles = () => {
   // Global state
@@ -19,7 +20,7 @@ export const useCareerRoles = () => {
   }, []);
 
   // API helper functions
-  const getApiUrl = () => API_CONFIG.BASE_URL_Local;
+  const getApiUrl = () => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
   const getAuthHeaders = () => {
     const token = localStorage.getItem('adminToken');
     return {
