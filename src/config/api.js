@@ -59,6 +59,8 @@ export const ENDPOINTS = {
   EMAIL_TEMPLATE_CREATE: '/EmailTemplate',
   EMAIL_TEMPLATE_UPDATE: (id) => `/EmailTemplate/${id}`,
   EMAIL_TEMPLATE_DELETE: (id) => `/EmailTemplate/${id}`,
+  // LMS Lectures endpoints
+  LMS_LECTURES_SEARCH: '/admin/lms-lectures/search',
 };
 
 // HTTP Status Codes
