@@ -6,7 +6,7 @@ import { useModalState } from '../../../../hooks/useModalState';
 import { useToast } from '../../../../hooks/useToast';
 import { COURSE_MANAGEMENT_CONSTANTS } from '../../../../constants/courseManagement';
 import { calculateCourseStats, filterCoursesBySearch } from '../../../../utils/courseUtils';
-import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2, Star, MessageSquare, Clock, Tag, Layers, Video, FileText } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 import CourseModal from '../../../../components/CourseModal';
@@ -615,66 +615,88 @@ const CourseManagement = () => {
         expandable={true}
         renderExpandedContent={(course, details) => (
           <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-            {/* Compact Course Header */}
+            {/* Course Header with Thumbnail and Basic Info */}
             <div className="flex items-start gap-4">
-              {/* Compact Thumbnail */}
+              {/* Thumbnail */}
               <div className="relative flex-shrink-0">
-                {details?.thumbnailUrl || details?.imageUrl || details?.image || details?.courseImage || course?.thumbnailUrl || course?.imageUrl || course?.image || course?.courseImage ? (
+                {details?.thumbnailUrl || course?.thumbnailUrl ? (
                   <div className="relative overflow-hidden rounded-lg shadow-md">
                     <img 
-                      src={details?.thumbnailUrl || details?.imageUrl || details?.image || details?.courseImage || course?.thumbnailUrl || course?.imageUrl || course?.image || course?.courseImage} 
+                      src={details?.thumbnailUrl || course?.thumbnailUrl} 
                       alt={details?.title || course?.title}
-                      className="w-16 h-16 object-cover"
+                      className="w-24 h-24 object-cover"
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.parentElement.style.display = 'none';
-                        e.target.parentElement.nextElementSibling.style.display = 'flex';
                       }}
                     />
                   </div>
-                ) : null}
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md border border-gray-200 dark:border-gray-600"
-                     style={{ display: (details?.thumbnailUrl || details?.imageUrl || details?.image || details?.courseImage || course?.thumbnailUrl || course?.imageUrl || course?.image || course?.courseImage) ? 'none' : 'flex' }}>
-                  <Image className="w-8 h-8 text-white" />
-                </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                    <Image className="w-10 h-10 text-white" />
+                  </div>
+                )}
               </div>
               
               {/* Course Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                       {details?.title || course?.title || 'Untitled Course'}
                     </h4>
                     {details?.subtitle && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{details.subtitle}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{details.subtitle}</p>
                     )}
                   </div>
-                  <div className="flex-shrink-0 ml-2">
-                    {details?.isPaid || course?.isPaid ? (
-                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                        <DollarSign className="w-3 h-3 mr-1" />
-                        Paid
+                  
+                  {/* Rating Badge */}
+                  {(details?.averageRating > 0 || details?.totalReviews > 0) && (
+                    <div className="flex-shrink-0 ml-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-2 border border-yellow-200 dark:border-yellow-800">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <span className="text-sm font-bold text-yellow-700 dark:text-yellow-300">
+                          {details?.averageRating?.toFixed(1) || '0.0'}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                        <Users className="w-3 h-3 mr-1" />
-                        Free
-                      </div>
-                    )}
-                  </div>
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-0.5">
+                        {details?.totalReviews || 0} reviews
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
-                {/* Compact Tags */}
-                <div className="flex flex-wrap gap-2">
+                {/* Tags Row */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {/* Course Type */}
+                  <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                    <Layers className="w-3 h-3 mr-1" />
+                    {details?.courseTypeName || course?.courseTypeName || 'Unknown Type'}
+                  </div>
+                  {/* Category */}
                   <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                     <BookOpen className="w-3 h-3 mr-1" />
                     {details?.categoryName || course?.categoryName || 'Unknown'}
                   </div>
+                  {/* Sub Category */}
+                  {details?.subCategoryName && (
+                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200">
+                      <Tag className="w-3 h-3 mr-1" />
+                      {details.subCategoryName}
+                    </div>
+                  )}
+                  {/* Course Level */}
                   <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
                     <Globe className="w-3 h-3 mr-1" />
-                    {details?.courseLevelName || course?.courseLevelName || 'Unknown'}
+                    {details?.courseLevelTitle || details?.courseLevelName || course?.courseLevelName || 'Unknown'}
                   </div>
+                  {/* Language */}
+                  {details?.languageCode && (
+                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                      {details.languageCode.toUpperCase()}
+                    </div>
+                  )}
+                  {/* Badges */}
                   {details?.badges?.map((badge, index) => (
                     <div key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
                       <Award className="w-3 h-3 mr-1" />
@@ -682,22 +704,47 @@ const CourseManagement = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* Pricing Info */}
+                <div className="flex items-center gap-4">
+                  {details?.isPaid || course?.isPaid ? (
+                    <div className="flex items-center gap-2">
+                      <div className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        {details?.currencyCode || 'USD'} {details?.price?.toFixed(2) || course?.price?.toFixed(2) || '0.00'}
+                      </div>
+                      {details?.discountedPrice && details.discountedPrice < details.price && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-500 line-through">
+                            {details.currencyCode || 'USD'} {details.price?.toFixed(2)}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                            {Math.round(((details.price - details.discountedPrice) / details.price) * 100)}% OFF
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                      <Users className="w-4 h-4 mr-1" />
+                      Free Course
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Compact Content Grid */}
+            {/* Content Grid - Description & Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Description Card */}
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
                 <div className="flex items-center mb-2">
                   <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mr-2">
-                    <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                  <div>
-                    <h5 className="text-sm font-bold text-gray-900 dark:text-white">Description</h5>
-                  </div>
+                  <h5 className="text-sm font-bold text-gray-900 dark:text-white">Description</h5>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm line-clamp-3">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
                   {details?.description || course?.description || 'No description available'}
                 </p>
               </div>
@@ -709,144 +756,192 @@ const CourseManagement = () => {
                     <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-2">
                       <Globe className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Overview</h5>
-                    </div>
+                    <h5 className="text-sm font-bold text-gray-900 dark:text-white">Overview</h5>
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm line-clamp-3">
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
                     {details.overview}
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Compact Promo Video */}
+            {/* Promo Video */}
             {(details?.promoVideoUrl || course?.promoVideoUrl) && (
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                 <div className="flex items-center mb-3">
                   <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-2">
-                    <Play className="w-4 h-4 text-white" />
+                    <Video className="w-4 h-4 text-white" />
                   </div>
-                  <div>
-                    <h5 className="text-sm font-bold text-gray-900 dark:text-white">Promo Video</h5>
-                  </div>
+                  <h5 className="text-sm font-bold text-gray-900 dark:text-white">Promo Video</h5>
                 </div>
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="lg:w-64">
-                    <div className="relative rounded-lg overflow-hidden bg-gray-900 shadow-md">
-                      <video
-                        src={details?.promoVideoUrl || course?.promoVideoUrl}
-                        className="w-full h-auto rounded-lg max-h-32 object-cover"
-                        controls
-                        preload="metadata"
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-green-200 dark:border-green-800">
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Video URL</p>
-                          <a
-                            href={details?.promoVideoUrl || course?.promoVideoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline text-xs font-medium flex items-center break-all"
-                          >
-                            {/* Clean up the URL by removing folder structure */}
-                            {(() => {
-                              const videoUrl = details?.promoVideoUrl || course?.promoVideoUrl;
-                              if (!videoUrl) return 'No URL available';
-                              
-                              // Extract just the filename from the S3 URL
-                              const urlParts = videoUrl.split('/');
-                              const filename = urlParts[urlParts.length - 1];
-                              return filename;
-                            })()}
-                            <svg className="w-3 h-3 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">Status</span>
-                          <span className="text-xs font-bold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
-                            Available
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="lg:w-80">
+                  <video
+                    src={details?.promoVideoUrl || course?.promoVideoUrl}
+                    className="w-full rounded-lg shadow-md"
+                    controls
+                    preload="metadata"
+                  />
                 </div>
               </div>
             )}
 
-            {/* Compact Course Sections */}
-            {(details?.courseTypeId === 1 || course?.courseTypeId === 1) && 
-             (details?.sections?.length > 0 || course?.sections?.length > 0) && (
+            {/* Course Sections with Lectures */}
+            {(details?.sections?.length > 0 || course?.sections?.length > 0) && (
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-2">
-                      <BookOpen className="w-4 h-4 text-white" />
+                      <Layers className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Modules</h5>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Course Sections</h5>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {details?.sections?.length || course?.sections?.length || 0} modules
+                        {details?.sections?.length || course?.sections?.length || 0} sections
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {(details?.sections || course?.sections || []).slice(0, 3).map((section, index) => (
-                    <div key={section.id || index} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded flex items-center justify-center">
-                            <span className="text-xs font-bold text-white">{index + 1}</span>
+                
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {(details?.sections || course?.sections || []).map((section, sectionIndex) => (
+                    <div key={section.id || sectionIndex} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                      {/* Section Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                            <span className="text-sm font-bold text-white">{sectionIndex + 1}</span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h6 className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                              {section.title || `Module ${index + 1}`}
+                          <div>
+                            <h6 className="text-sm font-bold text-gray-900 dark:text-white">
+                              {section.title || `Section ${sectionIndex + 1}`}
                             </h6>
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                                {index + 1}
-                              </div>
-                              <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                                {section.sortOrder !== undefined ? section.sortOrder : index}
-                              </div>
-                            </div>
+                            {section.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{section.description}</p>
+                            )}
                           </div>
                         </div>
+                        <span className="text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded-full">
+                          {section.lectures?.length || 0} lectures
+                        </span>
                       </div>
-                      <div className="ml-8 mt-2">
-                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-xs line-clamp-2">
-                          {section.description || 'No description available.'}
-                        </p>
-                      </div>
+                      
+                      {/* Section Lectures */}
+                      {section.lectures?.length > 0 && (
+                        <div className="ml-11 space-y-2">
+                          {section.lectures.map((lecture, lectureIndex) => (
+                            <div key={lecture.id || lectureIndex} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start space-x-2">
+                                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <Play className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {lecture.title}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        {lecture.lectureType || 'video'}
+                                      </span>
+                                      {lecture.isFreePreview && (
+                                        <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900 px-1.5 py-0.5 rounded">
+                                          Free Preview
+                                        </span>
+                                      )}
+                                    </div>
+                                    
+                                    {/* LMS Content Details */}
+                                    {lecture.lmsContent && (
+                                      <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div>
+                                            <span className="text-gray-500 dark:text-gray-400">Course:</span>
+                                            <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.lmsCourseName}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-gray-500 dark:text-gray-400">Module:</span>
+                                            <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.lmsModuleName}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-gray-500 dark:text-gray-400">Subject:</span>
+                                            <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.lmsSubjectName}</span>
+                                          </div>
+                                          {lecture.lmsContent.duration && (
+                                            <div>
+                                              <span className="text-gray-500 dark:text-gray-400">Duration:</span>
+                                              <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.duration}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        {lecture.lmsContent.lectureOverview && (
+                                          <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                                            {lecture.lmsContent.lectureOverview}
+                                          </p>
+                                        )}
+                                        {lecture.lmsContent.tags?.length > 0 && (
+                                          <div className="mt-2 flex flex-wrap gap-1">
+                                            {lecture.lmsContent.tags.map((tag, tagIndex) => (
+                                              <span key={tagIndex} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">
+                                                {tag}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
-                  {(details?.sections?.length > 3 || course?.sections?.length > 3) && (
-                    <div className="text-center py-2">
-                      <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
-                        +{(details?.sections?.length || course?.sections?.length || 0) - 3} more modules
-                      </span>
-                    </div>
-                  )}
                 </div>
-                {(!details?.sections?.length && !course?.sections?.length) && (
-                  <div className="text-center py-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-800">
-                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <BookOpen className="w-6 h-6 text-purple-400 dark:text-purple-400" />
+              </div>
+            )}
+
+            {/* Course Reviews */}
+            {details?.reviews?.length > 0 && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center mr-2">
+                      <MessageSquare className="w-4 h-4 text-white" />
                     </div>
-                    <h6 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No Modules</h6>
-                    <p className="text-xs text-gray-600 dark:text-gray-300">This course doesn't have any modules yet.</p>
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Course Reviews</h5>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {details.reviews.length} reviews • Average: {details.averageRating?.toFixed(1) || 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                )}
+                </div>
+                
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {details.reviews.map((review, index) => (
+                    <div key={review.id || index} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-yellow-200 dark:border-yellow-700">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`}
+                            />
+                          ))}
+                          <span className="ml-2 text-sm font-bold text-gray-900 dark:text-white">{review.rating}/5</span>
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Unknown date'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        {review.reviewText}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

@@ -58,6 +58,42 @@ const CourseModal = ({
 
   useEffect(() => {
     if (course && mode === 'edit') {
+      // Transform sections to include moduleName and lectures properly
+      const transformedSections = (course.sections || []).map(section => ({
+        moduleName: section.moduleName || '',
+        title: section.title || '',
+        description: section.description || '',
+        sortOrder: section.sortOrder || 0,
+        lectures: (section.lectures || section.courseDetails || []).map(lecture => ({
+          id: lecture.id || lecture.lmscourseMappingId,
+          title: lecture.title || '',
+          lectureType: lecture.lectureType || 1,
+          isFreePreview: lecture.isFreePreview || false,
+          sortOrder: lecture.sortOrder || 0,
+          lmscourseMappingId: lecture.lmscourseMappingId || lecture.id,
+          displayName: lecture.displayName || lecture.title,
+          lmsCourseName: lecture.lmsCourseName || '',
+          lmsModuleName: lecture.lmsModuleName || '',
+          lmsLectureName: lecture.lmsLectureName || lecture.title
+        }))
+      }));
+
+      // Transform direct lectures
+      const transformedDirectLectures = (course.directLectures || course.courseDetails || [])
+        .filter(lecture => !lecture.sectionId)
+        .map(lecture => ({
+          id: lecture.id || lecture.lmscourseMappingId,
+          title: lecture.title || '',
+          lectureType: lecture.lectureType || 1,
+          isFreePreview: lecture.isFreePreview || false,
+          sortOrder: lecture.sortOrder || 0,
+          lmscourseMappingId: lecture.lmscourseMappingId || lecture.id,
+          displayName: lecture.displayName || lecture.title,
+          lmsCourseName: lecture.lmsCourseName || '',
+          lmsModuleName: lecture.lmsModuleName || '',
+          lmsLectureName: lecture.lmsLectureName || lecture.title
+        }));
+
       setFormData({
         title: course.title || '',
         subtitle: course.subtitle || '',
@@ -74,8 +110,8 @@ const CourseModal = ({
         thumbnailUrl: course.thumbnailUrl || '',
         promoVideoUrl: course.promoVideoUrl || '',
         badgeIds: course.badgeIds || [],
-        sections: course.sections || [],
-        directLectures: course.directLectures || [],
+        sections: transformedSections,
+        directLectures: transformedDirectLectures,
         thumbnailFile: null,
         promoVideoFile: null
       });
@@ -117,6 +153,19 @@ const CourseModal = ({
         newData.currencyCode = 'USD';
       }
       
+      // Clear sections/directLectures when course type changes
+      if (name === 'courseTypeId') {
+        const newCourseTypeId = parseInt(value);
+        const oldCourseTypeId = prev.courseTypeId;
+        
+        // If switching between section-based (1, 2) and direct lectures (3)
+        if ((oldCourseTypeId === 3 && (newCourseTypeId === 1 || newCourseTypeId === 2)) ||
+            ((oldCourseTypeId === 1 || oldCourseTypeId === 2) && newCourseTypeId === 3)) {
+          newData.sections = [];
+          newData.directLectures = [];
+        }
+      }
+      
       return newData;
     });
     if (formErrors[name]) {
@@ -125,9 +174,11 @@ const CourseModal = ({
   };
   const addSection = () => {
     const newSection = {
+      moduleName: '',
       title: '',
       description: '',
-      sortOrder: formData.sections.length
+      sortOrder: formData.sections.length,
+      lectures: []
     };
     setFormData(prev => ({
       ...prev,
@@ -188,13 +239,16 @@ const CourseModal = ({
   };
 
   const handleLectureSelect = (lecture, targetSectionIndex = null) => {
+    // Use lmscourseMappingId from the API response (backend returns this field)
+    const mappingId = lecture.lmscourseMappingId || lecture.id;
+    
     const lectureData = {
-      id: lecture.id,
+      id: mappingId,
       title: lecture.lmsLectureName,
       lectureType: 1, // Default to video type
       isFreePreview: false,
       sortOrder: 0, // Will be updated when added
-      lmscourseMappingId: lecture.id,
+      lmscourseMappingId: mappingId, // This is the correct ID to send to backend
       displayName: lecture.displayName,
       lmsCourseId: lecture.lmsCourseId,
       lmsCourseName: lecture.lmsCourseName,
@@ -209,18 +263,19 @@ const CourseModal = ({
       tags: lecture.tags
     };
 
-    if (formData.courseTypeId === 1) {
-      // For courseType 1, add to directLectures
+    if (formData.courseTypeId === 3) {
+      // For courseType 3 (Short Course), add to directLectures
       lectureData.sortOrder = formData.directLectures.length;
       setFormData(prev => ({
         ...prev,
         directLectures: [...prev.directLectures, lectureData]
       }));
-    } else if (formData.courseTypeId === 2 || formData.courseTypeId === 3) {
-      // For courseType 2/3, add to sections
+    } else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
+      // For courseType 1 (Professional Certificate) / 2 (Certification), add to sections
       if (formData.sections.length === 0) {
         // If no sections exist, create one first
         const newSection = {
+          moduleName: formData.courseTypeId === 1 ? 'Module 1' : '',
           title: `Section 1`,
           description: '',
           sortOrder: 0,
@@ -251,12 +306,12 @@ const CourseModal = ({
   };
 
   const handleLectureRemove = (lectureId) => {
-    if (formData.courseTypeId === 1) {
+    if (formData.courseTypeId === 3) {
       setFormData(prev => ({
         ...prev,
         directLectures: prev.directLectures.filter(lecture => lecture.id !== lectureId)
       }));
-    } else if (formData.courseTypeId === 2 || formData.courseTypeId === 3) {
+    } else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
       // Remove from sections
       const updatedSections = formData.sections.map(section => ({
         ...section,
@@ -270,7 +325,7 @@ const CourseModal = ({
   };
 
   const handleLectureReorder = (dragIndex, dropIndex) => {
-    if (formData.courseTypeId === 1) {
+    if (formData.courseTypeId === 3) {
       const newLectures = [...formData.directLectures];
       const draggedLecture = newLectures[dragIndex];
       newLectures.splice(dragIndex, 1);
@@ -285,7 +340,7 @@ const CourseModal = ({
         ...prev,
         directLectures: newLectures
       }));
-    } else if (formData.courseTypeId === 2 || formData.courseTypeId === 3) {
+    } else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
       // Handle section lecture reordering
       // For simplicity, we'll handle the first section's lectures
       if (formData.sections.length > 0 && formData.sections[0].lectures) {
@@ -351,23 +406,57 @@ const CourseModal = ({
     if (formData.isPaid && (!formData.price || parseFloat(formData.price) <= 0)) {
       errors.price = 'Price must be greater than 0';
     }
+    // Course Type 1: Professional Certificate - requires sections with Module 1, 2, 3
     if (formData.courseTypeId === 1) {
-      if (!formData.directLectures || formData.directLectures.length === 0) {
-        errors.directLectures = 'At least one lecture is required for this course type';
-      }
-    } else if (formData.courseTypeId === 2 || formData.courseTypeId === 3) {
       if (!formData.sections || formData.sections.length === 0) {
-        errors.sections = 'At least one section is required for this course type';
+        errors.sections = 'Professional Certificate courses must have sections';
       } else {
+        // Check for required modules
+        const moduleNames = formData.sections
+          .map(s => (s.moduleName || '').trim())
+          .filter(x => x.length > 0);
+        
+        const requiredModules = ['Module 1', 'Module 2', 'Module 3'];
+        requiredModules.forEach(required => {
+          if (!moduleNames.some(m => m.toLowerCase() === required.toLowerCase())) {
+            errors.sections = `Professional Certificate must include sections for ${required}`;
+          }
+        });
+
         formData.sections.forEach((section, index) => {
-          if (!section || !section.title || !section.title.trim()) {
+          if (!section.moduleName || !section.moduleName.trim()) {
+            errors[`section_moduleName_${index}`] = 'Module name is required for Professional Certificate';
+          }
+          if (!section.title || !section.title.trim()) {
             errors[`section_title_${index}`] = 'Section title is required';
           }
-          // Check if section has lectures
           if (!section.lectures || section.lectures.length === 0) {
             errors[`section_lectures_${index}`] = 'At least one lecture is required in this section';
           }
         });
+      }
+    }
+    // Course Type 2: Certification - requires exactly 1 section
+    else if (formData.courseTypeId === 2) {
+      if (!formData.sections || formData.sections.length !== 1) {
+        errors.sections = 'Certification courses must have exactly 1 section';
+      } else {
+        const section = formData.sections[0];
+        if (!section.title || !section.title.trim()) {
+          errors[`section_title_0`] = 'Section title is required';
+        }
+        if (!section.lectures || section.lectures.length === 0) {
+          errors[`section_lectures_0`] = 'At least one lecture is required in this section';
+        }
+      }
+    }
+    // Course Type 3: Short Course - uses directLectures (no sections)
+    else if (formData.courseTypeId === 3) {
+      if (formData.sections && formData.sections.length > 0) {
+        errors.sections = 'Short courses cannot have sections. Use direct lectures instead.';
+      }
+      if (!formData.directLectures || formData.directLectures.length === 0) {
+        errors.directLectures = 'At least one lecture is required for Short Course';
       }
     }
 
@@ -443,8 +532,8 @@ const CourseModal = ({
         }
         
         // Add LMS lectures data based on course type
-        if (formData.courseTypeId === 1) {
-          // DirectLectures payload for courseType 1
+        // Course Type 3: Short Course - uses directLectures
+        if (formData.courseTypeId === 3) {
           if (formData.directLectures && formData.directLectures.length > 0) {
             formData.directLectures.forEach((lecture, index) => {
               submitData.append(`directLectures[${index}].title`, lecture.title || '');
@@ -454,10 +543,12 @@ const CourseModal = ({
               submitData.append(`directLectures[${index}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
             });
           }
-        } else if (formData.courseTypeId === 2 || formData.courseTypeId === 3) {
-          // Sections payload for courseType 2/3
+        } 
+        // Course Type 1 & 2: Professional Certificate / Certification - uses sections
+        else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
           if (formData.sections && formData.sections.length > 0) {
             formData.sections.forEach((section, sectionIndex) => {
+              submitData.append(`sections[${sectionIndex}].moduleName`, section.moduleName || '');
               submitData.append(`sections[${sectionIndex}].title`, section.title || '');
               submitData.append(`sections[${sectionIndex}].description`, section.description || '');
               submitData.append(`sections[${sectionIndex}].sortOrder`, section.sortOrder || sectionIndex);
@@ -498,8 +589,8 @@ const CourseModal = ({
         };
         
         // Add LMS lectures data based on course type
-        if (formData.courseTypeId === 1) {
-          // DirectLectures payload for courseType 1
+        // Course Type 3: Short Course - uses directLectures
+        if (formData.courseTypeId === 3) {
           submitData.directLectures = formData.directLectures.map((lecture, index) => ({
             title: lecture.title || '',
             lectureType: lecture.lectureType || 1,
@@ -507,9 +598,11 @@ const CourseModal = ({
             sortOrder: lecture.sortOrder || index,
             lmscourseMappingId: lecture.lmscourseMappingId || lecture.id
           }));
-        } else if (formData.courseTypeId === 2 || formData.courseTypeId === 3) {
-          // Sections payload for courseType 2/3
+        } 
+        // Course Type 1 & 2: Professional Certificate / Certification - uses sections
+        else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
           submitData.sections = formData.sections.map((section, sectionIndex) => ({
+            moduleName: section.moduleName || '',
             title: section.title || '',
             description: section.description || '',
             sortOrder: section.sortOrder || sectionIndex,
@@ -722,6 +815,25 @@ const CourseModal = ({
                   disabled={loading}
                 />
                 {formErrors.courseTypeId && <p className="mt-1 text-sm text-red-600">{formErrors.courseTypeId}</p>}
+                
+                {/* Course Type Info */}
+                {formData.courseTypeId > 0 && (
+                  <div className={`mt-2 p-2 rounded-lg text-xs ${
+                    formData.courseTypeId === 1 ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                    formData.courseTypeId === 2 ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                    'bg-green-50 text-green-700 border border-green-200'
+                  }`}>
+                    {formData.courseTypeId === 1 && (
+                      <span><strong>Professional Certificate:</strong> Requires sections with Module 1, Module 2, and Module 3. Each section must have lectures.</span>
+                    )}
+                    {formData.courseTypeId === 2 && (
+                      <span><strong>Certification:</strong> Requires exactly 1 section with lectures.</span>
+                    )}
+                    {formData.courseTypeId === 3 && (
+                      <span><strong>Short Course:</strong> Uses direct lectures without sections.</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Category */}
@@ -1027,49 +1139,40 @@ const CourseModal = ({
                 />
               </div>
 
-              {/* LMS Lectures - Show for all course types */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  LMS Lectures *
-                </label>
-                
-                {/* Search Dropdown */}
-                <div className="mb-4">
-                  <LmsLecturesDropdown
-                    onLectureSelect={handleLectureSelect}
-                    selectedLectures={
-                      formData.courseTypeId === 1 
-                        ? formData.directLectures 
-                        : formData.sections.flatMap(section => section.lectures || [])
-                    }
+              {/* LMS Lectures - Show for Short Course (Type 3) only */}
+              {formData.courseTypeId === 3 && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    LMS Lectures * (Direct Lectures for Short Course)
+                  </label>
+                  
+                  {/* Search Dropdown */}
+                  <div className="mb-4">
+                    <LmsLecturesDropdown
+                      onLectureSelect={handleLectureSelect}
+                      selectedLectures={formData.directLectures}
+                      disabled={loading}
+                      placeholder="Search and add LMS lectures..."
+                    />
+                  </div>
+                  
+                  {formErrors.directLectures && (
+                    <p className="mb-2 text-sm text-red-600">{formErrors.directLectures}</p>
+                  )}
+
+                  {/* Selected Lectures Table */}
+                  <SelectedLecturesTable
+                    selectedLectures={formData.directLectures}
+                    onLectureRemove={handleLectureRemove}
+                    onLectureReorder={handleLectureReorder}
+                    courseType={formData.courseTypeId}
                     disabled={loading}
-                    placeholder="Search and add LMS lectures..."
                   />
                 </div>
-                
-                {formErrors.directLectures && (
-                  <p className="mb-2 text-sm text-red-600">{formErrors.directLectures}</p>
-                )}
-                {formErrors.sections && (
-                  <p className="mb-2 text-sm text-red-600">{formErrors.sections}</p>
-                )}
+              )}
 
-                {/* Selected Lectures Table */}
-                <SelectedLecturesTable
-                  selectedLectures={
-                    formData.courseTypeId === 1 
-                      ? formData.directLectures 
-                      : formData.sections.flatMap(section => section.lectures || [])
-                  }
-                  onLectureRemove={handleLectureRemove}
-                  onLectureReorder={handleLectureReorder}
-                  courseType={formData.courseTypeId}
-                  disabled={loading}
-                />
-              </div>
-
-              {/* Sections - Only show when courseTypeId === 2 or 3 */}
-              {(formData.courseTypeId === 2 || formData.courseTypeId === 3) && (
+              {/* Sections - Show for Professional Certificate (Type 1) and Certification (Type 2) */}
+              {(formData.courseTypeId === 1 || formData.courseTypeId === 2) && (
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-4">
                     <label className="block text-sm font-medium text-gray-700">Course Sections *</label>
@@ -1139,8 +1242,30 @@ const CourseModal = ({
                             </button>
                           </div>
                           
-                          <div className="grid grid-cols-1 gap-4">
-                            <div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Module Name - Required for Professional Certificate (Type 1) */}
+                            {formData.courseTypeId === 1 && (
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Module Name *</label>
+                                <select
+                                  value={section.moduleName || ''}
+                                  onChange={(e) => updateSection(index, 'moduleName', e.target.value)}
+                                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                                    formErrors[`section_moduleName_${index}`] ? 'border-red-500' : 'border-gray-300'
+                                  }`}
+                                  disabled={loading}
+                                >
+                                  <option value="">Select Module</option>
+                                  <option value="Module 1">Module 1</option>
+                                  <option value="Module 2">Module 2</option>
+                                  <option value="Module 3">Module 3</option>
+                                </select>
+                                {formErrors[`section_moduleName_${index}`] && (
+                                  <p className="mt-1 text-xs text-red-600">{formErrors[`section_moduleName_${index}`]}</p>
+                                )}
+                              </div>
+                            )}
+                            <div className={formData.courseTypeId === 1 ? '' : 'md:col-span-2'}>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Section Title *</label>
                               <input
                                 type="text"
@@ -1183,6 +1308,16 @@ const CourseModal = ({
                                 {(section.lectures || []).length} lecture{(section.lectures || []).length !== 1 ? 's' : ''}
                               </span>
                             </div>
+
+                            {/* LMS Lectures Dropdown for this section */}
+                            <div className="mb-3">
+                              <LmsLecturesDropdown
+                                onLectureSelect={(lecture) => handleLectureSelect(lecture, index)}
+                                selectedLectures={formData.sections.flatMap(s => s.lectures || [])}
+                                disabled={loading}
+                                placeholder={`Search and add lectures to ${section.title || `Section ${index + 1}`}...`}
+                              />
+                            </div>
                             
                             {formErrors[`section_lectures_${index}`] && (
                               <p className="mb-2 text-xs text-red-600">{formErrors[`section_lectures_${index}`]}</p>
@@ -1193,7 +1328,7 @@ const CourseModal = ({
                                 <BookOpen className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                                 <p className="text-xs text-gray-500">No lectures in this section yet.</p>
                                 <p className="text-xs text-gray-400 mt-1">
-                                  Add lectures using the search dropdown above.
+                                  Use the search dropdown above to add lectures.
                                 </p>
                               </div>
                             ) : (

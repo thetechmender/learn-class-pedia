@@ -43,10 +43,14 @@ const LmsLecturesDropdown = ({
           pageSize: 50
         });
         
-        // Filter out already selected lectures
-        const availableLectures = response.filter(lecture => 
-          !selectedLectures.some(selected => selected.id === lecture.id)
-        );
+        // Filter out already selected lectures by lmscourseMappingId
+        const availableLectures = response.filter(lecture => {
+          const lectureMapId = lecture.lmscourseMappingId || lecture.id;
+          return !selectedLectures.some(selected => {
+            const selectedMapId = selected.lmscourseMappingId || selected.id;
+            return selectedMapId === lectureMapId;
+          });
+        });
         
         setLectures(availableLectures);
       } catch (err) {
@@ -119,7 +123,7 @@ const LmsLecturesDropdown = ({
             <div className="py-1">
               {lectures.map((lecture) => (
                 <div
-                  key={lecture.id}
+                  key={lecture.lmscourseMappingId || lecture.id}
                   onClick={() => handleLectureClick(lecture)}
                   className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                 >

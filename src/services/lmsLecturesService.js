@@ -1,6 +1,11 @@
 import { API_CONFIG, ENDPOINTS, HTTP_STATUS } from '../config/api';
+import { isProduction } from '../config/appSettings';
 
 class LmsLecturesService {
+  getApiUrl() {
+    return isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
+  }
+
   async searchLmsLectures(params = {}) {
     try {
       const { page = 1, pageSize = 50, search = '' } = params;
@@ -12,7 +17,7 @@ class LmsLecturesService {
       if (search) queryParams.append('search', search);
       
       const queryString = queryParams.toString();
-      const url = `${API_CONFIG.BASE_URL_Local}${ENDPOINTS.LMS_LECTURES_SEARCH}${queryString ? `?${queryString}` : ''}`;
+      const url = `${this.getApiUrl()}${ENDPOINTS.LMS_LECTURES_SEARCH}${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
