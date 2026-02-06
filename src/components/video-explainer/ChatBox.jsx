@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, Minimize2, Maximize2, Bot, User, Copy } from 'lucide-react';
+import { Send, X, Minimize2, Maximize2, User, Copy } from 'lucide-react';
 import { sendChatMessage } from '../../services/chatApi';
 import MarkdownRenderer from './MarkdownRenderer';
 
@@ -47,7 +47,7 @@ export default function ChatBox({ isOpen, onToggle, courseId = 1, isEmbedded = f
             const botMessage = {
                 id: Date.now() + 1,
                 type: 'bot',
-                text: response.message || response.text || 'I apologize, but I encountered an error.',
+                text: response.response || 'I apologize, but I encountered an error.',
                 timestamp: new Date(),
             };
             setMessages(prev => [...prev, botMessage]);
@@ -124,7 +124,7 @@ export default function ChatBox({ isOpen, onToggle, courseId = 1, isEmbedded = f
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                        <Bot className="w-5 h-5 text-white" />
+                        <span className="text-xs font-semibold text-white">MJ</span>
                     </div>
                     <div>
                         <h3 className="font-semibold text-gray-900">Mark jacob</h3>
@@ -170,8 +170,8 @@ export default function ChatBox({ isOpen, onToggle, courseId = 1, isEmbedded = f
                                 className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : ''}`}
                             >
                                 {message.type === 'bot' && (
-                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                        <Bot className="w-4 h-4 text-blue-600" />
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                                        <span className="text-xs font-semibold text-white">MJ</span>
                                     </div>
                                 )}
                                 <div className={`max-w-[80%] ${message.type === 'user' ? 'order-first' : ''}`}>
@@ -209,8 +209,8 @@ export default function ChatBox({ isOpen, onToggle, courseId = 1, isEmbedded = f
                         
                         {isTyping && (
                             <div className="flex gap-3">
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <Bot className="w-4 h-4 text-blue-600" />
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                                    <span className="text-xs font-semibold text-white">MJ</span>
                                 </div>
                                 <div className="bg-gray-100 p-3 rounded-lg">
                                     <div className="flex items-center gap-2">

@@ -7,22 +7,24 @@
  * @returns {Promise<{response: string, threadId: string}>} - The bot's response and thread ID
  */
 export const sendChatMessage = async (message, context = '', courseId = 1, threadId = '') => {
-    // Always use courseId as 1 for now
-    courseId = 1;
+    // Always use customerId and cpCourseDetailId as 1 for now
+    const customerId = 1;
+    const cpCourseDetailId = 1;
     try {
-        const response = await fetch('https://chatbot.thetechmenders.com/api/IntelligentChatbot/question', {
+        const requestBody = {
+            customerId: customerId,
+            cpCourseDetailId: cpCourseDetailId,
+            question: message,
+            threadId: threadId || ''
+        };
+
+        const response = await fetch('https://chatbot.thetechmenders.com/api/CourseQuestion/ask', {
             method: 'POST',
             headers: {
-                'accept': 'text/plain',
+                'accept': '*/*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                question: message,
-                courseId: courseId,
-                threadId: threadId,
-                sessionId: '',
-                customerId: ''
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
@@ -30,22 +32,16 @@ export const sendChatMessage = async (message, context = '', courseId = 1, threa
         }
 
         const data = await response.json();
-        
-        // Handle the IntelligentChatbot API response
-        if (data && data.success && data.answer) {
+        // Handle the CourseQuestion API response
+        if (data && data.success && data.data && data.data.answer) {
             return {
-                response: data.answer.trim(),
-                threadId: data.threadId || threadId
+                response: data.data.answer.trim(),
+                threadId: data.data.threadId || threadId
             };
-        } else if (data && data.errorMessage) {
+        } else if (data && data.message) {
             return {
-                response: `Sorry, I encountered an error: ${data.errorMessage}`,
+                response: `Sorry, I encountered an error: ${data.message}`,
                 threadId: threadId
-            };
-        } else if (data && data.answer) {
-            return {
-                response: data.answer.trim(),
-                threadId: data.threadId || threadId
             };
         } else {
             return {
