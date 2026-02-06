@@ -1,9 +1,10 @@
 import { API_CONFIG, ENDPOINTS } from '../config/api';
+import { isProduction } from '../config/appSettings';
 import routesData from '../data/routes.json';
 
 class AdminApiService {
   constructor() {
-    this.baseURL = API_CONFIG.BASE_URL_Local;
+    this.baseURL = isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
     this.timeout = API_CONFIG.TIMEOUT;
   }
 

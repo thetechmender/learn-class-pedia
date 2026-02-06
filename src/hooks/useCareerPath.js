@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { adminApiService } from '../services/AdminApi';
 import { API_CONFIG } from '../config/api';
+import { isProduction } from '../config/appSettings';
+
+const getApiUrl = () => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
 
 export const useCareerPath = () => {
   // Global state
@@ -31,7 +34,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/career-paths/levels`, {
+      const response = await fetch(`${getApiUrl()}/career-paths/levels`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -59,7 +62,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/careerskills`, {
+      const response = await fetch(`${getApiUrl()}/careerskills`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -87,7 +90,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/career-roles`, {
+      const response = await fetch(`${getApiUrl()}/career-roles`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -115,7 +118,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}/admin/course-types`, {
+      const response = await fetch(`${getApiUrl()}/admin/course-types`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
