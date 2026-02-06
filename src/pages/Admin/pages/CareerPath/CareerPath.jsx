@@ -8,9 +8,7 @@ import {
   Filter,
   Clock,
   BookOpen,
-  TrendingUp,
   Users,
-  ChevronRight,
   Calendar,
   Search,
   X,
@@ -47,38 +45,31 @@ const CareerPath = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [hoveredCard, setHoveredCard] = useState(null);
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Match API pageSize
+  const [itemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [serverTotalPages, setServerTotalPages] = useState(0); 
   
-  // Form states
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCareerPath, setEditingCareerPath] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  
-  // Toast notification
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   useEffect(() => {
     fetchCareerPaths();
-  }, [currentPage]); // Refetch when page changes
+  }, [currentPage]);
 
   useEffect(() => {
-    // Reset to page 1 when filters change
     setCurrentPage(1);
   }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
 
-  // Fetch data when filters change (after page reset)
   useEffect(() => {
     if (currentPage === 1) {
       fetchCareerPaths();
     }
   }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
 
-  // Pagination calculations (now using server-side data)
   const totalPages = serverTotalPages;
   const paginatedCareerPaths = Array.isArray(careerPaths) ? careerPaths : [];
 
@@ -86,18 +77,15 @@ const CareerPath = () => {
     try {
       setLoading(true);
       
-      // Build API parameters for server-side pagination and filtering
       const params = {
         page: currentPage,
         pageSize: itemsPerPage
       };
       
-      // Add search parameter if exists
       if (searchTerm) {
         params.search = searchTerm;
       }
       
-      // Add filter parameters if they're not 'all'
       if (selectedLevel !== 'all') {
         params.level = selectedLevel;
       }
@@ -110,27 +98,22 @@ const CareerPath = () => {
       
       const response = await getAllCareerPaths(params);
       
-      // Handle paginated response structure
       if (response && typeof response === 'object') {
-        // If response has pagination structure
         if (response.data && Array.isArray(response.data)) {
           setCareerPaths(response.data);
           setTotalItems(response.totalCount || response.total || response.data.length);
           setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.data.length) / itemsPerPage));
         } 
-        // If response is directly an array (fallback)
         else if (Array.isArray(response)) {
           setCareerPaths(response);
           setTotalItems(response.length);
           setServerTotalPages(Math.ceil(response.length / itemsPerPage));
         }
-        // If response has items property
         else if (response.items && Array.isArray(response.items)) {
           setCareerPaths(response.items);
           setTotalItems(response.totalCount || response.total || response.items.length);
           setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.items.length) / itemsPerPage));
         }
-        // Fallback to empty array
         else {
           setCareerPaths([]);
           setTotalItems(0);
@@ -176,7 +159,6 @@ const CareerPath = () => {
     return count;
   };
 
-  // CRUD Operations
   const handleCreateCareerPath = () => {
     setEditingCareerPath(null);
     setShowCreateForm(true);
@@ -185,7 +167,6 @@ const CareerPath = () => {
   const handleEditCareerPath = async (careerPath) => {
     try {
       setFormLoading(true);
-      // Fetch full career path details
       const careerPathDetails = await getCareerPathById(careerPath.id);
       setEditingCareerPath(careerPathDetails);
       setShowCreateForm(true);
@@ -197,8 +178,6 @@ const CareerPath = () => {
   };
 
   const handleSaveCareerPath = async (careerPathData, isFormData = false) => {
-   
-    
     try {
       setFormLoading(true);
       
@@ -206,10 +185,9 @@ const CareerPath = () => {
       
       if (editingCareerPath) {
         if (isFormData) {
-         
           savedCareerPath = await updateCareerPathWithFile(editingCareerPath.id, careerPathData);
         } else {   
-        const formData = new FormData();
+          const formData = new FormData();
           if (careerPathData.title) formData.append('Title', careerPathData.title);
           if (careerPathData.description) formData.append('Description', careerPathData.description);
           if (careerPathData.price !== undefined) formData.append('Price', careerPathData.price);
@@ -221,7 +199,6 @@ const CareerPath = () => {
           if (careerPathData.certificateCount !== undefined) formData.append('CertificateCount', careerPathData.certificateCount);
           if (careerPathData.roleId !== undefined) formData.append('RoleId', careerPathData.roleId);
           
-          // Add arrays using proper notation
           if (careerPathData.levels && careerPathData.levels.length > 0) {
             careerPathData.levels.forEach((level, index) => {
               formData.append(`Levels[${index}].levelId`, level.levelId);
@@ -244,21 +221,15 @@ const CareerPath = () => {
               formData.append(`CareerPathBadges[${index}]`, badgeId);
             });
           }
-          // Don't include CareerPathBadges field at all when empty
           
           savedCareerPath = await updateCareerPathWithFile(editingCareerPath.id, formData);
         }
         showToast('Career path updated successfully!', 'success');
       } else {
-        // Create new career path - always use FormData to avoid 415 error
         if (isFormData) {
-          // Use FormData for file uploads - need special handling
           savedCareerPath = await createCareerPathWithFile(careerPathData);
         } else {
-          // Convert JSON to FormData for consistency
           const formData = new FormData();
-          
-          // Add all fields to FormData
           if (careerPathData.title) formData.append('Title', careerPathData.title);
           if (careerPathData.description) formData.append('Description', careerPathData.description);
           if (careerPathData.price !== undefined) formData.append('Price', careerPathData.price);
@@ -269,8 +240,7 @@ const CareerPath = () => {
           if (careerPathData.outcome) formData.append('Outcome', careerPathData.outcome);
           if (careerPathData.certificateCount !== undefined) formData.append('CertificateCount', careerPathData.certificateCount);
           if (careerPathData.roleId !== undefined) formData.append('RoleId', careerPathData.roleId);
-          
-          // Add arrays using proper notation
+    
           if (careerPathData.levels && careerPathData.levels.length > 0) {
             careerPathData.levels.forEach((level, index) => {
               formData.append(`Levels[${index}].levelId`, level.levelId);
@@ -293,8 +263,6 @@ const CareerPath = () => {
               formData.append(`CareerPathBadges[${index}]`, badgeId);
             });
           }
-          // Don't include CareerPathBadges field at all when empty
-          
           savedCareerPath = await createCareerPathWithFile(formData);
         }
         showToast('Career path created successfully!', 'success');
@@ -302,15 +270,12 @@ const CareerPath = () => {
       
       setShowCreateForm(false);
       setEditingCareerPath(null);
-      fetchCareerPaths(); // Refresh the list
+      fetchCareerPaths(); 
     } catch (error) {
-      
-      // Extract specific error message from API response
+
       let errorMessage = editingCareerPath 
         ? 'Failed to update career path. Please try again.' 
         : 'Failed to create career path. Please try again.';
-      
-      // Check if error has a specific message from the API
       if (error.message) {
         errorMessage = error.message;
       } else if (error.response?.data?.message) {
@@ -337,7 +302,7 @@ const CareerPath = () => {
       await deleteCareerPath(deleteConfirm.id);
       showToast('Career path deleted successfully!', 'success');
       setDeleteConfirm(null);
-      fetchCareerPaths(); // Refresh the list
+      fetchCareerPaths(); 
     } catch (error) {
       showToast('Failed to delete career path. Please try again.', 'error');
     } finally {
@@ -436,8 +401,6 @@ const CareerPath = () => {
         </>
       }
     >
-
-      {/* Search Bar */}
       <div className="relative max-w-2xl mx-auto">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
@@ -458,8 +421,6 @@ const CareerPath = () => {
           </button>
         )}
       </div>
-
-      {/* Filters Section */}
       {showFilters && (
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
           <div className="py-6">
@@ -527,10 +488,7 @@ const CareerPath = () => {
           </div>
         </div>
       )}
-
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Results Summary */}
         {searchTerm || selectedLevel !== 'all' || selectedDuration !== 'all' || selectedCategory !== 'all' ? (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
             <div className="flex items-center justify-between">
@@ -592,7 +550,7 @@ const CareerPath = () => {
                   onMouseEnter={() => setHoveredCard(path.id)}
                   onMouseLeave={() => setHoveredCard(null)}
                 >
-                  {/* Card Header */}
+                
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1 pr-4 min-w-0">
@@ -623,9 +581,6 @@ const CareerPath = () => {
                     <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 leading-relaxed line-clamp-3">
                       {path.description}
                     </p>
-
-
-                    {/* Stats */}
                     <div className="grid grid-cols-4 gap-2 mb-6">
                       <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                         <div className="flex items-center justify-center text-blue-600 dark:text-blue-400 mb-2">
@@ -662,8 +617,6 @@ const CareerPath = () => {
                         <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Certificates</div>
                       </div>
                     </div>
-
-                    {/* Skills Summary */}
                     {path.skills && path.skills.length > 0 && (
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
@@ -687,8 +640,6 @@ const CareerPath = () => {
                         </div>
                       </div>
                     )}
-
-                    {/* Learning Path */}
                     {firstCourses.length > 0 && (
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
@@ -723,8 +674,6 @@ const CareerPath = () => {
                         )}
                       </div>
                     )}
-
-                    {/* Footer */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
                       <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                         <Calendar className="w-3 h-3 mr-1" />
@@ -761,8 +710,6 @@ const CareerPath = () => {
           </div>
         )}
       </div>
-
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
           <div className="flex items-center justify-between">
@@ -821,8 +768,6 @@ const CareerPath = () => {
           </div>
         </div>
       )}
-
-      {/* Create/Edit Form Modal */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
@@ -839,8 +784,6 @@ const CareerPath = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full">
@@ -879,8 +822,6 @@ const CareerPath = () => {
           </div>
         </div>
       )}
-
-      {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
           toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'

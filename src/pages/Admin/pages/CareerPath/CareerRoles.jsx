@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../../../hooks/useToast';
 import { useCareerRoles } from '../../../../hooks/useCareerRoles';
+import { useTheme } from '../../../../context/ThemeContext';
 import Modal from '../../../../components/Modal';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 import { 
   Plus, 
   Edit2, 
@@ -11,16 +13,17 @@ import {
   AlertCircle,
   CheckCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Briefcase as RolesIcon
 } from 'lucide-react';
 
 const CareerRoles = () => {
   const { toast, showToast } = useToast();
+  const { theme } = useTheme();
   
   const showSuccess = (message) => showToast(message, 'success');
   const showError = (message) => showToast(message, 'error');
 
-  // API operations from hook
   const {
     loading,
     error,
@@ -31,15 +34,12 @@ const CareerRoles = () => {
     updateCareerRole,
     deleteCareerRole
   } = useCareerRoles();
-  // State management
   const [careerRoles, setCareerRoles] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -47,14 +47,12 @@ const CareerRoles = () => {
   const [editingCareerRole, setEditingCareerRole] = useState(null);
   const [modalError, setModalError] = useState('');
 
-  // Form State
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     iconUrl: ''
   });
 
-  // Fetch all career roles
   const fetchCareerRoles = useCallback(async () => {
     try {
       const data = await getAllCareerRoles();
@@ -64,30 +62,25 @@ const CareerRoles = () => {
     }
   }, [getAllCareerRoles, showError]);
 
-  // Filter career roles based on search
   const filteredCareerRoles = careerRoles.filter(role => 
     role.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     role.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredCareerRoles.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedCareerRoles = filteredCareerRoles.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // Input handlers
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
-  // Form management
   const resetForm = useCallback(() => {
     setFormData({
       name: '',
@@ -97,7 +90,6 @@ const CareerRoles = () => {
     setEditingCareerRole(null);
   }, []);
 
-  // CRUD operations
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setModalError('');
@@ -148,7 +140,6 @@ const CareerRoles = () => {
     }
   }, [fetchCareerRoles, showSuccess, showError]);
 
-  // Modal handlers
   const openCreateModal = useCallback(() => {
     resetForm();
     setModalError('');
@@ -174,8 +165,22 @@ const CareerRoles = () => {
   }, []);
 
   return (
-    <div className="p-6">
-      {/* Toast Notification */}
+    <AdminPageLayout
+      title="Career Roles"
+      subtitle="Manage your career roles and responsibilities"
+      icon={RolesIcon}
+      loading={loading}
+      skeletonType="table"
+      actions={
+        <button
+          onClick={openCreateModal}
+          className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Career Role
+        </button>
+      }
+    >
       {toast.show && (
         <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
           toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
@@ -191,156 +196,188 @@ const CareerRoles = () => {
         </div>
       )}
 
-      <h1 className="text-2xl font-bold mb-2">Career Roles Management</h1>
-      <p className="text-gray-600 mb-4">Manage career roles and their descriptions</p>
+      {error && <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 rounded-xl">{error}</div>}
 
-      {/* Error message */}
-      {error && <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded">{error}</div>}
-
-      {/* Controls */}
-      <div className="mb-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="flex-1 w-full">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <input
-              type="text"
-              placeholder="Search career roles..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+      <div className="relative max-w-2xl mx-auto mb-6">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
         </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} className="mr-2"/> Add Career Role
-        </button>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search career roles by name or description..."
+          className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center"
+          >
+            <AlertCircle className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+          </button>
+        )}
       </div>
 
-      {/* Career Roles table */}
-      <div className="bg-white border rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading career roles...</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {searchTerm ? (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Showing <span className="font-semibold">{filteredCareerRoles.length}</span> of {careerRoles.length} career roles
+              </p>
+              <button
+                onClick={() => setSearchTerm('')}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+              >
+                Clear search
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {paginatedCareerRoles.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <RolesIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              {searchTerm ? 'No matching career roles found' : 'No career roles found'}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              {searchTerm 
+                ? 'Try adjusting your search to find what you\'re looking for'
+                : 'Create your first career role to get started'
+              }
+            </p>
+            {!searchTerm && (
+              <button 
+                onClick={openCreateModal}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+              >
+                <Plus className="w-4 h-4 mr-2 inline" />
+                Create Your First Career Role
+              </button>
+            )}
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {paginatedCareerRoles.length === 0 ? (
+          <div className={`border rounded-xl overflow-hidden shadow-sm ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b`}>
                   <tr>
-                    <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
-                      {searchTerm ? 'No career roles found matching your search.' : 'No career roles found.'}
-                    </td>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Name</th>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Slug</th>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Description</th>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Icon</th>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Actions</th>
                   </tr>
-                ) : (
-                  paginatedCareerRoles.map((role) => (
-                    <tr key={role.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{role.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 font-mono">{role.slug}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{role.description || 'No description'}</td>
-                      <td className="px-4 py-3">
-                        {role.iconUrl ? (
-                          <img src={role.iconUrl} alt={role.name} className="w-6 h-6 rounded" />
-                        ) : (
-                          <span className="text-gray-400 text-sm">No icon</span>
-                        )}
+                </thead>
+                <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  {paginatedCareerRoles.map((role) => (
+                    <tr key={role.id} className={`border-b transition-colors duration-150 ${theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-50 border-gray-200'}`}>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-sm text-gray-900 dark:text-white">{role.name}</div>
                       </td>
-                      <td className="px-4 py-3 flex space-x-2">
-                        <button 
-                          onClick={() => handleViewDetails(role)} 
-                          className="text-green-600 hover:bg-green-50 p-1 rounded"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleEdit(role)} 
-                          className="text-blue-600 hover:bg-blue-50 p-1 rounded"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(role.id)} 
-                          className="text-red-600 hover:bg-red-50 p-1 rounded"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      <td className={`px-6 py-4 text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{role.slug}</td>
+                      <td className={`px-6 py-4 text-sm max-w-xs truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{role.description || 'No description'}</td>
+                      <td className="px-6 py-4">
+                        {role.iconUrl ? <img src={role.iconUrl} alt={role.name} className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-600" /> : <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>No icon</span>}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-1">
+                          <button 
+                            onClick={() => handleViewDetails(role)} 
+                            className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-green-400 hover:bg-green-900/20' : 'text-green-600 hover:bg-green-50'}`}
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleEdit(role)} 
+                            className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-blue-400 hover:bg-blue-900/20' : 'text-blue-600 hover:bg-blue-50'}`}
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(role.id)} 
+                            className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'text-red-400 hover:bg-red-900/20' : 'text-red-600 hover:bg-red-50'}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredCareerRoles.length)} of{' '}
-            {filteredCareerRoles.length} results
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Previous
-            </button>
-            
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-2 text-sm border rounded-md ${
-                      currentPage === pageNum
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredCareerRoles.length)} of{' '}
+              {filteredCareerRoles.length} career roles
             </div>
-            
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Previous
+              </button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-2 text-sm border rounded-md ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -353,49 +390,61 @@ const CareerRoles = () => {
       >
         <form onSubmit={handleSubmit}>
           {modalError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg flex items-start">
-              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 rounded-xl flex items-start">
+              <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">Error</p>
-                <p className="text-sm">{modalError}</p>
+                <p className="font-semibold text-sm">Error</p>
+                <p className="text-sm mt-1">{modalError}</p>
               </div>
             </div>
           )}
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Name *</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter career role name"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter career role description"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Icon URL</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon URL</label>
               <input
                 type="url"
                 name="iconUrl"
                 value={formData.iconUrl}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="https://example.com/icon.png"
               />
             </div>
@@ -405,13 +454,13 @@ const CareerRoles = () => {
             <button
               type="button"
               onClick={closeCreateModal}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
               Create Career Role
             </button>
@@ -427,49 +476,61 @@ const CareerRoles = () => {
       >
         <form onSubmit={handleSubmit}>
           {modalError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg flex items-start">
-              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 rounded-xl flex items-start">
+              <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">Error</p>
-                <p className="text-sm">{modalError}</p>
+                <p className="font-semibold text-sm">Error</p>
+                <p className="text-sm mt-1">{modalError}</p>
               </div>
             </div>
           )}
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Name *</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter career role name"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="Enter career role description"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Icon URL</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon URL</label>
               <input
                 type="url"
                 name="iconUrl"
                 value={formData.iconUrl}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder="https://example.com/icon.png"
               />
             </div>
@@ -479,13 +540,13 @@ const CareerRoles = () => {
             <button
               type="button"
               onClick={closeUpdateModal}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
               Update Career Role
             </button>
@@ -493,7 +554,6 @@ const CareerRoles = () => {
         </form>
       </Modal>
 
-      {/* Career Role Details Modal */}
       <Modal 
         isOpen={showDetailsModal} 
         onClose={closeDetailsModal} 
@@ -502,37 +562,37 @@ const CareerRoles = () => {
         {selectedCareerRole && (
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Name</h3>
-              <p className="mt-1 text-sm text-gray-900">{selectedCareerRole.name}</p>
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Name</h3>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedCareerRole.name}</p>
             </div>
             
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Slug</h3>
-              <p className="mt-1 text-sm text-gray-900 font-mono">{selectedCareerRole.slug}</p>
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Slug</h3>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono">{selectedCareerRole.slug}</p>
             </div>
             
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Description</h3>
-              <p className="mt-1 text-sm text-gray-900">{selectedCareerRole.description || 'No description'}</p>
+              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Description</h3>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedCareerRole.description || 'No description'}</p>
             </div>
             
             {selectedCareerRole.iconUrl && (
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Icon</h3>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Icon</h3>
                 <div className="mt-1">
                   <img 
                     src={selectedCareerRole.iconUrl} 
                     alt={selectedCareerRole.name} 
-                    className="w-12 h-12 rounded border border-gray-200"
+                    className="w-12 h-12 rounded-xl border border-gray-200 dark:border-gray-700"
                   />
                 </div>
               </div>
             )}
             
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={closeDetailsModal}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                className="px-6 py-3 bg-gray-600 dark:bg-gray-700 text-white rounded-xl hover:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
               >
                 Close
               </button>
@@ -540,7 +600,7 @@ const CareerRoles = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </AdminPageLayout>
   );
 };
 
