@@ -15,6 +15,7 @@ class AdminApiService {
       headers: {
         'Content-Type': 'application/json',
         'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
         ...options.headers,
       },
       timeout: this.timeout,
@@ -187,6 +188,9 @@ class AdminApiService {
     if (filters.CourseLevelId && filters.CourseLevelId !== '') {
       queryParams.append('CourseLevelId', filters.CourseLevelId);
     }
+    if (filters.Title && filters.Title !== '') {
+      queryParams.append('Title', filters.Title);
+    }
     
     const queryString = queryParams.toString();
     const url = queryString ? `${ENDPOINTS.ADMINCOURSE}?${queryString}` : ENDPOINTS.ADMINCOURSE;
@@ -206,10 +210,11 @@ class AdminApiService {
 
   // POST create new course
   async createCourse(courseData) {
-    // Ensure sections are included in the request if provided
+    // Ensure sections and directLectures are included in the request if provided
     const requestData = {
       ...courseData,
-      sections: courseData.sections || []
+      sections: courseData.sections || [],
+      directLectures: courseData.directLectures || []
     };
     
     // Set default values for unpaid courses
@@ -227,10 +232,11 @@ class AdminApiService {
 
   // PUT update course
   async updateCourse(courseId, courseData) {
-    // Ensure sections are included in the request if provided
+    // Ensure sections and directLectures are included in the request if provided
     const requestData = {
       ...courseData,
-      sections: courseData.sections || []
+      sections: courseData.sections || [],
+      directLectures: courseData.directLectures || []
     };
     
     // Set default values for unpaid courses
@@ -476,6 +482,11 @@ class AdminApiService {
     return this.request(`${ENDPOINTS.CAREER_PATHS}/levels`);
   }
 
+  // GET career roles
+  async getCareerRoles() {
+    return this.request(ENDPOINTS.CAREER_ROLES);
+  }
+
   // GET career path by ID
   async getCareerPathById(id) {
     return this.request(`${ENDPOINTS.CAREER_PATHS}/${id}`);
@@ -514,6 +525,7 @@ class AdminApiService {
       // Don't set Content-Type header when using FormData, browser sets it automatically
       headers: {
         'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
       },
       timeout: this.timeout,
     };
@@ -569,6 +581,7 @@ class AdminApiService {
       // Don't set Content-Type header when using FormData, browser sets it automatically
       headers: {
         'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
       },
       timeout: this.timeout,
     };
@@ -839,6 +852,11 @@ class AdminApiService {
   // GET all skills
   async getAllSkills() {
     return this.request(ENDPOINTS.COURSE_SKILL_MAP_ALL);
+  }
+
+  // GET all career skills
+  async getAllCareerSkills() {
+    return this.request(ENDPOINTS.CAREER_SKILLS);
   }
 
   // GET skill by ID with course mappings

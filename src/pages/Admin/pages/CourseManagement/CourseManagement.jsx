@@ -74,6 +74,34 @@ const CourseManagement = () => {
     calculateCourseStats(filteredCourses),
     [filteredCourses]
   );
+
+  // Memoized stats for header
+  const statsCards = useMemo(() => [
+    {
+      label: 'Total',
+      value: stats.totalCourses,
+      icon: <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+      iconBg: 'bg-blue-100 dark:bg-blue-900'
+    },
+    {
+      label: 'Active',
+      value: stats.activeCourses,
+      icon: <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />,
+      iconBg: 'bg-green-100 dark:bg-green-900'
+    },
+    {
+      label: 'Paid',
+      value: stats.paidCourses,
+      icon: <DollarSign className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
+      iconBg: 'bg-purple-100 dark:bg-purple-900'
+    },
+    {
+      label: 'Free',
+      value: stats.freeCourses,
+      icon: <Users className="w-4 h-4 text-orange-600 dark:text-orange-400" />,
+      iconBg: 'bg-orange-100 dark:bg-orange-900'
+    }
+  ], [stats]);
   useEffect(() => {
     const fetchDropdownData = async () => {
       setDropdownLoading(prev => ({ ...prev, categories: true }));
@@ -258,9 +286,32 @@ const CourseManagement = () => {
           // Add sections array (always include, even if empty)
           if (formData.sections && formData.sections.length > 0) {
             formData.sections.forEach((section, index) => {
+              convertedFormData.append(`sections[${index}].moduleName`, section.moduleName || '');
               convertedFormData.append(`sections[${index}].title`, section.title || '');
               convertedFormData.append(`sections[${index}].description`, section.description || '');
               convertedFormData.append(`sections[${index}].sortOrder`, section.sortOrder || index);
+              
+              // Add lectures for this section
+              if (section.lectures && section.lectures.length > 0) {
+                section.lectures.forEach((lecture, lectureIndex) => {
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].title`, lecture.title || '');
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].lectureType`, lecture.lectureType || 1);
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].isFreePreview`, lecture.isFreePreview || false);
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].sortOrder`, lecture.sortOrder || lectureIndex);
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
+                });
+              }
+            });
+          }
+          
+          // Add directLectures array (always include, even if empty)
+          if (formData.directLectures && formData.directLectures.length > 0) {
+            formData.directLectures.forEach((lecture, index) => {
+              convertedFormData.append(`directLectures[${index}].title`, lecture.title || '');
+              convertedFormData.append(`directLectures[${index}].lectureType`, lecture.lectureType || 1);
+              convertedFormData.append(`directLectures[${index}].isFreePreview`, lecture.isFreePreview || false);
+              convertedFormData.append(`directLectures[${index}].sortOrder`, lecture.sortOrder || index);
+              convertedFormData.append(`directLectures[${index}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
             });
           }
           
@@ -302,9 +353,32 @@ const CourseManagement = () => {
           // Add sections array (always include, even if empty)
           if (formData.sections && formData.sections.length > 0) {
             formData.sections.forEach((section, index) => {
+              convertedFormData.append(`sections[${index}].moduleName`, section.moduleName || '');
               convertedFormData.append(`sections[${index}].title`, section.title || '');
               convertedFormData.append(`sections[${index}].description`, section.description || '');
               convertedFormData.append(`sections[${index}].sortOrder`, section.sortOrder || index);
+              
+              // Add lectures for this section
+              if (section.lectures && section.lectures.length > 0) {
+                section.lectures.forEach((lecture, lectureIndex) => {
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].title`, lecture.title || '');
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].lectureType`, lecture.lectureType || 1);
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].isFreePreview`, lecture.isFreePreview || false);
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].sortOrder`, lecture.sortOrder || lectureIndex);
+                  convertedFormData.append(`sections[${index}].lectures[${lectureIndex}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
+                });
+              }
+            });
+          }
+          
+          // Add directLectures array (always include, even if empty)
+          if (formData.directLectures && formData.directLectures.length > 0) {
+            formData.directLectures.forEach((lecture, index) => {
+              convertedFormData.append(`directLectures[${index}].title`, lecture.title || '');
+              convertedFormData.append(`directLectures[${index}].lectureType`, lecture.lectureType || 1);
+              convertedFormData.append(`directLectures[${index}].isFreePreview`, lecture.isFreePreview || false);
+              convertedFormData.append(`directLectures[${index}].sortOrder`, lecture.sortOrder || index);
+              convertedFormData.append(`directLectures[${index}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
             });
           }
           
@@ -420,6 +494,7 @@ const CourseManagement = () => {
       icon={BookOpen}
       loading={false}
       skeletonType="table"
+      stats={statsCards}
       actions={
         <>
           <button
@@ -464,28 +539,6 @@ const CourseManagement = () => {
           </div>
         </div>
       )}
-
-      {/* Search Bar */}
-      <div className="relative max-w-4xl mx-auto">
-        <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
-        </div>
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search courses by title, subtitle, category, level, or type..."
-          className="w-full pl-10 sm:pl-12 pr-10 sm:pr-4 py-3 sm:py-4 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
-        />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm('')}
-            className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center"
-          >
-            <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-          </button>
-        )}
-      </div>
 
       {/* Filters Section */}
       {filtersExpanded && (
@@ -824,7 +877,7 @@ const CourseManagement = () => {
                           {section.lectures?.length || 0} lectures
                         </span>
                       </div>
-                      
+                       
                       {/* Section Lectures */}
                       {section.lectures?.length > 0 && (
                         <div className="ml-11 space-y-2">
@@ -839,6 +892,9 @@ const CourseManagement = () => {
                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                                       {lecture.title}
                                     </p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {lecture.lmsContent?.lectureDescription || 'No description available'}
+                                    </p>
                                     <div className="flex items-center gap-2 mt-1">
                                       <span className="text-xs text-gray-500 dark:text-gray-400">
                                         {lecture.lectureType || 'video'}
@@ -849,46 +905,6 @@ const CourseManagement = () => {
                                         </span>
                                       )}
                                     </div>
-                                    
-                                    {/* LMS Content Details */}
-                                    {lecture.lmsContent && (
-                                      <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
-                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                          <div>
-                                            <span className="text-gray-500 dark:text-gray-400">Course:</span>
-                                            <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.lmsCourseName}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-gray-500 dark:text-gray-400">Module:</span>
-                                            <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.lmsModuleName}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-gray-500 dark:text-gray-400">Subject:</span>
-                                            <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.lmsSubjectName}</span>
-                                          </div>
-                                          {lecture.lmsContent.duration && (
-                                            <div>
-                                              <span className="text-gray-500 dark:text-gray-400">Duration:</span>
-                                              <span className="ml-1 text-gray-700 dark:text-gray-300">{lecture.lmsContent.duration}</span>
-                                            </div>
-                                          )}
-                                        </div>
-                                        {lecture.lmsContent.lectureOverview && (
-                                          <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                                            {lecture.lmsContent.lectureOverview}
-                                          </p>
-                                        )}
-                                        {lecture.lmsContent.tags?.length > 0 && (
-                                          <div className="mt-2 flex flex-wrap gap-1">
-                                            {lecture.lmsContent.tags.map((tag, tagIndex) => (
-                                              <span key={tagIndex} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">
-                                                {tag}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -896,6 +912,57 @@ const CourseManagement = () => {
                           ))}
                         </div>
                       )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Direct Lectures (for courses without sections) */}
+            {(details?.directLectures?.length > 0 || course?.directLectures?.length > 0) && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-2">
+                      <Play className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Course Lectures</h5>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {details?.directLectures?.length || course?.directLectures?.length || 0} lectures
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {(details?.directLectures || course?.directLectures || []).map((lecture, lectureIndex) => (
+                    <div key={lecture.id || lectureIndex} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-2">
+                          <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Play className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {lecture.title}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                              {lecture.lmsContent?.lectureDescription || 'No description available'}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {lecture.lectureType || 'video'}
+                              </span>
+                              {lecture.isFreePreview && (
+                                <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900 px-1.5 py-0.5 rounded">
+                                  Free Preview
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -949,59 +1016,6 @@ const CourseManagement = () => {
         emptyMessage="No courses found"
         loadingMessage="Loading courses..."
       />
-
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Courses</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalCourses}</p>
-              </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active Courses</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.activeCourses}</p>
-              </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Paid Courses</p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{stats.paidCourses}</p>
-              </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Free Courses</p>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{stats.freeCourses}</p>
-              </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                <Users className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Enhanced Pagination */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">

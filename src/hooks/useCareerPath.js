@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { adminApiService } from '../services/AdminApi';
 import { API_CONFIG } from '../config/api';
 import { isProduction } from '../config/appSettings';
@@ -6,6 +6,7 @@ import { isProduction } from '../config/appSettings';
 const getApiUrl = () => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
 
 export const useCareerPath = () => {
+
   // Global state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -34,19 +35,8 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-paths/levels`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const levelsData = Array.isArray(data) ? data : [];
+      const response = await adminApiService.getCareerPathLevels();
+      const levelsData = Array.isArray(response) ? response : [];
       setLevels(levelsData);
       return levelsData;
     } catch (err) {
@@ -62,19 +52,8 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/careerskills`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const skillsData = Array.isArray(data) ? data : [];
+      const response = await adminApiService.getAllCareerSkills();
+      const skillsData = Array.isArray(response) ? response : [];
       setSkills(skillsData);
       return skillsData;
     } catch (err) {
@@ -90,19 +69,8 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const rolesData = Array.isArray(data) ? data : [];
+      const response = await adminApiService.getCareerRoles();
+      const rolesData = Array.isArray(response) ? response : [];
       setCareerRoles(rolesData);
       return rolesData;
     } catch (err) {
@@ -118,19 +86,8 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/admin/course-types`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const typesData = Array.isArray(data) ? data : [];
+      const response = await adminApiService.getCourseTypes();
+      const typesData = Array.isArray(response) ? response : [];
       setCourseTypes(typesData);
       return typesData;
     } catch (err) {
@@ -176,6 +133,23 @@ export const useCareerPath = () => {
       return Array.isArray(courses) ? courses : [];
     } catch (err) {
       handleError('Failed to fetch courses by type for level', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
+  // Search courses by title
+  const searchCoursesByTitle = useCallback(async (title) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.getAllCoursesAdminNoPagination({ Title: title });
+      // Handle the response structure where courses are in an 'items' array
+      const courses = data.items || data || [];
+      return Array.isArray(courses) ? courses : [];
+    } catch (err) {
+      handleError('Failed to search courses by title', err);
       return [];
     } finally {
       setLoading(false);
@@ -295,7 +269,7 @@ export const useCareerPath = () => {
     } finally {
       setLoading(false);
     }
-  }, [getCareerPathLevels, getAllSkills, getCareerRoles, getCourseTypes, getBadges, handleError]);
+  }, [getCareerPathLevels, getAllSkills, getCareerRoles, getCourseTypes, getBadges]);
 
   return {
     // Global state
@@ -317,6 +291,7 @@ export const useCareerPath = () => {
     getCourseTypes,
     getBadges,
     getCoursesByTypeForLevel,
+    searchCoursesByTitle,
     createCareerPath,
     updateCareerPath,
     deleteCareerPath,

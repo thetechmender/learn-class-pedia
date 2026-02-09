@@ -130,18 +130,17 @@ const UniversalVirtualizedTable = React.forwardRef(({
     if (column.type === 'actions') {
       return (
         <div className="flex items-center justify-center space-x-1">
-          {onViewDetails && (
+          {(onViewDetails || (expandable && onToggleExpand)) && (
             <button
-              onClick={() => onViewDetails(item)}
-              className="text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900 p-2 rounded-lg transition-all duration-200"
-              title={column.viewTitle || 'View Details'}
-            >
-              {column.viewIcon || <Eye className="w-4 h-4" />}
-            </button>
-          )}
-          {expandable && onToggleExpand && (
-            <button
-              onClick={() => onToggleExpand(item.id)}
+              onClick={() => {
+                // Only call onViewDetails since it handles the expansion logic
+                if (onViewDetails) {
+                  onViewDetails(item);
+                } else if (expandable && onToggleExpand) {
+                  // Fallback to onToggleExpand if onViewDetails is not provided
+                  onToggleExpand(item.id);
+                }
+              }}
               className={`p-2 rounded-lg transition-all duration-200 ${
                 expandedItems[item.id] 
                   ? 'text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900' 

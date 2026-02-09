@@ -153,16 +153,47 @@ const CourseModal = ({
         newData.currencyCode = 'USD';
       }
       
-      // Clear sections/directLectures when course type changes
+      // Handle course type changes - preserve lectures and move them appropriately
       if (name === 'courseTypeId') {
         const newCourseTypeId = parseInt(value);
         const oldCourseTypeId = prev.courseTypeId;
         
-        // If switching between section-based (1, 2) and direct lectures (3)
-        if ((oldCourseTypeId === 3 && (newCourseTypeId === 1 || newCourseTypeId === 2)) ||
-            ((oldCourseTypeId === 1 || oldCourseTypeId === 2) && newCourseTypeId === 3)) {
+        // If switching from Basic (3 - direct lectures) to Intermediate/Advanced (1/2 - sections)
+        if (oldCourseTypeId === 3 && (newCourseTypeId === 1 || newCourseTypeId === 2)) {
+          // Move directLectures to first section
+          if (prev.directLectures && prev.directLectures.length > 0) {
+            const newSection = {
+              moduleName: newCourseTypeId === 1 ? 'Module 1' : '',
+              title: `Section 1`,
+              description: '',
+              sortOrder: 0,
+              lectures: prev.directLectures.map((lecture, index) => ({
+                ...lecture,
+                sortOrder: index
+              }))
+            };
+            newData.sections = [newSection];
+            newData.directLectures = [];
+          }
+        }
+        // If switching from Intermediate/Advanced (1/2 - sections) to Basic (3 - direct lectures)
+        else if ((oldCourseTypeId === 1 || oldCourseTypeId === 2) && newCourseTypeId === 3) {
+          // Move all lectures from all sections to directLectures
+          let allLectures = [];
+          if (prev.sections && prev.sections.length > 0) {
+            prev.sections.forEach(section => {
+              if (section.lectures && section.lectures.length > 0) {
+                allLectures = [...allLectures, ...section.lectures];
+              }
+            });
+            // Reassign sort order for direct lectures
+            allLectures = allLectures.map((lecture, index) => ({
+              ...lecture,
+              sortOrder: index
+            }));
+          }
+          newData.directLectures = allLectures;
           newData.sections = [];
-          newData.directLectures = [];
         }
       }
       

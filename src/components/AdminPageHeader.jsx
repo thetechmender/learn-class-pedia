@@ -43,25 +43,24 @@ const AdminPageHeader = ({
         
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pb-4">
             {stats.map((stat, index) => (
-              <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`${stat.iconBg} p-3 rounded-lg`}>
-                    {stat.icon}
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className={`${stat.iconBg} p-2 rounded-lg`}>
+                    <div className="w-4 h-4">
+                      {stat.icon}
+                    </div>
                   </div>
-                  {stat.change && (
-                    <span className={`${stat.changeColor} text-sm font-medium`}>
-                      {stat.change}
-                    </span>
-                  )}
+                  <div className="text-right">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      {stat.value}
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {stat.label}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white" style={{fontSize: '1.5rem'}}>
-                  {stat.value}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm" style={{fontSize: '0.875rem'}}>
-                  {stat.label}
-                </p>
               </div>
             ))}
           </div>

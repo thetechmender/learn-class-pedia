@@ -1,4 +1,4 @@
-import  { useState, useEffect } from 'react';
+import  { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../../../hooks/useAdmin';
 import CareerPathForm from './CareerPathForm';
@@ -56,24 +56,7 @@ const CareerPath = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  useEffect(() => {
-    fetchCareerPaths();
-  }, [currentPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
-
-  useEffect(() => {
-    if (currentPage === 1) {
-      fetchCareerPaths();
-    }
-  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
-
-  const totalPages = serverTotalPages;
-  const paginatedCareerPaths = Array.isArray(careerPaths) ? careerPaths : [];
-
-  const fetchCareerPaths = async () => {
+  const fetchCareerPaths = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -134,7 +117,24 @@ const CareerPath = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, searchTerm, selectedLevel, selectedDuration, selectedCategory, getAllCareerPaths]);
+
+  useEffect(() => {
+    fetchCareerPaths();
+  }, [currentPage, fetchCareerPaths]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
+
+  useEffect(() => {
+    if (currentPage === 1) {
+      fetchCareerPaths();
+    }
+  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory, currentPage, fetchCareerPaths]);
+
+  const totalPages = serverTotalPages;
+  const paginatedCareerPaths = Array.isArray(careerPaths) ? careerPaths : [];
 
   const getUniqueCategories = () => {
     const categories = careerPaths
@@ -181,11 +181,9 @@ const CareerPath = () => {
     try {
       setFormLoading(true);
       
-      let savedCareerPath;
-      
       if (editingCareerPath) {
         if (isFormData) {
-          savedCareerPath = await updateCareerPathWithFile(editingCareerPath.id, careerPathData);
+          await updateCareerPathWithFile(editingCareerPath.id, careerPathData);
         } else {   
           const formData = new FormData();
           if (careerPathData.title) formData.append('Title', careerPathData.title);
@@ -196,8 +194,29 @@ const CareerPath = () => {
           if (careerPathData.sortOrder !== undefined) formData.append('SortOrder', careerPathData.sortOrder);
           if (careerPathData.durationMaxMonths !== undefined) formData.append('DurationMaxMonths', careerPathData.durationMaxMonths);
           if (careerPathData.outcome) formData.append('Outcome', careerPathData.outcome);
+          if (careerPathData.overview) formData.append('overview', careerPathData.overview);
           if (careerPathData.certificateCount !== undefined) formData.append('CertificateCount', careerPathData.certificateCount);
           if (careerPathData.roleId !== undefined) formData.append('RoleId', careerPathData.roleId);
+          
+          // Handle icon properly - preserve existing icon if not modified
+          if (editingCareerPath) {
+            // During edit, if no new file and iconUrl hasn't changed, keep existing
+            if (careerPathData.iconFile === null && careerPathData.iconUrl === editingCareerPath.iconUrl) {
+              formData.append('IconUrl', editingCareerPath.iconUrl || ''); // Send existing icon URL
+            } else if (careerPathData.iconFile !== null) {
+              // New file uploaded - IconUrl will be set by backend
+              formData.append('IconUrl', careerPathData.iconUrl || '');
+            } else if (careerPathData.RemoveIcon === true) {
+              // User explicitly removed icon
+              formData.append('IconUrl', '');
+              formData.append('RemoveIcon', 'true');
+            }
+          } else {
+            // During create, handle icon
+            if (careerPathData.iconFile !== null) {
+              formData.append('IconUrl', careerPathData.iconUrl || '');
+            }
+          }
           
           if (careerPathData.levels && careerPathData.levels.length > 0) {
             careerPathData.levels.forEach((level, index) => {
@@ -222,12 +241,17 @@ const CareerPath = () => {
             });
           }
           
-          savedCareerPath = await updateCareerPathWithFile(editingCareerPath.id, formData);
+          // Add RemoveIcon flag if set
+          if (careerPathData.RemoveIcon === true) {
+            formData.append('RemoveIcon', 'true');
+          }
+          
+          await updateCareerPathWithFile(editingCareerPath.id, formData);
         }
         showToast('Career path updated successfully!', 'success');
       } else {
         if (isFormData) {
-          savedCareerPath = await createCareerPathWithFile(careerPathData);
+          await createCareerPathWithFile(careerPathData);
         } else {
           const formData = new FormData();
           if (careerPathData.title) formData.append('Title', careerPathData.title);
@@ -238,8 +262,14 @@ const CareerPath = () => {
           if (careerPathData.sortOrder !== undefined) formData.append('SortOrder', careerPathData.sortOrder);
           if (careerPathData.durationMaxMonths !== undefined) formData.append('DurationMaxMonths', careerPathData.durationMaxMonths);
           if (careerPathData.outcome) formData.append('Outcome', careerPathData.outcome);
+          if (careerPathData.overview) formData.append('overview', careerPathData.overview);
           if (careerPathData.certificateCount !== undefined) formData.append('CertificateCount', careerPathData.certificateCount);
           if (careerPathData.roleId !== undefined) formData.append('RoleId', careerPathData.roleId);
+    
+          // Handle icon for create operation
+          if (careerPathData.iconFile !== null) {
+            formData.append('IconUrl', careerPathData.iconUrl || '');
+          }
     
           if (careerPathData.levels && careerPathData.levels.length > 0) {
             careerPathData.levels.forEach((level, index) => {
@@ -263,7 +293,7 @@ const CareerPath = () => {
               formData.append(`CareerPathBadges[${index}]`, badgeId);
             });
           }
-          savedCareerPath = await createCareerPathWithFile(formData);
+          await createCareerPathWithFile(formData);
         }
         showToast('Career path created successfully!', 'success');
       }
