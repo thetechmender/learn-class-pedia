@@ -1,162 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  BookOpen, 
-  Clock, 
-  Award,
-  TrendingUp,
-  Activity
-} from 'lucide-react';
-import AdminPageLayout from '../../../../components/AdminPageLayout';
+import React from 'react';
+import { Sparkles } from 'lucide-react';
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [stats] = useState({
-    activeCourses: 12,
-    hoursLearned: 48,
-    completed: 6,
-    averageScore: 92
-  });
-
-  const [courses] = useState([
-    { id: 1, title: 'React Fundamentals', progress: 75, students: 234, image: '📚' },
-    { id: 2, title: 'JavaScript Advanced', progress: 60, students: 189, image: '💻' },
-    { id: 3, title: 'UI/UX Design', progress: 90, students: 156, image: '🎨' },
-    { id: 4, title: 'Node.js Basics', progress: 45, students: 98, image: '⚙️' }
-  ]);
-
-  const [recentActivity] = useState([
-    { id: 1, action: 'Completed React Fundamentals module', time: '2 hours ago', type: 'complete' },
-    { id: 2, action: 'Started JavaScript Advanced course', time: '5 hours ago', type: 'start' },
-    { id: 3, action: 'Submitted assignment for UI/UX', time: '1 day ago', type: 'assignment' },
-    { id: 4, action: 'Earned certificate in React Basics', time: '2 days ago', type: 'certificate' }
-  ]);
-
-  useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const statsData = [
-    {
-      icon: <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
-      iconBg: "bg-blue-100 dark:bg-blue-900",
-      value: stats.activeCourses,
-      label: "Active Courses",
-      change: "+12%",
-      changeColor: "text-green-500 dark:text-green-400"
-    },
-    {
-      icon: <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />,
-      iconBg: "bg-green-100 dark:bg-green-900",
-      value: stats.hoursLearned,
-      label: "Hours Learned",
-      change: "+8%",
-      changeColor: "text-green-500 dark:text-green-400"
-    },
-    {
-      icon: <Award className="w-6 h-6 text-purple-600 dark:text-purple-400" />,
-      iconBg: "bg-purple-100 dark:bg-purple-900",
-      value: stats.completed,
-      label: "Completed",
-      change: "+15%",
-      changeColor: "text-green-500 dark:text-green-400"
-    },
-    {
-      icon: <TrendingUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />,
-      iconBg: "bg-orange-100 dark:bg-orange-900",
-      value: `${stats.averageScore}%`,
-      label: "Average Score",
-      change: "+5%",
-      changeColor: "text-green-500 dark:text-green-400"
-    }
-  ];
-
-  if (loading) {
-    return <AdminPageLayout loading={true} skeletonType="cards" />;
-  }
-
   return (
-    <AdminPageLayout
-      title="Dashboard"
-      subtitle="Welcome back! Here's what's happening with your courses today."
-      icon={Activity}
-      stats={statsData}
-      loading={false}
-      skeletonType="cards"
-    >
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-8 text-white mb-6">
-        <h1 className="text-2xl font-bold mb-2" style={{fontSize: '1.8rem'}}>Welcome back, John! 👋</h1>
-        <p className="text-blue-100 text-lg" style={{fontSize: '1rem'}}>Here's what's happening with your courses today.</p>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* My Courses Section */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white" style={{fontSize: '1.25rem'}}>My Courses</h2>
-              <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">View All</button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {courses.map((course) => (
-                <div key={course.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="text-2xl">{course.image}</div>
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white text-sm" style={{fontSize: '0.875rem'}}>{course.title}</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400" style={{fontSize: '0.75rem'}}>{course.students} students</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400" style={{fontSize: '0.75rem'}}>
-                      <span>Progress</span>
-                      <span>{course.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${course.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-900 dark:via-purple-900 dark:to-pink-900">
+      <div className="text-center px-6">
+        {/* Animated sparkle icon */}
+        <div className="mb-8 flex justify-center">
+          <div className="relative">
+            <div className="absolute inset-0 animate-ping bg-white/30 rounded-full"></div>
+            <div className="relative bg-white/20 backdrop-blur-sm p-6 rounded-full">
+              <Sparkles className="w-16 h-16 text-white animate-pulse" />
             </div>
           </div>
         </div>
 
-        {/* Recent Activity Section */}
-        <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white" style={{fontSize: '1.25rem'}}>Recent Activity</h2>
-              <Activity className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-            </div>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                    activity.type === 'complete' ? 'bg-green-500' :
-                    activity.type === 'start' ? 'bg-blue-500' :
-                    activity.type === 'assignment' ? 'bg-yellow-500' :
-                    'bg-purple-500'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white" style={{fontSize: '0.875rem'}}>{activity.action}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400" style={{fontSize: '0.75rem'}}>{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Welcome text */}
+        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
+          Welcome to
+          <span className="block bg-gradient-to-r from-yellow-200 via-pink-200 to-cyan-200 bg-clip-text text-transparent">
+            LearnClassPedia
+          </span>
+        </h1>
+
+        <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+          Your journey to knowledge starts here. Explore, learn, and grow with us.
+        </p>
+
+        {/* Decorative elements */}
+        <div className="flex justify-center gap-3">
+          <div className="w-3 h-3 bg-yellow-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-3 h-3 bg-pink-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-3 h-3 bg-cyan-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
         </div>
       </div>
-    </AdminPageLayout>
+    </div>
   );
 };
 
