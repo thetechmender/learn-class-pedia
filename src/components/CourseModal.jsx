@@ -858,7 +858,7 @@ const CourseModal = ({
                       <span><strong>Professional Certificate:</strong> Requires sections with Module 1, Module 2, and Module 3. Each section must have lectures.</span>
                     )}
                     {formData.courseTypeId === 2 && (
-                      <span><strong>Certification:</strong> Requires exactly 1 section with lectures.</span>
+                      <span><strong>Certification:</strong> Requires exactly 1 section with lectures. Module name is optional.</span>
                     )}
                     {formData.courseTypeId === 3 && (
                       <span><strong>Short Course:</strong> Uses direct lectures without sections.</span>
@@ -1274,29 +1274,44 @@ const CourseModal = ({
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Module Name - Required for Professional Certificate (Type 1) */}
-                            {formData.courseTypeId === 1 && (
+                            {/* Module Name - Required for Professional Certificate (Type 1) and optional for Certification (Type 2) */}
+                            {(formData.courseTypeId === 1 || formData.courseTypeId === 2) && (
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Module Name *</label>
-                                <select
-                                  value={section.moduleName || ''}
-                                  onChange={(e) => updateSection(index, 'moduleName', e.target.value)}
-                                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                                    formErrors[`section_moduleName_${index}`] ? 'border-red-500' : 'border-gray-300'
-                                  }`}
-                                  disabled={loading}
-                                >
-                                  <option value="">Select Module</option>
-                                  <option value="Module 1">Module 1</option>
-                                  <option value="Module 2">Module 2</option>
-                                  <option value="Module 3">Module 3</option>
-                                </select>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Module Name {formData.courseTypeId === 1 ? '*' : ''}
+                                </label>
+                                {formData.courseTypeId === 1 ? (
+                                  <select
+                                    value={section.moduleName || ''}
+                                    onChange={(e) => updateSection(index, 'moduleName', e.target.value)}
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                                      formErrors[`section_moduleName_${index}`] ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    disabled={loading}
+                                  >
+                                    <option value="">Select Module</option>
+                                    <option value="Module 1">Module 1</option>
+                                    <option value="Module 2">Module 2</option>
+                                    <option value="Module 3">Module 3</option>
+                                  </select>
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={section.moduleName || ''}
+                                    onChange={(e) => updateSection(index, 'moduleName', e.target.value)}
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+                                      formErrors[`section_moduleName_${index}`] ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="Enter module name (optional)"
+                                    disabled={loading}
+                                  />
+                                )}
                                 {formErrors[`section_moduleName_${index}`] && (
                                   <p className="mt-1 text-xs text-red-600">{formErrors[`section_moduleName_${index}`]}</p>
                                 )}
                               </div>
                             )}
-                            <div className={formData.courseTypeId === 1 ? '' : 'md:col-span-2'}>
+                            <div className={(formData.courseTypeId === 1 || formData.courseTypeId === 2) ? '' : 'md:col-span-2'}>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Section Title *</label>
                               <input
                                 type="text"
