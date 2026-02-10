@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { API_CONFIG } from '../config/api';
 import { isProduction } from '../config/appSettings';
+import apiHelper from '../services/apiHelper';
 
 export const useCareerSkills = () => {
   // Global state
@@ -21,13 +22,6 @@ export const useCareerSkills = () => {
 
   // API helper functions
   const getApiUrl = useCallback(() => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local, []);
-  const getAuthHeaders = useCallback(() => {
-    const token = localStorage.getItem('adminToken');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
-  }, []);
 
   // Fetch all career skills with pagination and search
   const getAllCareerSkills = useCallback(async (params = {}) => {
@@ -42,11 +36,9 @@ export const useCareerSkills = () => {
       if (params.search) queryParams.append('search', params.search);
       
       const queryString = queryParams.toString();
-      const url = queryString ? `${getApiUrl()}/careerskills?${queryString}` : `${getApiUrl()}/careerskills`;
+      const endpoint = queryString ? `/careerskills?${queryString}` : '/careerskills';
       
-      const response = await fetch(url, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.get(endpoint);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -83,16 +75,14 @@ export const useCareerSkills = () => {
     } finally {
       setLoading(false);
     }
-  }, [handleError, getApiUrl, getAuthHeaders]);
+  }, [handleError]);
 
   // Get career skill by ID
   const getCareerSkillById = useCallback(async (skillId) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/careerskills/${skillId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.get(`/careerskills/${skillId}`);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -129,18 +119,14 @@ export const useCareerSkills = () => {
     } finally {
       setLoading(false);
     }
-  }, [handleError, getApiUrl, getAuthHeaders]);
+  }, [handleError]);
 
   // Create career skill
   const createCareerSkill = useCallback(async (skillData) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/careerskills`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(skillData)
-      });
+      const response = await apiHelper.post('/careerskills', skillData);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -177,18 +163,14 @@ export const useCareerSkills = () => {
     } finally {
       setLoading(false);
     }
-  }, [handleError, getApiUrl, getAuthHeaders]);
+  }, [handleError]);
 
   // Update career skill
   const updateCareerSkill = useCallback(async (skillId, skillData) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/careerskills/${skillId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(skillData)
-      });
+      const response = await apiHelper.put(`/careerskills/${skillId}`, skillData);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -225,17 +207,14 @@ export const useCareerSkills = () => {
     } finally {
       setLoading(false);
     }
-  }, [handleError, getApiUrl, getAuthHeaders]);
+  }, [handleError]);
 
   // Delete career skill
   const deleteCareerSkill = useCallback(async (skillId) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/careerskills/${skillId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.delete(`/careerskills/${skillId}`);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -272,7 +251,7 @@ export const useCareerSkills = () => {
     } finally {
       setLoading(false);
     }
-  }, [handleError, getApiUrl, getAuthHeaders]);
+  }, [handleError]);
 
   return {
     // Global state

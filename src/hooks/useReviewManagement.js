@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { API_CONFIG } from '../config/api';
 import { isProduction } from '../config/appSettings';
+import apiHelper from '../services/apiHelper';
 
 export const useReviewManagement = () => {
   // Global state
@@ -19,16 +20,6 @@ export const useReviewManagement = () => {
     setError(null);
   }, []);
 
-  // API helper functions
-  const getApiUrl = () => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('adminToken');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
-  };
-
   // Fetch all reviews
   const getAllReviews = useCallback(async (filters = {}) => {
     try {
@@ -43,11 +34,9 @@ export const useReviewManagement = () => {
       if (filters.pageSize) queryParams.append('pageSize', filters.pageSize);
       
       const queryString = queryParams.toString();
-      const url = `${getApiUrl()}/reviews${queryString ? `?${queryString}` : ''}`;
+      const endpoint = `/reviews${queryString ? `?${queryString}` : ''}`;
       
-      const response = await fetch(url, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.get(endpoint);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -68,9 +57,7 @@ export const useReviewManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/reviews/${reviewId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.get(`/reviews/${reviewId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -91,11 +78,7 @@ export const useReviewManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/reviews/${reviewId}/status`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ status })
-      });
+      const response = await apiHelper.patch(`/reviews/${reviewId}/status`, { status });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -116,11 +99,7 @@ export const useReviewManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const apiResponse = await fetch(`${getApiUrl()}/reviews/${reviewId}/respond`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ response })
-      });
+      const apiResponse = await apiHelper.post(`/reviews/${reviewId}/respond`, { response });
       
       if (!apiResponse.ok) {
         throw new Error(`HTTP error! status: ${apiResponse.status}`);
@@ -141,10 +120,7 @@ export const useReviewManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/reviews/${reviewId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.delete(`/reviews/${reviewId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -165,11 +141,7 @@ export const useReviewManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/reviews/${reviewId}/helpful`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ helpful })
-      });
+      const response = await apiHelper.patch(`/reviews/${reviewId}/helpful`, { helpful });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
