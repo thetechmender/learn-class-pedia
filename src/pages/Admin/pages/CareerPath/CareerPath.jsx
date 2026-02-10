@@ -36,7 +36,6 @@ const CareerPath = () => {
     deleteCareerPath
   } = useAdmin();
   const [careerPaths, setCareerPaths] = useState([]);
-  const [allCareerPaths, setAllCareerPaths] = useState([]); // Store all career paths for frontend filtering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -63,30 +62,43 @@ const CareerPath = () => {
     try {
       setLoading(true);
       
-      // Fetch all career paths without filters for frontend filtering
-      const response = await getAllCareerPaths({});
+      const params = {
+        page: currentPage,
+        pageSize: itemsPerPage
+      };
+      
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+      
+      if (selectedDuration !== 'all') {
+        params.duration = selectedDuration;
+      }
+      
+      const response = await getAllCareerPaths(params);
       
       if (response && typeof response === 'object') {
-        let allData = [];
         if (response.data && Array.isArray(response.data)) {
-          allData = response.data;
+          setCareerPaths(response.data);
+          setTotalItems(response.totalCount || response.total || response.data.length);
+          setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.data.length) / itemsPerPage));
         } 
         else if (Array.isArray(response)) {
-          allData = response;
+          setCareerPaths(response);
+          setTotalItems(response.length);
+          setServerTotalPages(Math.ceil(response.length / itemsPerPage));
         }
         else if (response.items && Array.isArray(response.items)) {
-          allData = response.items;
+          setCareerPaths(response.items);
+          setTotalItems(response.totalCount || response.total || response.items.length);
+          setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.items.length) / itemsPerPage));
         }
-        
-        setAllCareerPaths(allData);
-        
-        // Apply frontend filtering
-        const filteredData = applyFrontendFilters(allData, searchTerm, selectedDuration);
-        setCareerPaths(filteredData);
-        setTotalItems(filteredData.length);
-        setServerTotalPages(Math.ceil(filteredData.length / itemsPerPage));
+        else {
+          setCareerPaths([]);
+          setTotalItems(0);
+          setServerTotalPages(0);
+        }
       } else {
-        setAllCareerPaths([]);
         setCareerPaths([]);
         setTotalItems(0);
         setServerTotalPages(0);
@@ -95,54 +107,17 @@ const CareerPath = () => {
       setError(null);
     } catch (err) {
       setError('Failed to fetch career paths. Please try again.');
-      setAllCareerPaths([]);
       setCareerPaths([]);
       setTotalItems(0);
       setServerTotalPages(0);
     } finally {
       setLoading(false);
     }
-  }, [getAllCareerPaths, itemsPerPage]);
-
-  // Frontend filtering function
-  const applyFrontendFilters = useCallback((data, search, duration) => {
-    let filtered = [...data];
-    
-    // Apply title search filter
-    if (search && search.trim()) {
-      const searchLower = search.toLowerCase().trim();
-      filtered = filtered.filter(path => 
-        path.title && path.title.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    // Apply duration filter
-    if (duration !== 'all') {
-      filtered = filtered.filter(path => {
-        const minMonths = path.durationMinMonths || 0;
-        const maxMonths = path.durationMaxMonths || 0;
-        
-        switch (duration) {
-          case 'short':
-            return maxMonths <= 3;
-          case 'medium':
-            return minMonths >= 3 && maxMonths <= 6;
-          case 'long':
-            return minMonths >= 6 && maxMonths <= 12;
-          case 'extended':
-            return minMonths >= 12;
-          default:
-            return true;
-        }
-      });
-    }
-    
-    return filtered;
-  }, []);
+  }, [getAllCareerPaths, currentPage, itemsPerPage, searchTerm, selectedDuration]);
 
   useEffect(() => {
     fetchCareerPaths();
-  }, [fetchCareerPaths]);
+  }, [currentPage, itemsPerPage, searchTerm, selectedDuration]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -156,22 +131,8 @@ const CareerPath = () => {
     }
   }, [showFilters, searchTerm, selectedDuration]);
 
-  // Apply frontend filtering when filters change
-  useEffect(() => {
-    if (allCareerPaths.length > 0) {
-      const filteredData = applyFrontendFilters(allCareerPaths, searchTerm, selectedDuration);
-      setCareerPaths(filteredData);
-      setTotalItems(filteredData.length);
-      setServerTotalPages(Math.ceil(filteredData.length / itemsPerPage));
-      setCurrentPage(1); // Reset to first page when filters change
-    }
-  }, [searchTerm, selectedDuration, allCareerPaths, applyFrontendFilters, itemsPerPage]);
-
   const totalPages = serverTotalPages;
-  // Apply pagination to filtered data
-  const paginatedCareerPaths = Array.isArray(careerPaths) 
-    ? careerPaths.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-    : [];
+  const paginatedCareerPaths = Array.isArray(careerPaths) ? careerPaths : [];
 
   const getUniqueCategories = () => {
     const categories = careerPaths
@@ -531,7 +492,7 @@ const CareerPath = () => {
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
             <div className="flex items-center justify-between">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                Showing <span className="font-semibold">{paginatedCareerPaths.length === 0 ? `0 of ${totalItems}` : `${paginatedCareerPaths.length} of ${totalItems}`}</span> career paths
+                Showing <span className="font-semibold">{careerPaths.length}</span> of {totalItems} career paths
               </p>
               <button
                 onClick={clearFilters}

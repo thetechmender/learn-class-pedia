@@ -1,5 +1,6 @@
 import { API_CONFIG, ENDPOINTS } from '../config/api';
 import { isProduction } from '../config/appSettings';
+import { checkTokenBeforeRequest } from '../utils/authDebug';
 import routesData from '../data/routes.json';
 
 class AdminApiService {
@@ -9,11 +10,23 @@ class AdminApiService {
   }
 
   async request(endpoint, options = {}) {
+    // Check token before making request
+    try {
+      checkTokenBeforeRequest();
+    } catch (error) {
+      // Token is missing or expired
+      console.error('Authentication error:', error.message);
+      // Redirect to login or handle auth error
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+      throw error;
+    }
+    
     const url = `${this.baseURL}${endpoint}`;
     
     const config = {
       headers: {
-        'Content-Type': 'application/json',
         'accept': '*/*',
         'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
         ...options.headers,
@@ -22,10 +35,34 @@ class AdminApiService {
       ...options,
     };
 
+    // Only set Content-Type to application/json if not already set and not FormData
+    if (!config.headers['Content-Type'] && !(options.body instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+
+    // Remove Authorization header if explicitly set to null/undefined (for login)
+    if (options.headers && (options.headers.Authorization === null || options.headers.Authorization === undefined)) {
+      delete config.headers.Authorization;
+      console.log('AdminApi.request - Authorization header removed for login');
+    }
+
+    console.log('AdminApi.request - Final config headers:', config.headers);
+    console.log('AdminApi.request - Body type:', options.body instanceof FormData ? 'FormData' : typeof options.body);
+
     try {
       const response = await fetch(url, config);
 
       if (!response.ok) {
+        // Handle 401 specifically
+        if (response.status === 401) {
+          console.error(' 401 Unauthorized - Token may be invalid or expired');
+          // Clear token and redirect to login
+          localStorage.removeItem('adminToken');
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }
+
         // Try to get error details from response body
         let errorDetails = '';
         try {
@@ -107,9 +144,21 @@ class AdminApiService {
 
   // POST create new category
   async createCategory(categoryData) {
+    // Always use FormData for category creation (server expects it even without images)
+    const formData = new FormData();
+    formData.append('name', categoryData.name);
+    formData.append('description', categoryData.description || '');
+    formData.append('parentCategoryId', categoryData.parentCategoryId || 0);
+    
+    console.log('AdminApi.createCategory - Using FormData for create (even without image)');
+    console.log('AdminApi.createCategory - FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
+    
     return this.request(ENDPOINTS.CATEGORIES_Admin, {
       method: 'POST',
-      body: JSON.stringify(categoryData),
+      body: formData,
     });
   }
 
@@ -426,26 +475,70 @@ class AdminApiService {
   // POST login authentication
   async login(username, password) {
     try {
-      const response = await this.request(ENDPOINTS.AUTH_LOGIN, {
+      // Create a direct fetch request for login without any Authorization header
+      const url = `${this.baseURL}${ENDPOINTS.AUTH_LOGIN}`;
+      const config = {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           username: username,
           password: password
         })
-      });
+      };
+
+      console.log('AdminApi.login - Direct login request to:', url);
+      console.log('AdminApi.login - Headers:', config.headers);
+
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      let responseData;
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        const textData = await response.text();
+        responseData = textData ? { success: true, message: textData } : { success: true };
+      }
 
       // Store the JWT token
-      if (response.token) {
-        localStorage.setItem('adminToken', response.token);
+      if (responseData.token) {
+        localStorage.setItem('adminToken', responseData.token);
       }
 
       return {
         success: true,
-        user: response.user,
-        token: response.token,
-        expiresAt: response.expiresAt
+        user: responseData.user,
+        token: responseData.token,
+        expiresAt: responseData.expiresAt
       };
     } catch (error) {
+      console.error('AdminApi.login - Login failed:', error);
       // Handle authentication errors
       if (error.response?.status === 401) {
         return {
@@ -680,6 +773,7 @@ class AdminApiService {
       // Don't set Content-Type header when using FormData, browser sets it automatically
       headers: {
         'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
       },
       timeout: this.timeout,
     };
@@ -735,6 +829,7 @@ class AdminApiService {
       // Don't set Content-Type header when using FormData, browser sets it automatically
       headers: {
         'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
       },
       timeout: this.timeout,
     };
@@ -790,6 +885,7 @@ class AdminApiService {
       // Don't set Content-Type header when using FormData, browser sets it automatically
       headers: {
         'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
       },
       timeout: this.timeout,
     };
@@ -845,6 +941,7 @@ class AdminApiService {
       // Don't set Content-Type header when using FormData, browser sets it automatically
       headers: {
         'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
       },
       timeout: this.timeout,
     };

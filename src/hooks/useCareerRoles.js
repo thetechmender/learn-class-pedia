@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { API_CONFIG } from '../config/api';
 import { isProduction } from '../config/appSettings';
+import apiHelper from '../services/apiHelper';
 
 export const useCareerRoles = () => {
   // Global state
@@ -21,13 +22,6 @@ export const useCareerRoles = () => {
 
   // API helper functions
   const getApiUrl = () => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('adminToken');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
-  };
 
   // Fetch all career roles with pagination and search
   const getAllCareerRoles = useCallback(async (params = {}) => {
@@ -42,11 +36,9 @@ export const useCareerRoles = () => {
       if (params.search) queryParams.append('search', params.search);
       
       const queryString = queryParams.toString();
-      const url = queryString ? `${getApiUrl()}/career-roles?${queryString}` : `${getApiUrl()}/career-roles`;
+      const endpoint = queryString ? `/career-roles?${queryString}` : '/career-roles';
       
-      const response = await fetch(url, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.get(endpoint);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -90,9 +82,7 @@ export const useCareerRoles = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles/${roleId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.get(`/career-roles/${roleId}`);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -136,11 +126,7 @@ export const useCareerRoles = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(roleData)
-      });
+      const response = await apiHelper.post('/career-roles', roleData);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -184,11 +170,7 @@ export const useCareerRoles = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles/${roleId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(roleData)
-      });
+      const response = await apiHelper.put(`/career-roles/${roleId}`, roleData);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -232,10 +214,7 @@ export const useCareerRoles = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles/${roleId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
+      const response = await apiHelper.delete(`/career-roles/${roleId}`);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -279,14 +258,7 @@ export const useCareerRoles = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-          // Don't set Content-Type for FormData - browser will set it automatically with boundary
-        },
-        body: formData
-      });
+      const response = await apiHelper.postWithFormData('/career-roles', formData);
       
       if (!response.ok) {
         // Try to get error details from response body
@@ -330,14 +302,7 @@ export const useCareerRoles = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles/${roleId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-          // Don't set Content-Type for FormData - browser will set it automatically with boundary
-        },
-        body: formData
-      });
+      const response = await apiHelper.putWithFormData(`/career-roles/${roleId}`, formData);
       
       if (!response.ok) {
         // Try to get error details from response body

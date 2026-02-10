@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { adminApiService } from '../services/AdminApi';
 import { API_CONFIG } from '../config/api';
 import { isProduction } from '../config/appSettings';
+import apiHelper from '../services/apiHelper';
 
 const getApiUrl = () => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
 
@@ -69,13 +70,8 @@ export const useCareerPath = () => {
         console.warn('Career skills endpoint failed, trying /skills endpoint:', careerSkillsError);
         
         // If career skills fails, try the /skills endpoint directly
-        const skillsUrl = `${getApiUrl()}/skills`;
-        const skillsResponse = await fetch(skillsUrl, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-          }
-        });
+        const skillsUrl = `/skills`;
+        const skillsResponse = await apiHelper.get(skillsUrl);
         
         if (skillsResponse.ok) {
           response = await skillsResponse.json();
