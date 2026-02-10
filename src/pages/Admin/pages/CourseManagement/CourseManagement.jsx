@@ -665,6 +665,9 @@ const CourseManagement = () => {
         detailsLoading={detailsLoading}
         loading={filtersLoading}
         searchTerm={debouncedSearchTerm}
+        itemHeight={COURSE_MANAGEMENT_CONSTANTS.ITEM_HEIGHT}
+        containerHeight={COURSE_MANAGEMENT_CONSTANTS.CONTAINER_HEIGHT}
+        bufferSize={searchFilteredCourses.length}
         expandable={true}
         renderExpandedContent={(course, details) => (
           <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">

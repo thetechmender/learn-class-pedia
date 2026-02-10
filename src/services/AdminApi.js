@@ -166,7 +166,7 @@ class AdminApiService {
   }
 
   // GET courses paginated for admin
-  async getCoursesPaginatedAdmin({ page = 1, pageSize = 10 }) {
+  async getCoursesPaginatedAdmin({ page = 1, pageSize = 100 }) {
     const queryParams = new URLSearchParams({
       pageNumber: page,
       pageSize: pageSize
@@ -963,7 +963,7 @@ class AdminApiService {
   }
 
   // Email Template CRUD Operations
-  async getEmailTemplates(page = 1, pageSize = 10) {
+  async getEmailTemplates(page = 1, pageSize = 100) {
     return this.request(`${ENDPOINTS.EMAIL_TEMPLATE_ALL}?page=${page}&pageSize=${pageSize}`);
   }
 

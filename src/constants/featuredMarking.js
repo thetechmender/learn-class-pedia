@@ -1,7 +1,7 @@
 // Featured Marking Constants
 export const FEATURED_MARKING_CONSTANTS = {
   // Pagination
-  DEFAULT_PAGE_SIZE: 12,
+  DEFAULT_PAGE_SIZE: 100,
   INITIAL_PAGE: 1,
   
   // Debounce timing
@@ -9,8 +9,8 @@ export const FEATURED_MARKING_CONSTANTS = {
   
   // Virtual scrolling
   ITEM_HEIGHT: 120,
-  BUFFER_SIZE: 5,
-  CONTAINER_HEIGHT: 600,
+  BUFFER_SIZE: 10,
+  CONTAINER_HEIGHT: 800,
   
   // Toast timing
   TOAST_DURATION: 3000,

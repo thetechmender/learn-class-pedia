@@ -44,7 +44,7 @@ const CategoryManagement = () => {
 
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 10,
+    pageSize: 100,
     totalCount: 0
   });
 

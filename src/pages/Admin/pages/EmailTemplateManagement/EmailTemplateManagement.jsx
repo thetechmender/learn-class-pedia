@@ -5,7 +5,7 @@ import { Mail, Plus, Edit, Trash2, Eye, Search, ChevronLeft, ChevronRight, X, Sa
 
 const EmailTemplateManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(100);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

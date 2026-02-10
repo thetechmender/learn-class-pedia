@@ -1,7 +1,7 @@
 // Course Management Constants
 export const COURSE_MANAGEMENT_CONSTANTS = {
   // Pagination
-  DEFAULT_PAGE_SIZE: 10,
+  DEFAULT_PAGE_SIZE: 100,
   INITIAL_PAGE: 1,
   
   // Debounce timing
@@ -9,8 +9,8 @@ export const COURSE_MANAGEMENT_CONSTANTS = {
   
   // Virtual scrolling
   ITEM_HEIGHT: 80,
-  BUFFER_SIZE: 10,
-  CONTAINER_HEIGHT: 600,
+  BUFFER_SIZE: 15,
+  CONTAINER_HEIGHT: 800,
   
   // Cache timing
   CACHE_TTL: 5 * 60 * 1000, // 5 minutes
@@ -21,7 +21,7 @@ export const COURSE_MANAGEMENT_CONSTANTS = {
   // Filter defaults
   DEFAULT_FILTERS: {
     page: 1,
-    pageSize: 10,
+    pageSize: 100,
     title: '',
     subtitle: '',
     description: '',

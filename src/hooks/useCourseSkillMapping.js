@@ -25,7 +25,7 @@ export const useCourseSkillMapping = () => {
   // Pagination state for courses
   const [pagination, setPagination] = useState({
     currentPage: 1,
-    pageSize: 10,
+    pageSize: 100,
     totalItems: 0,
     totalPages: 0
   });
@@ -309,7 +309,7 @@ export const useCourseSkillMapping = () => {
   }, []);
 
   // Assign courses to skill
-  const assignCoursesToSkill = useCallback(async (skillId, courseIds, currentSearch = '', currentPage = 1, pageSize = 12) => {
+  const assignCoursesToSkill = useCallback(async (skillId, courseIds, currentSearch = '', currentPage = 1, pageSize = 100) => {
     try {
       await adminApiService.syncCoursesToSkill(skillId, courseIds);
       

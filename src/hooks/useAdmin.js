@@ -22,7 +22,7 @@ const setCache = (key, data) => {
   cache.set(key, { data, timestamp: Date.now() });
 };
 
-export const useAdmin = (initialPage = 1, pageSize = 10) => {
+export const useAdmin = (initialPage = 1, pageSize = 100) => {
   const { user } = useAuth();
 
   // Global state
@@ -353,8 +353,8 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
         nestedItems: data, // Keep nested structure for components that need it
         totalCount: response.totalCount || flattenedData.length,
         page: response.page || filters.page || 1,
-        pageSize: response.pageSize || filters.pageSize || 10,
-        totalPages: Math.ceil((response.totalCount || flattenedData.length) / (response.pageSize || filters.pageSize || 10))
+        pageSize: response.pageSize || filters.pageSize || 100,
+        totalPages: Math.ceil((response.totalCount || flattenedData.length) / (response.pageSize || filters.pageSize || 100))
       };
     } catch (err) {
       setError('Failed to fetch categories');
@@ -660,8 +660,8 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
         items: data,
         totalCount: response.totalCount || data.length,
         page: response.page || filters.page || 1,
-        pageSize: response.pageSize || filters.pageSize || 10,
-        totalPages: Math.ceil((response.totalCount || data.length) / (response.pageSize || filters.pageSize || 10))
+        pageSize: response.pageSize || filters.pageSize || 100,
+        totalPages: Math.ceil((response.totalCount || data.length) / (response.pageSize || filters.pageSize || 100))
       };
     } catch (err) {
       setError('Failed to fetch course badges');

@@ -7,6 +7,7 @@ export const courseTableColumns = [
     title: 'Course',
     width: '300px',
     type: 'image',
+    align: 'left',
     render: (value, item, index) => {
       // Debug: Log available image fields
       if (process.env.NODE_ENV === 'development') {
@@ -66,6 +67,7 @@ export const courseTableColumns = [
     title: 'Category',
     width: '150px',
     type: 'badge',
+    align: 'left',
     badgeClass: () => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700'
   },
   {
@@ -73,33 +75,8 @@ export const courseTableColumns = [
     title: 'Level',
     width: '120px',
     type: 'badge',
+    align: 'left',
     badgeClass: () => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-300 dark:border-orange-700'
-  },
-  {
-    key: 'isActive',
-    title: 'Status',
-    width: '100px',
-    type: 'badge',
-    badgeClass: (value) => value ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 dark:border-green-700' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-300 dark:border-red-700',
-    badgeText: (value) => value ? 'Active' : 'Inactive'
-  },
-  {
-    key: 'price',
-    title: 'Price',
-    width: '120px',
-    render: (value, item) => (
-      <div className="text-sm text-gray-900 dark:text-gray-100">
-        {item.discountedPrice < item.price ? (
-          <div className="flex items-center space-x-1">
-            <span className="text-green-600 dark:text-green-400">{item.discountedPrice}</span>
-            <span className="text-gray-400 dark:text-gray-500 line-through text-xs">{item.price}</span>
-          </div>
-        ) : (
-          <span className="font-medium">{item.price}</span>
-        )}
-        <span className="text-gray-500 dark:text-gray-400 ml-1 text-xs">{item.currencyCode}</span>
-      </div>
-    )
   },
   {
     key: 'actions',

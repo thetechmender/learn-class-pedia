@@ -1,6 +1,6 @@
 const appSettings = {
   // Environment: 'development' | 'production'
-  environment: 'development',
+  environment: 'production',
   
   // API Configuration
   api: {
@@ -22,6 +22,11 @@ const appSettings = {
   features: {
     useMockData: true,
     enableAnalytics: false,
+  },
+  
+  // Pagination
+  pagination: {
+    defaultPageSize: 100,
   },
   
   // App Info

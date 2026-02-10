@@ -49,7 +49,7 @@ const CareerPath = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(8);
+  const [itemsPerPage] = useState(100);
   const [totalItems, setTotalItems] = useState(0);
   const [serverTotalPages, setServerTotalPages] = useState(0); 
   

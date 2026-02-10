@@ -22,7 +22,7 @@ export const useCourseBadgeManagement = () => {
   // Pagination state for badges
   const [badgePagination, setBadgePagination] = useState({
     page: 1,
-    pageSize: 10,
+    pageSize: 100,
     totalCount: 0,
     totalPages: 0
   });
@@ -73,7 +73,7 @@ export const useCourseBadgeManagement = () => {
 }, []);
 
 
-const loadData = useCallback(async (page = 1, pageSize = 10) => {
+const loadData = useCallback(async (page = 1, pageSize = 100) => {
   try {
     setLoadingBadges(true);
     setBadgesError(null);
@@ -148,7 +148,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
 
         // Load badges and dropdowns in parallel for better performance
         const [badgesResponse, courseTypesData, courseLevelsData, categoriesData] = await Promise.all([
-          getAllCourseBadgesNew({ page: 1, pageSize: 10 }),
+          getAllCourseBadgesNew({ page: 1, pageSize: 100 }),
           adminApiService.getAllCourseTypes(),
           adminApiService.getAllCourseLevels(),
           adminApiService.getAllCategories()
@@ -158,7 +158,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         setBadges(badgesResponse.items || []);
         setBadgePagination({
           page: badgesResponse.page || 1,
-          pageSize: badgesResponse.pageSize || 10,
+          pageSize: badgesResponse.pageSize || 100,
           totalCount: badgesResponse.totalCount || 0,
           totalPages: badgesResponse.totalPages || 0
         });

@@ -17,8 +17,8 @@ const UniversalVirtualizedTable = React.forwardRef(({
   loading = false,
   searchTerm = '',
   itemHeight = 80,
-  containerHeight = 600,
-  bufferSize = 5,
+  containerHeight = 800,
+  bufferSize = 15,
   expandable = false,
   renderExpandedContent,
   emptyMessage = 'No data found',
@@ -303,10 +303,33 @@ const UniversalVirtualizedTable = React.forwardRef(({
   
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${className} ${theme === 'dark' ? 'dark' : ''}`}>
+      {/* Fixed Header */}
+      <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <table className="min-w-full">
+          <thead>
+            <tr>
+              {columns.map((column, index) => (
+                <th 
+                  key={index}
+                  className={`px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
+                    column.align === 'center' ? 'text-center' : 
+                    column.align === 'right' ? 'text-right' : 'text-left'
+                  }`}
+                  style={{ width: column.width }}
+                >
+                  {column.title}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        </table>
+      </div>
+      
+      {/* Scrollable Body */}
       <div 
         ref={containerRef}
         onScroll={handleScroll}
-        style={{ height: containerHeight, overflow: 'auto' }}
+        style={{ height: containerHeight - 44, overflow: 'auto' }}
         className="relative"
       >
         {/* Spacer for virtual scrolling */}
@@ -321,22 +344,6 @@ const UniversalVirtualizedTable = React.forwardRef(({
             }}
           >
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
-                <tr>
-                  {columns.map((column, index) => (
-                    <th 
-                      key={index}
-                      className={`px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
-                        column.align === 'center' ? 'text-center' : 
-                        column.align === 'right' ? 'text-right' : 'text-left'
-                      }`}
-                      style={{ width: column.width }}
-                    >
-                      {column.title}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {visibleItems.map((item, index) => renderRow(item, index))}
               </tbody>

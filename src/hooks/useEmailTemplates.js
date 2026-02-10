@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { adminApiService } from '../services/AdminApi';
 
-export const useEmailTemplates = (page = 1, pageSize = 10) => {
+export const useEmailTemplates = (page = 1, pageSize = 100) => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 10,
+    pageSize: 100,
     totalCount: 0,
   });
 

@@ -1,7 +1,7 @@
 // Category Management Constants
 export const CATEGORY_MANAGEMENT_CONSTANTS = {
   // Pagination
-  DEFAULT_PAGE_SIZE: 10,
+  DEFAULT_PAGE_SIZE: 100,
   INITIAL_PAGE: 1,
   
   // Debounce timing
@@ -9,8 +9,8 @@ export const CATEGORY_MANAGEMENT_CONSTANTS = {
   
   // Virtual scrolling
   ITEM_HEIGHT: 80,
-  BUFFER_SIZE: 10,
-  CONTAINER_HEIGHT: 600,
+  BUFFER_SIZE: 15,
+  CONTAINER_HEIGHT: 800,
   
   // Toast timing
   TOAST_DURATION: 3000,
