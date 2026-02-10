@@ -36,13 +36,16 @@ const CareerPath = () => {
     deleteCareerPath
   } = useAdmin();
   const [careerPaths, setCareerPaths] = useState([]);
+  const [allCareerPaths, setAllCareerPaths] = useState([]); // Store all career paths for frontend filtering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedDuration, setSelectedDuration] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // Temporary filter states
+  const [tempSearchTerm, setTempSearchTerm] = useState('');
+  const [tempSelectedDuration, setTempSelectedDuration] = useState('all');
   const [hoveredCard, setHoveredCard] = useState(null);
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,49 +63,30 @@ const CareerPath = () => {
     try {
       setLoading(true);
       
-      const params = {
-        page: currentPage,
-        pageSize: itemsPerPage
-      };
-      
-      if (searchTerm) {
-        params.search = searchTerm;
-      }
-      
-      if (selectedLevel !== 'all') {
-        params.level = selectedLevel;
-      }
-      if (selectedDuration !== 'all') {
-        params.duration = selectedDuration;
-      }
-      if (selectedCategory !== 'all') {
-        params.category = selectedCategory;
-      }
-      
-      const response = await getAllCareerPaths(params);
+      // Fetch all career paths without filters for frontend filtering
+      const response = await getAllCareerPaths({});
       
       if (response && typeof response === 'object') {
+        let allData = [];
         if (response.data && Array.isArray(response.data)) {
-          setCareerPaths(response.data);
-          setTotalItems(response.totalCount || response.total || response.data.length);
-          setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.data.length) / itemsPerPage));
+          allData = response.data;
         } 
         else if (Array.isArray(response)) {
-          setCareerPaths(response);
-          setTotalItems(response.length);
-          setServerTotalPages(Math.ceil(response.length / itemsPerPage));
+          allData = response;
         }
         else if (response.items && Array.isArray(response.items)) {
-          setCareerPaths(response.items);
-          setTotalItems(response.totalCount || response.total || response.items.length);
-          setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.items.length) / itemsPerPage));
+          allData = response.items;
         }
-        else {
-          setCareerPaths([]);
-          setTotalItems(0);
-          setServerTotalPages(0);
-        }
+        
+        setAllCareerPaths(allData);
+        
+        // Apply frontend filtering
+        const filteredData = applyFrontendFilters(allData, searchTerm, selectedDuration);
+        setCareerPaths(filteredData);
+        setTotalItems(filteredData.length);
+        setServerTotalPages(Math.ceil(filteredData.length / itemsPerPage));
       } else {
+        setAllCareerPaths([]);
         setCareerPaths([]);
         setTotalItems(0);
         setServerTotalPages(0);
@@ -111,30 +95,83 @@ const CareerPath = () => {
       setError(null);
     } catch (err) {
       setError('Failed to fetch career paths. Please try again.');
+      setAllCareerPaths([]);
       setCareerPaths([]);
       setTotalItems(0);
       setServerTotalPages(0);
     } finally {
       setLoading(false);
     }
-  }, [getAllCareerPaths, currentPage, itemsPerPage, searchTerm, selectedLevel, selectedDuration, selectedCategory]);
+  }, [getAllCareerPaths, itemsPerPage]);
+
+  // Frontend filtering function
+  const applyFrontendFilters = useCallback((data, search, duration) => {
+    let filtered = [...data];
+    
+    // Apply title search filter
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase().trim();
+      filtered = filtered.filter(path => 
+        path.title && path.title.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Apply duration filter
+    if (duration !== 'all') {
+      filtered = filtered.filter(path => {
+        const minMonths = path.durationMinMonths || 0;
+        const maxMonths = path.durationMaxMonths || 0;
+        
+        switch (duration) {
+          case 'short':
+            return maxMonths <= 3;
+          case 'medium':
+            return minMonths >= 3 && maxMonths <= 6;
+          case 'long':
+            return minMonths >= 6 && maxMonths <= 12;
+          case 'extended':
+            return minMonths >= 12;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    return filtered;
+  }, []);
 
   useEffect(() => {
     fetchCareerPaths();
-  }, [currentPage, itemsPerPage, searchTerm, selectedLevel, selectedDuration, selectedCategory]);
+  }, [fetchCareerPaths]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory]);
+  }, [searchTerm, selectedDuration]);
 
+  // Sync temporary states when filters are opened
   useEffect(() => {
-    if (currentPage === 1) {
-      fetchCareerPaths();
+    if (showFilters) {
+      setTempSearchTerm(searchTerm);
+      setTempSelectedDuration(selectedDuration);
     }
-  }, [searchTerm, selectedLevel, selectedDuration, selectedCategory, currentPage, fetchCareerPaths]);
+  }, [showFilters, searchTerm, selectedDuration]);
+
+  // Apply frontend filtering when filters change
+  useEffect(() => {
+    if (allCareerPaths.length > 0) {
+      const filteredData = applyFrontendFilters(allCareerPaths, searchTerm, selectedDuration);
+      setCareerPaths(filteredData);
+      setTotalItems(filteredData.length);
+      setServerTotalPages(Math.ceil(filteredData.length / itemsPerPage));
+      setCurrentPage(1); // Reset to first page when filters change
+    }
+  }, [searchTerm, selectedDuration, allCareerPaths, applyFrontendFilters, itemsPerPage]);
 
   const totalPages = serverTotalPages;
-  const paginatedCareerPaths = Array.isArray(careerPaths) ? careerPaths : [];
+  // Apply pagination to filtered data
+  const paginatedCareerPaths = Array.isArray(careerPaths) 
+    ? careerPaths.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    : [];
 
   const getUniqueCategories = () => {
     const categories = careerPaths
@@ -145,17 +182,22 @@ const CareerPath = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedLevel('all');
     setSelectedDuration('all');
-    setSelectedCategory('all');
+    setTempSearchTerm('');
+    setTempSelectedDuration('all');
+  };
+
+  const applyFilters = () => {
+    setSearchTerm(tempSearchTerm);
+    setSelectedDuration(tempSelectedDuration);
+    setCurrentPage(1);
+    setShowFilters(false);
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (searchTerm) count++;
-    if (selectedLevel !== 'all') count++;
     if (selectedDuration !== 'all') count++;
-    if (selectedCategory !== 'all') count++;
     return count;
   };
 
@@ -438,31 +480,31 @@ const CareerPath = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
               <button
-                onClick={clearFilters}
+                onClick={() => {
+                  setTempSearchTerm('');
+                  setTempSelectedDuration('all');
+                }}
                 className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Clear All
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
-                <select
-                  value={selectedLevel}
-                  onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="all">All Levels</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={tempSearchTerm}
+                  onChange={(e) => setTempSearchTerm(e.target.value)}
+                  placeholder="Search by title..."
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration</label>
                 <select
-                  value={selectedDuration}
-                  onChange={(e) => setSelectedDuration(e.target.value)}
+                  value={tempSelectedDuration}
+                  onChange={(e) => setTempSelectedDuration(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 >
                   <option value="all">All Durations</option>
@@ -472,24 +514,9 @@ const CareerPath = () => {
                   <option value="extended">12+ months</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="all">All Categories</option>
-                  {getUniqueCategories().map(category => (
-                    <option key={category} value={category.toLowerCase()}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-end">
+              <div className="flex items-end md:col-span-2">
                 <button
-                  onClick={() => setShowFilters(false)}
+                  onClick={applyFilters}
                   className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
                 >
                   Apply Filters
@@ -500,11 +527,11 @@ const CareerPath = () => {
         </div>
       )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {searchTerm || selectedLevel !== 'all' || selectedDuration !== 'all' || selectedCategory !== 'all' ? (
+        {searchTerm || selectedDuration !== 'all' ? (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
             <div className="flex items-center justify-between">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                Showing <span className="font-semibold">{careerPaths.length}</span> of {totalItems} career paths
+                Showing <span className="font-semibold">{paginatedCareerPaths.length === 0 ? `0 of ${totalItems}` : `${paginatedCareerPaths.length} of ${totalItems}`}</span> career paths
               </p>
               <button
                 onClick={clearFilters}
@@ -536,7 +563,7 @@ const CareerPath = () => {
                 Create Your First Career Path
               </button>
             )}
-            {(searchTerm || selectedLevel !== 'all' || selectedDuration !== 'all' || selectedCategory !== 'all') && (
+            {(searchTerm || selectedDuration !== 'all') && (
               <button
                 onClick={clearFilters}
                 className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"

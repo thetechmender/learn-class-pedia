@@ -1,7 +1,7 @@
-import { Menu, Search, Bell, Mail, Sun, Moon, CircleUser, ChevronDown, Star, Key } from 'lucide-react';
+import { Menu, Search, Sun, Moon, CircleUser, ChevronDown, Star, Key } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export function Navbar({ onMenuClick }) {
@@ -9,6 +9,7 @@ export function Navbar({ onMenuClick }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -18,6 +19,19 @@ export function Navbar({ onMenuClick }) {
   const handleToggle = () => {
     toggleTheme();
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-5 py-2 shadow-sm">
@@ -71,19 +85,9 @@ export function Navbar({ onMenuClick }) {
               <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             )}
           </button>
-          
-          <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors hidden sm:flex">
-            <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">2</span>
-          </button>
-          
-          <button className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors hidden sm:flex">
-            <Mail className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">1</span>
-          </button>
 
           {/* User Profile Section */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
               className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors min-w-0"

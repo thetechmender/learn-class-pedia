@@ -395,7 +395,7 @@ const CareerRoles = () => {
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Name</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Slug</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Description</th>
-                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Icon</th>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Image</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Actions</th>
                   </tr>
                 </thead>
@@ -408,7 +408,7 @@ const CareerRoles = () => {
                       <td className={`px-6 py-4 text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{role.slug}</td>
                       <td className={`px-6 py-4 text-sm max-w-xs truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{role.description || 'No description'}</td>
                       <td className="px-6 py-4">
-                        {role.iconUrl ? <img src={role.iconUrl} alt={role.name} className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-600" /> : <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>No icon</span>}
+                        {role.iconUrl ? <img src={role.iconUrl} alt={role.name} className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-600" /> : <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>No Image</span>}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-1">
@@ -519,7 +519,7 @@ const CareerRoles = () => {
             </div>
             
             <div>
-              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
               <div className="space-y-3">
                 {/* File Upload */}
                 <div className="flex items-center space-x-3">
@@ -555,7 +555,7 @@ const CareerRoles = () => {
                         disabled={modalError ? true : false}
                       >
                         <Upload size={20} />
-                        <span>Upload Icon Image</span>
+                        <span>Upload  Image</span>
                       </button>
                     </div>
                   </div>
@@ -581,7 +581,7 @@ const CareerRoles = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                        {formData.iconFile ? 'New  Image' : 'Current Image'}
                       </p>
                       {formData.iconFile && (
                         <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
@@ -663,7 +663,7 @@ const CareerRoles = () => {
             </div>
             
             <div>
-              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
               <div className="space-y-3">
                 {/* File Upload */}
                 <div className="flex items-center space-x-3">
@@ -699,7 +699,7 @@ const CareerRoles = () => {
                         disabled={modalError ? true : false}
                       >
                         <Upload size={20} />
-                        <span>Upload New Icon</span>
+                        <span>Upload New Image</span>
                       </button>
                     </div>
                   </div>
@@ -725,7 +725,7 @@ const CareerRoles = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                        {formData.iconFile ? 'New Image uploaded' : 'Current Image'}
                       </p>
                       {formData.iconFile && (
                         <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
@@ -779,7 +779,7 @@ const CareerRoles = () => {
             
             {selectedCareerRole.iconUrl && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Icon</h3>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Image</h3>
                 <div className="mt-1">
                   <img 
                     src={selectedCareerRole.iconUrl} 

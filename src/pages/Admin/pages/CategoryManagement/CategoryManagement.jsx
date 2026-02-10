@@ -376,7 +376,7 @@ const CategoryManagement = () => {
             </span>
           </td>
           <td className="px-6 py-4">
-            {category.iconUrl ? <img src={category.iconUrl} alt={category.name} className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-600" /> : <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>No icon</span>}
+            {category.iconUrl ? <img src={category.iconUrl} alt={category.name} className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-600" /> : <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>No Image</span>}
           </td>
           <td className="px-6 py-4">
             <div className="flex items-center space-x-1">
@@ -586,7 +586,7 @@ const CategoryManagement = () => {
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Description</th>
                     <th className={`px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Sort Order</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Status</th>
-                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Icon</th>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Image</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Actions</th>
                   </tr>
                 </thead>
@@ -723,7 +723,7 @@ const CategoryManagement = () => {
             </div>
             
             <div>
-              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <div className="flex-1">
@@ -758,7 +758,7 @@ const CategoryManagement = () => {
                         disabled={modalError ? true : false}
                       >
                         <Upload size={20} />
-                        <span>Upload Icon Image</span>
+                        <span>Upload  Image</span>
                       </button>
                     </div>
                   </div>
@@ -783,7 +783,7 @@ const CategoryManagement = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                        {formData.iconFile ? 'New Image uploaded' : 'Current Image'}
                       </p>
                       {formData.iconFile && (
                         <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
@@ -878,7 +878,7 @@ const CategoryManagement = () => {
             </div>
             
             <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Image</label>
               <div className="space-y-3">
                 {/* File Upload */}
                 <div className="flex items-center space-x-3">
@@ -914,7 +914,7 @@ const CategoryManagement = () => {
                         disabled={modalError ? true : false}
                       >
                         <Upload size={20} />
-                        <span>Upload New Icon</span>
+                        <span>Upload New Image</span>
                       </button>
                     </div>
                   </div>
@@ -940,7 +940,7 @@ const CategoryManagement = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                        {formData.iconFile ? 'New Image uploaded' : 'Current Image'}
                       </p>
                       {formData.iconFile && (
                         <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
@@ -1016,7 +1016,7 @@ const CategoryManagement = () => {
             
             {selectedCategory.iconUrl && (
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Icon</h3>
+                <h3 className="text-sm font-medium text-gray-500">Image</h3>
                 <div className="mt-1">
                   <img 
                     src={selectedCategory.iconUrl} 

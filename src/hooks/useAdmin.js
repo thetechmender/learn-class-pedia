@@ -450,11 +450,11 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
 
   // ==================== CAREER PATH OPERATIONS ====================
 
-  const getAllCareerPaths = useCallback(async () => {
+  const getAllCareerPaths = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCareerPaths();
+      const data = await adminApiService.getAllCareerPaths(params);
       return data;
     } catch (err) {
       setError('Failed to fetch career paths');
