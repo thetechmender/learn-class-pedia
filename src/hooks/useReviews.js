@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiService } from '../services/api';
+import { adminApiService } from '../services/AdminApi';
 
 export const useReviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -21,9 +21,9 @@ export const useReviews = () => {
       setError(null);
       
       const [reviewsData, coursesData, statsData] = await Promise.all([
-        apiService.getAllReviews(filters),
-        apiService.getReviewCourses(),
-        apiService.getReviewsStatistics()
+        adminApiService.getAllReviews(filters),
+        adminApiService.getReviewCourses(),
+        adminApiService.getReviewsStatistics()
       ]);
       
       setReviews(reviewsData);
@@ -60,7 +60,7 @@ export const useReviews = () => {
   // Update review status
   const updateReviewStatus = useCallback(async (reviewId, status) => {
     try {
-      const updatedReview = await apiService.updateReviewStatus(reviewId, status);
+      const updatedReview = await adminApiService.updateReviewStatus(reviewId, status);
       setReviews(prev => 
         prev.map(review => 
           review.id === reviewId ? updatedReview : review
@@ -90,7 +90,7 @@ export const useReviews = () => {
   // Update review content
   const updateReview = useCallback(async (reviewId, reviewData) => {
     try {
-      const updatedReview = await apiService.updateReview(reviewId, reviewData);
+      const updatedReview = await adminApiService.updateReview(reviewId, reviewData);
       setReviews(prev => 
         prev.map(review => 
           review.id === reviewId ? updatedReview : review
@@ -106,7 +106,7 @@ export const useReviews = () => {
   // Delete review
   const deleteReview = useCallback(async (reviewId) => {
     try {
-      const deletedReview = await apiService.deleteReview(reviewId);
+      const deletedReview = await adminApiService.deleteReview(reviewId);
       setReviews(prev => prev.filter(review => review.id !== reviewId));
       
       // Update statistics
@@ -130,7 +130,7 @@ export const useReviews = () => {
   // Create new review
   const createReview = useCallback(async (reviewData) => {
     try {
-      const newReview = await apiService.createReview(reviewData);
+      const newReview = await adminApiService.createReview(reviewData);
       setReviews(prev => [newReview, ...prev]);
       
       // Update statistics
@@ -152,7 +152,7 @@ export const useReviews = () => {
   // Get review by ID
   const getReviewById = useCallback(async (reviewId) => {
     try {
-      return await apiService.getReviewById(reviewId);
+      return await adminApiService.getReviewById(reviewId);
     } catch (err) {
       setError(err.message || 'Failed to get review');
       throw err;
@@ -162,7 +162,7 @@ export const useReviews = () => {
   // Get reviews by course
   const getReviewsByCourse = useCallback(async (courseId) => {
     try {
-      return await apiService.getReviewsByCourse(courseId);
+      return await adminApiService.getReviewsByCourse(courseId);
     } catch (err) {
       setError(err.message || 'Failed to get course reviews');
       throw err;
