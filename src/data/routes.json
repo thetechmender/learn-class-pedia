@@ -7,7 +7,6 @@
       "label": "Dashboard",
       "icon": "LayoutDashboard",
       "category": "main",
-      "allowedRoles": [1, 2],
       "order": 1
     },
     {
@@ -17,7 +16,6 @@
       "label": "Course Management",
       "icon": "BookOpen",
       "category": "management",
-      "allowedRoles": [1],
       "order": 2
     },
     {
@@ -27,7 +25,6 @@
       "label": "Career Path",
       "icon": "TrendingUp",
       "category": "management",
-      "allowedRoles": [1],
       "order": 3
     },
     {
@@ -37,7 +34,6 @@
       "label": "Featured Marking",
       "icon": "Star",
       "category": "management",
-      "allowedRoles": [1],
       "order": 4
     },
     {
@@ -47,7 +43,6 @@
       "label": "Review Management",
       "icon": "MessageSquare",
       "category": "management",
-      "allowedRoles": [1, 2],
       "order": 5
     },
     {
@@ -57,7 +52,6 @@
       "label": "Course URL Management",
       "icon": "Link2",
       "category": "management",
-      "allowedRoles": [1],
       "order": 6
     },
     {
@@ -67,7 +61,6 @@
       "label": "Category Management",
       "icon": "FolderTree",
       "category": "management",
-      "allowedRoles": [1],
       "order": 7
     },
     {
@@ -77,7 +70,6 @@
       "label": "Email Templates",
       "icon": "Mail",
       "category": "management",
-      "allowedRoles": [1],
       "order": 8
     },
     {
@@ -87,28 +79,16 @@
       "label": "Career Roles",
       "icon": "Briefcase",
       "category": "management",
-      "allowedRoles": [1],
       "order": 9
     },
     {
-      "id": "my-courses",
-      "path": "/admin/my-courses",
-      "component": "MyCourses",
-      "label": "My Courses",
-      "icon": "BookOpen",
+      "id": "change-password",
+      "path": "/admin/change-password",
+      "component": "ChangePassword",
+      "label": "Change Password",
+      "icon": "Key",
       "category": "main",
-      "allowedRoles": [2],
-      "order": 10
-    },
-    {
-      "id": "my-profile",
-      "path": "/admin/my-profile",
-      "component": "MyProfile",
-      "label": "My Profile",
-      "icon": "User",
-      "category": "main",
-      "allowedRoles": [1, 2],
-      "order": 11
+      "order": 2
     }
   ],
   "roles": [

@@ -9,16 +9,16 @@ const Login = () => {
   const { login: adminLogin } = useAdmin();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  const validateUsername = (username) => {
+    // Username should be at least 3 characters
+    return username.length >= 3;
   };
 
   const validatePassword = (password) => {
@@ -29,11 +29,11 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email address is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    // Username validation
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (!validateUsername(formData.username)) {
+      newErrors.username = 'Username must be at least 3 characters long';
     }
 
     // Password validation
@@ -67,13 +67,13 @@ const Login = () => {
     const { name, value } = e.target;
     const newErrors = { ...errors };
 
-    if (name === 'email') {
+    if (name === 'username') {
       if (!value.trim()) {
-        newErrors.email = 'Email address is required';
-      } else if (!validateEmail(value)) {
-        newErrors.email = 'Please enter a valid email address';
+        newErrors.username = 'Username is required';
+      } else if (!validateUsername(value)) {
+        newErrors.username = 'Username must be at least 3 characters long';
       } else {
-        delete newErrors.email;
+        delete newErrors.username;
       }
     }
 
@@ -102,7 +102,7 @@ const Login = () => {
 
     try {
     
-      const response = await adminLogin(formData.email, formData.password);
+      const response = await adminLogin(formData.username, formData.password);
       
       if (response.success) {
         login(response.user);
@@ -208,22 +208,22 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
-                <label htmlFor="email">Email Address</label>
+                <label htmlFor="username">Username</label>
                 <div className="input-container">
                   <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     required
-                    placeholder="admin@example.com or student@example.com"
-                    className={errors.email ? 'error' : ''}
+                    placeholder="Enter your username"
+                    className={errors.username ? 'error' : ''}
                   />
-                  <span className="input-icon">📧</span>
+                  <span className="input-icon">�</span>
                 </div>
-                {errors.email && <div className="field-error">{errors.email}</div>}
+                {errors.username && <div className="field-error">{errors.username}</div>}
               </div>
 
               <div className="form-group">

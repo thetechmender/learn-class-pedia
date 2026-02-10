@@ -424,30 +424,73 @@ class AdminApiService {
   }
 
   // POST login authentication
-  async login(email, password) {
-    await new Promise(resolve => setTimeout(resolve, 500)); // simulate network delay
+  async login(username, password) {
+    try {
+      const response = await this.request(ENDPOINTS.AUTH_LOGIN, {
+        method: 'POST',
+        body: JSON.stringify({
+          username: username,
+          password: password
+        })
+      });
 
-    // Filter user from mock data
-    const user = routesData.users.find(u => u.email === email);
-
-    if (user && password === 'password') { // mock password check
-      // Get role information from mock roles data
-      const role = routesData.roles.find(r => r.id === user.roleId);
+      // Store the JWT token
+      if (response.token) {
+        localStorage.setItem('adminToken', response.token);
+      }
 
       return {
         success: true,
-        user: {
-          ...user,
-          role: role || null
-        },
-        token: 'mock-jwt-token'
+        user: response.user,
+        token: response.token,
+        expiresAt: response.expiresAt
+      };
+    } catch (error) {
+      // Handle authentication errors
+      if (error.response?.status === 401) {
+        return {
+          success: false,
+          message: 'Invalid username or password'
+        };
+      }
+      
+      return {
+        success: false,
+        message: error.message || 'Login failed'
       };
     }
+  }
 
-    return {
-      success: false,
-      message: 'Invalid credentials'
-    };
+  // POST change password
+  async changePassword(currentPassword, newPassword, confirmPassword) {
+    try {
+      const response = await this.request(ENDPOINTS.AUTH_CHANGE_PASSWORD, {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: currentPassword,
+          newPassword: newPassword,
+          confirmPassword: confirmPassword
+        })
+      });
+
+      return {
+        success: true,
+        message: response.message || 'Password changed successfully'
+      };
+    } catch (error) {
+      // Handle password change errors
+      if (error.response?.status === 400) {
+        return {
+          success: false,
+          message: error.response.data || 'Current password is incorrect'
+        };
+      }
+      
+      return {
+        success: false,
+        message: error.message || 'Password change failed'
+      };
+    }
   }
 
   // GET user by email
@@ -903,29 +946,17 @@ class AdminApiService {
   }
 
   // GET routes filtered by user role
-  async getRoutesByRole(roleId) {
-    if (!roleId) {
-      console.error('AdminApi - roleId is required but not provided');
-      throw new Error('Role ID is required');
-    }
-    
-    if (!routesData || !routesData.routes) {
-      throw new Error('Routes data not available');
-    }
-    
+  async getRoutesByRole(roleId = null) {
     await new Promise(resolve => setTimeout(resolve, 300));
-    const filteredRoutes = routesData.routes.filter(route => 
-      route.allowedRoles && route.allowedRoles.includes(parseInt(roleId))
-    ).sort((a, b) => a.order - b.order);
-    
-    return filteredRoutes;
+    // Return all routes without role filtering
+    return routesData.routes.sort((a, b) => a.order - b.order);
   }
 
   // GET routes by category
   async getRoutesByCategory(category, roleId) {
     await new Promise(resolve => setTimeout(resolve, 300));
     const filteredRoutes = routesData.routes.filter(route => 
-      route.category === category && route.allowedRoles.includes(roleId)
+      route.category === category
     ).sort((a, b) => a.order - b.order);
     
     return filteredRoutes;

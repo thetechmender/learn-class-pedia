@@ -552,14 +552,28 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
 
   // ==================== AUTHENTICATION OPERATIONS ====================
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (username, password) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.login(email, password);
+      const data = await adminApiService.login(username, password);
       return data;
     } catch (err) {
       setError('Failed to login');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const changePassword = useCallback(async (currentPassword, newPassword, confirmPassword) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminApiService.changePassword(currentPassword, newPassword, confirmPassword);
+      return data;
+    } catch (err) {
+      setError('Failed to change password');
       throw err;
     } finally {
       setLoading(false);
@@ -734,6 +748,7 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
 
     // Authentication operations
     login,
+    changePassword,
 
     // Route operations
     getRoutesByRole,

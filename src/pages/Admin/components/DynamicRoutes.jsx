@@ -9,8 +9,7 @@ import CareerPathDetail from '../pages/CareerPath/CareerPathDetail';
 import FeaturedMarking from '../pages/FeaturedMarking/FeaturedMarking';
 import Reviews from '../pages/Reviews/Reviews';
 import CourseUrlManagement from '../pages/CourseUrlManagement/CourseUrlManagement';
-import MyCourses from '../pages/MyCourses/MyCourses';
-import MyProfile from '../pages/MyProfile/MyProfile';
+import ChangePassword from '../pages/ChangePassword/ChangePassword';
 import Settings from '../pages/Settings/Settings';
 import Notifications from '../pages/Notifications/Notifications';
 import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
@@ -28,8 +27,7 @@ const componentMap = {
   FeaturedMarking,
   Reviews,
   CourseUrlManagement,
-  MyCourses,
-  MyProfile,
+  ChangePassword,
   Settings,
   Notifications,
   CategoryManagement,
@@ -76,16 +74,10 @@ const DynamicRoutes = () => {
 
   useEffect(() => {
     const loadRoutes = async () => {
-      // Check if user exists and has roleId
+      // Check if user exists
       if (!user) {
         setLoading(false);
         setError('No user authenticated');
-        return;
-      }
-
-      if (!user.roleId) {
-        setLoading(false);
-        setError('User role not found');
         return;
       }
 
@@ -93,7 +85,7 @@ const DynamicRoutes = () => {
       setError(null);
 
       try {
-        const userRoutes = await getRoutesByRole(user.roleId);
+        const userRoutes = await getRoutesByRole();
         
         if (!userRoutes || !Array.isArray(userRoutes)) {
           throw new Error('Invalid routes data received');

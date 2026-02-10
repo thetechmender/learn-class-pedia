@@ -1,4 +1,4 @@
-import { Menu, Search, Bell, Mail, Sun, Moon, CircleUser, ChevronDown, Star } from 'lucide-react';
+import { Menu, Search, Bell, Mail, Sun, Moon, CircleUser, ChevronDown, Star, Key } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useState } from 'react';
@@ -90,10 +90,10 @@ export function Navbar({ onMenuClick }) {
             >
               <div className="text-left hidden sm:block min-w-0">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                  {user?.name || 'Admin User'}
+                  {user?.username || 'Admin User'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user?.role?.name || 'UI Designer'}
+                  {user?.role || 'UI Designer'}
                 </p>
               </div>
               
@@ -106,7 +106,7 @@ export function Navbar({ onMenuClick }) {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
-                    {user?.name?.charAt(0).toUpperCase() || 'A'}
+                    {user?.username?.charAt(0).toUpperCase() || 'A'}
                   </div>
                 )}
               </div>
@@ -119,20 +119,21 @@ export function Navbar({ onMenuClick }) {
               <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
                 <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {user?.name || 'Admin User'}
+                    {user?.username || 'Admin User'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {user?.email || 'admin@example.com'}
+                    {user?.role || 'admin@example.com'}
                   </p>
                 </div>
                 <button
                   onClick={() => {
-                    navigate('/admin/my-profile');
+                    navigate('/admin/change-password');
                     setIsUserDropdownOpen(false);
                   }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                 >
-                  View Profile
+                  <Key className="w-4 h-4" />
+                  Change Password
                 </button>
                 <button
                   onClick={() => {
