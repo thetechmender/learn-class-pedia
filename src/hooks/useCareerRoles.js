@@ -274,6 +274,108 @@ export const useCareerRoles = () => {
     }
   }, [handleError]);
 
+  // Create career role with file
+  const createCareerRoleWithFile = useCallback(async (formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${getApiUrl()}/career-roles`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          // Don't set Content-Type for FormData - browser will set it automatically with boundary
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
+      }
+      
+      // Handle successful response - check if it has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (err) {
+      handleError('Failed to create career role', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
+  // Update career role with file
+  const updateCareerRoleWithFile = useCallback(async (roleId, formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${getApiUrl()}/career-roles/${roleId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          // Don't set Content-Type for FormData - browser will set it automatically with boundary
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
+      }
+      
+      // Handle successful response - check if it has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (err) {
+      handleError('Failed to update career role', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
   return {
     // Global state
     loading,
@@ -285,6 +387,8 @@ export const useCareerRoles = () => {
     getCareerRoleById,
     createCareerRole,
     updateCareerRole,
+    createCareerRoleWithFile,
+    updateCareerRoleWithFile,
     deleteCareerRole,
   };
 };

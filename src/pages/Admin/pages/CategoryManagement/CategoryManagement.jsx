@@ -38,7 +38,8 @@ const CategoryManagement = () => {
     updateCategory,
     deleteCategory,
     createCategoryWithFile,
-    updateCategoryWithFile
+    updateCategoryWithFile,
+    getCategoryById
   } = useAdmin();
 
   const [pagination, setPagination] = useState({
@@ -71,7 +72,8 @@ const CategoryManagement = () => {
     description: '',
     parentCategoryId: 0,
     iconUrl: '',
-    iconFile: null
+    iconFile: null,
+    IsIconRemoved: false
   });
   const fetchCategories = useCallback(async () => {
     try {
@@ -167,22 +169,14 @@ const CategoryManagement = () => {
     return categories;
   }, [categories]);
 
-  const paginatedDisplayCategories = useMemo(() => {
-    return displayCategories.slice(
-      (pagination.page - 1) * pagination.pageSize,
-      pagination.page * pagination.pageSize
-    );
-  }, [displayCategories, pagination.page, pagination.pageSize]);
-
-  const categoryMap = useMemo(() => new Map(displayCategories.map(cat => [cat.id, cat])), [displayCategories]);
-
   const resetForm = useCallback(() => {
     setFormData({
       name: '',
       description: '',
       parentCategoryId: 0,
       iconUrl: '',
-      iconFile: null
+      iconFile: null,
+      IsIconRemoved: false
     });
     setEditingCategory(null);
   }, []);
@@ -204,6 +198,7 @@ const CategoryManagement = () => {
         if (formData.iconFile) {
           submitData.append('File', formData.iconFile);
         }
+        submitData.append('IsIconRemoved', formData.IsIconRemoved || false);
       }
       
       if (editingCategory) {
@@ -255,24 +250,43 @@ const CategoryManagement = () => {
       setModalError(errorMessage);
       showError(errorMessage);
     }
-  }, [editingCategory, formData, updateCategory, createCategoryWithFile, updateCategoryWithFile, resetForm, fetchCategories, showSuccess, showError]);
+  }, [editingCategory, formData, updateCategory, createCategory, createCategoryWithFile, updateCategoryWithFile, resetForm, fetchCategories, showSuccess, showError]);
 
-  const handleEdit = useCallback((category) => {
-    setEditingCategory(category);
-    setFormData({
-      name: category.name || '',
-      description: category.description || '',
-      parentCategoryId: category.parentCategoryId || 0,
-      iconUrl: category.iconUrl || '',
-      iconFile: null
-    });
-    setShowUpdateModal(true);
-  }, []);
+  const handleEdit = useCallback(async (category) => {
+    try {
+      setLoading(true);
+      const categoryDetails = await getCategoryById(category.id);
+      setEditingCategory(categoryDetails);
+      setFormData({
+        name: categoryDetails.name || '',
+        description: categoryDetails.description || '',
+        parentCategoryId: categoryDetails.parentCategoryId || 0,
+        iconUrl: categoryDetails.iconUrl || '',
+        iconFile: null,
+        IsIconRemoved: false
+      });
+      setShowUpdateModal(true);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to fetch category details';
+      showError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [getCategoryById, showError]);
 
-  const handleViewDetails = useCallback((category) => {
-    setSelectedCategory(category);
-    setShowDetailsModal(true);
-  }, []);
+  const handleViewDetails = useCallback(async (category) => {
+    try {
+      setLoading(true);
+      const categoryDetails = await getCategoryById(category.id);
+      setSelectedCategory(categoryDetails);
+      setShowDetailsModal(true);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to fetch category details';
+      showError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [getCategoryById, showError]);
 
   const handleDelete = useCallback(async (categoryId) => {
     if (!window.confirm('Are you sure you want to delete this category?')) return;
@@ -313,18 +327,6 @@ const CategoryManagement = () => {
   const goToPage = useCallback((page) => {
     setPagination(prev => ({ ...prev, page }));
   }, []);
-
-  const nextPage = useCallback(() => {
-    if (pagination.page < Math.ceil(pagination.totalCount / pagination.pageSize)) {
-      goToPage(pagination.page + 1);
-    }
-  }, [pagination, goToPage]);
-
-  const prevPage = useCallback(() => {
-    if (pagination.page > 1) {
-      goToPage(pagination.page - 1);
-    }
-  }, [pagination, goToPage]);
 
   const allCategoriesForDropdown = categories;
 
@@ -737,7 +739,8 @@ const CategoryManagement = () => {
                             setFormData(prev => ({ 
                               ...prev, 
                               iconUrl: previewUrl,
-                              iconFile: file
+                              iconFile: file,
+                              IsIconRemoved: false
                             }));
                           }
                         }}
@@ -771,7 +774,7 @@ const CategoryManagement = () => {
                       />
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null }))}
+                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null, IsIconRemoved: true }))}
                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                         disabled={modalError ? true : false}
                       >
@@ -892,7 +895,8 @@ const CategoryManagement = () => {
                             setFormData(prev => ({ 
                               ...prev, 
                               iconUrl: previewUrl,
-                              iconFile: file
+                              iconFile: file,
+                              IsIconRemoved: false
                             }));
                           }
                         }}
@@ -927,7 +931,7 @@ const CategoryManagement = () => {
                       />
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null }))}
+                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null, IsIconRemoved: true }))}
                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                         disabled={modalError ? true : false}
                       >

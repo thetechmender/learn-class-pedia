@@ -14,7 +14,9 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
-  Briefcase as RolesIcon
+  Briefcase as RolesIcon,
+  Upload,
+  X
 } from 'lucide-react';
 
 const CareerRoles = () => {
@@ -32,6 +34,8 @@ const CareerRoles = () => {
     getCareerRoleById,
     createCareerRole,
     updateCareerRole,
+    createCareerRoleWithFile,
+    updateCareerRoleWithFile,
     deleteCareerRole
   } = useCareerRoles();
   const [careerRoles, setCareerRoles] = useState([]);
@@ -49,11 +53,14 @@ const CareerRoles = () => {
   const [selectedCareerRole, setSelectedCareerRole] = useState(null);
   const [editingCareerRole, setEditingCareerRole] = useState(null);
   const [modalError, setModalError] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    iconUrl: ''
+    iconUrl: '',
+    iconFile: null,
+    IsIconRemoved: false
   });
 
   const fetchCareerRoles = useCallback(async (page = currentPage, search = searchTerm) => {
@@ -141,7 +148,9 @@ const CareerRoles = () => {
     setFormData({
       name: '',
       description: '',
-      iconUrl: ''
+      iconUrl: '',
+      iconFile: null,
+      IsIconRemoved: false
     });
     setEditingCareerRole(null);
   }, []);
@@ -151,12 +160,38 @@ const CareerRoles = () => {
     setModalError('');
     
     try {
+      let submitData;
+      let isFormData = false;
+      
+      // Always use FormData for career roles to match update logic and avoid content-type issues
+      isFormData = true;
+      submitData = new FormData();
+      submitData.append('name', formData.name);
+      submitData.append('description', formData.description || '');
+      submitData.append('iconUrl', formData.iconUrl || '');
+      
+      // Add the file only if it exists
+      if (formData.iconFile) {
+        submitData.append('file', formData.iconFile);
+      }
+      
+      // Add IsIconRemoved flag (matches CategoryManagement pattern)
+      submitData.append('IsIconRemoved', formData.IsIconRemoved || false);
+      
       if (editingCareerRole) {
-        await updateCareerRole(editingCareerRole.id, formData);
+        if (isFormData) {
+          await updateCareerRoleWithFile(editingCareerRole.id, submitData);
+        } else {
+          await updateCareerRole(editingCareerRole.id, submitData);
+        }
         setShowUpdateModal(false);
         showSuccess('Career role updated successfully!');
       } else {
-        await createCareerRole(formData);
+        if (isFormData) {
+          await createCareerRoleWithFile(submitData);
+        } else {
+          await createCareerRole(submitData);
+        }
         setShowCreateModal(false);
         showSuccess('Career role created successfully!');
       }
@@ -167,22 +202,42 @@ const CareerRoles = () => {
       setModalError(errorMessage);
       showError(errorMessage);
     }
-  }, [editingCareerRole, formData, resetForm, fetchCareerRoles, showSuccess, showError]);
+  }, [editingCareerRole, formData, resetForm, fetchCareerRoles, showSuccess, showError, createCareerRoleWithFile, updateCareerRoleWithFile]);
 
-  const handleEdit = useCallback((careerRole) => {
-    setEditingCareerRole(careerRole);
-    setFormData({
-      name: careerRole.name || '',
-      description: careerRole.description || '',
-      iconUrl: careerRole.iconUrl || ''
-    });
-    setShowUpdateModal(true);
-  }, []);
+  const handleEdit = useCallback(async (careerRole) => {
+    try {
+      setFormLoading(true);
+      const careerRoleDetails = await getCareerRoleById(careerRole.id);
+      setEditingCareerRole(careerRoleDetails);
+      setFormData({
+        name: careerRoleDetails.name || '',
+        description: careerRoleDetails.description || '',
+        iconUrl: careerRoleDetails.iconUrl || '',
+        iconFile: null,
+        IsIconRemoved: false
+      });
+      setShowUpdateModal(true);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to fetch career role details';
+      showError(errorMessage);
+    } finally {
+      setFormLoading(false);
+    }
+  }, [getCareerRoleById, showError]);
 
-  const handleViewDetails = useCallback((careerRole) => {
-    setSelectedCareerRole(careerRole);
-    setShowDetailsModal(true);
-  }, []);
+  const handleViewDetails = useCallback(async (careerRole) => {
+    try {
+      setFormLoading(true);
+      const careerRoleDetails = await getCareerRoleById(careerRole.id);
+      setSelectedCareerRole(careerRoleDetails);
+      setShowDetailsModal(true);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to fetch career role details';
+      showError(errorMessage);
+    } finally {
+      setFormLoading(false);
+    }
+  }, [getCareerRoleById, showError]);
 
   const handleDelete = useCallback(async (careerRoleId) => {
     if (!window.confirm('Are you sure you want to delete this career role?')) return;
@@ -464,19 +519,77 @@ const CareerRoles = () => {
             </div>
             
             <div>
-              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon URL</label>
-              <input
-                type="url"
-                name="iconUrl"
-                value={formData.iconUrl}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-                placeholder="https://example.com/icon.png"
-              />
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
+              <div className="space-y-3">
+                {/* File Upload */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="icon-upload-create"
+                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const previewUrl = URL.createObjectURL(file);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              iconUrl: previewUrl,
+                              iconFile: file,
+                              IsIconRemoved: false
+                            }));
+                          }
+                        }}
+                        className="hidden"
+                        disabled={modalError ? true : false}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('icon-upload-create').click()}
+                        className={`w-full px-4 py-3 border-2 border-dashed rounded-xl hover:border-blue-400 transition-all duration-200 flex items-center justify-center space-x-2 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 text-gray-400 hover:text-blue-400 hover:bg-gray-700' 
+                            : 'border-gray-300 text-gray-600 hover:text-blue-600'
+                        }`}
+                        disabled={modalError ? true : false}
+                      >
+                        <Upload size={20} />
+                        <span>Upload Icon Image</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Icon Preview */}
+                {(formData.iconUrl || formData.iconFile) && (
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <img 
+                        src={formData.iconUrl} 
+                        alt="Icon preview" 
+                        className={`w-16 h-16 rounded-xl border object-cover ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null, IsIconRemoved: true }))}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                        disabled={modalError ? true : false}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                      </p>
+                      {formData.iconFile && (
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           
@@ -550,19 +663,77 @@ const CareerRoles = () => {
             </div>
             
             <div>
-              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon URL</label>
-              <input
-                type="url"
-                name="iconUrl"
-                value={formData.iconUrl}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-                placeholder="https://example.com/icon.png"
-              />
+              <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Icon</label>
+              <div className="space-y-3">
+                {/* File Upload */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="icon-upload-update"
+                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const previewUrl = URL.createObjectURL(file);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              iconUrl: previewUrl,
+                              iconFile: file,
+                              IsIconRemoved: false
+                            }));
+                          }
+                        }}
+                        className="hidden"
+                        disabled={modalError ? true : false}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('icon-upload-update').click()}
+                        className={`w-full px-4 py-3 border-2 border-dashed rounded-lg hover:border-blue-400 transition-colors flex items-center justify-center space-x-2 ${
+                          theme === 'dark' 
+                            ? 'border-gray-600 text-gray-400 hover:text-blue-400 hover:bg-gray-700' 
+                            : 'border-gray-300 text-gray-600 hover:text-blue-600'
+                        }`}
+                        disabled={modalError ? true : false}
+                      >
+                        <Upload size={20} />
+                        <span>Upload New Icon</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Icon Preview */}
+                {(formData.iconUrl || formData.iconFile) && (
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <img 
+                        src={formData.iconUrl} 
+                        alt="Icon preview" 
+                        className={`w-16 h-16 rounded-lg border object-cover ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, iconUrl: '', iconFile: null, IsIconRemoved: true }))}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                        disabled={modalError ? true : false}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {formData.iconFile ? 'New icon uploaded' : 'Current icon'}
+                      </p>
+                      {formData.iconFile && (
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>{formData.iconFile.name}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           

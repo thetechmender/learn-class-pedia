@@ -121,7 +121,7 @@ const CareerPath = () => {
 
   useEffect(() => {
     fetchCareerPaths();
-  }, [fetchCareerPaths]);
+  }, [currentPage, itemsPerPage, searchTerm, selectedLevel, selectedDuration, selectedCategory]);
 
   useEffect(() => {
     setCurrentPage(1);

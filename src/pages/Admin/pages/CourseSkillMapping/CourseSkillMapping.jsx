@@ -27,6 +27,7 @@ const CourseSkillMapping = () => {
   const {
     skills,
     courses,
+    allCourses,
     courseTypes,
     courseLevels,
     categories,
@@ -79,12 +80,6 @@ const CourseSkillMapping = () => {
     if (page >= 1 && page <= totalPages) {
       fetchAllSkills({ page, pageSize: skillsPagination.pageSize, search: searchTerm });
     }
-  };
-
-  // Handle page size change for filtered skills
-  const handleChangeSkillsPageSize = (newPageSize) => {
-    changeSkillsPageSize(newPageSize);
-    fetchAllSkills({ page: 1, pageSize: newPageSize, search: searchTerm });
   };
 
   // Debounced search - only triggers when user stops typing
@@ -147,6 +142,8 @@ const CourseSkillMapping = () => {
     // Fetch skill details to get current course assignments
     try {
       await fetchSkillById(skill.skillId);
+      // Automatically load all courses when modal opens
+      await fetchCoursesWithFilters({});
     } catch (err) {
       console.error('Failed to fetch skill details:', err);
     }
@@ -769,6 +766,10 @@ const CourseSkillMapping = () => {
                                       const courseLevel = courseLevels.find(cl => cl.id === course.courseLevelId);
                                       
                                       const parts = [];
+                                      // Add course description if available
+                                      if (course.description) {
+                                        parts.push(course.description);
+                                      }
                                       if (courseType?.name) parts.push(courseType.name);
                                       if (category?.name) parts.push(category.name);
                                       if (courseLevel?.name) parts.push(courseLevel.name);
@@ -790,9 +791,33 @@ const CourseSkillMapping = () => {
                               </div>
                             );
                           })}
-                          {!Array.isArray(courses) && (
-                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                              No courses available. Apply filters to load courses.
+                          {(!Array.isArray(courses) || courses.length === 0) && !loadingCourses && (
+                            <div className="text-center py-8">
+                              <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                {Object.keys(courseFilters).some(key => courseFilters[key]) 
+                                  ? 'No courses found matching your filters' 
+                                  : 'All courses loaded'}
+                              </h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                {Object.keys(courseFilters).some(key => courseFilters[key]) 
+                                  ? 'Try adjusting your filter criteria to see more courses.' 
+                                  : `${Array.isArray(allCourses) ? allCourses.length : 0} courses are available. Use filters above to narrow down the selection.`}
+                              </p>
+                              {Object.keys(courseFilters).some(key => courseFilters[key]) && (
+                                <button
+                                  onClick={() => {
+                                    setCourseFilters({
+                                      courseTypeId: '',
+                                      categoryId: '',
+                                      courseLevelId: ''
+                                    });
+                                  }}
+                                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                                >
+                                  Clear Filters
+                                </button>
+                              )}
                             </div>
                           )}
                         </>
@@ -930,6 +955,10 @@ const CourseSkillMapping = () => {
                                     const courseLevel = courseLevels.find(cl => cl.id === course.courseLevelId);
                                     
                                     const parts = [];
+                                    // Add course description if available
+                                    if (course.description) {
+                                      parts.push(course.description);
+                                    }
                                     if (courseType?.name) parts.push(courseType.name);
                                     if (category?.name) parts.push(category.name);
                                     if (courseLevel?.name) parts.push(courseLevel.name);
