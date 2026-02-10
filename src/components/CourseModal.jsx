@@ -16,6 +16,7 @@ import MultiSelectDropdown from './MultiSelectDropdown';
 import CategoryDropdown from './CategoryDropdown';
 import LmsLecturesDropdown from './LmsLecturesDropdown';
 import SelectedLecturesTable from './SelectedLecturesTable';
+import ConfirmationModal from './ConfirmationModal';
 
 const CourseModal = ({
   isOpen,
@@ -55,6 +56,15 @@ const CourseModal = ({
   });
 
   const [formErrors, setFormErrors] = useState({});
+
+  // Confirmation modal state
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'warning',
+    onConfirm: null
+  });
 
   useEffect(() => {
     if (course && mode === 'edit') {
@@ -226,14 +236,14 @@ const CourseModal = ({
   };
 
   const removeSection = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      sections: prev.sections.filter((_, i) => i !== index).map((section, i) => ({
-        ...section,
-        sortOrder: i
-      }))
-    }));
-  };
+  setFormData(prev => ({
+    ...prev,
+    sections: prev.sections.filter((_, i) => i !== index).map((section, i) => ({
+      ...section,
+      sortOrder: i
+    }))
+  }));
+};
 
   const moveSection = (dragIndex, dropIndex) => {
     const newSections = [...formData.sections];
@@ -439,9 +449,8 @@ const CourseModal = ({
     }
     // Course Type 1: Professional Certificate - requires sections with Module 1, 2, 3
     if (formData.courseTypeId === 1) {
-      if (!formData.sections || formData.sections.length === 0) {
-        errors.sections = 'Professional Certificate courses must have sections';
-      } else {
+      // Removed requirement for sections in Professional Certificate
+      if (formData.sections && formData.sections.length > 0) {
         // Check for required modules
         const moduleNames = formData.sections
           .map(s => (s.moduleName || '').trim())
@@ -461,24 +470,20 @@ const CourseModal = ({
           if (!section.title || !section.title.trim()) {
             errors[`section_title_${index}`] = 'Section title is required';
           }
-          if (!section.lectures || section.lectures.length === 0) {
-            errors[`section_lectures_${index}`] = 'At least one lecture is required in this section';
-          }
+          // Removed requirement for lectures in sections
         });
       }
     }
     // Course Type 2: Certification - requires exactly 1 section
     else if (formData.courseTypeId === 2) {
-      if (!formData.sections || formData.sections.length !== 1) {
-        errors.sections = 'Certification courses must have exactly 1 section';
-      } else {
-        const section = formData.sections[0];
-        if (!section.title || !section.title.trim()) {
-          errors[`section_title_0`] = 'Section title is required';
-        }
-        if (!section.lectures || section.lectures.length === 0) {
-          errors[`section_lectures_0`] = 'At least one lecture is required in this section';
-        }
+      // Removed requirement for exactly 1 section in Certification
+      if (formData.sections && formData.sections.length > 0) {
+        formData.sections.forEach((section, index) => {
+          if (!section.title || !section.title.trim()) {
+            errors[`section_title_${index}`] = 'Section title is required';
+          }
+          // Removed requirement for lectures in sections
+        });
       }
     }
     // Course Type 3: Short Course - uses directLectures (no sections)
@@ -486,9 +491,7 @@ const CourseModal = ({
       if (formData.sections && formData.sections.length > 0) {
         errors.sections = 'Short courses cannot have sections. Use direct lectures instead.';
       }
-      if (!formData.directLectures || formData.directLectures.length === 0) {
-        errors.directLectures = 'At least one lecture is required for Short Course';
-      }
+      // Removed requirement for at least one lecture in Short Course
     }
 
     // Validate promo video file if present
@@ -527,134 +530,175 @@ const CourseModal = ({
       }
     }
     
-    if (validateForm()) {
-      let submitData;
-      let isFormData = false;
+    // Check for empty sections/lectures before validation
+    const hasEmptySectionsOrLectures = checkEmptySectionsOrLectures();
+    
+    if (hasEmptySectionsOrLectures) {
+      // Show confirmation modal
+      setConfirmationModal({
+        isOpen: true,
+        title: 'Confirm Course Submission',
+        message: "You haven't created any lecture/section. Are you sure you want to proceed?",
+        type: 'warning',
+        onConfirm: () => {
+          setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+          proceedWithSubmission();
+        }
+      });
+    } else if (validateForm()) {
+      proceedWithSubmission();
+    }
+  };
+
+  const checkEmptySectionsOrLectures = () => {
+    if (formData.courseTypeId === 3) {
+      // Short Course - check direct lectures
+      return !formData.directLectures || formData.directLectures.length === 0;
+    } else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
+      // Professional Certificate/Certification - check sections and lectures
+      if (!formData.sections || formData.sections.length === 0) {
+        return true;
+      }
+      // Check if any section has lectures
+      const hasAnyLectures = formData.sections.some(section => 
+        section.lectures && section.lectures.length > 0
+      );
+      return !hasAnyLectures;
+    }
+    return false;
+  };
+
+  const proceedWithSubmission = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    let submitData;
+    let isFormData = false;
+    
+    // If there's a file, use FormData
+    if (formData.thumbnailFile || formData.promoVideoFile) {
+      isFormData = true;
+      submitData = new FormData();
+      submitData.append('title', formData.title);
+      submitData.append('subtitle', formData.subtitle);
+      submitData.append('description', formData.description);
+      submitData.append('overview', formData.overview);
+      submitData.append('languageCode', formData.languageCode);
+      submitData.append('courseTypeId', parseInt(formData.courseTypeId));
+      submitData.append('categoryId', parseInt(formData.categoryId));
+      submitData.append('courseLevelId', parseInt(formData.courseLevelId));
+      submitData.append('isPaid', formData.isPaid);
+      submitData.append('price', parseFloat(formData.price) || 0);
+      submitData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
+      submitData.append('currencyCode', formData.currencyCode);
+      submitData.append('promoVideoUrl', formData.promoVideoUrl);
+      submitData.append('IsThumbnailRemoved', formData.IsThumbnailRemoved || false);
+      submitData.append('IsPromoVideoRemoved', formData.IsPromoVideoRemoved || false);
+
       
-      // If there's a file, use FormData
-      if (formData.thumbnailFile || formData.promoVideoFile) {
-        isFormData = true;
-        submitData = new FormData();
-        submitData.append('title', formData.title);
-        submitData.append('subtitle', formData.subtitle);
-        submitData.append('description', formData.description);
-        submitData.append('overview', formData.overview);
-        submitData.append('languageCode', formData.languageCode);
-        submitData.append('courseTypeId', parseInt(formData.courseTypeId));
-        submitData.append('categoryId', parseInt(formData.categoryId));
-        submitData.append('courseLevelId', parseInt(formData.courseLevelId));
-        submitData.append('isPaid', formData.isPaid);
-        submitData.append('price', parseFloat(formData.price) || 0);
-        submitData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
-        submitData.append('currencyCode', formData.currencyCode);
-        submitData.append('promoVideoUrl', formData.promoVideoUrl);
-        submitData.append('IsThumbnailRemoved', formData.IsThumbnailRemoved || false);
-        submitData.append('IsPromoVideoRemoved', formData.IsPromoVideoRemoved || false);
-   
-        
-        // Add badges array (always include, even if empty)
-        if (formData.badgeIds && formData.badgeIds.length > 0) {
-          formData.badgeIds.forEach((badgeId, index) => {
-            submitData.append(`badgeIds[${index}]`, parseInt(badgeId));
-          });
-        } else {
-          // Always include badges, even if empty array
-          submitData.append('badgeIds', JSON.stringify([]));
-        }
-        
-        // Add LMS lectures data based on course type
-        // Course Type 3: Short Course - uses directLectures
-        if (formData.courseTypeId === 3) {
-          if (formData.directLectures && formData.directLectures.length > 0) {
-            formData.directLectures.forEach((lecture, index) => {
-              submitData.append(`directLectures[${index}].title`, lecture.title || '');
-              submitData.append(`directLectures[${index}].lectureType`, lecture.lectureType || 1);
-              submitData.append(`directLectures[${index}].isFreePreview`, lecture.isFreePreview || false);
-              submitData.append(`directLectures[${index}].sortOrder`, lecture.sortOrder || index);
-              submitData.append(`directLectures[${index}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
-            });
-          }
-        } 
-        // Course Type 1 & 2: Professional Certificate / Certification - uses sections
-        else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
-          if (formData.sections && formData.sections.length > 0) {
-            formData.sections.forEach((section, sectionIndex) => {
-              submitData.append(`sections[${sectionIndex}].moduleName`, section.moduleName || '');
-              submitData.append(`sections[${sectionIndex}].title`, section.title || '');
-              submitData.append(`sections[${sectionIndex}].description`, section.description || '');
-              submitData.append(`sections[${sectionIndex}].sortOrder`, section.sortOrder || sectionIndex);
-              
-              // Add lectures for this section
-              if (section.lectures && section.lectures.length > 0) {
-                section.lectures.forEach((lecture, lectureIndex) => {
-                  submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].title`, lecture.title || '');
-                  submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lectureType`, lecture.lectureType || 1);
-                  submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].isFreePreview`, lecture.isFreePreview || false);
-                  submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].sortOrder`, lecture.sortOrder || lectureIndex);
-                  submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
-                });
-              }
-            });
-          }
-        }
-        
-        // Add the files
-        if (formData.thumbnailFile) {
-          submitData.append('File', formData.thumbnailFile);
-        }
-        if (formData.promoVideoFile) {
-          submitData.append('PromoVideoFile', formData.promoVideoFile);
-        }
+      // Add badges array (always include, even if empty)
+      if (formData.badgeIds && formData.badgeIds.length > 0) {
+        formData.badgeIds.forEach((badgeId, index) => {
+          submitData.append(`badgeIds[${index}]`, parseInt(badgeId));
+        });
       } else {
-        // No file, use regular JSON
-        submitData = {
-          ...formData,
-          courseTypeId: parseInt(formData.courseTypeId),
-          categoryId: parseInt(formData.categoryId),
-          courseLevelId: parseInt(formData.courseLevelId),
-          price: parseFloat(formData.price) || 0,
-          discountedPrice: parseFloat(formData.discountedPrice) || 0,
-          badgeIds: formData.badgeIds.map(id => parseInt(id)),
-           IsThumbnailRemoved: formData.IsThumbnailRemoved || false,
-  IsPromoVideoRemoved: formData.IsPromoVideoRemoved || false
-        };
-        
-        // Add LMS lectures data based on course type
-        // Course Type 3: Short Course - uses directLectures
-        if (formData.courseTypeId === 3) {
-          submitData.directLectures = formData.directLectures.map((lecture, index) => ({
-            title: lecture.title || '',
-            lectureType: lecture.lectureType || 1,
-            isFreePreview: lecture.isFreePreview || false,
-            sortOrder: lecture.sortOrder || index,
-            lmscourseMappingId: lecture.lmscourseMappingId || lecture.id
-          }));
-        } 
-        // Course Type 1 & 2: Professional Certificate / Certification - uses sections
-        else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
-          submitData.sections = formData.sections.map((section, sectionIndex) => ({
-            moduleName: section.moduleName || '',
-            title: section.title || '',
-            description: section.description || '',
-            sortOrder: section.sortOrder || sectionIndex,
-            lectures: (section.lectures || []).map((lecture, lectureIndex) => ({
-              title: lecture.title || '',
-              lectureType: lecture.lectureType || 1,
-              isFreePreview: lecture.isFreePreview || false,
-              sortOrder: lecture.sortOrder || lectureIndex,
-              lmscourseMappingId: lecture.lmscourseMappingId || lecture.id
-            }))
-          }));
+        // Always include badges, even if empty array
+        submitData.append('badgeIds', JSON.stringify([]));
+      }
+      
+      // Add LMS lectures data based on course type
+      // Course Type 3: Short Course - uses directLectures
+      if (formData.courseTypeId === 3) {
+        if (formData.directLectures && formData.directLectures.length > 0) {
+          formData.directLectures.forEach((lecture, index) => {
+            submitData.append(`directLectures[${index}].title`, lecture.title || '');
+            submitData.append(`directLectures[${index}].lectureType`, lecture.lectureType || 1);
+            submitData.append(`directLectures[${index}].isFreePreview`, lecture.isFreePreview || false);
+            submitData.append(`directLectures[${index}].sortOrder`, lecture.sortOrder || index);
+            submitData.append(`directLectures[${index}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
+          });
         }
-        
-        // Don't send blob URLs
-        if (submitData.thumbnailUrl && submitData.thumbnailUrl.startsWith('blob:')) {
-          submitData.thumbnailUrl = '';
+      } 
+        // Course Type 1 & 2: Professional Certificate / Certification - uses sections
+      else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
+        if (formData.sections && formData.sections.length > 0) {
+          formData.sections.forEach((section, sectionIndex) => {
+            submitData.append(`sections[${sectionIndex}].moduleName`, section.moduleName || '');
+            submitData.append(`sections[${sectionIndex}].title`, section.title || '');
+            submitData.append(`sections[${sectionIndex}].description`, section.description || '');
+            submitData.append(`sections[${sectionIndex}].sortOrder`, section.sortOrder || sectionIndex);
+            
+            // Add lectures for this section
+            if (section.lectures && section.lectures.length > 0) {
+              section.lectures.forEach((lecture, lectureIndex) => {
+                submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].title`, lecture.title || '');
+                submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lectureType`, lecture.lectureType || 1);
+                submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].isFreePreview`, lecture.isFreePreview || false);
+                submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].sortOrder`, lecture.sortOrder || lectureIndex);
+                submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
+              });
+            }
+          });
         }
       }
       
-      onSubmit(submitData, isFormData);
+      // Add the files
+      if (formData.thumbnailFile) {
+        submitData.append('File', formData.thumbnailFile);
+      }
+      if (formData.promoVideoFile) {
+        submitData.append('PromoVideoFile', formData.promoVideoFile);
+      }
+    } else {
+      // No file, use regular JSON
+      submitData = {
+        ...formData,
+        courseTypeId: parseInt(formData.courseTypeId),
+        categoryId: parseInt(formData.categoryId),
+        courseLevelId: parseInt(formData.courseLevelId),
+        price: parseFloat(formData.price) || 0,
+        discountedPrice: parseFloat(formData.discountedPrice) || 0,
+        badgeIds: formData.badgeIds.map(id => parseInt(id)),
+         IsThumbnailRemoved: formData.IsThumbnailRemoved || false,
+  IsPromoVideoRemoved: formData.IsPromoVideoRemoved || false
+      };
+      
+      // Add LMS lectures data based on course type
+      // Course Type 3: Short Course - uses directLectures
+      if (formData.courseTypeId === 3) {
+        submitData.directLectures = formData.directLectures.map((lecture, index) => ({
+          title: lecture.title || '',
+          lectureType: lecture.lectureType || 1,
+          isFreePreview: lecture.isFreePreview || false,
+          sortOrder: lecture.sortOrder || index,
+          lmscourseMappingId: lecture.lmscourseMappingId || lecture.id
+        }));
+      } 
+      // Course Type 1 & 2: Professional Certificate / Certification - uses sections
+      else if (formData.courseTypeId === 1 || formData.courseTypeId === 2) {
+        submitData.sections = formData.sections.map((section, sectionIndex) => ({
+          moduleName: section.moduleName || '',
+          title: section.title || '',
+          description: section.description || '',
+          sortOrder: section.sortOrder || sectionIndex,
+          lectures: (section.lectures || []).map((lecture, lectureIndex) => ({
+            title: lecture.title || '',
+            lectureType: lecture.lectureType || 1,
+            isFreePreview: lecture.isFreePreview || false,
+            sortOrder: lecture.sortOrder || lectureIndex,
+            lmscourseMappingId: lecture.lmscourseMappingId || lecture.id
+          }))
+        }));
+      }
+      
+      // Don't send blob URLs
+      if (submitData.thumbnailUrl && submitData.thumbnailUrl.startsWith('blob:')) {
+        submitData.thumbnailUrl = '';
+      }
     }
+    
+    onSubmit(submitData, isFormData);
   };
 
   const getModalTitle = () => {
@@ -1451,6 +1495,16 @@ const CourseModal = ({
           </div>
         </form>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        type={confirmationModal.type}
+      />
     </div>
   );
 };
