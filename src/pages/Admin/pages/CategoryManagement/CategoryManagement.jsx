@@ -48,21 +48,16 @@ const CategoryManagement = () => {
   });
 
   const [categories, setCategories] = useState([]);
+  const [nestedCategories, setNestedCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [filters, setFilters] = useState({
     name: '',
     slug: '',
-    description: '',
-    parentCategoryId: ''
+    description: ''
   });
-  const [tempFilters, setTempFilters] = useState({
-    name: '',
-    slug: '',
-    description: '',
-    parentCategoryId: ''
-  });
+  const [showFilters, setShowFilters] = useState(false);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -82,22 +77,59 @@ const CategoryManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const searchTerm = Object.values(filters).filter(Boolean).join(' ') || '';
-      const data = await getAllCategories(searchTerm, {});
+      const data = await getAllCategories({
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        ...filters
+      });
       const categories = data.items || data || [];
+      const nestedCats = data.nestedItems || [];
       setCategories(categories);
+      setNestedCategories(nestedCats);
+      setPagination(prev => ({
+        ...prev,
+        totalCount: data.totalCount || categories.length,
+        totalPages: data.totalPages || Math.ceil(categories.length / pagination.pageSize)
+      }));
     } catch (err) {
       setError('Failed to fetch categories');
     } finally {
       setLoading(false);
     }
-  }, [getAllCategories, filters]);
+  }, [getAllCategories, pagination.page, pagination.pageSize]);
+
+  const fetchCategoriesWithFilters = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllCategories({
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        ...filters
+      });
+      const categories = data.items || data || [];
+      const nestedCats = data.nestedItems || [];
+      setCategories(categories);
+      setNestedCategories(nestedCats);
+      setPagination(prev => ({
+        ...prev,
+        totalCount: data.totalCount || categories.length,
+        totalPages: data.totalPages || Math.ceil(categories.length / pagination.pageSize)
+      }));
+    } catch (err) {
+      setError('Failed to fetch categories');
+    } finally {
+      setLoading(false);
+    }
+  }, [getAllCategories, filters, pagination.page, pagination.pageSize]);
+
   useEffect(() => {
     fetchCategories();
   }, []);
+
   useEffect(() => {
     fetchCategories();
-  }, [filters, fetchCategories]);
+  }, [pagination.page, fetchCategories]);
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -106,8 +138,27 @@ const CategoryManagement = () => {
 
   const handleFilterChange = useCallback((e) => {
     const { name, value } = e.target;
-    setTempFilters(prev => ({ ...prev, [name]: value }));
+    setFilters(prev => ({ ...prev, [name]: value }));
   }, []);
+
+  const clearFilters = useCallback(() => {
+    const clearedFilters = { name: '', slug: '', description: '' };
+    setFilters(clearedFilters);
+    setPagination(prev => ({ ...prev, page: 1 }));
+    // Fetch data with cleared filters
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const applyFilters = useCallback(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+    setShowFilters(false);
+    // Trigger a new fetch with current filters
+    fetchCategoriesWithFilters();
+  }, [fetchCategoriesWithFilters]);
+
+  const getActiveFilters = useCallback(() => {
+    return Object.entries(filters).filter(([key, value]) => value && value.trim() !== '');
+  }, [filters]);
 
     const handleParentCategoryChange = useCallback((value) => {
     setFormData(prev => ({ ...prev, parentCategoryId: value || 0 }));
@@ -124,26 +175,6 @@ const CategoryManagement = () => {
   }, [displayCategories, pagination.page, pagination.pageSize]);
 
   const categoryMap = useMemo(() => new Map(displayCategories.map(cat => [cat.id, cat])), [displayCategories]);
-  
-  const parentCategories = useMemo(() => displayCategories.filter(cat => {
-    return !cat.parentCategoryId;
-  }), [displayCategories]);
-
-  useEffect(() => {
-    setPagination(prev => ({ ...prev, totalCount: parentCategories.length }));
-  }, [parentCategories.length]);
-
-  const applyFilters = useCallback(() => {
-    setFilters(tempFilters);
-    setPagination(prev => ({ ...prev, page: 1 }));
-  }, [tempFilters]);
-
-  const clearFilters = useCallback(() => {
-    const clearedFilters = { name: '', slug: '', description: '', parentCategoryId: '' };
-    setTempFilters(clearedFilters);
-    setFilters(clearedFilters);
-    setPagination(prev => ({ ...prev, page: 1 }));
-  }, []);
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -298,7 +329,7 @@ const CategoryManagement = () => {
   const allCategoriesForDropdown = categories;
 
   const renderCategoryRow = (category, level = 0) => {
-    const children = displayCategories.filter(cat => cat.parentCategoryId === category.id);
+    const children = category.children || [];
     const isExpanded = expandedCategories[category.id];
     const hasChildren = children.length > 0;
     
@@ -366,14 +397,32 @@ const CategoryManagement = () => {
       loading={loading}
       skeletonType="table"
       actions={
-        <button
-          onClick={openCreateModal}
-          className="flex items-center px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
-        >
-          <Plus className="w-4 h-4 sm:mr-2" />
-          <span className="hidden sm:inline">Add Category</span>
-          <span className="sm:hidden">Add</span>
-        </button>
+        <>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 font-medium text-sm ${
+              getActiveFilters().length > 0 || showFilters
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
+                : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Filter className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Filters</span>
+            {(getActiveFilters().length > 0 || showFilters) && (
+              <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
+                Active
+              </span>
+            )}
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
+          >
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Add Category</span>
+            <span className="sm:hidden">Add</span>
+          </button>
+        </>
       }
     >
       {/* Toast Notification */}
@@ -400,129 +449,129 @@ const CategoryManagement = () => {
         </div>
       </div>}
 
-      <div className="relative max-w-2xl mx-auto mb-4">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-        </div>
-        <input
-          type="text"
-          name="name"
-          value={tempFilters.name || ''}
-          onChange={handleFilterChange}
-          placeholder="Search categories by name..."
-          className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-        />
-        {tempFilters.name && (
-          <button
-            onClick={() => setTempFilters(prev => ({ ...prev, name: '' }))}
-            className="absolute inset-y-0 right-0 pr-4 flex items-center"
-          >
-            <X className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-          </button>
-        )}
-      </div>
-
-      <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
-          <button
-            onClick={clearFilters}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-          >
-            Clear All
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input
-            type="text"
-            name="slug"
-            placeholder="Search by slug..."
-            value={tempFilters.slug || ''}
-            onChange={handleFilterChange}
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
-          />
-          <input
-            type="text"
-            name="description"
-            placeholder="Search by description..."
-            value={tempFilters.description || ''}
-            onChange={handleFilterChange}
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
-          />
-          <CategoryDropdown
-            categories={allCategoriesForDropdown}
-            value={tempFilters.parentCategoryId || ''}
-            onChange={(value) => setTempFilters(prev => ({ ...prev, parentCategoryId: value || '' }))}
-            placeholder="Parent category..."
-            className="w-full"
-            allowClear={true}
-          />
-        </div>
-        <div className="flex items-center gap-3 mt-4">
-          <button
-            onClick={applyFilters}
-            className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Apply Filters
-          </button>
-          <button
-            onClick={clearFilters}
-            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
-          >
-            Clear Filters
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {filters.name || filters.slug || filters.description || filters.parentCategoryId ? (
-          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                Showing <span className="font-semibold">{parentCategories.length}</span> categories
-              </p>
+      {/* Filters Section */}
+      {showFilters && (
+        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
+          <div className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
               <button
                 onClick={clearFilters}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
-                Clear filters
+                Clear All
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={filters.name || ''}
+                  onChange={handleFilterChange}
+                  placeholder="Search by name..."
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Slug</label>
+                <input
+                  type="text"
+                  name="slug"
+                  value={filters.slug || ''}
+                  onChange={handleFilterChange}
+                  placeholder="Search by slug..."
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                <input
+                  type="text"
+                  name="description"
+                  value={filters.description || ''}
+                  onChange={handleFilterChange}
+                  placeholder="Search by description..."
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button
+                onClick={() => {
+                  clearFilters();
+                  setShowFilters(false);
+                }}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium text-sm"
+              >
+                Clear Filters
+              </button>
+              <button
+                onClick={applyFilters}
+                className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Apply Filters
               </button>
             </div>
           </div>
-        ) : null}
+        </div>
+      )}
 
-        {parentCategories.length === 0 ? (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {getActiveFilters().length > 0 && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-blue-800 dark:text-blue-200 font-medium">Active filters:</span>
+                {getActiveFilters().map(([key, value]) => (
+                  <span key={key} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-700">
+                    {key}: {value}
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, [key]: '' }))}
+                      className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-blue-800 dark:text-blue-200">
+                  <span className="font-semibold">{categories.length}</span> categories
+                </span>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                >
+                  Clear all
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {nestedCategories.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
               <FolderIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {filters.name || filters.slug || filters.description || filters.parentCategoryId ? 'No matching categories found' : 'No categories found'}
+              No categories found
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              {filters.name || filters.slug || filters.description || filters.parentCategoryId 
-                ? 'Try adjusting your search or filters to find what you\'re looking for'
-                : 'Create your first category to get started'
-              }
+              Create your first category to get started
             </p>
-            {!filters.name && !filters.slug && !filters.description && !filters.parentCategoryId && (
-              <button 
-                onClick={openCreateModal}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-              >
-                <Plus className="w-4 h-4 mr-2 inline" />
-                Create Your First Category
-              </button>
-            )}
-            {(filters.name || filters.slug || filters.description || filters.parentCategoryId) && (
-              <button
-                onClick={clearFilters}
-                className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
-              >
-                Clear All Filters
-              </button>
-            )}
+            <button 
+              onClick={openCreateModal}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+            >
+              <Plus className="w-4 h-4 mr-2 inline" />
+              Create Your First Category
+            </button>
           </div>
         ) : (
           <div className={`border rounded-xl overflow-hidden shadow-sm ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
@@ -540,9 +589,7 @@ const CategoryManagement = () => {
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {parentCategories
-                    .slice((pagination.page - 1) * pagination.pageSize, pagination.page * pagination.pageSize)
-                    .map(cat => renderCategoryRow(cat))}
+                  {nestedCategories.map(cat => renderCategoryRow(cat))}
                 </tbody>
               </table>
             </div>

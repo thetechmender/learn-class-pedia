@@ -325,13 +325,36 @@ export const useAdmin = (initialPage = 1, pageSize = 10) => {
       const queryString = queryParams.toString();
       const response = await adminApiService.getAllCategories(null, null, queryString);
       const data = response.items || response || [];
+      
+      // Handle new nested structure - flatten categories for backward compatibility
+      const flattenCategories = (categories, parentPath = '') => {
+        const flat = [];
+        categories.forEach(category => {
+          const flatCategory = {
+            ...category,
+            parentCategoryName: category.parentCategoryName || null,
+            // Add path for hierarchical display
+            path: parentPath ? `${parentPath} > ${category.name}` : category.name
+          };
+          flat.push(flatCategory);
+          
+          // Recursively flatten children
+          if (category.children && Array.isArray(category.children) && category.children.length > 0) {
+            flat.push(...flattenCategories(category.children, flatCategory.path));
+          }
+        });
+        return flat;
+      };
+      
+      const flattenedData = flattenCategories(data);
     
       return {
-        items: data,
-        totalCount: response.totalCount || data.length,
+        items: flattenedData,
+        nestedItems: data, // Keep nested structure for components that need it
+        totalCount: response.totalCount || flattenedData.length,
         page: response.page || filters.page || 1,
         pageSize: response.pageSize || filters.pageSize || 10,
-        totalPages: Math.ceil((response.totalCount || data.length) / (response.pageSize || filters.pageSize || 10))
+        totalPages: Math.ceil((response.totalCount || flattenedData.length) / (response.pageSize || filters.pageSize || 10))
       };
     } catch (err) {
       setError('Failed to fetch categories');

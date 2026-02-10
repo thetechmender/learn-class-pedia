@@ -36,9 +36,12 @@ const CareerRoles = () => {
   } = useCareerRoles();
   const [careerRoles, setCareerRoles] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(8);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -53,27 +56,80 @@ const CareerRoles = () => {
     iconUrl: ''
   });
 
-  const fetchCareerRoles = useCallback(async () => {
+  const fetchCareerRoles = useCallback(async (page = currentPage, search = searchTerm) => {
     try {
-      const data = await getAllCareerRoles();
-      setCareerRoles(data);
+      const response = await getAllCareerRoles({
+        page,
+        pageSize: itemsPerPage,
+        search: search.trim() || undefined
+      });
+      
+      // Handle the response structure from the backend
+      if (response && typeof response === 'object') {
+        if (response.items && Array.isArray(response.items)) {
+          // Backend returns paginated data with items array
+          setCareerRoles(response.items);
+          setTotalItems(response.totalCount || response.total || 0);
+          setTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || 0) / itemsPerPage));
+        } else if (Array.isArray(response)) {
+          // Backend returns direct array (fallback)
+          setCareerRoles(response);
+          setTotalItems(response.length);
+          setTotalPages(Math.ceil(response.length / itemsPerPage));
+        }
+      } else if (Array.isArray(response)) {
+        // Backend returns direct array (fallback)
+        setCareerRoles(response);
+        setTotalItems(response.length);
+        setTotalPages(Math.ceil(response.length / itemsPerPage));
+      }
     } catch (err) {
       showError('Failed to fetch career roles');
+      // Reset to empty state on error
+      setCareerRoles([]);
+      setTotalItems(0);
+      setTotalPages(0);
     }
-  }, [getAllCareerRoles, showError]);
+  }, [getAllCareerRoles, currentPage, itemsPerPage, searchTerm, showError]);
 
-  const filteredCareerRoles = careerRoles.filter(role => 
-    role.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    role.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredCareerRoles.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedCareerRoles = filteredCareerRoles.slice(startIndex, endIndex);
-
+  // Initial fetch and when page changes
   useEffect(() => {
-    setCurrentPage(1);
+    fetchCareerRoles();
+  }, [currentPage, itemsPerPage]); // Don't include searchTerm here to avoid double calls
+
+  // Debounced search - only triggers when user stops typing
+  useEffect(() => {
+    // Only set up timeout if there's a search term
+    if (searchTerm.trim() === '') {
+      // If search is empty, reset to first page and fetch all
+      setIsTyping(false);
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        fetchCareerRoles(1, '');
+      }
+      return;
+    }
+
+    // User is typing
+    setIsTyping(true);
+
+    const timeoutId = setTimeout(() => {
+      // User stopped typing, set isTyping to false and fetch
+      setIsTyping(false);
+      // Only fetch if the search term hasn't changed in the last 800ms
+      if (currentPage !== 1) {
+        setCurrentPage(1); // Reset to first page when searching
+      } else {
+        fetchCareerRoles(1, searchTerm);
+      }
+    }, 800); // 800ms delay - only triggers when user stops typing
+
+    return () => {
+      clearTimeout(timeoutId);
+      // Clear typing indicator when component unmounts or search changes
+      setIsTyping(false);
+    };
   }, [searchTerm]);
 
   const handleInputChange = useCallback((e) => {
@@ -206,37 +262,44 @@ const CareerRoles = () => {
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search career roles by name or description..."
-          className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+          placeholder={isTyping ? "Type to search..." : "Search career roles by name or description..."}
+          className={`w-full pl-12 pr-12 py-4 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 ${
+            isTyping 
+              ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' 
+              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+          }`}
         />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm('')}
-            className="absolute inset-y-0 right-0 pr-4 flex items-center"
-          >
-            <AlertCircle className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-          </button>
+        <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+          {isTyping && (
+            <div className="flex items-center space-x-1">
+              <div className="flex space-x-1">
+                <div className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                <div className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                <div className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+              </div>
+            </div>
+          )}
+          {loading && !isTyping && searchTerm && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          )}
+          {!isTyping && !loading && searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <AlertCircle className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+        {isTyping && (
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">
+            Searching when you stop typing...
+          </div>
         )}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {searchTerm ? (
-          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                Showing <span className="font-semibold">{filteredCareerRoles.length}</span> of {careerRoles.length} career roles
-              </p>
-              <button
-                onClick={() => setSearchTerm('')}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-              >
-                Clear search
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {paginatedCareerRoles.length === 0 ? (
+        {careerRoles.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
               <RolesIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
@@ -282,7 +345,7 @@ const CareerRoles = () => {
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {paginatedCareerRoles.map((role) => (
+                  {careerRoles.map((role) => (
                     <tr key={role.id} className={`border-b transition-colors duration-150 ${theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-50 border-gray-200'}`}>
                       <td className="px-6 py-4">
                         <div className="font-semibold text-sm text-gray-900 dark:text-white">{role.name}</div>
@@ -325,57 +388,24 @@ const CareerRoles = () => {
 
       {totalPages > 1 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredCareerRoles.length)} of{' '}
-              {filteredCareerRoles.length} career roles
-            </div>
+          <div className="flex items-center justify-center">
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
               >
-                <ChevronLeft className="w-4 h-4 mr-1" />
+                <ChevronLeft className="w-4 h-4 mr-2" />
                 Previous
               </button>
-              
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm border rounded-md ${
-                        currentPage === pageNum
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
               
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
               >
                 Next
-                <ChevronRight className="w-4 h-4 ml-1" />
+                <ChevronRight className="w-4 h-4 ml-2" />
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useToast } from '../../../../hooks/useToast';
 import { useCourseSkillMapping } from '../../../../hooks/useCourseSkillMapping';
 import {
@@ -13,7 +13,9 @@ import {
   CheckCircle,
   AlertCircle,
   Brain,
-  Filter
+  Filter,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
@@ -21,10 +23,9 @@ import CategoryDropdown from '../../../../components/CategoryDropdown';
 const CourseSkillMapping = () => {
   const { toast, showToast } = useToast();
   
-  // Use the custom hook for API operations
+  // Use custom hook for API operations
   const {
     skills,
-    allSkills,
     courses,
     courseTypes,
     courseLevels,
@@ -34,13 +35,13 @@ const CourseSkillMapping = () => {
     loadingCourses,
     error,
     skillsPagination,
-    paginateSkills,
     changeSkillsPageSize,
     pagination,
     paginateCourses,
     changePageSize,
     fetchSkillById,
     fetchCoursesWithFilters,
+    fetchAllSkills,
     assignCoursesToSkill
   } = useCourseSkillMapping();
   
@@ -59,43 +60,59 @@ const CourseSkillMapping = () => {
 
   // Search and view states
   const [searchTerm, setSearchTerm] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
 
   // API functions are now handled by the custom hook
 
   // Initialize data is now handled by the custom hook
 
-  // Filter skills from allSkills for search functionality
-  const filteredSkills = Array.isArray(allSkills) ? allSkills.filter(skill => {
-    const matchesSearch = skill.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  }) : [];
+  // Filter skills from allSkills for search functionality - now handled by backend
+  const filteredSkills = Array.isArray(skills) ? skills : [];
 
   // Apply pagination to filtered skills
-  const paginatedFilteredSkills = Array.isArray(filteredSkills) ? filteredSkills.slice(
-    ((skillsPagination.currentPage - 1) * skillsPagination.pageSize),
-    (skillsPagination.currentPage * skillsPagination.pageSize)
-  ) : [];
+  const paginatedFilteredSkills = Array.isArray(filteredSkills) ? filteredSkills : [];
 
-  // Calculate pagination info for filtered skills
-  const filteredPagination = {
-    ...skillsPagination,
-    totalItems: filteredSkills.length,
-    totalPages: Math.ceil(filteredSkills.length / skillsPagination.pageSize)
-  };
-
-  // Handle pagination for filtered skills
+  // Handle pagination for filtered skills - now uses backend pagination
   const handlePaginateSkills = (page) => {
-    const totalPages = Math.ceil(filteredSkills.length / skillsPagination.pageSize);
+    const totalPages = skillsPagination.totalPages;
     if (page >= 1 && page <= totalPages) {
-      paginateSkills(page);
+      fetchAllSkills({ page, pageSize: skillsPagination.pageSize, search: searchTerm });
     }
   };
 
   // Handle page size change for filtered skills
   const handleChangeSkillsPageSize = (newPageSize) => {
     changeSkillsPageSize(newPageSize);
+    fetchAllSkills({ page: 1, pageSize: newPageSize, search: searchTerm });
   };
+
+  // Debounced search - only triggers when user stops typing
+  useEffect(() => {
+    // Only set up timeout if there's a search term
+    if (searchTerm.trim() === '') {
+      // If search is empty, reset to first page and fetch all
+      setIsTyping(false);
+      fetchAllSkills({ page: 1, pageSize: skillsPagination.pageSize, search: '' });
+      return;
+    }
+
+    // User is typing
+    setIsTyping(true);
+
+    const timeoutId = setTimeout(() => {
+      // User stopped typing, set isTyping to false and fetch
+      setIsTyping(false);
+      // Only fetch if the search term hasn't changed in the last 800ms
+      fetchAllSkills({ page: 1, pageSize: skillsPagination.pageSize, search: searchTerm });
+    }, 800); // 800ms delay - only triggers when user stops typing
+
+    return () => {
+      clearTimeout(timeoutId);
+      // Clear typing indicator when component unmounts or search changes
+      setIsTyping(false);
+    };
+  }, [searchTerm, skillsPagination.pageSize, fetchAllSkills]);
 
   // Handle course filter changes
   const handleCourseFilterChange = useCallback(async (filterType, value) => {
@@ -178,7 +195,7 @@ const CourseSkillMapping = () => {
         }
       });
       
-      await assignCoursesToSkill(selectedSkill.skillId, newAssignment);
+      await assignCoursesToSkill(selectedSkill.skillId, newAssignment, searchTerm, skillsPagination.currentPage, skillsPagination.pageSize);
       showToast('Courses assigned to skill successfully!', 'success');
       setSelectedCourses([]);
       closeModals();
@@ -276,16 +293,39 @@ const CourseSkillMapping = () => {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search skills by title..."
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-all duration-200 shadow-sm"
+                  placeholder={isTyping ? "Type to search..." : "Search skills by title..."}
+                  className={`w-full pl-12 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-all duration-200 shadow-sm ${
+                    isTyping 
+                      ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' 
+                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400'
+                  }`}
                 />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  {isTyping && (
+                    <div className="flex items-center space-x-1">
+                      <div className="flex space-x-1">
+                        <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                        <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                        <div className="w-1 h-1 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                      </div>
+                    </div>
+                  )}
+                  {loading && !isTyping && searchTerm && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                  )}
+                  {!isTyping && !loading && searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {isTyping && (
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Searching when you stop typing...
+                  </div>
                 )}
               </div>
             </div>
@@ -556,47 +596,25 @@ const CourseSkillMapping = () => {
 
         {/* Skills Pagination */}
         {skillsPagination.totalPages > 1 && (
-          <div className="flex items-center justify-between py-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-center py-4">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Showing {((skillsPagination.currentPage - 1) * skillsPagination.pageSize) + 1} to{' '}
-                {Math.min(skillsPagination.currentPage * skillsPagination.pageSize, skillsPagination.totalItems)} of{' '}
-                {skillsPagination.totalItems} skills
-              </span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm text-gray-700 dark:text-gray-300">Show:</label>
-                <select
-                  value={skillsPagination.pageSize}
-                  onChange={(e) => changeSkillsPageSize(Number(e.target.value))}
-                  className="border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value={8}>8</option>
-                  <option value={12}>12</option>
-                  <option value={16}>16</option>
-                  <option value={24}>24</option>
-                </select>
-              </div>
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => paginateSkills(skillsPagination.currentPage - 1)}
-                  disabled={skillsPagination.currentPage === 1}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
-                  Page {skillsPagination.currentPage} of {skillsPagination.totalPages}
-                </span>
-                <button
-                  onClick={() => paginateSkills(skillsPagination.currentPage + 1)}
-                  disabled={skillsPagination.currentPage === skillsPagination.totalPages}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                >
-                  Next
-                </button>
-              </div>
+              <button
+                onClick={() => handlePaginateSkills(skillsPagination.currentPage - 1)}
+                disabled={skillsPagination.currentPage === 1}
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Previous
+              </button>
+              
+              <button
+                onClick={() => handlePaginateSkills(skillsPagination.currentPage + 1)}
+                disabled={skillsPagination.currentPage === skillsPagination.totalPages}
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </button>
             </div>
           </div>
         )}

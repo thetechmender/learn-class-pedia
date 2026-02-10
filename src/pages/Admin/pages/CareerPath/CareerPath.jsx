@@ -46,7 +46,7 @@ const CareerPath = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
   
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(8);
   const [totalItems, setTotalItems] = useState(0);
   const [serverTotalPages, setServerTotalPages] = useState(0); 
   
@@ -117,11 +117,11 @@ const CareerPath = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, selectedLevel, selectedDuration, selectedCategory, getAllCareerPaths]);
+  }, [getAllCareerPaths, currentPage, itemsPerPage, searchTerm, selectedLevel, selectedDuration, selectedCategory]);
 
   useEffect(() => {
     fetchCareerPaths();
-  }, [currentPage, fetchCareerPaths]);
+  }, [fetchCareerPaths]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -431,26 +431,7 @@ const CareerPath = () => {
         </>
       }
     >
-      <div className="relative max-w-2xl mx-auto">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-        </div>
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search career paths by title or description..."
-          className="w-full pl-12 pr-4 py-4 border border-gray-200 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-        />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm('')}
-            className="absolute inset-y-0 right-0 pr-4 flex items-center"
-          >
-            <X className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-          </button>
-        )}
-      </div>
+      {/* Filters Section */}
       {showFilters && (
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
           <div className="py-6">
@@ -742,57 +723,24 @@ const CareerPath = () => {
       </div>
       {totalPages > 1 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of{' '}
-              {totalItems} results
-            </div>
+          <div className="flex items-center justify-center">
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
               >
-                <ChevronLeft className="w-4 h-4 mr-1" />
+                <ChevronLeft className="w-4 h-4 mr-2" />
                 Previous
               </button>
-              
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm border rounded-md ${
-                        currentPage === pageNum
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
               
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="flex items-center px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
               >
                 Next
-                <ChevronRightIcon className="w-4 h-4 ml-1" />
+                <ChevronRightIcon className="w-4 h-4 ml-2" />
               </button>
             </div>
           </div>

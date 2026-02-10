@@ -120,10 +120,32 @@ export const isCacheValid = (cacheEntry, ttl) => {
 
 /**
  * Build category hierarchy tree
- * @param {Array} categories - Flat array of categories
+ * @param {Array} categories - Flat array of categories or nested array from API
  * @returns {Array} Hierarchical category tree
  */
 export const buildCategoryTree = (categories) => {
+  if (!categories || !Array.isArray(categories)) return [];
+  
+  // Check if categories already have nested structure (from new API)
+  const hasNestedStructure = categories.some(cat => cat.children && Array.isArray(cat.children));
+  
+  if (hasNestedStructure) {
+    // Return the nested structure directly, ensuring proper sorting
+    const sortNestedCategories = (cats) => {
+      return cats
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+        .map(cat => ({
+          ...cat,
+          children: cat.children && Array.isArray(cat.children) && cat.children.length > 0 
+            ? sortNestedCategories(cat.children) 
+            : []
+        }));
+    };
+    
+    return sortNestedCategories(categories);
+  }
+  
+  // Fallback to building tree from flat structure (backward compatibility)
   const categoryMap = {};
   const rootCategories = [];
   
@@ -134,7 +156,7 @@ export const buildCategoryTree = (categories) => {
   
   // Build the tree structure
   categories.forEach(category => {
-    if (category.parentCategoryId) {
+    if (category.parentCategoryId && category.parentCategoryId !== 0) {
       const parent = categoryMap[category.parentCategoryId];
       if (parent) {
         parent.children.push(categoryMap[category.id]);
@@ -144,7 +166,46 @@ export const buildCategoryTree = (categories) => {
     }
   });
   
-  return rootCategories;
+  // Sort categories and their children
+  const sortCategories = (cats) => {
+    return cats
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map(cat => ({
+        ...cat,
+        children: cat.children && Array.isArray(cat.children) && cat.children.length > 0 
+          ? sortCategories(cat.children) 
+          : []
+      }));
+  };
+  
+  return sortCategories(rootCategories);
+};
+
+/**
+ * Flatten nested categories into a flat array
+ * @param {Array} categories - Nested categories array
+ * @param {string} parentPath - Parent category path (for recursive calls)
+ * @returns {Array} Flattened categories array
+ */
+export const flattenCategories = (categories, parentPath = '') => {
+  if (!categories || !Array.isArray(categories)) return [];
+  
+  const flat = [];
+  categories.forEach(category => {
+    const flatCategory = {
+      ...category,
+      parentCategoryName: category.parentCategoryName || null,
+      // Add path for hierarchical display
+      path: parentPath ? `${parentPath} > ${category.name}` : category.name
+    };
+    flat.push(flatCategory);
+    
+    // Recursively flatten children
+    if (category.children && Array.isArray(category.children) && category.children.length > 0) {
+      flat.push(...flattenCategories(category.children, flatCategory.path));
+    }
+  });
+  return flat;
 };
 
 /**

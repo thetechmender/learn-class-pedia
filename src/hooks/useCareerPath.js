@@ -52,11 +52,55 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.getAllCareerSkills();
-      const skillsData = Array.isArray(response) ? response : [];
-      setSkills(skillsData);
-      return skillsData;
+      
+      let response;
+      let skillsData = [];
+      
+      try {
+        // First try the career skills endpoint
+        response = await adminApiService.getAllCareerSkills();
+        console.log('Career Skills API Response:', response); // Debug log
+        
+        // Handle the API response structure where skills are in items array
+        skillsData = response.items || response || [];
+        console.log('Extracted career skills data:', skillsData); // Debug log
+        
+      } catch (careerSkillsError) {
+        console.warn('Career skills endpoint failed, trying /skills endpoint:', careerSkillsError);
+        
+        // If career skills fails, try the /skills endpoint directly
+        const skillsUrl = `${getApiUrl()}/skills`;
+        const skillsResponse = await fetch(skillsUrl, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        });
+        
+        if (skillsResponse.ok) {
+          response = await skillsResponse.json();
+          console.log('Skills API Response:', response); // Debug log
+          
+          // Handle the API response structure where skills are in items array
+          skillsData = response.items || response || [];
+          console.log('Extracted skills data:', skillsData); // Debug log
+        } else {
+          throw new Error('Both skill endpoints failed');
+        }
+      }
+      
+      const transformedSkills = Array.isArray(skillsData) ? skillsData.map(skill => ({
+        id: skill.id,
+        name: skill.title || skill.name, // Use title from API response as name
+        description: skill.description || skill.name,
+        category: 'Skill' // Add default category since API doesn't provide one
+      })) : [];
+      console.log('Transformed skills:', transformedSkills); // Debug log
+      
+      setSkills(transformedSkills);
+      return transformedSkills;
     } catch (err) {
+      console.error('Skills fetch error:', err); // Debug log
       handleError('Failed to fetch skills', err);
       return [];
     } finally {
@@ -70,9 +114,15 @@ export const useCareerPath = () => {
       setLoading(true);
       setError(null);
       const response = await adminApiService.getCareerRoles();
-      const rolesData = Array.isArray(response) ? response : [];
-      setCareerRoles(rolesData);
-      return rolesData;
+      // Handle the API response structure where roles are in items array
+      const rolesData = response.items || response || [];
+      const transformedRoles = Array.isArray(rolesData) ? rolesData.map(role => ({
+        id: role.id,
+        name: role.name,
+        description: role.description
+      })) : [];
+      setCareerRoles(transformedRoles);
+      return transformedRoles;
     } catch (err) {
       handleError('Failed to fetch career roles', err);
       return [];

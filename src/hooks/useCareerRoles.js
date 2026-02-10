@@ -29,21 +29,54 @@ export const useCareerRoles = () => {
     };
   };
 
-  // Fetch all career roles
-  const getAllCareerRoles = useCallback(async () => {
+  // Fetch all career roles with pagination and search
+  const getAllCareerRoles = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${getApiUrl()}/career-roles`, {
+      
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      if (params.page) queryParams.append('page', params.page);
+      if (params.pageSize) queryParams.append('pageSize', params.pageSize);
+      if (params.search) queryParams.append('search', params.search);
+      
+      const queryString = queryParams.toString();
+      const url = queryString ? `${getApiUrl()}/career-roles?${queryString}` : `${getApiUrl()}/career-roles`;
+      
+      const response = await fetch(url, {
         headers: getAuthHeaders()
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
       }
       
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      // Handle successful response - check if it has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
     } catch (err) {
       handleError('Failed to fetch career roles', err);
       return [];
@@ -62,11 +95,34 @@ export const useCareerRoles = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
       }
       
-      const data = await response.json();
-      return data;
+      // Handle successful response - check if it has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
     } catch (err) {
       handleError('Failed to fetch career role', err);
       throw err;
@@ -87,11 +143,34 @@ export const useCareerRoles = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
       }
       
-      const data = await response.json();
-      return data;
+      // Handle successful response - check if it has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
     } catch (err) {
       handleError('Failed to create career role', err);
       throw err;
@@ -112,11 +191,34 @@ export const useCareerRoles = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
       }
       
-      const data = await response.json();
-      return data;
+      // Handle successful response - check if it has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
     } catch (err) {
       handleError('Failed to update career role', err);
       throw err;
@@ -136,11 +238,34 @@ export const useCareerRoles = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
       }
       
-      const data = await response.json();
-      return data;
+      // Handle successful response - check if it has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        // For successful responses without JSON content, return a success indicator
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
     } catch (err) {
       handleError('Failed to delete career role', err);
       throw err;

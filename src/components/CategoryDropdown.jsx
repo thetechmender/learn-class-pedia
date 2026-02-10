@@ -35,6 +35,37 @@ const CategoryDropdown = ({
   const categoryTree = useMemo(() => {
     if (!categories || !Array.isArray(categories)) return [];
     
+    // Check if categories already have nested structure (from new API)
+    const hasNestedStructure = categories.some(cat => cat.children && Array.isArray(cat.children));
+    
+    if (hasNestedStructure) {
+      // Use the nested structure directly from API
+      return categories
+        .filter(category => {
+          if (excludeId && category.id === excludeId) return false;
+          if (!searchTerm) return true;
+          
+          const lowerSearchTerm = searchTerm.toLowerCase();
+          return category.name?.toLowerCase().includes(lowerSearchTerm) ||
+                 category.slug?.toLowerCase().includes(lowerSearchTerm) ||
+                 category.description?.toLowerCase().includes(lowerSearchTerm);
+        })
+        .map(category => ({
+          ...category,
+          children: category.children ? category.children
+            .filter(child => !(excludeId && child.id === excludeId))
+            .filter(child => {
+              if (!searchTerm) return true;
+              const lowerSearchTerm = searchTerm.toLowerCase();
+              return child.name?.toLowerCase().includes(lowerSearchTerm) ||
+                     child.slug?.toLowerCase().includes(lowerSearchTerm) ||
+                     child.description?.toLowerCase().includes(lowerSearchTerm);
+            }) : []
+        }))
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    }
+    
+    // Fallback to building tree from flat structure (backward compatibility)
     const categoryMap = new Map();
     const rootCategories = [];
 
@@ -82,7 +113,7 @@ const CategoryDropdown = ({
     };
 
     return sortCategories(rootCategories);
-  }, [filteredCategories, excludeId]);
+  }, [categories, searchTerm, excludeId]);
 
   // Get display name for selected value
   const getSelectedDisplayName = () => {

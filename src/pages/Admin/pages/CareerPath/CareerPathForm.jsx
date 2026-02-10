@@ -1151,8 +1151,9 @@ const CareerPathForm = ({
                   <div className="mt-2 border border-gray-200 rounded-xl max-h-60 overflow-y-auto bg-white shadow-lg">
                     {skills
                       .filter(skill => 
-                        (skill.name || skill.skillName || skill.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (skill.category || skill.skillCategory || '').toLowerCase().includes(searchTerm.toLowerCase())
+                        (skill.name || skill.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (skill.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (skill.category || '').toLowerCase().includes(searchTerm.toLowerCase())
                       )
                       .map(skill => {
                         const isSelected = formData.skills.some(s => s.skillId === (skill.id || skill.skillId));
@@ -1166,8 +1167,8 @@ const CareerPathForm = ({
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <h4 className="text-sm font-medium text-gray-900">{skill.name || skill.skillName || skill.title}</h4>
-                                <p className="text-xs text-gray-500">{skill.category || skill.skillCategory || 'Skill'}</p>
+                                <h4 className="text-sm font-medium text-gray-900">{skill.name || skill.title}</h4>
+                                <p className="text-xs text-gray-500">{skill.category || 'Skill'}</p>
                               </div>
                               {isSelected ? (
                                 <CheckCircle className="w-4 h-4 text-green-600" />
@@ -1183,8 +1184,9 @@ const CareerPathForm = ({
 
                 {searchTerm && skills.length > 0 && 
                   skills.filter(skill => 
-                    (skill.name || skill.skillName || skill.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (skill.category || skill.skillCategory || '').toLowerCase().includes(searchTerm.toLowerCase())
+                    (skill.name || skill.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (skill.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (skill.category || '').toLowerCase().includes(searchTerm.toLowerCase())
                   ).length === 0 && (
                   <div className="mt-2 p-4 text-center border border-gray-200 rounded-xl bg-gray-50">
                     <p className="text-sm text-gray-600">No skills found matching your search</p>
@@ -1226,10 +1228,10 @@ const CareerPathForm = ({
                           <div className="flex-1 min-w-0 mr-3">
                             <div className="flex items-center gap-2 mb-2">
                               <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {skillDetails?.name || skillDetails?.skillName || skillDetails?.title || `Skill ${skill.skillId || skill.id || index}`}
+                                {skillDetails?.name || skillDetails?.title || `Skill ${skill.skillId || skill.id || index}`}
                               </h4>
                               <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                                {skillDetails?.category || skillDetails?.skillCategory || 'Skill'}
+                                {skillDetails?.category || 'Skill'}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">

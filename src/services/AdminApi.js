@@ -854,6 +854,12 @@ class AdminApiService {
     return this.request(ENDPOINTS.COURSE_SKILL_MAP_ALL);
   }
 
+  // GET all skills with pagination and search
+  async getAllSkillsWithPagination(queryParams = '') {
+    const url = queryParams ? `${ENDPOINTS.COURSE_SKILL_MAP_ALL}?${queryParams}` : ENDPOINTS.COURSE_SKILL_MAP_ALL;
+    return this.request(url);
+  }
+
   // GET all career skills
   async getAllCareerSkills() {
     return this.request(ENDPOINTS.CAREER_SKILLS);

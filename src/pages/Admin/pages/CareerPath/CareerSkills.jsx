@@ -24,9 +24,7 @@ const CareerSkills = () => {
   const {
     loading,
     error,
-    clearError,
     getAllCareerSkills,
-    getCareerSkillById,
     createCareerSkill,
     updateCareerSkill,
     deleteCareerSkill
@@ -34,10 +32,13 @@ const CareerSkills = () => {
   // State management
   const [careerSkills, setCareerSkills] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(8);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -53,35 +54,81 @@ const CareerSkills = () => {
     description: ''
   });
 
-  // Fetch all career skills
-  const fetchCareerSkills = useCallback(async () => {
+  // Fetch all career skills with pagination and search
+  const fetchCareerSkills = useCallback(async (page = currentPage, search = searchTerm) => {
     try {
-      const data = await getAllCareerSkills();
-      setCareerSkills(data);
+      const response = await getAllCareerSkills({
+        page,
+        pageSize: itemsPerPage,
+        search: search.trim() || undefined
+      });
+      
+      // Handle the response structure from the backend
+      if (response && typeof response === 'object') {
+        if (response.items && Array.isArray(response.items)) {
+          // Backend returns paginated data with items array
+          setCareerSkills(response.items);
+          setTotalItems(response.totalCount || response.total || 0);
+          setTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || 0) / itemsPerPage));
+        } else if (Array.isArray(response)) {
+          // Backend returns direct array (fallback)
+          setCareerSkills(response);
+          setTotalItems(response.length);
+          setTotalPages(Math.ceil(response.length / itemsPerPage));
+        }
+      } else if (Array.isArray(response)) {
+        // Backend returns direct array (fallback)
+        setCareerSkills(response);
+        setTotalItems(response.length);
+        setTotalPages(Math.ceil(response.length / itemsPerPage));
+      }
     } catch (err) {
       showError('Failed to fetch career skills');
+      // Reset to empty state on error
+      setCareerSkills([]);
+      setTotalItems(0);
+      setTotalPages(0);
     }
-  }, [getAllCareerSkills, showError]);
+  }, [getAllCareerSkills, currentPage, itemsPerPage, searchTerm, showError]);
 
+  // Initial fetch and when page changes
   useEffect(() => {
     fetchCareerSkills();
-  }, []);
+  }, [currentPage, itemsPerPage]); // Don't include searchTerm here to avoid double calls
 
-  // Filter career skills based on search
-  const filteredCareerSkills = careerSkills.filter(skill => 
-    skill.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    skill.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredCareerSkills.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedCareerSkills = filteredCareerSkills.slice(startIndex, endIndex);
-
-  // Reset to page 1 when search changes
+  // Debounced search - only triggers when user stops typing
   useEffect(() => {
-    setCurrentPage(1);
+    // Only set up timeout if there's a search term
+    if (searchTerm.trim() === '') {
+      // If search is empty, reset to first page and fetch all
+      setIsTyping(false);
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        fetchCareerSkills(1, '');
+      }
+      return;
+    }
+
+    // User is typing
+    setIsTyping(true);
+
+    const timeoutId = setTimeout(() => {
+      // User stopped typing, set isTyping to false and fetch
+      setIsTyping(false);
+      // Only fetch if the search term hasn't changed in the last 800ms
+      if (currentPage !== 1) {
+        setCurrentPage(1); // Reset to first page when searching
+      } else {
+        fetchCareerSkills(1, searchTerm);
+      }
+    }, 800); // 800ms delay - only triggers when user stops typing
+
+    return () => {
+      clearTimeout(timeoutId);
+      // Clear typing indicator when component unmounts or search changes
+      setIsTyping(false);
+    };
   }, [searchTerm]);
 
   // Input handlers
@@ -201,12 +248,35 @@ const CareerSkills = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             <input
               type="text"
-              placeholder="Search career skills..."
+              placeholder={isTyping ? "Type to search..." : "Search career skills..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-2 pl-10 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                isTyping 
+                  ? 'border-blue-400 bg-blue-50' 
+                  : 'border-gray-300 bg-white'
+              }`}
             />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              {isTyping && (
+                <div className="flex items-center space-x-1">
+                  <div className="flex space-x-1">
+                    <div className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                    <div className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                    <div className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                  </div>
+                </div>
+              )}
+              {loading && !isTyping && searchTerm && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              )}
+            </div>
           </div>
+          {isTyping && (
+            <div className="mt-1 text-xs text-gray-500">
+              Searching when you stop typing...
+            </div>
+          )}
         </div>
         <button
           onClick={openCreateModal}
@@ -235,14 +305,14 @@ const CareerSkills = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {paginatedCareerSkills.length === 0 ? (
+                {careerSkills.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
                       {searchTerm ? 'No career skills found matching your search.' : 'No career skills found.'}
                     </td>
                   </tr>
                 ) : (
-                  paginatedCareerSkills.map((skill) => (
+                  careerSkills.map((skill) => (
                     <tr key={skill.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium">{skill.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-600 font-mono">{skill.slug}</td>
@@ -278,57 +348,24 @@ const CareerSkills = () => {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredCareerSkills.length)} of{' '}
-            {filteredCareerSkills.length} results
-          </div>
+        <div className="mt-4 flex items-center justify-center">
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
+              <ChevronLeft className="w-4 h-4 mr-2" />
               Previous
             </button>
-            
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-2 text-sm border rounded-md ${
-                      currentPage === pageNum
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-            </div>
             
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-4 h-4 ml-2" />
             </button>
           </div>
         </div>

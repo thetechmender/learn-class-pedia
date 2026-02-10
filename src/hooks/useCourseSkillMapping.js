@@ -17,7 +17,7 @@ export const useCourseSkillMapping = () => {
   // Pagination state for skills
   const [skillsPagination, setSkillsPagination] = useState({
     currentPage: 1,
-    pageSize: 12, // 3x4 grid
+    pageSize: 8, // 8 items per page
     totalItems: 0,
     totalPages: 0
   });
@@ -30,31 +30,80 @@ export const useCourseSkillMapping = () => {
     totalPages: 0
   });
 
-  // Fetch all skills
-  const fetchAllSkills = useCallback(async () => {
+  // Fetch all skills with pagination and search
+  const fetchAllSkills = useCallback(async (params = {}) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await adminApiService.getAllSkills();
-      setAllSkills(data);
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      if (params.page) queryParams.append('page', params.page);
+      if (params.pageSize) queryParams.append('pageSize', params.pageSize);
+      if (params.search) queryParams.append('search', params.search);
       
-      // Update skills pagination info
-      const totalPages = Math.ceil(data.length / skillsPagination.pageSize);
-      setSkillsPagination(prev => ({
-        ...prev,
-        totalItems: data.length,
-        totalPages: totalPages,
-        currentPage: 1 // Reset to first page
-      }));
+      const data = await adminApiService.getAllSkillsWithPagination(queryParams.toString());
       
-      // Set current page skills
-      const startIndex = 0;
-      const endIndex = skillsPagination.pageSize;
-      const paginatedSkills = data.slice(startIndex, endIndex);
-      setSkills(paginatedSkills);
+      // Handle the response structure from the backend
+      if (data && typeof data === 'object') {
+        if (data.items && Array.isArray(data.items)) {
+          // Backend returns paginated data with items array
+          setAllSkills(data.items);
+          const totalPages = data.totalPages || Math.ceil((data.totalCount || data.total || 0) / skillsPagination.pageSize);
+          setSkillsPagination(prev => ({
+            ...prev,
+            totalItems: data.totalCount || data.total || 0,
+            totalPages: totalPages,
+            currentPage: params.page || 1
+          }));
+          
+          // Backend already returns paginated items, so use them directly
+          setSkills(data.items);
+        } else if (Array.isArray(data)) {
+          // Backend returns direct array (fallback)
+          setAllSkills(data);
+          const totalPages = Math.ceil(data.length / skillsPagination.pageSize);
+          setSkillsPagination(prev => ({
+            ...prev,
+            totalItems: data.length,
+            totalPages: totalPages,
+            currentPage: params.page || 1
+          }));
+          
+          // Set current page skills
+          const startIndex = ((params.page || 1) - 1) * skillsPagination.pageSize;
+          const endIndex = startIndex + skillsPagination.pageSize;
+          const paginatedSkills = data.slice(startIndex, endIndex);
+          setSkills(paginatedSkills);
+        }
+      } else if (Array.isArray(data)) {
+        // Backend returns direct array (fallback)
+        setAllSkills(data);
+        const totalPages = Math.ceil(data.length / skillsPagination.pageSize);
+        setSkillsPagination(prev => ({
+          ...prev,
+          totalItems: data.length,
+          totalPages: totalPages,
+          currentPage: params.page || 1
+        }));
+        
+        // Set current page skills
+        const startIndex = ((params.page || 1) - 1) * skillsPagination.pageSize;
+        const endIndex = startIndex + skillsPagination.pageSize;
+        const paginatedSkills = data.slice(startIndex, endIndex);
+        setSkills(paginatedSkills);
+      }
     } catch (err) {
       setError(err.message || 'Failed to fetch skills');
       console.error('Failed to fetch skills:', err);
+      // Reset to empty state on error
+      setAllSkills([]);
+      setSkills([]);
+      setSkillsPagination(prev => ({
+        ...prev,
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1
+      }));
     } finally {
       setLoading(false);
     }
@@ -260,12 +309,12 @@ export const useCourseSkillMapping = () => {
   }, []);
 
   // Assign courses to skill
-  const assignCoursesToSkill = useCallback(async (skillId, courseIds) => {
+  const assignCoursesToSkill = useCallback(async (skillId, courseIds, currentSearch = '', currentPage = 1, pageSize = 12) => {
     try {
       await adminApiService.syncCoursesToSkill(skillId, courseIds);
       
-      // Refresh skill data
-      await fetchAllSkills();
+      // Refresh skill data with current search and pagination
+      await fetchAllSkills({ page: currentPage, pageSize: pageSize, search: currentSearch });
       
       return { success: true };
     } catch (err) {
@@ -284,7 +333,7 @@ export const useCourseSkillMapping = () => {
     try {
       setLoading(true);
       await Promise.all([
-        fetchAllSkills(),
+        fetchAllSkills({ page: 1, pageSize: skillsPagination.pageSize, search: '' }),
         fetchCourseTypes(),
         fetchCourseLevels(),
         fetchCategories()
@@ -294,7 +343,7 @@ export const useCourseSkillMapping = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchAllSkills, fetchCourseTypes, fetchCourseLevels, fetchCategories]);
+  }, [fetchAllSkills, fetchCourseTypes, fetchCourseLevels, fetchCategories, skillsPagination.pageSize]);
 
   // Initialize data on mount
   useEffect(() => {
