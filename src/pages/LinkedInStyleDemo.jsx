@@ -302,10 +302,7 @@ const LinkedInStyleDemo = ({
                         {showSidebar ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
                     </button>
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-                            <GraduationCap className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="text-xl font-bold text-gray-800">Classpedia</span>
+                        <img src="/images/logo.png" alt="Classpedia" className="h-8 w-auto" />
                     </div>
                 </div>
 
@@ -338,28 +335,21 @@ const LinkedInStyleDemo = ({
                 {/* Video/Content Area */}
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Lecture Header - Classpedia Style */}
-                    <div className="px-4 py-3 bg-white border-b border-gray-200">
-                        {/* Top row - Rating, Duration, Tabs */}
+                    <div className="px-6 py-4 bg-white border-b border-gray-200">
+                        {/* Top row - Duration, Video/PDF tabs */}
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1">
-                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-gray-800 font-semibold text-sm">{courseData.rating}</span>
-                                    <span className="text-gray-400 text-sm">({courseData.reviews} reviews)</span>
-                                </div>
                                 <div className="flex items-center gap-1 text-gray-500 text-sm">
                                     <Clock className="w-4 h-4" />
                                     <span>{selectedLecture.duration}</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-gray-500 text-sm">
-                                    <span>•</span>
-                                </div>
+                                <span className="text-gray-300">•</span>
                                 <div className="flex items-center gap-2">
-                                    <button className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium">
+                                    <button className="flex items-center gap-1.5 px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700">
                                         <Video className="w-4 h-4" />
                                         Video
                                     </button>
-                                    <button className="flex items-center gap-1 px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-full text-sm">
+                                    <button className="flex items-center gap-1.5 px-3 py-1 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">
                                         <FileText className="w-4 h-4" />
                                         PDF
                                     </button>
@@ -372,15 +362,8 @@ const LinkedInStyleDemo = ({
                                 >
                                     <Bookmark className={`w-5 h-5 ${bookmarkedLectures.has(selectedLecture.id) ? 'text-accent fill-accent' : 'text-gray-400'}`} />
                                 </button>
-                                {!completedLectures.has(selectedLecture.id) ? (
-                                    <button
-                                        onClick={() => markAsComplete(selectedLecture.id)}
-                                        className="px-4 py-1.5 bg-accent hover:bg-accent/90 text-white rounded-full text-sm font-medium transition-colors"
-                                    >
-                                        Mark Complete
-                                    </button>
-                                ) : (
-                                    <span className="flex items-center gap-1.5 text-accent text-sm font-medium px-3 py-1.5 bg-accent/10 rounded-full border border-accent/30">
+                                {completedLectures.has(selectedLecture.id) && (
+                                    <span className="flex items-center gap-1.5 text-[#00d9a5] text-sm font-medium">
                                         <CheckCircle2 className="w-4 h-4" />
                                         Completed
                                     </span>
@@ -388,7 +371,7 @@ const LinkedInStyleDemo = ({
                             </div>
                         </div>
                         {/* Title row */}
-                        <h2 className="text-gray-800 text-lg font-bold mb-1">{selectedLecture.title}</h2>
+                        <h2 className="text-gray-900 text-xl font-semibold mb-1">{selectedLecture.title}</h2>
                         <p className="text-gray-500 text-sm">
                             Lecture {selectedLecture.lectureNumber} • {selectedLecture.studentCount.toLocaleString()} students viewed
                         </p>
@@ -468,8 +451,8 @@ const LinkedInStyleDemo = ({
                     fixed lg:relative left-0 top-0 h-full lg:h-auto
                     w-[85vw] sm:w-72 lg:w-72
                     transition-all duration-300 ease-in-out
-                    bg-white dark:bg-slate-900
-                    border-r border-gray-200 dark:border-slate-800
+                    bg-white
+                    border-r border-gray-200
                     flex flex-col overflow-hidden flex-shrink-0
                     shadow-lg lg:shadow-none
                     z-50 lg:z-auto
@@ -478,36 +461,35 @@ const LinkedInStyleDemo = ({
                     {(showSidebar || isLargeScreen) && (
                         <>
                             {/* Sidebar Header */}
-                            <div className="p-5 border-b border-gray-200 dark:border-slate-800">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-gray-900 dark:text-white font-semibold text-lg">Course Content</h3>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                                            <BarChart3 className="w-4 h-4" />
-                                            <span>{getTotalDuration()} total</span>
-                                        </div>
-                                        <button 
-                                            onClick={() => setShowSidebar(false)}
-                                            className="lg:hidden p-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-                                        >
-                                            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                        </button>
+                            <div className="p-4 border-b border-gray-200">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-black font-medium text-[19px] leading-[23px]">Course Content</h3>
+                                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                                        <Clock className="w-4 h-4" />
+                                        <span>{getTotalDuration()} total</span>
                                     </div>
                                 </div>
                                 
+                                {/* Rating */}
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                    <span className="text-sm font-medium text-gray-800">{courseData.rating}</span>
+                                    <span className="text-sm text-gray-400">({courseData.reviews} reviews)</span>
+                                </div>
+                                
                                 {/* Progress Overview */}
-                                <div className="mb-4">
+                                <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Your Progress</span>
-                                        <span className="text-accent text-sm font-bold">{getProgress()}%</span>
+                                        <span className="text-gray-700 text-sm font-medium">Your Progress</span>
+                                        <span className="text-[#00d9a5] text-sm font-bold">{getProgress()}%</span>
                                     </div>
-                                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                                         <div 
-                                            className="h-full bg-accent transition-all duration-500"
+                                            className="h-full bg-[#00d9a5] transition-all duration-500"
                                             style={{ width: `${getProgress()}%` }}
                                         />
                                     </div>
-                                    <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
                                         <span>{completedLectures.size} completed</span>
                                         <span>{getTotalLectures() - completedLectures.size} remaining</span>
                                     </div>
@@ -521,51 +503,32 @@ const LinkedInStyleDemo = ({
                                     const chapterProgress = chapter.lectures.filter(l => completedLectures.has(l.id)).length;
                                     
                                     return (
-                                        <div key={chapter.id} className="border-b border-gray-200 dark:border-slate-800">
+                                        <div key={chapter.id} className="border-b border-gray-100">
                                             {/* Chapter Header */}
                                             <button
                                                 onClick={() => toggleChapter(chapter.id)}
-                                                className="w-full p-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+                                                className="w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors text-left"
                                             >
                                                 <div className="mt-0.5">
                                                     {expandedChapters.has(chapter.id) ? (
-                                                        <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                                        <ChevronDown className="w-4 h-4 text-gray-400" />
                                                     ) : (
-                                                        <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                                        <ChevronRight className="w-4 h-4 text-gray-400" />
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <div className="flex items-center gap-2">
-                                                            {chapterCompleted ? (
-                                                                <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 flex-shrink-0" />
-                                                            ) : (
-                                                                <Circle className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                                                            )}
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400">Chapter {chapterIndex + 1}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {chapter.project && (
-                                                                <span className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full">
-                                                                    Project
-                                                                </span>
-                                                            )}
-                                                            {chapter.certificate && (
-                                                                <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
-                                                                    Certificate
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-xs text-gray-500">Chapter {chapterIndex + 1}</span>
                                                     </div>
-                                                    <h4 className="text-gray-900 dark:text-white font-medium text-sm line-clamp-2">{chapter.title}</h4>
-                                                    <div className="flex items-center justify-between mt-2">
-                                                        <div className="flex-1 h-1.5 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden mr-3">
+                                                    <h4 className="text-gray-900 font-medium text-sm mb-2">{chapter.title}</h4>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden mr-3">
                                                             <div 
-                                                                className="h-full bg-accent transition-all"
+                                                                className="h-full bg-[#00d9a5] transition-all"
                                                                 style={{ width: `${(chapterProgress / chapter.lectures.length) * 100}%` }}
                                                             />
                                                         </div>
-                                                        <span className="text-xs text-gray-500 dark:text-gray-400">{chapterProgress}/{chapter.lectures.length}</span>
+                                                        <span className="text-xs text-gray-500">{chapterProgress}/{chapter.lectures.length}</span>
                                                     </div>
                                                 </div>
                                             </button>
@@ -583,47 +546,27 @@ const LinkedInStyleDemo = ({
                                                             <div key={lecture.id} className="relative">
                                                                 <button
                                                                     onClick={() => handleLectureSelect(lecture)}
-                                                                    className={`w-full px-4 py-3 pl-12 flex items-center gap-3 transition-colors text-left ${
+                                                                    className={`w-full px-4 py-2.5 pl-10 flex items-center gap-3 transition-colors text-left ${
                                                                         isSelected 
-                                                                            ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' 
-                                                                            : 'hover:bg-gray-50 dark:hover:bg-slate-800/50 border-l-4 border-transparent'
+                                                                            ? 'bg-blue-50 border-l-4 border-blue-500' 
+                                                                            : 'hover:bg-gray-50 border-l-4 border-transparent'
                                                                     }`}
                                                                 >
-                                                                    <div className="absolute left-4">
+                                                                    <div className="absolute left-3">
                                                                         {isCompleted ? (
-                                                                            <CheckCircle2 className="w-5 h-5 text-green-500 dark:text-green-400" />
-                                                                        ) : isSelected ? (
-                                                                            <Play className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                                                                            <CheckCircle2 className="w-4 h-4 text-[#00d9a5]" />
                                                                         ) : (
-                                                                            <Circle className="w-5 h-5 text-gray-400 dark:text-gray-600" />
+                                                                            <Circle className="w-4 h-4 text-gray-300" />
                                                                         )}
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
-                                                                        <div className="flex items-center justify-between mb-1">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Icon className={`w-4 h-4 ${isSelected ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
-                                                                                <p className={`text-sm line-clamp-2 ${
-                                                                                    isSelected ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-700 dark:text-gray-300'
-                                                                                }`}>
-                                                                                    {lecture.title}
-                                                                                </p>
-                                                                            </div>
-                                                                            {isBookmarked && (
-                                                                                <Bookmark className="w-4 h-4 text-blue-500 dark:text-blue-400 fill-current" />
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="flex items-center gap-3">
-                                                                            <span className="text-xs text-gray-500 dark:text-gray-400">{lecture.duration}</span>
-                                                                            <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
-                                                                            <span className="text-xs text-gray-500 dark:text-gray-400">{lecture.studentCount.toLocaleString()} views</span>
-                                                                            {lecture.hasQuiz && (
-                                                                                <>
-                                                                                    <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
-                                                                                    <span className="text-xs px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded">
-                                                                                        Quiz
-                                                                                    </span>
-                                                                                </>
-                                                                            )}
+                                                                        <p className={`text-sm ${isSelected ? 'text-gray-900 font-medium' : 'text-gray-700'}`}>
+                                                                            {lecture.title}
+                                                                        </p>
+                                                                        <div className="flex items-center gap-2 mt-1">
+                                                                            <span className="text-xs text-gray-400">{lecture.duration}</span>
+                                                                            <span className="text-xs text-gray-300">•</span>
+                                                                            <span className="text-xs text-gray-400">{lecture.studentCount.toLocaleString()} views</span>
                                                                         </div>
                                                                     </div>
                                                                 </button>
@@ -640,7 +583,7 @@ const LinkedInStyleDemo = ({
                             {/* Course Complete Button */}
                             <div className="p-4 border-t border-gray-200">
                                 <button 
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent hover:bg-accent/90 text-white rounded-lg text-sm font-medium transition-colors"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#00d9a5] hover:bg-[#00c495] text-white rounded-lg text-sm font-medium transition-colors"
                                 >
                                     <Play className="w-4 h-4" />
                                     Course Complete!
