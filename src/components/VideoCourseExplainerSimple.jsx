@@ -217,14 +217,14 @@ export default function VideoCourseExplainerSimple({
     const overallProgress = slideProgress + currentSlideContribution;
 
     return (
-        <div className="w-full h-full bg-slate-950 overflow-hidden relative flex flex-col">
+        <div className="w-full h-full bg-navy-800 overflow-hidden relative flex flex-col">
             <audio ref={videoState.audioRef} src={videoState.audioStreamUrl} className="hidden" />
 
             {/* Main Content Area */}
             <div className="flex-1 relative overflow-hidden">
                 {/* Background */}
                 <div className="absolute inset-0">
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900"></div>
                     <div className="absolute inset-0 opacity-10">
                         <div className="absolute top-10 left-10 w-80 h-80 bg-purple-500/40 rounded-full blur-3xl"></div>
                         <div className="absolute bottom-10 right-10 w-72 h-72 bg-blue-500/40 rounded-full blur-3xl"></div>
@@ -233,7 +233,7 @@ export default function VideoCourseExplainerSimple({
 
                 {/* Content Display */}
                 <div className="absolute inset-0 flex items-center justify-center p-4 pb-2">
-                    <div className="w-full max-w-7xl h-full bg-slate-900 rounded-2xl border border-slate-700/50 p-6 md:p-10 overflow-auto shadow-2xl">
+                    <div className="w-full max-w-7xl h-full bg-navy-900 rounded-2xl border border-navy-700/50 p-6 md:p-10 overflow-auto shadow-2xl">
                         {videoState.slides.length > 0 ? (
                             <SlideContent
                                 slide={videoState.slides[videoState.currentSlide]}
@@ -339,15 +339,15 @@ export default function VideoCourseExplainerSimple({
             </div>
 
             {/* Bottom Controls - Simple inline bar */}
-            <div className="flex-shrink-0 bg-slate-900 border-t border-slate-800 px-6 py-4">
+            <div className="flex-shrink-0 bg-navy-900 border-t border-navy-700 px-6 py-4">
                 {/* Progress Bar */}
                 <div className="mb-3">
                     <div 
-                        className="w-full h-1.5 bg-slate-700 rounded-full cursor-pointer overflow-hidden"
+                        className="w-full h-1.5 bg-navy-700 rounded-full cursor-pointer overflow-hidden"
                         onClick={handleProgressClick}
                     >
                         <div 
-                            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all"
+                            className="h-full bg-accent rounded-full transition-all"
                             style={{ width: `${overallProgress}%` }}
                         />
                     </div>
@@ -371,7 +371,7 @@ export default function VideoCourseExplainerSimple({
                         {/* Play/Pause */}
                         <button
                             onClick={handlePlayPause}
-                            className="w-10 h-10 rounded-full bg-purple-500 hover:bg-purple-400 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 rounded-full bg-accent hover:bg-accent-600 flex items-center justify-center transition-colors"
                         >
                             {videoState.isPlaying ? (
                                 <span className="w-3 h-3 bg-white rounded-sm" />
@@ -415,7 +415,7 @@ export default function VideoCourseExplainerSimple({
                     <div className="text-center">
                         <button
                             onClick={handlePlayPause}
-                            className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                            className="w-24 h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-accent/30 hover:scale-105 transition-transform"
                         >
                             <Play className="w-10 h-10 text-white ml-1" />
                         </button>

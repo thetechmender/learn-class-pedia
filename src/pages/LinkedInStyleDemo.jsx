@@ -43,7 +43,7 @@ import {
 
 // Default IDs for development/testing (overridden by authenticated props)
 const DEFAULT_STUDENT_ID = 1;
-const DEFAULT_COURSE_ID = 5;
+const DEFAULT_COURSE_ID = 15;
 
 const parseDurationToSeconds = (duration) => {
     if (!duration) return 0;
@@ -291,47 +291,36 @@ const LinkedInStyleDemo = ({
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col">
+        <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
             {/* Top Navigation Bar */}
-            <header className="h-14 sm:h-16 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-800/50 flex items-center justify-between px-3 sm:px-6 flex-shrink-0 sticky top-0 z-40">
-                <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+            <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 flex-shrink-0 sticky top-0 z-40">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => setShowSidebar(!showSidebar)}
-                        className="lg:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                        {showSidebar ? <X className="w-5 h-5 text-gray-700 dark:text-white" /> : <Menu className="w-5 h-5 text-gray-700 dark:text-white" />}
+                        {showSidebar ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
                     </button>
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
-                            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                            <GraduationCap className="w-5 h-5 text-white" />
                         </div>
-                        <div className="min-w-0 flex-1">
-                            <h1 className="text-gray-900 dark:text-white font-semibold text-xs sm:text-sm truncate">{courseData.title}</h1>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-400 rounded-full font-medium">
-                                    {courseData.level}
-                                </span>
-                            </div>
-                        </div>
+                        <span className="text-xl font-bold text-gray-800">Classpedia</span>
                     </div>
                 </div>
 
-                {/* Right Side */}
+                {/* Right Side - Progress */}
                 <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-3">
-                        <div className="text-right">
-                            <p className="text-gray-900 dark:text-white text-sm font-semibold">{getProgress()}% Complete</p>
-                            <p className="text-gray-500 dark:text-gray-400 text-xs">{completedLectures.size} of {getTotalLectures()} lectures</p>
-                        </div>
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-green-500/25">
-                            <span className="text-white text-xs font-bold">{getProgress()}%</span>
-                        </div>
+                    <div className="hidden md:flex items-center gap-2">
+                        <Search className="w-5 h-5 text-gray-400" />
+                        <Bell className="w-5 h-5 text-gray-400" />
                     </div>
-                    {/* Mobile Progress Circle */}
-                    <div className="flex md:hidden items-center">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-r from-green-500 to-emerald-400 flex items-center justify-center shadow-md">
-                            <span className="text-white text-[10px] font-bold">{getProgress()}%</span>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-gray-800">{getProgress()}% Complete</span>
+                        <span className="text-xs text-gray-500">{completedLectures.size} of {getTotalLectures()} lectures</span>
+                    </div>
+                    <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+                        DA
                     </div>
                 </div>
             </header>
@@ -348,45 +337,61 @@ const LinkedInStyleDemo = ({
             <div className="flex-1 flex overflow-hidden">
                 {/* Video/Content Area */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    {/* Lecture Header - Combined Info */}
-                    <div className="px-3 sm:px-6 py-3 sm:py-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border-b border-gray-200/50 dark:border-slate-800/50">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <div className="flex items-center gap-1">
-                                        <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                                        <span className="text-gray-900 dark:text-white font-semibold text-xs sm:text-sm">{courseData.rating}</span>
-                                    </div>
-                                    <span className="text-gray-400 dark:text-gray-500">•</span>
-                                    <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{courseData.reviews} reviews</span>
+                    {/* Lecture Header - Classpedia Style */}
+                    <div className="px-4 py-3 bg-white border-b border-gray-200">
+                        {/* Top row - Rating, Duration, Tabs */}
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1">
+                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                    <span className="text-gray-800 font-semibold text-sm">{courseData.rating}</span>
+                                    <span className="text-gray-400 text-sm">({courseData.reviews} reviews)</span>
                                 </div>
-                                <h2 className="text-gray-900 dark:text-white text-base sm:text-lg lg:text-xl font-bold mb-1 line-clamp-2">{selectedLecture.title}</h2>
-                                <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
-                                    Lecture {selectedLecture.lectureNumber} • {selectedLecture.studentCount.toLocaleString()} students viewed
-                                </p>
+                                <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                    <Clock className="w-4 h-4" />
+                                    <span>{selectedLecture.duration}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                    <span>•</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium">
+                                        <Video className="w-4 h-4" />
+                                        Video
+                                    </button>
+                                    <button className="flex items-center gap-1 px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-full text-sm">
+                                        <FileText className="w-4 h-4" />
+                                        PDF
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => toggleBookmark(selectedLecture.id)}
-                                    className="p-2 sm:p-2.5 rounded-xl bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105"
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
-                                    <Bookmark className={`w-4 h-4 sm:w-5 sm:h-5 ${bookmarkedLectures.has(selectedLecture.id) ? 'text-blue-500 fill-blue-500' : 'text-gray-500 dark:text-gray-400'}`} />
+                                    <Bookmark className={`w-5 h-5 ${bookmarkedLectures.has(selectedLecture.id) ? 'text-accent fill-accent' : 'text-gray-400'}`} />
                                 </button>
                                 {!completedLectures.has(selectedLecture.id) ? (
                                     <button
                                         onClick={() => markAsComplete(selectedLecture.id)}
-                                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-xl hover:scale-105"
+                                        className="px-4 py-1.5 bg-accent hover:bg-accent/90 text-white rounded-full text-sm font-medium transition-colors"
                                     >
                                         Mark Complete
                                     </button>
                                 ) : (
-                                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs sm:text-sm font-medium px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                        <span className="hidden sm:inline">Completed</span>
+                                    <span className="flex items-center gap-1.5 text-accent text-sm font-medium px-3 py-1.5 bg-accent/10 rounded-full border border-accent/30">
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Completed
                                     </span>
                                 )}
                             </div>
                         </div>
+                        {/* Title row */}
+                        <h2 className="text-gray-800 text-lg font-bold mb-1">{selectedLecture.title}</h2>
+                        <p className="text-gray-500 text-sm">
+                            Lecture {selectedLecture.lectureNumber} • {selectedLecture.studentCount.toLocaleString()} students viewed
+                        </p>
                     </div>
 
                     {/* Video Player Area */}
@@ -403,23 +408,31 @@ const LinkedInStyleDemo = ({
                         </div>
                     </div>
 
-                    {/* Interactive Footer */}
-                    <div className="px-3 sm:px-6 py-2.5 sm:py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-gray-200/50 dark:border-slate-800/50 flex items-center justify-between sm:justify-end gap-2">
-                        {/* Mobile Chat Button */}
-                        <button 
-                            onClick={() => setShowChatBox(true)}
-                            className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl text-xs font-medium shadow-lg shadow-purple-500/25"
-                        >
-                            <MessageSquare className="w-4 h-4" />
-                            <span>Chat</span>
-                        </button>
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <button className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl text-gray-700 dark:text-gray-300 text-xs sm:text-sm transition-all duration-200 hover:scale-105">
+                    {/* Interactive Footer - Classpedia Style */}
+                    <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between">
+                        {/* Left side - Action buttons */}
+                        <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm transition-colors">
+                                <ThumbsUp className="w-4 h-4" />
+                                Helpful
+                            </button>
+                            <button className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm transition-colors">
+                                <MessageSquare className="w-4 h-4" />
+                                Ask Question
+                            </button>
+                            <button className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm transition-colors">
+                                <HelpCircle className="w-4 h-4" />
+                                Need Help?
+                            </button>
+                        </div>
+                        {/* Right side - Navigation buttons */}
+                        <div className="flex items-center gap-3">
+                            <button className="px-5 py-2 border border-gray-300 hover:bg-gray-50 rounded-full text-gray-700 text-sm font-medium transition-colors">
                                 Previous
                             </button>
                             <button 
                                 onClick={() => handleLectureSelect(getNextLecture())}
-                                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:scale-105"
+                                className="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium transition-colors"
                             >
                                 Next Lesson
                             </button>
@@ -486,11 +499,11 @@ const LinkedInStyleDemo = ({
                                 <div className="mb-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Your Progress</span>
-                                        <span className="text-blue-500 dark:text-blue-400 text-sm font-bold">{getProgress()}%</span>
+                                        <span className="text-accent text-sm font-bold">{getProgress()}%</span>
                                     </div>
-                                    <div className="w-full h-2 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                                         <div 
-                                            className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500"
+                                            className="h-full bg-accent transition-all duration-500"
                                             style={{ width: `${getProgress()}%` }}
                                         />
                                     </div>
@@ -548,7 +561,7 @@ const LinkedInStyleDemo = ({
                                                     <div className="flex items-center justify-between mt-2">
                                                         <div className="flex-1 h-1.5 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden mr-3">
                                                             <div 
-                                                                className="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all"
+                                                                className="h-full bg-accent transition-all"
                                                                 style={{ width: `${(chapterProgress / chapter.lectures.length) * 100}%` }}
                                                             />
                                                         </div>
@@ -622,6 +635,16 @@ const LinkedInStyleDemo = ({
                                         </div>
                                     );
                                 })}
+                            </div>
+
+                            {/* Course Complete Button */}
+                            <div className="p-4 border-t border-gray-200">
+                                <button 
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent hover:bg-accent/90 text-white rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    <Play className="w-4 h-4" />
+                                    Course Complete!
+                                </button>
                             </div>
                         </>
                     )}
