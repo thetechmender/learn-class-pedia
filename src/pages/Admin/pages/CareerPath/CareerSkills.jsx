@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useToast } from '../../../../hooks/useToast';
 import { useCareerSkills } from '../../../../hooks/useCareerSkills';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
 import Modal from '../../../../components/Modal';
 import { 
   Plus, 
@@ -11,14 +12,16 @@ import {
   AlertCircle,
   CheckCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Award,
+  Target
 } from 'lucide-react';
 
 const CareerSkills = () => {
   const { toast, showToast } = useToast();
   
-  const showSuccess = (message) => showToast(message, 'success');
-  const showError = (message) => showToast(message, 'error');
+  const showSuccess = useCallback((message) => showToast(message, 'success'), [showToast]);
+  const showError = useCallback((message) => showToast(message, 'error'), [showToast]);
 
   // API operations from hook
   const {
@@ -94,7 +97,7 @@ const CareerSkills = () => {
   // Initial fetch and when page changes
   useEffect(() => {
     fetchCareerSkills();
-  }, [currentPage, itemsPerPage]); // Don't include searchTerm here to avoid double calls
+  }, [fetchCareerSkills, currentPage, itemsPerPage]); // Don't include searchTerm here to avoid double calls
 
   // Debounced search - only triggers when user stops typing
   useEffect(() => {
@@ -168,7 +171,7 @@ const CareerSkills = () => {
       setModalError(errorMessage);
       showError(errorMessage);
     }
-  }, [editingCareerSkill, formData, resetForm, fetchCareerSkills, showSuccess, showError]);
+  }, [handleInputChange, resetForm, fetchCareerSkills, showSuccess, showError, editingCareerSkill, formData, createCareerSkill, updateCareerSkill]);
 
   const handleEdit = useCallback((careerSkill) => {
     setEditingCareerSkill(careerSkill);
@@ -217,47 +220,60 @@ const CareerSkills = () => {
     setShowDetailsModal(false);
   }, []);
 
+  if (loading) {
+    return <AdminPageLayout loading={true} skeletonType="table" />;
+  }
+
+  if (error) {
+    return (
+      <AdminPageLayout
+        title="Career Skills"
+        subtitle="Manage career skills and their descriptions"
+        icon={Award}
+        loading={false}
+        skeletonType="table"
+      >
+        <div className="text-red-500 p-4">{error}</div>
+      </AdminPageLayout>
+    );
+  }
+
   return (
-    <div className="p-6">
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
-          toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
-          <div className="flex items-center space-x-2">
-            {toast.type === 'success' ? (
-              <CheckCircle className="w-5 h-5" />
-            ) : (
-              <AlertCircle className="w-5 h-5" />
-            )}
-            <span className="font-medium">{toast.message}</span>
-          </div>
-        </div>
-      )}
-
-      <h1 className="text-2xl font-bold mb-2">Career Skills Management</h1>
-      <p className="text-gray-600 mb-4">Manage career skills and their descriptions</p>
-
-      {/* Error message */}
-      {error && <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded">{error}</div>}
-
-      {/* Controls */}
-      <div className="mb-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="flex-1 w-full">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+    <AdminPageLayout
+      title="Career Skills"
+      subtitle="Manage career skills and their descriptions"
+      icon={Award}
+      loading={false}
+      skeletonType="table"
+      actions={
+        <button
+          onClick={openCreateModal}
+          className="flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Career Skill
+        </button>
+      }
+    >
+      {/* Search Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <div className="relative max-w-2xl mx-auto">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+            </div>
             <input
               type="text"
               placeholder={isTyping ? "Type to search..." : "Search career skills..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full px-4 py-2 pl-10 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+              className={`w-full pl-12 pr-12 py-4 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 ${
                 isTyping 
-                  ? 'border-blue-400 bg-blue-50' 
-                  : 'border-gray-300 bg-white'
+                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' 
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
               }`}
             />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
               {isTyping && (
                 <div className="flex items-center space-x-1">
                   <div className="flex space-x-1">
@@ -270,103 +286,175 @@ const CareerSkills = () => {
               {loading && !isTyping && searchTerm && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
               )}
+              {!isTyping && !loading && searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <AlertCircle className="h-5 w-5" />
+                </button>
+              )}
             </div>
           </div>
           {isTyping && (
-            <div className="mt-1 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               Searching when you stop typing...
             </div>
           )}
         </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} className="mr-2"/> Add Career Skill
-        </button>
-      </div>
 
-      {/* Career Skills table */}
-      <div className="bg-white border rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading career skills...</span>
+        {searchTerm && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Showing <span className="font-semibold">{careerSkills.length}</span> of {totalItems} career skills
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+              >
+                Clear search
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {careerSkills.length === 0 ? (
+        )}
+
+        {/* Career Skills Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-300">Loading career skills...</span>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
-                      {searchTerm ? 'No career skills found matching your search.' : 'No career skills found.'}
-                    </td>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Slug</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
-                ) : (
-                  careerSkills.map((skill) => (
-                    <tr key={skill.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{skill.title}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 font-mono">{skill.slug}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{skill.description || 'No description'}</td>
-                      <td className="px-4 py-3 flex space-x-2">
-                        <button 
-                          onClick={() => handleViewDetails(skill)} 
-                          className="text-green-600 hover:bg-green-50 p-1 rounded"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleEdit(skill)} 
-                          className="text-blue-600 hover:bg-blue-50 p-1 rounded"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(skill.id)} 
-                          className="text-red-600 hover:bg-red-50 p-1 rounded"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {careerSkills.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                            <Target className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                            {searchTerm ? 'No career skills found' : 'No career skills available'}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-300 mb-6">
+                            {searchTerm 
+                              ? 'Try adjusting your search terms' 
+                              : 'Create your first career skill to get started'
+                            }
+                          </p>
+                          {!searchTerm && (
+                            <button
+                              onClick={openCreateModal}
+                              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                            >
+                              <Plus className="w-4 h-4 mr-2 inline" />
+                              Create Your First Career Skill
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    careerSkills.map((skill) => (
+                      <tr key={skill.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{skill.title}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 font-mono">{skill.slug}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate" title={skill.description}>
+                            {skill.description || 'No description'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => handleViewDetails(skill)} 
+                              className="flex items-center px-2 py-1.5 text-xs text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg font-medium transition-colors"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              View
+                            </button>
+                            <button 
+                              onClick={() => handleEdit(skill)} 
+                              className="flex items-center px-2 py-1.5 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition-colors"
+                            >
+                              <Edit2 className="w-3 h-3 mr-1" />
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(skill.id)} 
+                              className="flex items-center px-2 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg font-medium transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex items-center justify-center">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Previous
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+          toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="flex items-center px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
-            </button>
-            
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="flex items-center px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </button>
+            {toast.type === 'success' ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <AlertCircle className="w-5 h-5" />
+            )}
+            <span className="font-medium">{toast.message}</span>
           </div>
         </div>
       )}
@@ -390,26 +478,26 @@ const CareerSkills = () => {
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 placeholder="Enter career skill title"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 placeholder="Enter career skill description"
               />
             </div>
@@ -419,13 +507,13 @@ const CareerSkills = () => {
             <button
               type="button"
               onClick={closeCreateModal}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
               Create Career Skill
             </button>
@@ -452,26 +540,26 @@ const CareerSkills = () => {
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 placeholder="Enter career skill title"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
                 placeholder="Enter career skill description"
               />
             </div>
@@ -481,13 +569,13 @@ const CareerSkills = () => {
             <button
               type="button"
               onClick={closeUpdateModal}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
               Update Career Skill
             </button>
@@ -504,24 +592,24 @@ const CareerSkills = () => {
         {selectedCareerSkill && (
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Title</h3>
-              <p className="mt-1 text-sm text-gray-900">{selectedCareerSkill.title}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Title</h3>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedCareerSkill.title}</p>
             </div>
             
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Slug</h3>
-              <p className="mt-1 text-sm text-gray-900 font-mono">{selectedCareerSkill.slug}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Slug</h3>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono">{selectedCareerSkill.slug}</p>
             </div>
             
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Description</h3>
-              <p className="mt-1 text-sm text-gray-900">{selectedCareerSkill.description || 'No description'}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</h3>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white">{selectedCareerSkill.description || 'No description'}</p>
             </div>
             
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={closeDetailsModal}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                className="px-6 py-2.5 bg-gray-600 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors font-medium"
               >
                 Close
               </button>
@@ -529,7 +617,7 @@ const CareerSkills = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </AdminPageLayout>
   );
 };
 

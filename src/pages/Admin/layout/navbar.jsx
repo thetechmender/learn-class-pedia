@@ -1,4 +1,4 @@
-import { Menu, Search, Sun, Moon, CircleUser, ChevronDown, Star, Key } from 'lucide-react';
+import { Menu, Search, Sun, Moon, ChevronDown, Key } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useState, useEffect, useRef } from 'react';

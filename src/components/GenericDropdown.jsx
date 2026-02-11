@@ -117,7 +117,7 @@ const GenericDropdown = ({
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
+        <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
           {/* Search Input */}
           {searchable && (
             <div className="p-3 border-b border-gray-200">

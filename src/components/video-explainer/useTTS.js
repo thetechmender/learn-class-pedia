@@ -127,45 +127,18 @@ export function useTTS({
             // Fallback to any available voice
             return voices.length > 0 ? voices[0] : null;
         };
-        
+
         // Helper function to score voice maturity based on name
         const getMaturityScore = (voiceName) => {
-            let score = 0;
-            
-            // Names that sound more mature/experienced
-            const matureNameIndicators = [
-                'susan', 'karen', 'linda', 'patricia', 'deborah', 'nancy',
-                'donna', 'carol', 'sandra', 'sharon', 'kathleen', 'cynthia',
-                'elizabeth', 'margaret', 'anne', 'mary', 'judith'
-            ];
-            
-            // Voice quality indicators
-            const qualityIndicators = [
-                'mature', 'adult', 'natural', 'premium', 'enhanced',
-                'professional', 'studio', 'expressive'
-            ];
-            
-            matureNameIndicators.forEach(indicator => {
-                if (voiceName.includes(indicator)) score += 3;
-            });
-            
-            qualityIndicators.forEach(indicator => {
-                if (voiceName.includes(indicator)) score += 2;
-            });
-            
-            // Penalize young-sounding names
-            const youngIndicators = ['teen', 'young', 'kid', 'child', 'girl'];
-            youngIndicators.forEach(indicator => {
-                if (voiceName.includes(indicator)) score -= 3;
-            });
-            
-            return score;
+            const matureNames = ['susan', 'karen', 'linda', 'patricia', 'deborah'];
+            return matureNames.reduce((score, name) => {
+                return score + (voiceName.toLowerCase().includes(name) ? 10 : 0);
+            }, 0);
         };
 
         const voice = findMatureFemaleVoice();
         if (voice) {
             utterance.voice = voice;
-            console.log('Selected mature female voice:', voice.name);
         } else if (voices.length > 0) {
             utterance.voice = voices[0];
         } else {

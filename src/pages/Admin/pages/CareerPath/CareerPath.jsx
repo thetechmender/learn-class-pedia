@@ -1,8 +1,10 @@
-import  { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useReducer } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../../../hooks/useAdmin';
+import { useCareerPath } from '../../../../hooks/useCareerPath';
 import CareerPathForm from './CareerPathForm';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
+import GenericDropdown from '../../../../components/GenericDropdown';
 import {
   Plus,
   Filter,
@@ -10,8 +12,6 @@ import {
   BookOpen,
   Users,
   Calendar,
-  Search,
-  X,
   Star,
   Award,
   Target,
@@ -26,6 +26,36 @@ import {
   Route as RouteIcon
 } from 'lucide-react';
 
+// Filter state reducer for managing temporary filter states
+const filterReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_TEMP_TITLE':
+      return { ...state, tempTitle: action.payload };
+    case 'SET_TEMP_SEARCH_TERM':
+      return { ...state, tempSearchTerm: action.payload };
+    case 'SET_TEMP_ROLE_ID':
+      return { ...state, tempSelectedRoleId: action.payload };
+    case 'SET_TEMP_COURSE_CERTIFICATE':
+      return { ...state, tempCourseCertificate: action.payload };
+    case 'RESET_TEMP_FILTERS':
+      return { 
+        tempTitle: '',
+        tempSearchTerm: '',
+        tempSelectedRoleId: '',
+        tempCourseCertificate: ''
+      };
+    case 'SYNC_TEMP_FILTERS':
+      return {
+        tempTitle: action.payload.title || '',
+        tempSearchTerm: action.payload.searchTerm || '',
+        tempSelectedRoleId: action.payload.selectedRoleId || '',
+        tempCourseCertificate: action.payload.courseCertificate || ''
+      };
+    default:
+      return state;
+  }
+};
+
 const CareerPath = () => {
   const navigate = useNavigate();
   const {
@@ -35,16 +65,26 @@ const CareerPath = () => {
     updateCareerPathWithFile,
     deleteCareerPath
   } = useAdmin();
+  const { getCareerRoles } = useCareerPath();
   const [careerPaths, setCareerPaths] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('all');
+  const [selectedRoleId, setSelectedRoleId] = useState('');
+  const [courseCertificate, setCourseCertificate] = useState('');
+  const [title, setTitle] = useState('');
+  const [careerRoles, setCareerRoles] = useState([]);
   
-  // Temporary filter states
-  const [tempSearchTerm, setTempSearchTerm] = useState('');
-  const [tempSelectedDuration, setTempSelectedDuration] = useState('all');
+  // Use useReducer for temporary filter states
+  const [tempFilters, dispatchTempFilters] = useReducer(filterReducer, {
+    tempTitle: '',
+    tempSearchTerm: '',
+    tempSelectedRoleId: '',
+    tempCourseCertificate: ''
+  });
+
   const [hoveredCard, setHoveredCard] = useState(null);
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +98,22 @@ const CareerPath = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  // Fetch career roles on component mount
+  useEffect(() => {
+    const fetchCareerRoles = async () => {
+      try {
+        const rolesData = await getCareerRoles();
+        const roles = Array.isArray(rolesData) ? rolesData : rolesData.items || [];
+        setCareerRoles(roles);
+      } catch (error) {
+        console.error('Failed to fetch career roles:', error);
+        setCareerRoles([]);
+      }
+    };
+    
+    fetchCareerRoles();
+  }, [getCareerRoles]);
+
   const fetchCareerPaths = useCallback(async () => {
     try {
       setLoading(true);
@@ -67,8 +123,16 @@ const CareerPath = () => {
         pageSize: itemsPerPage
       };
       
-      if (searchTerm) {
-        params.search = searchTerm;
+      if (title) {
+        params.Title = title;
+      }
+      
+      if (selectedRoleId) {
+        params.RoleId = selectedRoleId;
+      }
+      
+      if (courseCertificate) {
+        params.CertificateCount = courseCertificate;
       }
       
       if (selectedDuration !== 'all') {
@@ -81,7 +145,7 @@ const CareerPath = () => {
         if (response.data && Array.isArray(response.data)) {
           setCareerPaths(response.data);
           setTotalItems(response.totalCount || response.total || response.data.length);
-          setServerTotalPages(response.totalPages || Math.ceil((response.totalCount || response.total || response.data.length) / itemsPerPage));
+          setServerTotalPages(serverTotalPages || Math.ceil((response.totalCount || response.total || response.data.length) / itemsPerPage));
         } 
         else if (Array.isArray(response)) {
           setCareerPaths(response);
@@ -113,52 +177,54 @@ const CareerPath = () => {
     } finally {
       setLoading(false);
     }
-  }, [getAllCareerPaths, currentPage, itemsPerPage, searchTerm, selectedDuration]);
+  }, [getAllCareerPaths, currentPage, itemsPerPage, title, selectedRoleId, courseCertificate, selectedDuration, serverTotalPages]);
 
   useEffect(() => {
     fetchCareerPaths();
-  }, [currentPage, itemsPerPage, searchTerm, selectedDuration]);
+  }, [fetchCareerPaths, currentPage, itemsPerPage, title, selectedRoleId, courseCertificate, selectedDuration]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedDuration]);
+  }, [title, selectedRoleId, courseCertificate, selectedDuration, searchTerm]);
 
   // Sync temporary states when filters are opened
   useEffect(() => {
     if (showFilters) {
-      setTempSearchTerm(searchTerm);
-      setTempSelectedDuration(selectedDuration);
+      dispatchTempFilters({ 
+        type: 'SYNC_TEMP_FILTERS', 
+        payload: {
+          title,
+          searchTerm,
+          selectedRoleId,
+          courseCertificate
+        }
+      });
     }
-  }, [showFilters, searchTerm, selectedDuration]);
-
-  const totalPages = serverTotalPages;
-  const paginatedCareerPaths = Array.isArray(careerPaths) ? careerPaths : [];
-
-  const getUniqueCategories = () => {
-    const categories = careerPaths
-      .map(path => path.categoryName)
-      .filter(Boolean);
-    return [...new Set(categories)];
-  };
+  }, [showFilters, title, selectedRoleId, courseCertificate, searchTerm]);
 
   const clearFilters = () => {
+    setTitle('');
     setSearchTerm('');
-    setSelectedDuration('all');
-    setTempSearchTerm('');
-    setTempSelectedDuration('all');
+    setSelectedRoleId('');
+    setCourseCertificate('');
+    dispatchTempFilters({ type: 'RESET_TEMP_FILTERS' });
   };
 
   const applyFilters = () => {
-    setSearchTerm(tempSearchTerm);
-    setSelectedDuration(tempSelectedDuration);
+    setTitle(tempFilters.tempTitle);
+    setSearchTerm(tempFilters.tempSearchTerm);
+    setSelectedRoleId(tempFilters.tempSelectedRoleId);
+    setCourseCertificate(tempFilters.tempCourseCertificate);
     setCurrentPage(1);
     setShowFilters(false);
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
+    if (title) count++;
     if (searchTerm) count++;
-    if (selectedDuration !== 'all') count++;
+    if (selectedRoleId) count++;
+    if (courseCertificate) count++;
     return count;
   };
 
@@ -410,17 +476,17 @@ const CareerPath = () => {
         <>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 font-medium ${
-              getActiveFiltersCount() > 0
+            className={`flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 font-medium text-sm ${
+              (showFilters || title || selectedRoleId || courseCertificate)
                 ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
                 : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-            {getActiveFiltersCount() > 0 && (
+            <Filter className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Filters</span>
+            {(showFilters || title || selectedRoleId || courseCertificate) && (
               <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
-                {getActiveFiltersCount()}
+                Active
               </span>
             )}
           </button>
@@ -436,49 +502,62 @@ const CareerPath = () => {
     >
       {/* Filters Section */}
       {showFilters && (
-        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
-          <div className="py-6">
-            <div className="flex items-center justify-between mb-4">
+        <div className="relative z-[9998] bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 lg:px-8">
+          <div className="py-2 sm:py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 space-y-2 sm:space-y-0">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
               <button
                 onClick={() => {
-                  setTempSearchTerm('');
-                  setTempSelectedDuration('all');
+                  dispatchTempFilters({ type: 'SET_TEMP_SEARCH_TERM', payload: '' });
                 }}
                 className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Clear All
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
                 <input
                   type="text"
-                  value={tempSearchTerm}
-                  onChange={(e) => setTempSearchTerm(e.target.value)}
+                  value={tempFilters.tempTitle}
+                  onChange={(e) => dispatchTempFilters({ type: 'SET_TEMP_TITLE', payload: e.target.value })}
                   placeholder="Search by title..."
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration</label>
-                <select
-                  value={tempSelectedDuration}
-                  onChange={(e) => setTempSelectedDuration(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="all">All Durations</option>
-                  <option value="short">0-3 months</option>
-                  <option value="medium">3-6 months</option>
-                  <option value="long">6-12 months</option>
-                  <option value="extended">12+ months</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Career Role</label>
+                <GenericDropdown
+                  items={careerRoles.map(role => ({ id: role.id, name: role.name }))}
+                  value={tempFilters.tempSelectedRoleId}
+                  onChange={(value) => dispatchTempFilters({ type: 'SET_TEMP_ROLE_ID', payload: value })}
+                  placeholder="Select role..."
+                  className="w-full"
+                />
               </div>
-              <div className="flex items-end md:col-span-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Certificate</label>
+                <input
+                  type="text"
+                  value={tempFilters.tempCourseCertificate}
+                  onChange={(e) => dispatchTempFilters({ type: 'SET_TEMP_COURSE_CERTIFICATE', payload: e.target.value })}
+                  placeholder="Filter by certificate count..."
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
+                />
+              </div>
+              <div className="flex items-end">
                 <button
-                  onClick={applyFilters}
-                  className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
+                  onClick={() => {
+                    setTitle(tempFilters.tempTitle);
+                    setSearchTerm(tempFilters.tempSearchTerm);
+                    setSelectedRoleId(tempFilters.tempSelectedRoleId);
+                    setCourseCertificate(tempFilters.tempCourseCertificate);
+                    setCurrentPage(1);
+                    setShowFilters(false);
+                  }}
+                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
                 >
                   Apply Filters
                 </button>
@@ -488,7 +567,7 @@ const CareerPath = () => {
         </div>
       )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {searchTerm || selectedDuration !== 'all' ? (
+        {title || selectedRoleId || courseCertificate ? (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
             <div className="flex items-center justify-between">
               <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -524,7 +603,7 @@ const CareerPath = () => {
                 Create Your First Career Path
               </button>
             )}
-            {(searchTerm || selectedDuration !== 'all') && (
+            {(searchTerm) && (
               <button
                 onClick={clearFilters}
                 className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium"
@@ -535,7 +614,7 @@ const CareerPath = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {paginatedCareerPaths.map((path) => {
+            {careerPaths.map((path) => {
               const totalCourses = calculateTotalCourses(path.levels);
               const firstCourses = getFirstFewCourses(path.levels, 3);
               const isHovered = hoveredCard === path.id;
@@ -709,7 +788,7 @@ const CareerPath = () => {
           </div>
         )}
       </div>
-      {totalPages > 1 && (
+      {serverTotalPages > 1 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
           <div className="flex items-center justify-center">
             <div className="flex items-center space-x-2">
@@ -723,8 +802,8 @@ const CareerPath = () => {
               </button>
               
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, serverTotalPages))}
+                disabled={currentPage === serverTotalPages}
                 className="flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
               >
                 Next

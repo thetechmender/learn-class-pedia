@@ -50,7 +50,6 @@ export default function VoiceSelector({
 
     // Match available system voices to our predefined human-like voices
     const getMatchedVoices = () => {
-        console.log('VoiceSelector: Total available voices:', voices.length);
         const matched = [];
         
         HUMAN_VOICES.forEach(humanVoice => {
@@ -63,7 +62,6 @@ export default function VoiceSelector({
             );
             
             if (systemVoice) {
-                console.log(`Matched ${humanVoice.name} to ${systemVoice.name}`);
                 matched.push({
                     ...humanVoice,
                     systemVoice: systemVoice,
@@ -78,7 +76,6 @@ export default function VoiceSelector({
                 v.lang.includes('en') && !matched.some(m => m.systemName === v.name)
             );
             
-            console.log('Adding fallback voices:', englishVoices.length);
             englishVoices.slice(0, 5 - matched.length).forEach((voice, idx) => {
                 matched.push({
                     id: `fallback-${idx}`,
@@ -91,7 +88,6 @@ export default function VoiceSelector({
             });
         }
 
-        console.log('VoiceSelector: Total matched voices:', matched.length);
         return matched.slice(0, 5); // Limit to 5 voices
     };
 
@@ -99,10 +95,7 @@ export default function VoiceSelector({
     const currentVoice = matchedVoices.find(v => v.systemName === selectedVoice) || matchedVoices[0];
 
     const handleVoiceSelect = (voice) => {
-        console.log('🎤 Voice selected:', voice.systemName);
-        console.log('🎤 Current selectedVoice before change:', selectedVoice);
         onVoiceChange(voice.systemName);
-        console.log('🎤 onVoiceChange called with:', voice.systemName);
         setIsOpen(false);
         
         // Show a brief notification

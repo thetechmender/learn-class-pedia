@@ -86,8 +86,6 @@ const CareerPathForm = ({
 
   useEffect(() => {
     if (careerPath) {
-      console.log('CareerPath data received:', careerPath);
-      console.log('Overview field:', careerPath.overview);
       setFormData({
         title: careerPath.title || '',
         description: careerPath.description || '',
@@ -115,7 +113,6 @@ const CareerPathForm = ({
   // Initialize iconUrl only once when component mounts or careerPath changes
   useEffect(() => {
     if (careerPath) {
-      console.log('Second useEffect - updating iconUrl and overview');
       setFormData(prev => ({
         ...prev,
         iconUrl: careerPath.iconUrl || '', // Only set from careerPath data
@@ -134,12 +131,10 @@ const CareerPathForm = ({
       }).filter(id => id !== null) || [];
       
       setFormData(prev => {
-        console.log('Before badge update - formData.Overview:', prev.Overview);
         const updated = {
           ...prev,
           careerPathBadges: mappedBadgeIds
         };
-        console.log('After badge update - formData.Overview:', updated.Overview);
         return updated;
       });
     }
@@ -1208,17 +1203,11 @@ const CareerPathForm = ({
                   </h4>
                   <div className="space-y-3">
                     {formData.skills.map((skill, index) => {
-                      // Debug: log the skill data to understand the structure
-                      console.log('Skill data:', skill);
-                      console.log('Available skills:', skills);
-                      
                       // Try different ways to find the skill details
                       const skillDetails = skills.find(s => s.id === skill.skillId) || 
                                          skills.find(s => s.skillId === skill.skillId) ||
                                          skills.find(s => s.id === skill.id) ||
                                          skill; // fallback to the skill object itself
-                      
-                      console.log('Skill details found:', skillDetails);
                       
                       return (
                         <div

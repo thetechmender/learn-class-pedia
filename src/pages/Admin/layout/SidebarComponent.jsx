@@ -1,4 +1,4 @@
-import { BookOpen, X, ChevronLeft, ChevronRight, LayoutDashboard, TrendingUp, User, LogOut, Star, MessageCircle, Link2, ChevronDown, ChevronRight as ChevronRightIcon, Brain } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/useDynamicRoutes';
@@ -59,7 +59,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                 }
               }}
               className={`
-                flex-1 flex items-center gap-2 px-3 py-3 rounded-l-lg
+                flex-1 flex items-center gap-2 px-3 py-2 rounded-l-lg
                 transition-all duration-200 relative
                 ${isActive
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
@@ -69,7 +69,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
               style={{ paddingLeft: `${level * 12 + 12}px` }}
             >
               <item.icon className="w-4 h-4 flex-shrink-0" />
-              <span className="font-medium text-sm truncate flex-1 text-left">{item.label}</span>
+              <span className="font-semibold text-sm truncate flex-1 text-left">{item.label}</span>
             </button>
             <button
               onClick={() => toggleMenu(item.id)}
@@ -101,7 +101,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
         key={item.id}
         onClick={() => handleNavigation(item.path)}
         className={`
-          w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-3 rounded-lg
+          w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-2 rounded-lg
           transition-all duration-200 relative
           ${isActive
             ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
@@ -112,7 +112,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
         title={isCollapsed ? item.label : undefined}
       >
         <item.icon className={`w-4 h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-        {!isCollapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
+        {!isCollapsed && <span className="font-semibold text-sm truncate">{item.label}</span>}
       </button>
     );
   };
@@ -293,7 +293,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             {/* Main Navigation */}
             <div>
               {!isCollapsed && (
-                <h3 className={`px-3 text-xs font-semibold uppercase tracking-wider mb-2 lg:mb-2 text-xs lg:text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} hidden lg:block`} style={{fontSize: '0.75rem'}}>
+                <h3 className={`px-3 text-sm font-semibold uppercase tracking-wider mb-2 lg:mb-2 text-sm lg:text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} hidden lg:block`} style={{fontSize: '0.75rem'}}>
                   Main Menu
                 </h3>
               )}
@@ -309,7 +309,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                       key={item.id}
                       onClick={() => handleNavigation(item.path)}
                       className={`
-                        w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-2 lg:px-3 py-2 lg:py-3 rounded-lg
+                        w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-2 lg:px-3 py-2 lg:py-2 rounded-lg
                         transition-all duration-200 relative
                         ${isActive
                           ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
@@ -319,7 +319,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                       title={isCollapsed ? item.label : undefined}
                     >
                       <item.icon className={`w-4 h-4 lg:w-4 lg:h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-                      {!isCollapsed && <span className="font-medium text-xs lg:text-sm truncate  lg:block">{item.label}</span>}
+                      {!isCollapsed && <span className="font-semibold text-sm truncate lg:block">{item.label}</span>}
                     </button>
                   );
                 })}
@@ -329,7 +329,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             {/* Management Section */}
             <div>
               {!isCollapsed && (
-                <h3 className={`px-3 text-xs  lg:text-sm font-semibold uppercase tracking-wider mb-2 lg:mb-2 text-xs lg:text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} hidden lg:block`} style={{fontSize: '0.75rem'}}>
+                <h3 className={`px-3 text-sm font-semibold uppercase tracking-wider mb-2 lg:mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} hidden lg:block`}>
                   Management
                 </h3>
               )}
@@ -343,14 +343,14 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
               <button
                 onClick={handleLogout}
                 className={`
-                  w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-2 lg:px-3 py-2 lg:py-3 rounded-lg
+                  w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-2 lg:px-3 py-2 lg:py-2 rounded-lg
                   transition-all duration-200 relative
                   text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
                 `}
                 title={isCollapsed ? 'Logout' : undefined}
               >
                 <LogOut className={`w-4 h-4 lg:w-4 lg:h-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-                {!isCollapsed && <span className="font-medium text-xs lg:text-sm hidden lg:block">Logout</span>}
+                {!isCollapsed && <span className="font-semibold text-sm hidden lg:block">Logout</span>}
               </button>
             </div>
           </nav>

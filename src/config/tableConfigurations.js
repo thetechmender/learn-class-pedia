@@ -5,32 +5,13 @@ export const courseTableColumns = [
   {
     key: 'title',
     title: 'Course',
-    width: '300px',
+    width: '35%',
+    minWidth: '250px',
     type: 'image',
     align: 'left',
     render: (value, item, index) => {
-      // Debug: Log available image fields
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Course item data:', item);
-        console.log('Available image fields:', {
-          thumbnailUrl: item.thumbnailUrl,
-          imageUrl: item.imageUrl,
-          image: item.image,
-          courseImage: item.courseImage,
-          thumbnail: item.thumbnail,
-          courseThumbnail: item.courseThumbnail
-        });
-      }
       
-      const handleImageError = (e) => {
-        console.warn('Image failed to load:', e.target.src);
-        e.target.style.display = 'none';
-        e.target.nextSibling.style.display = 'flex';
-      };
       
-      const handleImageLoad = () => {
-        console.log('Image loaded successfully');
-      };
       
       const imageUrl = item.thumbnailUrl || item.imageUrl || item.image || item.courseImage || item.thumbnail || item.courseThumbnail;
       const hasImage = !!imageUrl;
@@ -43,8 +24,10 @@ export const courseTableColumns = [
               alt={item.title}
               className="w-10 h-10 rounded-lg object-cover mr-3 border border-gray-200 dark:border-gray-600"
               loading="lazy"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
             />
           ) : null}
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-3 border border-gray-200 dark:border-gray-600" 
@@ -65,7 +48,8 @@ export const courseTableColumns = [
   {
     key: 'categoryName',
     title: 'Category',
-    width: '150px',
+    width: '20%',
+    minWidth: '120px',
     type: 'badge',
     align: 'left',
     badgeClass: () => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700'
@@ -73,7 +57,8 @@ export const courseTableColumns = [
   {
     key: 'courseLevelName',
     title: 'Level',
-    width: '120px',
+    width: '15%',
+    minWidth: '80px',
     type: 'badge',
     align: 'left',
     badgeClass: () => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-300 dark:border-orange-700'
@@ -81,7 +66,8 @@ export const courseTableColumns = [
   {
     key: 'actions',
     title: 'Actions',
-    width: '150px',
+    width: '30%',
+    minWidth: '140px',
     type: 'actions',
     align: 'center'
   }
