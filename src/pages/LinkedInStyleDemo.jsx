@@ -336,40 +336,31 @@ const LinkedInStyleDemo = ({
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Lecture Header - Classpedia Style */}
                     <div className="px-6 py-4 bg-white border-b border-gray-200">
-                        {/* Top row - Duration, Video/PDF tabs */}
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1 text-gray-500 text-sm">
-                                    <Clock className="w-4 h-4" />
-                                    <span>{selectedLecture.duration}</span>
-                                </div>
-                                <span className="text-gray-300">•</span>
-                                <div className="flex items-center gap-2">
-                                    <button className="flex items-center gap-1.5 px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700">
-                                        <Video className="w-4 h-4" />
-                                        Video
-                                    </button>
-                                    <button className="flex items-center gap-1.5 px-3 py-1 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50">
-                                        <FileText className="w-4 h-4" />
-                                        PDF
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => toggleBookmark(selectedLecture.id)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <Bookmark className={`w-5 h-5 ${bookmarkedLectures.has(selectedLecture.id) ? 'text-accent fill-accent' : 'text-gray-400'}`} />
-                                </button>
-                                {completedLectures.has(selectedLecture.id) && (
-                                    <span className="flex items-center gap-1.5 text-[#00d9a5] text-sm font-medium">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        Completed
-                                    </span>
-                                )}
-                            </div>
+                        {/* Rating row */}
+                        <div className="flex items-center gap-2 mb-3">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-gray-800 font-medium text-sm">{courseData.rating}</span>
+                            <span className="text-gray-400 text-sm">({courseData.reviews} reviews)</span>
                         </div>
+                        
+                        {/* Duration and Video/PDF tabs row */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="flex items-center gap-1 text-gray-500 text-sm">
+                                <Clock className="w-4 h-4" />
+                                <span>{selectedLecture.duration}</span>
+                            </div>
+                            <span className="text-gray-300">•</span>
+                            <button className="flex items-center gap-1.5 px-2 py-0.5 border border-gray-300 rounded text-sm text-gray-600">
+                                <Video className="w-4 h-4" />
+                                Video
+                            </button>
+                            <span className="text-gray-300">•</span>
+                            <button className="flex items-center gap-1.5 px-2 py-0.5 border border-gray-300 rounded text-sm text-gray-600">
+                                <FileText className="w-4 h-4" />
+                                PDF
+                            </button>
+                        </div>
+                        
                         {/* Title row */}
                         <h2 className="text-gray-900 text-xl font-semibold mb-1">{selectedLecture.title}</h2>
                         <p className="text-gray-500 text-sm">
@@ -481,11 +472,11 @@ const LinkedInStyleDemo = ({
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-gray-700 text-sm font-medium">Your Progress</span>
-                                        <span className="text-[#00d9a5] text-sm font-bold">{getProgress()}%</span>
+                                        <span className="text-blue-500 text-sm font-bold">{getProgress()}%</span>
                                     </div>
                                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                                         <div 
-                                            className="h-full bg-[#00d9a5] transition-all duration-500"
+                                            className="h-full bg-blue-500 transition-all duration-500"
                                             style={{ width: `${getProgress()}%` }}
                                         />
                                     </div>
@@ -524,7 +515,7 @@ const LinkedInStyleDemo = ({
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden mr-3">
                                                             <div 
-                                                                className="h-full bg-[#00d9a5] transition-all"
+                                                                className="h-full bg-blue-500 transition-all"
                                                                 style={{ width: `${(chapterProgress / chapter.lectures.length) * 100}%` }}
                                                             />
                                                         </div>
@@ -554,7 +545,7 @@ const LinkedInStyleDemo = ({
                                                                 >
                                                                     <div className="absolute left-3">
                                                                         {isCompleted ? (
-                                                                            <CheckCircle2 className="w-4 h-4 text-[#00d9a5]" />
+                                                                            <CheckCircle2 className="w-4 h-4 text-blue-500" />
                                                                         ) : (
                                                                             <Circle className="w-4 h-4 text-gray-300" />
                                                                         )}
@@ -583,7 +574,7 @@ const LinkedInStyleDemo = ({
                             {/* Course Complete Button */}
                             <div className="p-4 border-t border-gray-200">
                                 <button 
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#00d9a5] hover:bg-[#00c495] text-white rounded-lg text-sm font-medium transition-colors"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
                                 >
                                     <Play className="w-4 h-4" />
                                     Course Complete!
