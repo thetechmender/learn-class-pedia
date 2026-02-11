@@ -26,7 +26,9 @@ import {
     Search,
     Home,
     GraduationCap,
-    Video
+    Video,
+    Monitor,
+    File
 } from 'lucide-react';
 import VideoCourseExplainerSimple from '../components/VideoCourseExplainerSimple';
 import ChatBox from '../components/video-explainer/ChatBox';
@@ -351,12 +353,12 @@ const LinkedInStyleDemo = ({
                             </div>
                             <span className="text-gray-300">•</span>
                             <button className="flex items-center gap-1.5 px-2 py-0.5 border border-gray-300 rounded text-sm text-gray-600">
-                                <Video className="w-4 h-4" />
+                                <Monitor className="w-4 h-4 text-blue-500" />
                                 Video
                             </button>
                             <span className="text-gray-300">•</span>
                             <button className="flex items-center gap-1.5 px-2 py-0.5 border border-gray-300 rounded text-sm text-gray-600">
-                                <FileText className="w-4 h-4" />
+                                <File className="w-4 h-4 text-blue-500" />
                                 PDF
                             </button>
                         </div>
