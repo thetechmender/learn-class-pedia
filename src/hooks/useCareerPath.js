@@ -60,11 +60,9 @@ export const useCareerPath = () => {
       try {
         // First try the career skills endpoint
         response = await adminApiService.getAllCareerSkills();
-        console.log('Career Skills API Response:', response); // Debug log
         
         // Handle the API response structure where skills are in items array
         skillsData = response.items || response || [];
-        console.log('Extracted career skills data:', skillsData); // Debug log
         
       } catch (careerSkillsError) {
         console.warn('Career skills endpoint failed, trying /skills endpoint:', careerSkillsError);
@@ -75,11 +73,9 @@ export const useCareerPath = () => {
         
         if (skillsResponse.ok) {
           response = await skillsResponse.json();
-          console.log('Skills API Response:', response); // Debug log
           
           // Handle the API response structure where skills are in items array
           skillsData = response.items || response || [];
-          console.log('Extracted skills data:', skillsData); // Debug log
         } else {
           throw new Error('Both skill endpoints failed');
         }
@@ -91,12 +87,10 @@ export const useCareerPath = () => {
         description: skill.description || skill.name,
         category: 'Skill' // Add default category since API doesn't provide one
       })) : [];
-      console.log('Transformed skills:', transformedSkills); // Debug log
       
       setSkills(transformedSkills);
       return transformedSkills;
     } catch (err) {
-      console.error('Skills fetch error:', err); // Debug log
       handleError('Failed to fetch skills', err);
       return [];
     } finally {

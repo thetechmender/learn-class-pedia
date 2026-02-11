@@ -181,8 +181,7 @@ export const clearChatThread = async (threadId) => {
     
     try {
         // If there's an API endpoint to clear threads, call it here
-        // For now, just return success as the frontend handles the reset
-        console.log('Clearing chat thread:', threadId);
+        // For now, just return success as frontend handles reset
         return { success: true };
     } catch (error) {
         console.error('Error clearing chat thread:', error);

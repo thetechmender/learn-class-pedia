@@ -1,5 +1,5 @@
-import  { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAdmin } from '../../../hooks/useAdmin';
 import { useAuth } from '../../../context/AuthContext';
 import Dashboard from '../pages/Dashboard/Dashboard';
@@ -10,8 +10,6 @@ import FeaturedMarking from '../pages/FeaturedMarking/FeaturedMarking';
 import Reviews from '../pages/Reviews/Reviews';
 import CourseUrlManagement from '../pages/CourseUrlManagement/CourseUrlManagement';
 import ChangePassword from '../pages/ChangePassword/ChangePassword';
-import Settings from '../pages/Settings/Settings';
-import Notifications from '../pages/Notifications/Notifications';
 import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
 import CareerRoles from '../pages/CareerPath/CareerRoles';
 import CareerSkills from '../pages/CareerPath/CareerSkills';
@@ -28,8 +26,6 @@ const componentMap = {
   Reviews,
   CourseUrlManagement,
   ChangePassword,
-  Settings,
-  Notifications,
   CategoryManagement,
   CareerRoles,
   CareerSkills,
@@ -100,7 +96,7 @@ const DynamicRoutes = () => {
     };
 
     loadRoutes();
-  }, [user]);
+  }, [user, getRoutesByRole]);
 
   if (loading) {
     return (

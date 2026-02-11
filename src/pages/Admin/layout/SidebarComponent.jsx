@@ -1,4 +1,4 @@
-import { BookOpen, X, ChevronLeft, ChevronRight, LayoutDashboard, TrendingUp, User, LogOut, Star, MessageCircle, Link2, ChevronDown, ChevronRight as ChevronRightIcon, Brain } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/useDynamicRoutes';

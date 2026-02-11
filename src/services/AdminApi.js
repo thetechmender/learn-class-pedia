@@ -43,11 +43,7 @@ class AdminApiService {
     // Remove Authorization header if explicitly set to null/undefined (for login)
     if (options.headers && (options.headers.Authorization === null || options.headers.Authorization === undefined)) {
       delete config.headers.Authorization;
-      console.log('AdminApi.request - Authorization header removed for login');
     }
-
-    console.log('AdminApi.request - Final config headers:', config.headers);
-    console.log('AdminApi.request - Body type:', options.body instanceof FormData ? 'FormData' : typeof options.body);
 
     try {
       const response = await fetch(url, config);
@@ -149,12 +145,6 @@ class AdminApiService {
     formData.append('name', categoryData.name);
     formData.append('description', categoryData.description || '');
     formData.append('parentCategoryId', categoryData.parentCategoryId || 0);
-    
-    console.log('AdminApi.createCategory - Using FormData for create (even without image)');
-    console.log('AdminApi.createCategory - FormData contents:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}: ${value}`);
-    }
     
     return this.request(ENDPOINTS.CATEGORIES_Admin, {
       method: 'POST',
@@ -488,9 +478,6 @@ class AdminApiService {
         })
       };
 
-      console.log('AdminApi.login - Direct login request to:', url);
-      console.log('AdminApi.login - Headers:', config.headers);
-
       const response = await fetch(url, config);
 
       if (!response.ok) {
@@ -598,8 +585,6 @@ class AdminApiService {
   async getAllCareerPaths(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     const url = queryString ? `${ENDPOINTS.CAREER_PATHS}?${queryString}` : ENDPOINTS.CAREER_PATHS;
-    console.log('AdminApi.getAllCareerPaths - Final URL:', `${this.baseURL}${url}`);
-    console.log('AdminApi.getAllCareerPaths - Params:', params);
     return this.request(url);
   }
 
