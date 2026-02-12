@@ -15,6 +15,7 @@ import CareerRoles from '../pages/CareerPath/CareerRoles';
 import CareerSkills from '../pages/CareerPath/CareerSkills';
 import CourseSkillMapping from '../pages/CourseSkillMapping/CourseSkillMapping';
 import EmailTemplateManagement from '../pages/EmailTemplateManagement/EmailTemplateManagement';
+import ReviewManagementPage from '../pages/ReviewManagementPage/ReviewManagementPage';
 
 // Component mapping
 const componentMap = {
@@ -31,6 +32,7 @@ const componentMap = {
   CareerSkills,
   CourseSkillMapping,
   EmailTemplateManagement,
+  ReviewManagementPage,
 };
 
 // Protected Route Component
@@ -81,7 +83,7 @@ const DynamicRoutes = () => {
       setError(null);
 
       try {
-        const userRoutes = await getRoutesByRole();
+        const userRoutes = await getRoutesByRole(user?.roleId);
         
         if (!userRoutes || !Array.isArray(userRoutes)) {
           throw new Error('Invalid routes data received');
@@ -143,6 +145,16 @@ const DynamicRoutes = () => {
       <Route path="course-skill-mapping" element={
         <ProtectedRoute>
           <CourseSkillMapping />
+        </ProtectedRoute>
+      } />
+      <Route path="career-path" element={
+        <ProtectedRoute>
+          <CareerPath />
+        </ProtectedRoute>
+      } />
+      <Route path="review-management" element={
+        <ProtectedRoute>
+          <ReviewManagementPage />
         </ProtectedRoute>
       } />
       

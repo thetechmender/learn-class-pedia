@@ -236,8 +236,17 @@ const CareerPathForm = ({
     if (!levelData) return;
     
     const newLevel = {
+      levelMapId: levelData.levelMapId || levelId,
       levelId: levelId,
-      levelName: levelData.levelName,
+      title: levelData.title || levelData.levelName || '',
+      description: '',
+      overview: '',
+      outcome: '',
+      durationMinMonths: 0,
+      durationMaxMonths: 0,
+      price: 0,
+      discountedPrice: 0,
+      sortOrder: 0,
       courses: []
     };
     
@@ -251,6 +260,17 @@ const CareerPathForm = ({
     setFormData(prev => ({
       ...prev,
       levels: prev.levels.filter((_, i) => i !== levelIndex)
+    }));
+  };
+
+  const updateLevelField = (levelIndex, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      levels: prev.levels.map((level, index) => 
+        index === levelIndex 
+          ? { ...level, [field]: value }
+          : level
+      )
     }));
   };
 
@@ -540,7 +560,18 @@ const CareerPathForm = ({
       
       // Add arrays using only proper form field notation
       const levelsArray = formData.levels.map(level => ({
+        levelMapId: parseInt(level.levelMapId) || parseInt(level.levelId),
         levelId: parseInt(level.levelId),
+        title: level.title || '',
+        description: level.description || '',
+        overview: level.overview || '',
+        outcome: level.outcome || '',
+        durationMinMonths: parseInt(level.durationMinMonths) || 0,
+        durationMaxMonths: parseInt(level.durationMaxMonths) || 0,
+        price: parseFloat(level.price) || 0,
+        discountedPrice: parseFloat(level.discountedPrice) || 0,
+        sortOrder: parseInt(level.sortOrder) || 0,
+        certificateCount: level.courses?.length || 0, // Auto-calculate from courses
         courses: level.courses.map(course => ({
           courseId: parseInt(course.courseId),
           courseSequence: course.courseSequence || 0
@@ -558,10 +589,21 @@ const CareerPathForm = ({
       
       // Send arrays using proper array notation only
       levelsArray.forEach((level, index) => {
-        submitData.append(`levels[${index}].levelId`, level.levelId);
+        submitData.append(`Levels[${index}].levelMapId`, level.levelMapId);
+        submitData.append(`Levels[${index}].levelId`, level.levelId);
+        if (level.title) submitData.append(`Levels[${index}].title`, level.title);
+        if (level.description) submitData.append(`Levels[${index}].description`, level.description);
+        if (level.overview) submitData.append(`Levels[${index}].overview`, level.overview);
+        if (level.outcome) submitData.append(`Levels[${index}].outcome`, level.outcome);
+        if (level.durationMinMonths !== undefined) submitData.append(`Levels[${index}].durationMinMonths`, level.durationMinMonths);
+        if (level.durationMaxMonths !== undefined) submitData.append(`Levels[${index}].durationMaxMonths`, level.durationMaxMonths);
+        if (level.price !== undefined) submitData.append(`Levels[${index}].price`, level.price);
+        if (level.discountedPrice !== undefined) submitData.append(`Levels[${index}].discountedPrice`, level.discountedPrice);
+        if (level.sortOrder !== undefined) submitData.append(`Levels[${index}].sortOrder`, level.sortOrder);
+        if (level.certificateCount !== undefined) submitData.append(`Levels[${index}].certificateCount`, level.certificateCount);
         level.courses.forEach((course, courseIndex) => {
-          submitData.append(`levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
-          submitData.append(`levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
+          submitData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
+          submitData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
         });
       });
       
@@ -596,7 +638,18 @@ const CareerPathForm = ({
         overview: formData.Overview,
         roleId: parseInt(formData.roleId),
         levels: formData.levels.map(level => ({
+          levelMapId: parseInt(level.levelMapId) || parseInt(level.levelId),
           levelId: parseInt(level.levelId),
+          title: level.title || '',
+          description: level.description || '',
+          overview: level.overview || '',
+          outcome: level.outcome || '',
+          durationMinMonths: parseInt(level.durationMinMonths) || 0,
+          durationMaxMonths: parseInt(level.durationMaxMonths) || 0,
+          price: parseFloat(level.price) || 0,
+          discountedPrice: parseFloat(level.discountedPrice) || 0,
+          sortOrder: parseInt(level.sortOrder) || 0,
+          certificateCount: level.courses?.length || 0, // Auto-calculate from courses
           courses: level.courses.map(course => ({
             courseId: parseInt(course.courseId),
             courseSequence: course.courseSequence || 0
@@ -954,7 +1007,7 @@ const CareerPathForm = ({
                           className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center"
                         >
                           <Target className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                          <div className="text-sm font-medium text-gray-900">{level.levelName}</div>
+                          <div className="text-sm font-medium text-gray-900">{level.title || level.levelName}</div>
                         </button>
                       ))}
                     </div>
@@ -973,7 +1026,7 @@ const CareerPathForm = ({
                   <div key={levelIndex} className="border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h4 className="text-lg font-semibold text-gray-900">{level.levelName}</h4>
+                        <h4 className="text-lg font-semibold text-gray-900">{level.title || level.levelName}</h4>
                         <p className="text-sm text-gray-600">{level.courses.length} course{level.courses.length !== 1 ? 's' : ''} assigned</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1000,6 +1053,142 @@ const CareerPathForm = ({
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+                      </div>
+                    </div>
+
+                    {/* Level Details - Always Visible */}
+                    <div className="border-t border-gray-100 pt-4 mt-4">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-4">Level Details</h5>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Level Title */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Level Title
+                          </label>
+                          <input
+                            type="text"
+                            value={level.title || ''}
+                            onChange={(e) => updateLevelField(levelIndex, 'title', e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Enter level title..."
+                          />
+                        </div>
+
+                        {/* Duration Range */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Duration (Months)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={level.durationMinMonths || 0}
+                              onChange={(e) => updateLevelField(levelIndex, 'durationMinMonths', parseInt(e.target.value) || 0)}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Min"
+                              min="0"
+                            />
+                            <span className="text-gray-500">to</span>
+                            <input
+                              type="number"
+                              value={level.durationMaxMonths || 0}
+                              onChange={(e) => updateLevelField(levelIndex, 'durationMaxMonths', parseInt(e.target.value) || 0)}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Max"
+                              min="0"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Price Range */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Price
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <input
+                                type="number"
+                                value={level.price || 0}
+                                onChange={(e) => updateLevelField(levelIndex, 'price', parseFloat(e.target.value) || 0)}
+                                className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Price"
+                                min="0"
+                                step="0.01"
+                              />
+                            </div>
+                            <div className="relative flex-1">
+                              <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <input
+                                type="number"
+                                value={level.discountedPrice || 0}
+                                onChange={(e) => updateLevelField(levelIndex, 'discountedPrice', parseFloat(e.target.value) || 0)}
+                                className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Discount"
+                                min="0"
+                                step="0.01"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Sort Order */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Sort Order
+                          </label>
+                          <input
+                            type="number"
+                            value={level.sortOrder || 0}
+                            onChange={(e) => updateLevelField(levelIndex, 'sortOrder', parseInt(e.target.value) || 0)}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="0"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Description
+                        </label>
+                        <textarea
+                          value={level.description || ''}
+                          onChange={(e) => updateLevelField(levelIndex, 'description', e.target.value)}
+                          rows={2}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          placeholder="Describe this level..."
+                        />
+                      </div>
+
+                      {/* Overview */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Overview
+                        </label>
+                        <textarea
+                          value={level.overview || ''}
+                          onChange={(e) => updateLevelField(levelIndex, 'overview', e.target.value)}
+                          rows={2}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          placeholder="Provide an overview of this level..."
+                        />
+                      </div>
+
+                      {/* Outcome */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Learning Outcome
+                        </label>
+                        <textarea
+                          value={level.outcome || ''}
+                          onChange={(e) => updateLevelField(levelIndex, 'outcome', e.target.value)}
+                          rows={2}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          placeholder="What will participants learn in this level?"
+                        />
                       </div>
                     </div>
 

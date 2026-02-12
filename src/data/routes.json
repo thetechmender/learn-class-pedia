@@ -46,13 +46,22 @@
       "order": 5
     },
     {
+      "id": "review-management-page",
+      "path": "/admin/review-management",
+      "component": "ReviewManagementPage",
+      "label": "Course & Career Reviews",
+      "icon": "Star",
+      "category": "management",
+      "order": 6
+    },
+    {
       "id": "course-urls",
       "path": "/admin/course-urls",
       "component": "CourseUrlManagement",
       "label": "Course URL Management",
       "icon": "Link2",
       "category": "management",
-      "order": 6
+      "order": 7
     },
     {
       "id": "categories",
@@ -61,7 +70,7 @@
       "label": "Category Management",
       "icon": "FolderTree",
       "category": "management",
-      "order": 7
+      "order": 8
     },
     {
       "id": "email-templates",
@@ -70,7 +79,7 @@
       "label": "Email Templates",
       "icon": "Mail",
       "category": "management",
-      "order": 8
+      "order": 9
     },
     {
       "id": "career-roles",
@@ -79,7 +88,7 @@
       "label": "Career Roles",
       "icon": "Briefcase",
       "category": "management",
-      "order": 9
+      "order": 10
     },
     {
       "id": "change-password",

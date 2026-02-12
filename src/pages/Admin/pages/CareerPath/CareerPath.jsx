@@ -26,7 +26,6 @@ import {
   Route as RouteIcon
 } from 'lucide-react';
 
-// Filter state reducer for managing temporary filter states
 const filterReducer = (state, action) => {
   switch (action.type) {
     case 'SET_TEMP_TITLE':
@@ -35,21 +34,17 @@ const filterReducer = (state, action) => {
       return { ...state, tempSearchTerm: action.payload };
     case 'SET_TEMP_ROLE_ID':
       return { ...state, tempSelectedRoleId: action.payload };
-    case 'SET_TEMP_COURSE_CERTIFICATE':
-      return { ...state, tempCourseCertificate: action.payload };
     case 'RESET_TEMP_FILTERS':
       return { 
         tempTitle: '',
         tempSearchTerm: '',
-        tempSelectedRoleId: '',
-        tempCourseCertificate: ''
+        tempSelectedRoleId: ''
       };
     case 'SYNC_TEMP_FILTERS':
       return {
         tempTitle: action.payload.title || '',
         tempSearchTerm: action.payload.searchTerm || '',
-        tempSelectedRoleId: action.payload.selectedRoleId || '',
-        tempCourseCertificate: action.payload.courseCertificate || ''
+        tempSelectedRoleId: action.payload.selectedRoleId || ''
       };
     default:
       return state;
@@ -71,18 +66,13 @@ const CareerPath = () => {
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDuration, setSelectedDuration] = useState('all');
   const [selectedRoleId, setSelectedRoleId] = useState('');
-  const [courseCertificate, setCourseCertificate] = useState('');
   const [title, setTitle] = useState('');
   const [careerRoles, setCareerRoles] = useState([]);
-  
-  // Use useReducer for temporary filter states
   const [tempFilters, dispatchTempFilters] = useReducer(filterReducer, {
     tempTitle: '',
     tempSearchTerm: '',
-    tempSelectedRoleId: '',
-    tempCourseCertificate: ''
+    tempSelectedRoleId: ''
   });
 
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -131,13 +121,7 @@ const CareerPath = () => {
         params.RoleId = selectedRoleId;
       }
       
-      if (courseCertificate) {
-        params.CertificateCount = courseCertificate;
-      }
-      
-      if (selectedDuration !== 'all') {
-        params.duration = selectedDuration;
-      }
+    
       
       const response = await getAllCareerPaths(params);
       
@@ -177,15 +161,15 @@ const CareerPath = () => {
     } finally {
       setLoading(false);
     }
-  }, [getAllCareerPaths, currentPage, itemsPerPage, title, selectedRoleId, courseCertificate, selectedDuration, serverTotalPages]);
+  }, [getAllCareerPaths, currentPage, itemsPerPage, title, selectedRoleId, serverTotalPages]);
 
   useEffect(() => {
     fetchCareerPaths();
-  }, [fetchCareerPaths, currentPage, itemsPerPage, title, selectedRoleId, courseCertificate, selectedDuration]);
+  }, [currentPage, itemsPerPage, title, selectedRoleId]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [title, selectedRoleId, courseCertificate, selectedDuration, searchTerm]);
+  }, [title, selectedRoleId, searchTerm]);
 
   // Sync temporary states when filters are opened
   useEffect(() => {
@@ -195,38 +179,19 @@ const CareerPath = () => {
         payload: {
           title,
           searchTerm,
-          selectedRoleId,
-          courseCertificate
+          selectedRoleId
         }
       });
     }
-  }, [showFilters, title, selectedRoleId, courseCertificate, searchTerm]);
+  }, [showFilters, title, selectedRoleId, searchTerm]);
 
   const clearFilters = () => {
     setTitle('');
     setSearchTerm('');
     setSelectedRoleId('');
-    setCourseCertificate('');
     dispatchTempFilters({ type: 'RESET_TEMP_FILTERS' });
   };
 
-  const applyFilters = () => {
-    setTitle(tempFilters.tempTitle);
-    setSearchTerm(tempFilters.tempSearchTerm);
-    setSelectedRoleId(tempFilters.tempSelectedRoleId);
-    setCourseCertificate(tempFilters.tempCourseCertificate);
-    setCurrentPage(1);
-    setShowFilters(false);
-  };
-
-  const getActiveFiltersCount = () => {
-    let count = 0;
-    if (title) count++;
-    if (searchTerm) count++;
-    if (selectedRoleId) count++;
-    if (courseCertificate) count++;
-    return count;
-  };
 
   const handleCreateCareerPath = () => {
     setEditingCareerPath(null);
@@ -264,12 +229,8 @@ const CareerPath = () => {
           if (careerPathData.durationMaxMonths !== undefined) formData.append('DurationMaxMonths', careerPathData.durationMaxMonths);
           if (careerPathData.outcome) formData.append('Outcome', careerPathData.outcome);
           if (careerPathData.overview) formData.append('overview', careerPathData.overview);
-          if (careerPathData.certificateCount !== undefined) formData.append('CertificateCount', careerPathData.certificateCount);
           if (careerPathData.roleId !== undefined) formData.append('RoleId', careerPathData.roleId);
-          
-          // Handle icon properly - preserve existing icon if not modified
           if (editingCareerPath) {
-            // During edit, if no new file and iconUrl hasn't changed, keep existing
             if (careerPathData.iconFile === null && careerPathData.iconUrl === editingCareerPath.iconUrl) {
               formData.append('IconUrl', editingCareerPath.iconUrl || ''); // Send existing icon URL
             } else if (careerPathData.iconFile !== null) {
@@ -289,7 +250,18 @@ const CareerPath = () => {
           
           if (careerPathData.levels && careerPathData.levels.length > 0) {
             careerPathData.levels.forEach((level, index) => {
+              formData.append(`Levels[${index}].levelMapId`, level.levelMapId || level.levelId);
               formData.append(`Levels[${index}].levelId`, level.levelId);
+              if (level.durationMaxMonths !== undefined) formData.append(`Levels[${index}].durationMaxMonths`, level.durationMaxMonths);
+              if (level.price !== undefined) formData.append(`Levels[${index}].price`, level.price);
+              if (level.discountedPrice !== undefined) formData.append(`Levels[${index}].discountedPrice`, level.discountedPrice);
+              if (level.sortOrder !== undefined) formData.append(`Levels[${index}].sortOrder`, level.sortOrder);
+              if (level.durationMinMonths !== undefined) formData.append(`Levels[${index}].durationMinMonths`, level.durationMinMonths);
+              if (level.outcome) formData.append(`Levels[${index}].outcome`, level.outcome);
+              if (level.certificateCount !== undefined) formData.append(`Levels[${index}].certificateCount`, level.certificateCount);
+              if (level.title) formData.append(`Levels[${index}].title`, level.title);
+              if (level.overview) formData.append(`Levels[${index}].overview`, level.overview);
+              if (level.description) formData.append(`Levels[${index}].description`, level.description);
               level.courses.forEach((course, courseIndex) => {
                 formData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
                 formData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
@@ -342,7 +314,18 @@ const CareerPath = () => {
     
           if (careerPathData.levels && careerPathData.levels.length > 0) {
             careerPathData.levels.forEach((level, index) => {
+              formData.append(`Levels[${index}].levelMapId`, level.levelMapId || level.levelId);
               formData.append(`Levels[${index}].levelId`, level.levelId);
+              if (level.durationMaxMonths !== undefined) formData.append(`Levels[${index}].durationMaxMonths`, level.durationMaxMonths);
+              if (level.price !== undefined) formData.append(`Levels[${index}].price`, level.price);
+              if (level.discountedPrice !== undefined) formData.append(`Levels[${index}].discountedPrice`, level.discountedPrice);
+              if (level.sortOrder !== undefined) formData.append(`Levels[${index}].sortOrder`, level.sortOrder);
+              if (level.durationMinMonths !== undefined) formData.append(`Levels[${index}].durationMinMonths`, level.durationMinMonths);
+              if (level.outcome) formData.append(`Levels[${index}].outcome`, level.outcome);
+              if (level.certificateCount !== undefined) formData.append(`Levels[${index}].certificateCount`, level.certificateCount);
+              if (level.title) formData.append(`Levels[${index}].title`, level.title);
+              if (level.overview) formData.append(`Levels[${index}].overview`, level.overview);
+              if (level.description) formData.append(`Levels[${index}].description`, level.description);
               level.courses.forEach((course, courseIndex) => {
                 formData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
                 formData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
@@ -477,14 +460,14 @@ const CareerPath = () => {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 font-medium text-sm ${
-              (showFilters || title || selectedRoleId || courseCertificate)
+              (showFilters || title || selectedRoleId)
                 ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-2 border-blue-200 dark:border-blue-700'
                 : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <Filter className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Filters</span>
-            {(showFilters || title || selectedRoleId || courseCertificate) && (
+            {(showFilters || title || selectedRoleId) && (
               <span className="ml-2 px-2 py-0.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-full">
                 Active
               </span>
@@ -538,14 +521,6 @@ const CareerPath = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Certificate</label>
-                <input
-                  type="text"
-                  value={tempFilters.tempCourseCertificate}
-                  onChange={(e) => dispatchTempFilters({ type: 'SET_TEMP_COURSE_CERTIFICATE', payload: e.target.value })}
-                  placeholder="Filter by certificate count..."
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
-                />
               </div>
               <div className="flex items-end">
                 <button
@@ -553,7 +528,6 @@ const CareerPath = () => {
                     setTitle(tempFilters.tempTitle);
                     setSearchTerm(tempFilters.tempSearchTerm);
                     setSelectedRoleId(tempFilters.tempSelectedRoleId);
-                    setCourseCertificate(tempFilters.tempCourseCertificate);
                     setCurrentPage(1);
                     setShowFilters(false);
                   }}
@@ -567,7 +541,7 @@ const CareerPath = () => {
         </div>
       )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {title || selectedRoleId || courseCertificate ? (
+        {title || selectedRoleId ? (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
             <div className="flex items-center justify-between">
               <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -685,16 +659,7 @@ const CareerPath = () => {
                         </div>
                         <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Levels</div>
                       </div>
-                      <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
-                        <div className="flex items-center justify-center text-orange-600 dark:text-orange-400 mb-2">
-                          <Award className="w-5 h-5" />
-                        </div>
-                        <div className="text-xl font-bold text-gray-900 dark:text-white">
-                          {path.certificateCount || 0}
-                        </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Certificates</div>
-                      </div>
-                    </div>
+                                          </div>
                     {path.skills && path.skills.length > 0 && (
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">

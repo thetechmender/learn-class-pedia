@@ -62,6 +62,25 @@ export const ENDPOINTS = {
   EMAIL_TEMPLATE_DELETE: (id) => `/EmailTemplate/${id}`,
   // LMS Lectures endpoints
   LMS_LECTURES_SEARCH: '/admin/lms-lectures/search',
+  // Reviews endpoints
+  CAREER_PATH_REVIEWS: (id) => `/Review/careerpath/${id}`,
+  COURSE_REVIEWS: (id) => `/Review/course/${id}`,
+  CAREER_PATH_REVIEW_CREATE: '/Review',
+  CAREER_PATH_REVIEW_UPDATE: (id) => `/Review/${id}`,
+  CAREER_PATH_REVIEW_DELETE: (id) => `/Review/${id}`,
+  COURSE_REVIEW_CREATE: '/Review',
+  COURSE_REVIEW_UPDATE: (id) => `/Review/${id}`,
+  COURSE_REVIEW_DELETE: (id) => `/Review/${id}`,
+  CAREER_PATH_REVIEW_READ: (id) => `/Review/${id}`,
+  COURSE_REVIEW_READ: (id) => `/Review/${id}`,
+  CAREER_PATH_REVIEW_ALL: '/Review/careerpath',
+  COURSE_REVIEW_ALL: '/Review/course',
+  
+  // Review dropdown endpoints
+  REVIEW_CAREER_PATHS_DROPDOWN: '/Review/careerpaths/dropdown',
+  REVIEW_COURSES_DROPDOWN: '/Review/courses/dropdown',
+  REVIEW_CAREER_PATH_LEVELS: (careerPathId) => `/Review/careerpaths/${careerPathId}/levels`,
+  REVIEW_WITH_DETAILS: (reviewId) => `/Review/${reviewId}/details`,
 };
 
 // HTTP Status Codes
