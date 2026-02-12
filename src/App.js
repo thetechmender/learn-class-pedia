@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LinkedInStyleDemo from './pages/LinkedInStyleDemo';
 import AuthenticatedLecture from './pages/AuthenticatedLecture';
 import AssessmentPage from './pages/AssessmentPage';
+import Assessment from './pages/Assessment';
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
           <Route path="/classroom" element={<AuthenticatedLecture />} />
           
           {/* Assessment route */}
-          <Route path="/assessment" element={<AssessmentPage />} />
+          <Route path="/assessment" element={<Assessment />} />
           <Route path="/assessment/:lectureId" element={<AssessmentPage />} />
         </Routes>
       </div>
