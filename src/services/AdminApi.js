@@ -600,7 +600,7 @@ class AdminApiService {
 
   // GET career path levels
   async getCareerPathLevels() {
-    return this.request(`${ENDPOINTS.CAREER_PATHS}/levels`);
+    return this.request(`${ENDPOINTS.COURSE_LEVELS}`);
   }
 
   // GET career roles
@@ -669,7 +669,7 @@ class AdminApiService {
           errorDetails = response.statusText || 'Unknown error';
         }
         
-        const error = new Error(`Create failed! status: ${response.status} - ${errorDetails}`);
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
         error.response = {
           status: response.status,
           statusText: response.statusText,
@@ -725,7 +725,7 @@ class AdminApiService {
           errorDetails = response.statusText || 'Unknown error';
         }
         
-        const error = new Error(`Update failed! status: ${response.status} - ${errorDetails}`);
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
         error.response = {
           status: response.status,
           statusText: response.statusText,
@@ -781,7 +781,7 @@ class AdminApiService {
           errorDetails = response.statusText || 'Unknown error';
         }
         
-        const error = new Error(`Create course failed! status: ${response.status} - ${errorDetails}`);
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
         error.response = {
           status: response.status,
           statusText: response.statusText,
@@ -837,7 +837,7 @@ class AdminApiService {
           errorDetails = response.statusText || 'Unknown error';
         }
         
-        const error = new Error(`Update course failed! status: ${response.status} - ${errorDetails}`);
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
         error.response = {
           status: response.status,
           statusText: response.statusText,
@@ -893,7 +893,7 @@ class AdminApiService {
           errorDetails = response.statusText || 'Unknown error';
         }
         
-        const error = new Error(`Create category failed! status: ${response.status} - ${errorDetails}`);
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
         error.response = {
           status: response.status,
           statusText: response.statusText,
@@ -949,7 +949,7 @@ class AdminApiService {
           errorDetails = response.statusText || 'Unknown error';
         }
         
-        const error = new Error(`Update category failed! status: ${response.status} - ${errorDetails}`);
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
         error.response = {
           status: response.status,
           statusText: response.statusText,

@@ -64,7 +64,7 @@ const ReviewManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEWS(id)}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEWS(id)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -81,7 +81,7 @@ const ReviewManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.COURSE_REVIEWS(id)}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.COURSE_REVIEWS(id)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -121,14 +121,14 @@ const ReviewManagementPage = () => {
       let resourceId, resourceTypeId;
       
       if (reviewType === 'careerpath') {
-        resourceId = formData.levelId; // Use level ID for career path reviews
+        resourceId = formData.careerPathId; // Use career path ID for career path reviews
         resourceTypeId = 2; // 2 = career path level
       } else {
         resourceId = formData.courseId; // Use course ID for course reviews
         resourceTypeId = 1; // 1 = course
       }
       
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ const ReviewManagementPage = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_UPDATE(editingReview.id)}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_UPDATE(editingReview.id)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -235,7 +235,7 @@ const ReviewManagementPage = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_DELETE(review.id)}?resourceId=${review.resourceId || review.id}&resourceTypeId=${review.resourceTypeId || (reviewType === 'careerpath' ? 2 : 1)}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_DELETE(review.id)}?resourceId=${review.resourceId || review.id}&resourceTypeId=${review.resourceTypeId || (reviewType === 'careerpath' ? 2 : 1)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, Trash2, X, Search, BookOpen } from 'lucide-react';
+import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, X, Search, BookOpen, Trash2 } from 'lucide-react';
 import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 import GenericDropdown from '../../../../components/GenericDropdown';
@@ -164,7 +164,7 @@ const ReviewManagementPage = () => {
   useEffect(() => {
     fetchCareerPaths('', 1);
     fetchCourses('', 1);
-  }, []); // Remove dependencies to prevent infinite loops
+  }, [fetchCareerPaths, fetchCourses]);
 
   // Course search autocomplete handler
   const handleCourseSearch = useCallback(async (searchTerm) => {
@@ -407,7 +407,7 @@ const ReviewManagementPage = () => {
 
   const fetchCareerPathLevels = async (careerPathId) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -437,7 +437,7 @@ const ReviewManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEWS(id)}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEWS(id)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -454,7 +454,7 @@ const ReviewManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.COURSE_REVIEWS(id)}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.COURSE_REVIEWS(id)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -495,7 +495,7 @@ const ReviewManagementPage = () => {
       
       if (reviewType === 'careerpath') {
         // Scenario: ResourceTypeId = 2 AND CourseId = 0
-        resourceId = formData.levelId;    // Use level ID for career path reviews
+        resourceId = formData.careerPathId;    // Use career path ID for career path reviews
         resourceTypeId = 2;             // 2 = career path level
         courseId = 0;                   // CourseId = 0 for career path reviews
       } else {
@@ -505,7 +505,7 @@ const ReviewManagementPage = () => {
         courseId = formData.courseId;        // Use CourseId for course reviews
       }
       
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -518,7 +518,7 @@ const ReviewManagementPage = () => {
             reviewBy: formData.reviewBy,
             courseId: courseId  // Include courseId in review object
           },
-          resourceId: resourceId,      // LevelId for career paths, 0 for courses
+          resourceId: resourceId,      // CareerPathId for career paths, 0 for courses
           resourceTypeId: resourceTypeId  // 2 for career paths, 1 for courses
         })
       });
@@ -552,7 +552,7 @@ const ReviewManagementPage = () => {
 
   const fetchCareerPathLevelsForEdit = async (careerPathId) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -570,7 +570,7 @@ const ReviewManagementPage = () => {
   const handleEditReview = async (review) => {
     try {
       // Fetch review with details
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.REVIEW_WITH_DETAILS(review.id)}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.REVIEW_WITH_DETAILS(review.id)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -637,7 +637,7 @@ const ReviewManagementPage = () => {
       // Determine resource type and ID based on the original review
       if (editingReview.resourceTypeId === 2) {
         // Career path level review: ResourceTypeId = 2 AND CourseId = 0
-        resourceId = editModalData.selectedLevel || editingReview.resourceId;
+        resourceId = editModalData.selectedCareerPath || editingReview.resourceId;
         resourceTypeId = 2; // 2 = career path level
         courseId = 0;       // CourseId = 0 for career path reviews
       } else {
@@ -647,7 +647,7 @@ const ReviewManagementPage = () => {
         courseId = editModalData.selectedCourse || editingReview.courseId;
       }
       
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_UPDATE(editingReview.id)}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_UPDATE(editingReview.id)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -660,7 +660,7 @@ const ReviewManagementPage = () => {
             reviewBy: formData.reviewBy,
             courseId: courseId  // Include courseId in review object
           },
-          resourceId: resourceId,      // LevelId for career paths, 0 for courses
+          resourceId: resourceId,      // CareerPathId for career paths, 0 for courses
           resourceTypeId: resourceTypeId  // 2 for career paths, 1 for courses
         })
       });
@@ -708,7 +708,7 @@ const ReviewManagementPage = () => {
         resourceTypeId = 1; // 1 = course
       }
       
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_DELETE(review.id)}?resourceId=${resourceId}&resourceTypeId=${resourceTypeId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_DELETE(review.id)}?resourceId=${resourceId}&resourceTypeId=${resourceTypeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -735,7 +735,7 @@ const ReviewManagementPage = () => {
   useEffect(() => {
     fetchCareerPaths();
     fetchCourses();
-  }, []);
+  }, [fetchCareerPaths, fetchCourses]);
 
   useEffect(() => {
     if (reviewType === 'careerpath' && careerPathId) {

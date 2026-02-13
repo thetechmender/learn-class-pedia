@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Upload,
   CheckCircle,
-  Plus
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import MultiSelectDropdown from '../../../../components/MultiSelectDropdown';
@@ -41,6 +42,8 @@ const CareerPathForm = ({
   
   // Add a state to track if initial data is loaded
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -82,6 +85,7 @@ const CareerPathForm = ({
     initializeDropdownData();
     // Always clear cache on mount to ensure fresh start
     clearCache();
+    console.log('CareerPathForm mounted, levels:', levels);
   }, []);
 
   useEffect(() => {
@@ -201,6 +205,11 @@ const CareerPathForm = ({
         [field]: ''
       }));
     }
+    
+    // Clear modal error when user makes changes
+    if (modalError) {
+      setModalError('');
+    }
   };
 
   const handleSkillSelection = (skillId, proficiencyLevel) => {
@@ -227,17 +236,31 @@ const CareerPathForm = ({
   };
 
   const getAvailableLevels = () => {
-    const selectedLevelIds = formData.levels.map(level => level.levelId);
-    return levels.filter(level => !selectedLevelIds.includes(level.levelId));
+    const selectedLevelIds = formData.levels.map(level => parseInt(level.levelId));
+    const available = levels.filter(level => !selectedLevelIds.includes(parseInt(level.levelId)));
+    console.log('getAvailableLevels - selectedLevelIds:', selectedLevelIds);
+    console.log('getAvailableLevels - available levels:', available);
+    return available;
   };
 
   const addLevelToPath = (levelId) => {
-    const levelData = levels.find(l => l.levelId === levelId);
-    if (!levelData) return;
+    console.log('addLevelToPath called with levelId:', levelId);
+    console.log('Available levels:', levels);
+    
+    const numericLevelId = parseInt(levelId);
+    const levelData = levels.find(l => parseInt(l.levelId) === numericLevelId);
+    
+    console.log('numericLevelId:', numericLevelId);
+    console.log('levelData found:', levelData);
+    
+    if (!levelData) {
+      console.log('No level data found, returning');
+      return;
+    }
     
     const newLevel = {
-      levelMapId: levelData.levelMapId || levelId,
-      levelId: levelId,
+      levelMapId: parseInt(levelData.levelMapId) || numericLevelId,
+      levelId: numericLevelId,
       title: levelData.title || levelData.levelName || '',
       description: '',
       overview: '',
@@ -275,19 +298,30 @@ const CareerPathForm = ({
   };
 
   const addCourseToSelectedLevel = (courseId) => {
+    console.log('addCourseToSelectedLevel called with courseId:', courseId);
+    console.log('selectedLevelForCourses:', selectedLevelForCourses);
+    console.log('courseSearchResults:', courseSearchResults);
+    
     if (selectedLevelForCourses === null) return;
     
     const level = formData.levels[selectedLevelForCourses];
+    console.log('level:', level);
+    
     const courseExists = level.courses.some(c => c.courseId === courseId);
+    console.log('courseExists:', courseExists);
     
     if (!courseExists) {
       // Find the course details from search results to get the title
       const courseDetails = courseSearchResults.find(c => c.id === courseId);
+      console.log('courseDetails found:', courseDetails);
+      
       const newCourse = {
         courseId: courseId,
         courseSequence: level.courses.length + 1,
         title: courseDetails?.title || `Course ID: ${courseId}`
       };
+      
+      console.log('newCourse to add:', newCourse);
       
       setFormData(prev => ({
         ...prev,
@@ -538,138 +572,156 @@ const CareerPathForm = ({
       return;
     }
     
-    let submitData;
-    let isFormData = false;
+    setModalError('');
+    setFormLoading(true);
     
-    // If there's a file, use FormData to avoid 415 error
-    if (formData.iconFile) {
-      isFormData = true;
-      submitData = new FormData();
+    try {
+      let submitData;
+      let isFormData = false;
       
-      // Add all fields to FormData
-      submitData.append('title', formData.title);
-      submitData.append('description', formData.description);
-      submitData.append('price', parseFloat(formData.price) || 0);
-      submitData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
-      submitData.append('durationMinMonths', parseInt(formData.durationMinMonths));
-      submitData.append('sortOrder', 0);
-      submitData.append('durationMaxMonths', parseInt(formData.durationMaxMonths));
-      submitData.append('outcome', formData.outcome);
-      submitData.append('overview', formData.Overview);
-      submitData.append('roleId', parseInt(formData.roleId));
-      
-      // Add arrays using only proper form field notation
-      const levelsArray = formData.levels.map(level => ({
-        levelMapId: parseInt(level.levelMapId) || parseInt(level.levelId),
-        levelId: parseInt(level.levelId),
-        title: level.title || '',
-        description: level.description || '',
-        overview: level.overview || '',
-        outcome: level.outcome || '',
-        durationMinMonths: parseInt(level.durationMinMonths) || 0,
-        durationMaxMonths: parseInt(level.durationMaxMonths) || 0,
-        price: parseFloat(level.price) || 0,
-        discountedPrice: parseFloat(level.discountedPrice) || 0,
-        sortOrder: parseInt(level.sortOrder) || 0,
-        certificateCount: level.courses?.length || 0, // Auto-calculate from courses
-        courses: level.courses.map(course => ({
-          courseId: parseInt(course.courseId),
-          courseSequence: course.courseSequence || 0
-        }))
-      }));
-      
-      const skillsArray = formData.skills.map(skill => ({
-        skillId: parseInt(skill.skillId),
-        proficiencyLevel: parseInt(skill.proficiencyLevel)
-      }));
-      
-      const badgesArray = formData.careerPathBadges
-        .map(badgeId => parseInt(badgeId))
-        .filter(badgeId => !isNaN(badgeId) && badgeId > 0);
-      
-      // Send arrays using proper array notation only
-      levelsArray.forEach((level, index) => {
-        submitData.append(`Levels[${index}].levelMapId`, level.levelMapId);
-        submitData.append(`Levels[${index}].levelId`, level.levelId);
-        if (level.title) submitData.append(`Levels[${index}].title`, level.title);
-        if (level.description) submitData.append(`Levels[${index}].description`, level.description);
-        if (level.overview) submitData.append(`Levels[${index}].overview`, level.overview);
-        if (level.outcome) submitData.append(`Levels[${index}].outcome`, level.outcome);
-        if (level.durationMinMonths !== undefined) submitData.append(`Levels[${index}].durationMinMonths`, level.durationMinMonths);
-        if (level.durationMaxMonths !== undefined) submitData.append(`Levels[${index}].durationMaxMonths`, level.durationMaxMonths);
-        if (level.price !== undefined) submitData.append(`Levels[${index}].price`, level.price);
-        if (level.discountedPrice !== undefined) submitData.append(`Levels[${index}].discountedPrice`, level.discountedPrice);
-        if (level.sortOrder !== undefined) submitData.append(`Levels[${index}].sortOrder`, level.sortOrder);
-        if (level.certificateCount !== undefined) submitData.append(`Levels[${index}].certificateCount`, level.certificateCount);
-        level.courses.forEach((course, courseIndex) => {
-          submitData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
-          submitData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
+      // If there's a file, use FormData to avoid 415 error
+      if (formData.iconFile) {
+        isFormData = true;
+        submitData = new FormData();
+        
+        // Add all fields to FormData
+        submitData.append('title', formData.title);
+        submitData.append('description', formData.description);
+        submitData.append('price', parseFloat(formData.price) || 0);
+        submitData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
+        submitData.append('durationMinMonths', parseInt(formData.durationMinMonths));
+        submitData.append('sortOrder', 0);
+        submitData.append('durationMaxMonths', parseInt(formData.durationMaxMonths));
+        submitData.append('outcome', formData.outcome);
+        submitData.append('overview', formData.Overview);
+        submitData.append('roleId', parseInt(formData.roleId));
+        
+        // Add arrays using only proper form field notation
+        const levelsArray = formData.levels.map(level => {
+          console.log('Processing level:', level);
+          console.log('Level courses:', level.courses);
+          return {
+            levelMapId: parseInt(level.levelMapId) || parseInt(level.levelId) || 0,
+            levelId: parseInt(level.levelId) || 0,
+            title: level.title || '',
+            description: level.description || '',
+            overview: level.overview || '',
+            outcome: level.outcome || '',
+            durationMinMonths: parseInt(level.durationMinMonths) || 0,
+            durationMaxMonths: parseInt(level.durationMaxMonths) || 0,
+            price: parseFloat(level.price) || 0,
+            discountedPrice: parseFloat(level.discountedPrice) || 0,
+            sortOrder: parseInt(level.sortOrder) || 0,
+            certificateCount: level.courses?.length || 0, // Auto-calculate from courses
+            courses: level.courses.map(course => {
+              console.log('Processing course:', course);
+              return {
+                courseId: parseInt(course.courseId),
+                courseSequence: course.courseSequence || 0
+              };
+            })
+          };
         });
-      });
-      
-      skillsArray.forEach((skill, index) => {
-        submitData.append(`skills[${index}].skillId`, skill.skillId);
-        submitData.append(`skills[${index}].proficiencyLevel`, skill.proficiencyLevel);
-      });
-      
-      // Only append badges if there are valid ones
-      if (badgesArray.length > 0) {
-        badgesArray.forEach((badgeId, index) => {
-          submitData.append(`careerPathBadges[${index}]`, badgeId);
-        });
-      }
-      
-      // Add the file
-      submitData.append('file', formData.iconFile);
-      
-      // Add RemoveIcon flag
-      submitData.append('RemoveIcon', formData.RemoveIcon ? 'true' : 'false');
-    } else {
-      // No file, use regular JSON
-      submitData = {
-        title: formData.title,
-        description: formData.description,
-        price: parseFloat(formData.price) || 0,
-        discountedPrice: parseFloat(formData.discountedPrice) || 0,
-        durationMinMonths: parseInt(formData.durationMinMonths),
-        sortOrder: 0,
-        durationMaxMonths: parseInt(formData.durationMaxMonths),
-        outcome: formData.outcome,
-        overview: formData.Overview,
-        roleId: parseInt(formData.roleId),
-        levels: formData.levels.map(level => ({
-          levelMapId: parseInt(level.levelMapId) || parseInt(level.levelId),
-          levelId: parseInt(level.levelId),
-          title: level.title || '',
-          description: level.description || '',
-          overview: level.overview || '',
-          outcome: level.outcome || '',
-          durationMinMonths: parseInt(level.durationMinMonths) || 0,
-          durationMaxMonths: parseInt(level.durationMaxMonths) || 0,
-          price: parseFloat(level.price) || 0,
-          discountedPrice: parseFloat(level.discountedPrice) || 0,
-          sortOrder: parseInt(level.sortOrder) || 0,
-          certificateCount: level.courses?.length || 0, // Auto-calculate from courses
-          courses: level.courses.map(course => ({
-            courseId: parseInt(course.courseId),
-            courseSequence: course.courseSequence || 0
-          }))
-        })),
-        skills: formData.skills.map(skill => ({
+        
+        const skillsArray = formData.skills.map(skill => ({
           skillId: parseInt(skill.skillId),
           proficiencyLevel: parseInt(skill.proficiencyLevel)
-        })),
-        careerPathBadges: formData.careerPathBadges
+        }));
+        
+        const badgesArray = formData.careerPathBadges
           .map(badgeId => parseInt(badgeId))
-          .filter(badgeId => !isNaN(badgeId) && badgeId > 0),
-        RemoveIcon: formData.RemoveIcon // Add RemoveIcon flag (uppercase)
-      };
+          .filter(badgeId => !isNaN(badgeId) && badgeId > 0);
+        
+        // Send arrays using proper array notation only
+        levelsArray.forEach((level, index) => {
+          submitData.append(`Levels[${index}].levelMapId`, level.levelMapId);
+          submitData.append(`Levels[${index}].levelId`, level.levelId);
+          if (level.title) submitData.append(`Levels[${index}].title`, level.title);
+          if (level.description) submitData.append(`Levels[${index}].description`, level.description);
+          if (level.overview) submitData.append(`Levels[${index}].overview`, level.overview);
+          if (level.outcome) submitData.append(`Levels[${index}].outcome`, level.outcome);
+          if (level.durationMinMonths !== undefined) submitData.append(`Levels[${index}].durationMinMonths`, level.durationMinMonths);
+          if (level.durationMaxMonths !== undefined) submitData.append(`Levels[${index}].durationMaxMonths`, level.durationMaxMonths);
+          if (level.price !== undefined) submitData.append(`Levels[${index}].price`, level.price);
+          if (level.discountedPrice !== undefined) submitData.append(`Levels[${index}].discountedPrice`, level.discountedPrice);
+          if (level.sortOrder !== undefined) submitData.append(`Levels[${index}].sortOrder`, level.sortOrder);
+          if (level.certificateCount !== undefined) submitData.append(`Levels[${index}].certificateCount`, level.certificateCount);
+          level.courses.forEach((course, courseIndex) => {
+            submitData.append(`Levels[${index}].courses[${courseIndex}].courseId`, course.courseId);
+            submitData.append(`Levels[${index}].courses[${courseIndex}].courseSequence`, course.courseSequence);
+          });
+        });
+        
+        skillsArray.forEach((skill, index) => {
+          submitData.append(`skills[${index}].skillId`, skill.skillId);
+          submitData.append(`skills[${index}].proficiencyLevel`, skill.proficiencyLevel);
+        });
+        
+        // Only append badges if there are valid ones
+        if (badgesArray.length > 0) {
+          badgesArray.forEach((badgeId, index) => {
+            submitData.append(`careerPathBadges[${index}]`, badgeId);
+          });
+        }
+        
+        // Add the file
+        submitData.append('file', formData.iconFile);
+        
+        // Add RemoveIcon flag
+        submitData.append('RemoveIcon', formData.RemoveIcon ? 'true' : 'false');
+      } else {
+        // No file, use regular JSON
+        submitData = {
+          title: formData.title,
+          description: formData.description,
+          price: parseFloat(formData.price) || 0,
+          discountedPrice: parseFloat(formData.discountedPrice) || 0,
+          durationMinMonths: parseInt(formData.durationMinMonths),
+          sortOrder: 0,
+          durationMaxMonths: parseInt(formData.durationMaxMonths),
+          outcome: formData.outcome,
+          overview: formData.Overview,
+          roleId: parseInt(formData.roleId),
+          levels: formData.levels.map(level => ({
+            levelMapId: parseInt(level.levelMapId) || parseInt(level.levelId) || 0,
+            levelId: parseInt(level.levelId) || 0,
+            title: level.title || '',
+            description: level.description || '',
+            overview: level.overview || '',
+            outcome: level.outcome || '',
+            durationMinMonths: parseInt(level.durationMinMonths) || 0,
+            durationMaxMonths: parseInt(level.durationMaxMonths) || 0,
+            price: parseFloat(level.price) || 0,
+            discountedPrice: parseFloat(level.discountedPrice) || 0,
+            sortOrder: parseInt(level.sortOrder) || 0,
+            certificateCount: level.courses?.length || 0, // Auto-calculate from courses
+            courses: level.courses.map(course => ({
+              courseId: parseInt(course.courseId),
+              courseSequence: course.courseSequence || 0
+            }))
+          })),
+          skills: formData.skills.map(skill => ({
+            skillId: parseInt(skill.skillId),
+            proficiencyLevel: parseInt(skill.proficiencyLevel)
+          })),
+          careerPathBadges: formData.careerPathBadges
+            .map(badgeId => parseInt(badgeId))
+            .filter(badgeId => !isNaN(badgeId) && badgeId > 0),
+          RemoveIcon: formData.RemoveIcon // Add RemoveIcon flag (uppercase)
+        };
+      }
+      
+      clearCache();
+      
+      // Pass data to parent with flag indicating if it's FormData
+      await onSave(submitData, isFormData);
+    } catch (err) {
+      const errorMessage = err.message || err.response?.data?.error || err.response?.data?.message || 'An unexpected error occurred';
+      setModalError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setFormLoading(false);
     }
-    
-    clearCache();
-    
-    // Pass data to parent with flag indicating if it's FormData
-    await onSave(submitData, isFormData);
   };
 
  
@@ -709,6 +761,17 @@ const CareerPathForm = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Error Display */}
+        {modalError && (
+          <div className="mx-6 mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 rounded-xl flex items-start">
+            <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-sm">Error</p>
+              <p className="text-sm mt-1">{modalError}</p>
+            </div>
+          </div>
+        )}
 
         {/* Progress Steps */}
         <div className="flex items-center justify-between">
@@ -1081,18 +1144,18 @@ const CareerPathForm = ({
                           </label>
                           <div className="flex items-center gap-2">
                             <input
-                              type="number"
-                              value={level.durationMinMonths || 0}
-                              onChange={(e) => updateLevelField(levelIndex, 'durationMinMonths', parseInt(e.target.value) || 0)}
+                              type="text"
+                              value={level.durationMinMonths || ''}
+                              onChange={(e) => updateLevelField(levelIndex, 'durationMinMonths', e.target.value)}
                               className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               placeholder="Min"
                               min="0"
                             />
                             <span className="text-gray-500">to</span>
                             <input
-                              type="number"
-                              value={level.durationMaxMonths || 0}
-                              onChange={(e) => updateLevelField(levelIndex, 'durationMaxMonths', parseInt(e.target.value) || 0)}
+                              type="text"
+                              value={level.durationMaxMonths || ''}
+                              onChange={(e) => updateLevelField(levelIndex, 'durationMaxMonths', e.target.value)}
                               className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               placeholder="Max"
                               min="0"
@@ -1109,9 +1172,9 @@ const CareerPathForm = ({
                             <div className="relative flex-1">
                               <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                               <input
-                                type="number"
-                                value={level.price || 0}
-                                onChange={(e) => updateLevelField(levelIndex, 'price', parseFloat(e.target.value) || 0)}
+                                type="text"
+                                value={level.price || ''}
+                                onChange={(e) => updateLevelField(levelIndex, 'price', e.target.value)}
                                 className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Price"
                                 min="0"
@@ -1121,9 +1184,9 @@ const CareerPathForm = ({
                             <div className="relative flex-1">
                               <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                               <input
-                                type="number"
-                                value={level.discountedPrice || 0}
-                                onChange={(e) => updateLevelField(levelIndex, 'discountedPrice', parseFloat(e.target.value) || 0)}
+                                type="text"
+                                value={level.discountedPrice || ''}
+                                onChange={(e) => updateLevelField(levelIndex, 'discountedPrice', e.target.value)}
                                 className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Discount"
                                 min="0"
@@ -1588,11 +1651,11 @@ const CareerPathForm = ({
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={formLoading || modalError ? true : false}
                   className="flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {loading ? 'Saving...' : (careerPath ? 'Update Career Path' : 'Create Career Path')}
+                  {formLoading ? 'Saving...' : (careerPath ? 'Update Career Path' : 'Create Career Path')}
                 </button>
               </>
             )}
