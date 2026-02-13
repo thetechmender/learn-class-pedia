@@ -318,6 +318,14 @@ const LinkedInStyleDemo = ({
                         <span className="text-sm font-semibold text-gray-800">{getProgress()}% Complete</span>
                         <span className="text-xs text-gray-500">{completedLectures.size} of {getTotalLectures()} lectures</span>
                     </div>
+                    <button 
+                        onClick={() => setShowChatBox(!showChatBox)}
+                        className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                        title="Start Chat"
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>Chat</span>
+                    </button>
                     <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
                         DA
                     </div>
@@ -427,17 +435,7 @@ const LinkedInStyleDemo = ({
                         />
                     </div>
                 )}
-                {!showChatBox && (
-                    <button 
-                        onClick={() => setShowChatBox(true)}
-                        className="hidden lg:flex items-center gap-2 px-4 py-2 flex-shrink-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-l-xl shadow-lg hover:shadow-xl transition-all duration-300 fixed right-0 top-1/2 -translate-y-1/2 z-30"
-                        title="Start Chat"
-                    >
-                        <MessageSquare className="w-5 h-5" />
-                        <span className="text-sm font-medium">Start Chat</span>
-                    </button>
-                )}
-
+                
                 {/* Course Outline Sidebar - LEFT SIDE - Mobile overlay, Desktop always visible */}
                 <div className={`
                     ${showSidebar || isLargeScreen ? 'translate-x-0' : '-translate-x-full'}
