@@ -4,25 +4,6 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// Clear cache and localStorage on app start
-const clearAppCache = () => {
-  // Clear localStorage
-  localStorage.clear();
-  
-  // Clear sessionStorage
-  sessionStorage.clear();
-  
-  // Clear cookies
-  document.cookie.split(';').forEach((cookie) => {
-    const eqPos = cookie.indexOf('=');
-    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-  });
-  
-  console.log('App cache cleared on startup');
-};
-
-clearAppCache();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

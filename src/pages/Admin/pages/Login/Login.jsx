@@ -16,6 +16,28 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
+  // Clear cache and localStorage on login page access
+  useEffect(() => {
+    const clearAppCache = () => {
+      // Clear localStorage
+      localStorage.clear();
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+      
+      // Clear cookies
+      document.cookie.split(';').forEach((cookie) => {
+        const eqPos = cookie.indexOf('=');
+        const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      });
+      
+      console.log('App cache cleared on login page access');
+    };
+
+    clearAppCache();
+  }, []);
+
   const validateUsername = (username) => {
     // Username should be at least 3 characters
     return username.length >= 3;
