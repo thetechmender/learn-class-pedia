@@ -153,6 +153,11 @@ const LinkedInStyleDemo = ({
                 if (studentProgress?.notes) {
                     setLectureNotes(studentProgress.notes);
                 }
+                
+                // Set course completion status from API
+                if (studentProgress?.overallProgress === 100) {
+                    setIsCourseComplete(true);
+                }
             }
         } catch (err) {
             console.error('Error fetching course data:', err);
@@ -357,7 +362,8 @@ const LinkedInStyleDemo = ({
 
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
-                {/* Video/Content Area */}
+                {/* Video/Content Area - Hidden when assessment is shown */}
+                {!showAssessment && (
                 <div className="flex-1 flex flex-col min-w-0">
                     {/* Lecture Header - Classpedia Style */}
                     <div className="px-6 py-4 bg-white border-b border-gray-200">
@@ -438,6 +444,7 @@ const LinkedInStyleDemo = ({
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* ChatBox Panel - RIGHT SIDE - Fixed on desktop */}
                 {showChatBox && (

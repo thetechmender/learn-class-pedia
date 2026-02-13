@@ -1109,3 +1109,132 @@
         gap: 12px;
     }
 }
+
+
+
+/* Question indicators styling */
+.question-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.question-indicator {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.question-indicator:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.question-indicator.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.question-indicator.answered {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+/* Option styling */
+.options-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.option-item {
+  display: block;
+  padding: 1rem 1.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.option-item:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.option-item.selected {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 4px rgba(59,130,246,0.1);
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.option-letter {
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 1.5rem;
+}
+
+.selected .option-letter {
+  color: #3b82f6;
+}
+
+/* Footer actions */
+.footer-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.footer-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 2rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.footer-icon-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+/* Responsive footer */
+@media (max-width: 640px) {
+  .footer-icon-btn span {
+    display: none;
+  }
+  
+  .footer-icon-btn {
+    padding: 0.5rem;
+  }
+  
+  .footer-nav {
+    gap: 0.5rem;
+  }
+}

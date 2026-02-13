@@ -399,15 +399,16 @@ export default function Assessment({
                   </div>
                   <p className="review-question-text">{question.question}</p>
                   <div className="review-options">
-                    {question.options.map((option) => {
+                    {question.options.map((option, optIndex) => {
                       const isSelected = result.selectedAnswer === option.optionLetter;
                       const isCorrect = question.correctAnswer === option.optionLetter;
+                      const displayLetter = String.fromCharCode(65 + optIndex); // A, B, C, D
                       return (
                         <div
                           key={option.quizOptionId}
                           className={`review-option ${isCorrect ? "correct-answer" : ""} ${isSelected && !isCorrect ? "wrong-answer" : ""}`}
                         >
-                          <span className="option-letter">{option.optionLetter}</span>
+                          <span className="option-letter">{displayLetter}</span>
                           <span className="option-text">{option.optionText}</span>
                           {isCorrect && <i className="fa-solid fa-check correct-icon"></i>}
                           {isSelected && !isCorrect && <i className="fa-solid fa-times wrong-icon"></i>}
@@ -611,10 +612,6 @@ export default function Assessment({
               </div>
             )}
           </div>
-
-          <button className="complete-btn">
-            <i className="fa-solid fa-graduation-cap"></i> Course Complete!
-          </button>
         </aside>
 
         {/* MAIN CONTENT */}
@@ -665,8 +662,9 @@ export default function Assessment({
             </header>
 
             <div className="options-grid">
-              {currentQuestion.options.map((option) => {
+              {currentQuestion.options.map((option, index) => {
                 const isSelected = selectedAnswers[currentQuestion.quizQuestionId] === option.optionLetter;
+                const displayLetter = String.fromCharCode(65 + index); // A, B, C, D
                 return (
                   <label
                     key={option.quizOptionId}
@@ -681,7 +679,7 @@ export default function Assessment({
                       className="sr-only"
                     />
                     <span className="option-label">
-                      <span className="option-letter">{option.optionLetter}.</span>
+                      <span className="option-letter">{displayLetter}.</span>
                       {option.optionText}
                     </span>
                   </label>
