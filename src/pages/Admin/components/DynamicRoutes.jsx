@@ -7,7 +7,6 @@ import CourseManagement from '../pages/CourseManagement/CourseManagement';
 import CareerPath from '../pages/CareerPath/CareerPath';
 import CareerPathDetail from '../pages/CareerPath/CareerPathDetail';
 import FeaturedMarking from '../pages/FeaturedMarking/FeaturedMarking';
-import Reviews from '../pages/Reviews/Reviews';
 import CourseUrlManagement from '../pages/CourseUrlManagement/CourseUrlManagement';
 import ChangePassword from '../pages/ChangePassword/ChangePassword';
 import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
@@ -24,7 +23,6 @@ const componentMap = {
   CareerPath,
   CareerPathDetail,
   FeaturedMarking,
-  Reviews,
   CourseUrlManagement,
   ChangePassword,
   CategoryManagement,

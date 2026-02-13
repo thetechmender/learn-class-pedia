@@ -1030,8 +1030,14 @@ class AdminApiService {
   // GET routes filtered by user role
   async getRoutesByRole(roleId = null) {
     await new Promise(resolve => setTimeout(resolve, 300));
-    // Return all routes without role filtering
-    return routesData.routes.sort((a, b) => a.order - b.order);
+    // Return all routes without role filtering, but exclude reviews and review-management
+    return routesData.routes
+      .filter(route => 
+        route.id !== 'reviews' && // Exclude reviews route
+        route.id !== 'review-management' && // Exclude review-management route
+        route.label !== 'Review Management' // Exclude any Review Management items
+      )
+      .sort((a, b) => a.order - b.order);
   }
 
   // GET routes by category
