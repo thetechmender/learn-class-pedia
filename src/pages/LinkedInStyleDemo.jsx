@@ -324,7 +324,7 @@ const LinkedInStyleDemo = ({
                         {showSidebar ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
                     </button>
                     <div className="flex items-center gap-2">
-                        <img src="/images/logo.png" alt="Classpedia" className="h-8 w-auto" />
+                        <img src="/logo.svg" alt="Classpedia" className="h-8 w-auto" />
                     </div>
                 </div>
 
