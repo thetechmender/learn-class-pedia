@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
     Play,
     CheckCircle2,
@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import VideoCourseExplainerSimple from '../components/VideoCourseExplainerSimple';
 import ChatBox from '../components/video-explainer/ChatBox';
+import Assessment from './Assessment';
 import { transformApiResponse } from '../utils/courseTransformer';
 import { 
     getCourseDetails, 
@@ -97,6 +98,9 @@ const LinkedInStyleDemo = ({
     const [lectureNotes, setLectureNotes] = useState({});
     const [bookmarkedLectures, setBookmarkedLectures] = useState(new Set());
     const [showChatBox, setShowChatBox] = useState(false);
+    const [isCourseComplete, setIsCourseComplete] = useState(false);
+    const [showAssessment, setShowAssessment] = useState(false);
+    const assessmentRef = useRef(null);
 
     // Fetch course data from API
     const fetchCourseData = useCallback(async () => {
@@ -248,6 +252,17 @@ const LinkedInStyleDemo = ({
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
         return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    };
+
+    const handleCourseComplete = () => {
+        setIsCourseComplete(true);
+    };
+
+    const handleStartAssessment = () => {
+        setShowAssessment(true);
+        setTimeout(() => {
+            assessmentRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
     };
 
     // Loading state
@@ -572,18 +587,57 @@ const LinkedInStyleDemo = ({
                             </div>
 
                             {/* Course Complete Button */}
-                            <div className="p-4 border-t border-gray-200">
+                            <div className="p-4 border-t border-gray-200 space-y-2">
                                 <button 
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                                    onClick={handleCourseComplete}
+                                    disabled={isCourseComplete}
+                                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                        isCourseComplete 
+                                            ? 'bg-green-500 text-white cursor-default' 
+                                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    }`}
                                 >
-                                    <Play className="w-4 h-4" />
-                                    Course Complete!
+                                    {isCourseComplete ? (
+                                        <>
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            Course Completed!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Play className="w-4 h-4" />
+                                            Course Complete!
+                                        </>
+                                    )}
+                                </button>
+                                <button 
+                                    onClick={handleStartAssessment}
+                                    disabled={!isCourseComplete}
+                                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                        isCourseComplete 
+                                            ? 'bg-purple-500 hover:bg-purple-600 text-white' 
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                                >
+                                    <Award className="w-4 h-4" />
+                                    Start Assessment
                                 </button>
                             </div>
                         </>
                     )}
                 </div>
             </div>
+
+            {/* Assessment Section */}
+            {showAssessment && (
+                <div ref={assessmentRef} className="border-t border-gray-200 scroll-mt-14">
+                    <Assessment 
+                        lectureId={selectedLecture.id}
+                        lectureName={selectedLecture.title}
+                        studentId={STUDENT_ID}
+                        courseId={COURSE_ID}
+                    />
+                </div>
+            )}
         </div>
     );
 };

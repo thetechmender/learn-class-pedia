@@ -364,12 +364,6 @@ export default function Assessment({
   if (isSubmitted && showReview) {
     return (
       <div className="assessment-wrapper">
-        <div className="assessment-header">
-          <div className="logo">
-            <img src="/logo.svg" alt="Classpedia logo" />
-          </div>
-        </div>
-
         <div className="results-container">
           <div className="results-header">
             <i className={`fa-solid fa-trophy ${results.percentage >= 70 ? "gold" : ""}`}></i>
@@ -451,9 +445,6 @@ export default function Assessment({
               <i className="fa-solid fa-bars"></i>
             )}
           </button>
-          <div className="logo">
-            <img src="/logo.svg" alt="Classpedia logo" />
-          </div>
         </div>
 
         <div className="header-right">
@@ -511,7 +502,9 @@ export default function Assessment({
       {/* Main layout */}
       <div className="assessment-wrapper-inner">
         {/* LEFT SIDEBAR */}
-        <aside className={`left-sidebar ${showSidebar || isLargeScreen ? "sidebar-visible" : "sidebar-hidden"}`}>
+       <aside 
+        className={`left-sidebar ${showSidebar || isLargeScreen ? "sidebar-visible" : "sidebar-hidden"}`}
+      >
           <div className="cur-cont">
             <h5>Course Content</h5>
             <span>
@@ -625,142 +618,136 @@ export default function Assessment({
         </aside>
 
         {/* MAIN CONTENT */}
-        <main className="content-mid">
-          <div className="content-header">
-            <div>
-              <h3>{lectureName}</h3>
-              <p className="content-subtitle">Assessment Quiz</p>
-            </div>
-            <span className="question-count">{currentQuestionIndex + 1}/{questions.length} Questions</span>
+     {/* MAIN CONTENT */}
+      <main className="content-mid">
+        <div className="content-header">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900">{lectureName}</h3>
+            <p className="text-sm text-gray-500 mt-1">Assessment Quiz</p>
           </div>
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            {currentQuestionIndex + 1}/{questions.length} Questions
+          </span>
+        </div>
 
-          {/* Question Indicators */}
-          <div className="question-indicators">
-            {questions.map((q, index) => (
-              <button
-                key={q.quizQuestionId}
-                type="button"
-                className={`question-indicator ${index === currentQuestionIndex ? "active" : ""} ${selectedAnswers[q.quizQuestionId] ? "answered" : ""}`}
-                onClick={() => setCurrentQuestionIndex(index)}
-              >
-                {index + 1}
-              </button>
-            ))}
-          </div>
+        {/* Question Indicators - Improved UX */}
+        <div className="question-indicators">
+          {questions.map((q, index) => (
+            <button
+              key={q.quizQuestionId}
+              className={`question-indicator ${index === currentQuestionIndex ? "active" : ""} 
+                ${selectedAnswers[q.quizQuestionId] ? "answered" : ""}`}
+              onClick={() => setCurrentQuestionIndex(index)}
+              aria-label={`Go to question ${index + 1}`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
 
-          {currentQuestion && (
-            <section className="question-card">
-              <header className="question-header">
-                <span className="question-badge">Question {currentQuestionIndex + 1}</span>
-                {currentQuestion.category && <span className="category-badge">{currentQuestion.category}</span>}
-                <h4>{currentQuestion.question}</h4>
-              </header>
-
-              <div className="options-grid">
-                {currentQuestion.options.map((option) => {
-                  const isSelected = selectedAnswers[currentQuestion.quizQuestionId] === option.optionLetter;
-                  return (
-                    <label
-                      key={option.quizOptionId}
-                      className={`option-item ${isSelected ? "selected" : ""}`}
-                      onClick={() => handleAnswerSelect(currentQuestion.quizQuestionId, option.optionLetter)}
-                    >
-                      <input
-                        type="radio"
-                        name={`q-${currentQuestion.quizQuestionId}`}
-                        value={option.optionLetter}
-                        checked={isSelected}
-                        onChange={() => handleAnswerSelect(currentQuestion.quizQuestionId, option.optionLetter)}
-                      />
-                      <span className="option-label">{option.optionLetter}. {option.optionText}</span>
-                    </label>
-                  );
-                })}
+        {/* Question Card */}
+        {currentQuestion && (
+          <section className="question-card">
+            <header className="question-header">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium">
+                  Question {currentQuestionIndex + 1}
+                </span>
+                {currentQuestion.category && (
+                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-sm">
+                    {currentQuestion.category}
+                  </span>
+                )}
               </div>
-            </section>
-          )}
+              <h4 className="text-lg font-medium text-gray-900 mb-6">
+                {currentQuestion.question}
+              </h4>
+            </header>
 
-          <footer className="assessment-footer">
-            <div className="footer-actions">
-              <button type="button" className="footer-icon-btn">
-                <i className="fa-regular fa-hand" />
-                <span>Helpful</span>
-              </button>
-              <button type="button" className="footer-icon-btn">
-                <i className="fa-regular fa-circle-question" />
-                <span>Ask Question</span>
-              </button>
-              <button type="button" className="footer-icon-btn">
-                <i className="fa-regular fa-life-ring" />
-                <span>Need Help?</span>
-              </button>
+            <div className="options-grid">
+              {currentQuestion.options.map((option) => {
+                const isSelected = selectedAnswers[currentQuestion.quizQuestionId] === option.optionLetter;
+                return (
+                  <label
+                    key={option.quizOptionId}
+                    className={`option-item ${isSelected ? "selected" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name={`q-${currentQuestion.quizQuestionId}`}
+                      value={option.optionLetter}
+                      checked={isSelected}
+                      onChange={() => handleAnswerSelect(currentQuestion.quizQuestionId, option.optionLetter)}
+                      className="sr-only"
+                    />
+                    <span className="option-label">
+                      <span className="option-letter">{option.optionLetter}.</span>
+                      {option.optionText}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
+          </section>
+        )}
 
-            <div className="footer-nav">
+        {/* Footer Navigation */}
+        <footer className="assessment-footer">
+          <div className="footer-actions">
+            <button className="footer-icon-btn" aria-label="Helpful">
+              <i className="fa-regular fa-hand"></i>
+              <span>Helpful</span>
+            </button>
+            <button className="footer-icon-btn" aria-label="Ask Question">
+              <i className="fa-regular fa-circle-question"></i>
+              <span>Ask Question</span>
+            </button>
+            <button className="footer-icon-btn" aria-label="Need Help">
+              <i className="fa-regular fa-life-ring"></i>
+              <span>Need Help?</span>
+            </button>
+          </div>
+
+          <div className="footer-nav">
+            <button
+              className="btn-secondary"
+              onClick={handlePrevious}
+              disabled={currentQuestionIndex === 0}
+            >
+              <i className="fa-solid fa-arrow-left"></i>
+              Previous
+            </button>
+            
+            {currentQuestionIndex === questions.length - 1 ? (
               <button
-                type="button"
-                className="btn-secondary"
-                onClick={handlePrevious}
-                disabled={currentQuestionIndex === 0}
+                className="btn-primary submit-btn"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
               >
-                Previous
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit
+                    <i className="fa-solid fa-paper-plane"></i>
+                  </>
+                )}
               </button>
-              {currentQuestionIndex === questions.length - 1 ? (
-                <button
-                  type="button"
-                  className="btn-primary submit-btn"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <i className="fa-solid fa-spinner fa-spin"></i> Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-paper-plane"></i> Submit
-                    </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleNext}
-                >
-                  Next
-                </button>
-              )}
-            </div>
-          </footer>
-        </main>
-
-        {/* RIGHT CHAT PANEL */}
-        <aside className="chat-panel">
-          <div className="chat-header">
-            <div className="chat-header-user">
-              <strong>Mark jacob</strong>
-              <span className="online">Online</span>
-            </div>
-            <button type="button" className="chat-more-btn">
-              ···
-            </button>
+            ) : (
+              <button
+                className="btn-primary"
+                onClick={handleNext}
+              >
+                Next
+                <i className="fa-solid fa-arrow-right"></i>
+              </button>
+            )}
           </div>
-
-          <div className="chat-body">
-            <div className="message message-incoming">
-              <p>Hello! How can I help you today?</p>
-              <span className="message-time">02:30 PM</span>
-            </div>
-          </div>
-
-          <div className="chat-input">
-            <input type="text" placeholder="Type your message..." />
-            <button type="button" className="chat-send-btn">
-              ➤
-            </button>
-          </div>
-        </aside>
+        </footer>
+      </main>
       </div>
     </div>
   );
