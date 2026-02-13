@@ -31,6 +31,9 @@ const CareerPathDetail = () => {
     try {
       setLoading(true);
       const response = await getCareerPathById(id);
+      console.log('Career Path Response:', response);
+      console.log('Levels:', response?.levels);
+      console.log('Levels count:', response?.levels?.length);
       setCareerPath(response);
       setError(null);
     } catch (err) {
@@ -50,7 +53,7 @@ const CareerPathDetail = () => {
           allCourses.push({
             ...course,
             levelId: level.levelId,
-            levelName: level.levelName,
+            levelName: level.title,
             courseSequence: course.courseSequence || 0
           });
         });
@@ -97,7 +100,7 @@ const CareerPathDetail = () => {
     careerPath.levels.forEach(level => {
       const levelCourses = allCourses.filter(course => course.levelId === level.levelId);
       stats[level.levelId] = {
-        name: level.levelName || 'Unknown Level',
+        name: level.title || 'Unknown Level',
         count: levelCourses.length,
         paidCount: 0
       };
@@ -277,7 +280,11 @@ const CareerPathDetail = () => {
             <div className="mb-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Learning Levels Structure</h3>
               <div className="space-y-4">
-                {careerPath?.levels?.map((level, levelIndex) => (
+                {console.log('Rendering levels:', careerPath?.levels)}
+                {console.log('Levels length in render:', careerPath?.levels?.length)}
+                {careerPath?.levels?.map((level, levelIndex) => {
+                  console.log('Rendering level:', level, 'Index:', levelIndex);
+                  return (
                   <div key={level.levelId} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -285,7 +292,7 @@ const CareerPathDetail = () => {
                           {levelIndex + 1}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-900">{level.levelName}</h4>
+                          <h4 className="text-lg font-semibold text-gray-900">{level.title}</h4>
                           <p className="text-sm text-gray-600">{level.courses?.length || 0} courses</p>
                         </div>
                       </div>
@@ -323,7 +330,8 @@ const CareerPathDetail = () => {
                       </div>
                     )}
                   </div>
-                )) || (
+                );
+                }) || (
                   <div className="text-center py-8 bg-gray-50 rounded-2xl">
                     <Target className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-600">No levels defined for this career path</p>
