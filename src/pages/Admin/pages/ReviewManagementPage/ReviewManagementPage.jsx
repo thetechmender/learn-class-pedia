@@ -1,12 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, Trash2, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, Trash2, X, Search, BookOpen } from 'lucide-react';
 import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import { useAdmin } from '../../../../hooks/useAdmin';
+import { useCareerPath } from '../../../../hooks/useCareerPath';
+import { debugAuth } from '../../../../utils/authDebug';
+
+// Authentication wrapper component
+const withAuthCheck = (WrappedComponent) => {
+  return () => {
+    // Check authentication status on component mount
+    const authStatus = debugAuth();
+    if (!authStatus.hasToken || authStatus.isExpired) {
+      console.warn('🚨 Authentication issue detected:', !authStatus.hasToken ? 'No token found' : 'Token expired');
+      // Clear invalid/expired token
+      localStorage.removeItem('adminToken');
+      // Redirect to login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      return null; // Don't render component if redirecting
+    }
+    
+    return <WrappedComponent />;
+  };
+};
 
 const ReviewManagementPage = () => {
   const { getAllCareerPaths, getAllCoursesAdmin } = useAdmin();
+  const { searchCoursesByTitle } = useCareerPath();
   const [reviewType, setReviewType] = useState('careerpath');
   const [careerPathId, setCareerPathId] = useState('');
   const [courseId, setCourseId] = useState('');
@@ -16,6 +39,36 @@ const ReviewManagementPage = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Search states
+  const [careerPathLoading, setCareerPathLoading] = useState(false);
+  const [courseLoading, setCourseLoading] = useState(false);
+  
+  // Autocomplete states for courses
+  const [courseSearchTerm, setCourseSearchTerm] = useState('');
+  const [courseSearchResults, setCourseSearchResults] = useState([]);
+  const [courseSearchLoading, setCourseSearchLoading] = useState(false);
+  
+  // Autocomplete states for career paths
+  const [careerPathSearchTerm, setCareerPathSearchTerm] = useState('');
+  const [careerPathSearchResults, setCareerPathSearchResults] = useState([]);
+  const [careerPathSearchLoading, setCareerPathSearchLoading] = useState(false);
+  
+  // Edit modal autocomplete states
+  const [editCourseSearchTerm, setEditCourseSearchTerm] = useState('');
+  const [editCourseSearchResults, setEditCourseSearchResults] = useState([]);
+  const [editCourseSearchLoading, setEditCourseSearchLoading] = useState(false);
+  const [editCareerPathSearchTerm, setEditCareerPathSearchTerm] = useState('');
+  const [editCareerPathSearchResults, setEditCareerPathSearchResults] = useState([]);
+  const [editCareerPathSearchLoading, setEditCareerPathSearchLoading] = useState(false);
+  
+  // Main page autocomplete states
+  const [mainCareerPathSearchTerm, setMainCareerPathSearchTerm] = useState('');
+  const [mainCareerPathSearchResults, setMainCareerPathSearchResults] = useState([]);
+  const [mainCareerPathSearchLoading, setMainCareerPathSearchLoading] = useState(false);
+  const [mainCourseSearchTerm, setMainCourseSearchTerm] = useState('');
+  const [mainCourseSearchResults, setMainCourseSearchResults] = useState([]);
+  const [mainCourseSearchLoading, setMainCourseSearchLoading] = useState(false);
   
   // CRUD states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -38,37 +91,345 @@ const ReviewManagementPage = () => {
     courseId: ''
   });
 
-  const fetchCareerPaths = async () => {
+  // Search and fetch functions with pagination
+  const fetchCareerPaths = useCallback(async (searchTerm = '', page = 1) => {
+    setCareerPathLoading(true);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.REVIEW_CAREER_PATHS_DROPDOWN}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCareerPaths(data);
+      const params = {
+        page,
+        pageSize: 10
+      };
+      
+      if (searchTerm) {
+        params.Title = searchTerm; // Use Title (capital T) as per CareerPath page
       }
+      
+      console.log('Fetching career paths with params:', params);
+      const response = await getAllCareerPaths(params);
+      console.log('Career Paths API Response:', response);
+      const careerPathsArray = response?.data || response?.items || response || [];
+      console.log('Career Paths Array:', careerPathsArray);
+      
+      // Format for dropdown
+      const formattedPaths = careerPathsArray.map(path => ({
+        id: path.id,
+        title: path.title,
+        description: path.description
+      }));
+      
+      setCareerPaths(formattedPaths);
     } catch (err) {
       console.error('Failed to fetch career paths:', err);
       setCareerPaths([]);
+    } finally {
+      setCareerPathLoading(false);
     }
+  }, [getAllCareerPaths]);
+
+  const fetchCourses = useCallback(async (searchTerm = '', page = 1) => {
+    setCourseLoading(true);
+    try {
+      const params = {
+        page,
+        pageSize: 10
+      };
+      
+      if (searchTerm) {
+        params.Title = searchTerm; // Use Title (capital T) as per API endpoint
+      }
+      
+      console.log('Fetching courses with params:', params);
+      const response = await getAllCoursesAdmin(params);
+      console.log('Courses API Response:', response);
+      const coursesArray = response?.items || response?.data || response || [];
+      console.log('Courses Array:', coursesArray);
+      
+      // Format for dropdown
+      const formattedCourses = coursesArray.map(course => ({
+        courseId: course.id,
+        title: course.title,
+        description: course.description
+      }));
+      
+      setCourses(formattedCourses);
+    } catch (err) {
+      console.error('Failed to fetch courses:', err);
+      setCourses([]);
+    } finally {
+      setCourseLoading(false);
+    }
+  }, [getAllCoursesAdmin]);
+
+  // Load initial data
+  useEffect(() => {
+    fetchCareerPaths('', 1);
+    fetchCourses('', 1);
+  }, []); // Remove dependencies to prevent infinite loops
+
+  // Course search autocomplete handler
+  const handleCourseSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setCourseSearchResults([]);
+      return;
+    }
+
+    try {
+      setCourseSearchLoading(true);
+      const results = await searchCoursesByTitle(searchTerm);
+      // Format results for dropdown
+      const formattedResults = results.map(course => ({
+        courseId: course.id,
+        title: course.title,
+        description: course.description
+      }));
+      setCourseSearchResults(formattedResults);
+    } catch (error) {
+      console.error('Failed to search courses:', error);
+      setCourseSearchResults([]);
+    } finally {
+      setCourseSearchLoading(false);
+    }
+  }, [searchCoursesByTitle]);
+
+  // Career path search autocomplete handler
+  const handleCareerPathSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setCareerPathSearchResults([]);
+      return;
+    }
+
+    try {
+      setCareerPathSearchLoading(true);
+      const params = {
+        page: 1,
+        pageSize: 10
+      };
+      
+      if (searchTerm) {
+        params.Title = searchTerm; // Use Title (capital T) as per CareerPath page
+      }
+      
+      const response = await getAllCareerPaths(params);
+      const careerPathsArray = response?.data || response?.items || response || [];
+      
+      // Format results for dropdown
+      const formattedResults = careerPathsArray.map(path => ({
+        id: path.id,
+        title: path.title,
+        description: path.description
+      }));
+      
+      setCareerPathSearchResults(formattedResults);
+    } catch (error) {
+      console.error('Failed to search career paths:', error);
+      setCareerPathSearchResults([]);
+    } finally {
+      setCareerPathSearchLoading(false);
+    }
+  }, [getAllCareerPaths]);
+
+  // Edit modal course search autocomplete handler
+  const handleEditCourseSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setEditCourseSearchResults([]);
+      return;
+    }
+
+    try {
+      setEditCourseSearchLoading(true);
+      const results = await searchCoursesByTitle(searchTerm);
+      // Format results for dropdown
+      const formattedResults = results.map(course => ({
+        courseId: course.id,
+        title: course.title,
+        description: course.description
+      }));
+      setEditCourseSearchResults(formattedResults);
+    } catch (error) {
+      console.error('Failed to search courses:', error);
+      setEditCourseSearchResults([]);
+    } finally {
+      setEditCourseSearchLoading(false);
+    }
+  }, [searchCoursesByTitle]);
+
+  // Edit modal career path search autocomplete handler
+  const handleEditCareerPathSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setEditCareerPathSearchResults([]);
+      return;
+    }
+
+    try {
+      setEditCareerPathSearchLoading(true);
+      const params = {
+        page: 1,
+        pageSize: 10
+      };
+      
+      if (searchTerm) {
+        params.Title = searchTerm; // Use Title (capital T) as per CareerPath page
+      }
+      
+      const response = await getAllCareerPaths(params);
+      const careerPathsArray = response?.data || response?.items || response || [];
+      
+      // Format results for dropdown
+      const formattedResults = careerPathsArray.map(path => ({
+        id: path.id,
+        title: path.title,
+        description: path.description
+      }));
+      
+      setEditCareerPathSearchResults(formattedResults);
+    } catch (error) {
+      console.error('Failed to search career paths:', error);
+      setEditCareerPathSearchResults([]);
+    } finally {
+      setEditCareerPathSearchLoading(false);
+    }
+  }, [getAllCareerPaths]);
+
+  // Main page career path search autocomplete handler
+  const handleMainCareerPathSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setMainCareerPathSearchResults([]);
+      return;
+    }
+
+    try {
+      setMainCareerPathSearchLoading(true);
+      const params = {
+        page: 1,
+        pageSize: 10
+      };
+      
+      if (searchTerm) {
+        params.Title = searchTerm; // Use Title (capital T) as per CareerPath page
+      }
+      
+      const response = await getAllCareerPaths(params);
+      const careerPathsArray = response?.data || response?.items || response || [];
+      
+      // Format results for dropdown
+      const formattedResults = careerPathsArray.map(path => ({
+        id: path.id,
+        title: path.title,
+        description: path.description
+      }));
+      
+      setMainCareerPathSearchResults(formattedResults);
+    } catch (error) {
+      console.error('Failed to search career paths:', error);
+      setMainCareerPathSearchResults([]);
+    } finally {
+      setMainCareerPathSearchLoading(false);
+    }
+  }, [getAllCareerPaths]);
+
+  // Main page course search autocomplete handler
+  const handleMainCourseSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setMainCourseSearchResults([]);
+      return;
+    }
+
+    try {
+      setMainCourseSearchLoading(true);
+      const results = await searchCoursesByTitle(searchTerm);
+      // Format results for dropdown
+      const formattedResults = results.map(course => ({
+        courseId: course.id,
+        title: course.title,
+        description: course.description
+      }));
+      setMainCourseSearchResults(formattedResults);
+    } catch (error) {
+      console.error('Failed to search courses:', error);
+      setMainCourseSearchResults([]);
+    } finally {
+      setMainCourseSearchLoading(false);
+    }
+  }, [searchCoursesByTitle]);
+
+  // Reset function to clear selection and refresh data
+  const handleReset = () => {
+    setCareerPathId('');
+    setCourseId('');
+    setMainCareerPathSearchTerm('');
+    setMainCourseSearchTerm('');
+    setMainCareerPathSearchResults([]);
+    setMainCourseSearchResults([]);
+    setCareerPathData(null);
+    setCourseReviews([]);
+    setError(null);
   };
 
-  const fetchCourses = async () => {
+  // Sync main page selections with modal form data
+  useEffect(() => {
+    if (showAddModal) {
+      if (reviewType === 'course' && courseId && mainCourseSearchTerm) {
+        setFormData(prev => ({
+          ...prev,
+          courseId: courseId
+        }));
+        setCourseSearchTerm(mainCourseSearchTerm);
+      } else if (reviewType === 'careerpath' && careerPathId && mainCareerPathSearchTerm) {
+        setFormData(prev => ({
+          ...prev,
+          careerPathId: careerPathId
+        }));
+        setCareerPathSearchTerm(mainCareerPathSearchTerm);
+        fetchCareerPathLevels(careerPathId);
+      }
+    }
+  }, [showAddModal, reviewType, courseId, careerPathId, mainCourseSearchTerm, mainCareerPathSearchTerm]);
+
+  // Sync main page selections with edit modal form data
+  useEffect(() => {
+    if (showEditModal && editingReview) {
+      if (reviewType === 'course' && courseId && mainCourseSearchTerm) {
+        setEditModalData(prev => ({
+          ...prev,
+          selectedCourse: courseId
+        }));
+        setEditCourseSearchTerm(mainCourseSearchTerm);
+      } else if (reviewType === 'careerpath' && careerPathId && mainCareerPathSearchTerm) {
+        setEditModalData(prev => ({
+          ...prev,
+          selectedCareerPath: careerPathId
+        }));
+        setEditCareerPathSearchTerm(mainCareerPathSearchTerm);
+        fetchCareerPathLevelsForEdit(careerPathId);
+      }
+    }
+  }, [showEditModal, reviewType, courseId, careerPathId, mainCourseSearchTerm, mainCareerPathSearchTerm, editingReview]);
+
+  const fetchCareerPathLevels = async (careerPathId) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.REVIEW_COURSES_DROPDOWN}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
       });
+      
       if (response.ok) {
-        const data = await response.json();
-        setCourses(data);
+        const levels = await response.json();
+        setCareerPathData(prev => ({
+          ...prev,
+          levels: levels.map(level => ({
+            id: level.id,
+            title: level.title,
+            description: level.description
+          }))
+        }));
       }
     } catch (err) {
-      console.error('Failed to fetch courses:', err);
-      setCourses([]);
+      console.error('Failed to fetch career path levels:', err);
+      setCareerPathData(prev => ({
+        ...prev,
+        levels: []
+      }));
     }
   };
 
@@ -130,14 +491,18 @@ const ReviewManagementPage = () => {
     setError(null);
     
     try {
-      let resourceId, resourceTypeId;
+      let resourceId, resourceTypeId, courseId;
       
       if (reviewType === 'careerpath') {
-        resourceId = formData.levelId; // Use level ID for career path reviews
-        resourceTypeId = 2; // 2 = career path level
+        // Scenario: ResourceTypeId = 2 AND CourseId = 0
+        resourceId = formData.levelId;    // Use level ID for career path reviews
+        resourceTypeId = 2;             // 2 = career path level
+        courseId = 0;                   // CourseId = 0 for career path reviews
       } else {
-        resourceId = formData.courseId; // Use course ID for course reviews
-        resourceTypeId = 1; // 1 = course
+        // Scenario: ResourceTypeId = 1 AND CourseId ≠ 0
+        resourceId = 0;                   // Ignore ResourceId for course reviews
+        resourceTypeId = 1;             // 1 = course
+        courseId = formData.courseId;        // Use CourseId for course reviews
       }
       
       const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
@@ -150,9 +515,10 @@ const ReviewManagementPage = () => {
           review: {
             rating: formData.rating,
             reviewText: formData.reviewText,
-            reviewBy: formData.reviewBy
+            reviewBy: formData.reviewBy,
+            courseId: courseId  // Include courseId in review object
           },
-          resourceId: resourceId,      // LevelId for career paths, CourseId for courses
+          resourceId: resourceId,      // LevelId for career paths, 0 for courses
           resourceTypeId: resourceTypeId  // 2 for career paths, 1 for courses
         })
       });
@@ -223,14 +589,14 @@ const ReviewManagementPage = () => {
         
         // Set edit modal data based on review type
         if (reviewDetails.resourceTypeId === 1) {
-          // Course review
+          // Course review - use nested course object
           setEditModalData({
             careerPaths: [],
             courses: courses,
             careerPathLevels: [],
             selectedCareerPath: '',
             selectedLevel: '',
-            selectedCourse: reviewDetails.course?.id || ''
+            selectedCourse: reviewDetails.course?.courseId || reviewDetails.courseId  // Use nested course.courseId first
           });
         } else if (reviewDetails.resourceTypeId === 2) {
           // Career path level review
@@ -266,17 +632,19 @@ const ReviewManagementPage = () => {
     setError(null);
     
     try {
-      let resourceId, resourceTypeId;
+      let resourceId, resourceTypeId, courseId;
       
       // Determine resource type and ID based on the original review
       if (editingReview.resourceTypeId === 2) {
-        // Career path level review
+        // Career path level review: ResourceTypeId = 2 AND CourseId = 0
         resourceId = editModalData.selectedLevel || editingReview.resourceId;
         resourceTypeId = 2; // 2 = career path level
+        courseId = 0;       // CourseId = 0 for career path reviews
       } else {
-        // Course review
-        resourceId = editModalData.selectedCourse || editingReview.resourceId;
+        // Course review: ResourceTypeId = 1 AND CourseId ≠ 0
+        resourceId = 0; // Ignore ResourceId for course reviews
         resourceTypeId = 1; // 1 = course
+        courseId = editModalData.selectedCourse || editingReview.courseId;
       }
       
       const response = await fetch(`${API_CONFIG.BASE_URL_Local}${ENDPOINTS.CAREER_PATH_REVIEW_UPDATE(editingReview.id)}`, {
@@ -289,9 +657,10 @@ const ReviewManagementPage = () => {
           review: {
             rating: formData.rating,
             reviewText: formData.reviewText,
-            reviewBy: formData.reviewBy
+            reviewBy: formData.reviewBy,
+            courseId: courseId  // Include courseId in review object
           },
-          resourceId: resourceId,      // LevelId for career paths, CourseId for courses
+          resourceId: resourceId,      // LevelId for career paths, 0 for courses
           resourceTypeId: resourceTypeId  // 2 for career paths, 1 for courses
         })
       });
@@ -330,12 +699,12 @@ const ReviewManagementPage = () => {
       
       // Determine resource type and ID based on review
       if (review.resourceTypeId === 2) {
-        // Career path level review
+        // Career path level review: ResourceTypeId = 2 AND CourseId = 0
         resourceId = review.resourceId; // This is the level ID
         resourceTypeId = 2; // 2 = career path level
       } else {
-        // Course review
-        resourceId = review.resourceId; // This is the course ID
+        // Course review: ResourceTypeId = 1 AND CourseId ≠ 0
+        resourceId = 0; // Ignore ResourceId for course reviews
         resourceTypeId = 1; // 1 = course
       }
       
@@ -589,80 +958,180 @@ const ReviewManagementPage = () => {
       <div className="space-y-6">
         {/* Controls */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Review Type Selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Review Type
-              </label>
-              <div className="relative">
-                <select
-                  value={reviewType}
-                  onChange={(e) => setReviewType(e.target.value)}
-                  className="w-full px-4 py-2 pr-8 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none"
-                >
-                  <option value="careerpath">Career Path Reviews</option>
-                  <option value="course">Course Reviews</option>
-                </select>
-                <ChevronDown className="absolute right-2 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+          <div className="space-y-4">
+            {/* First Row: Review Type and Search */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              {/* Review Type Selector */}
+              <div className="md:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Review Type
+                </label>
+                <div className="relative">
+                  <select
+                    value={reviewType}
+                    onChange={(e) => setReviewType(e.target.value)}
+                    className="w-full px-4 py-2.5 pr-8 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none"
+                  >
+                    <option value="careerpath">Career Path Reviews</option>
+                    <option value="course">Course Reviews</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* ID Input / Career Path Autocomplete / Course Autocomplete */}
+              <div className="md:col-span-9">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {reviewType === 'careerpath' ? 'Career Path' : 'Course'}
+                </label>
+                <div className="relative">
+                {reviewType === 'careerpath' ? (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={mainCareerPathSearchTerm}
+                        onChange={(e) => {
+                          setMainCareerPathSearchTerm(e.target.value);
+                          handleMainCareerPathSearch(e.target.value);
+                        }}
+                        placeholder="Search career paths by title..."
+                        className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                      />
+                      {mainCareerPathSearchLoading && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Autocomplete Dropdown - Fixed positioning */}
+                    {mainCareerPathSearchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full border border-gray-200 rounded-xl max-h-48 overflow-y-auto bg-white shadow-lg">
+                        {mainCareerPathSearchResults.map(path => (
+                          <div
+                            key={path.id}
+                            className={`flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                              careerPathId === path.id ? 'bg-blue-50' : ''
+                            }`}
+                            onClick={() => {
+                              setCareerPathId(path.id);
+                              setMainCareerPathSearchTerm(path.title);
+                              setMainCareerPathSearchResults([]);
+                            }}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {path.title}
+                              </div>
+                              {path.description && (
+                                <div className="text-xs text-gray-500 truncate mt-1">
+                                  {path.description}
+                                </div>
+                              )}
+                            </div>
+                            {careerPathId === path.id && (
+                              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {mainCareerPathSearchTerm && mainCareerPathSearchResults.length === 0 && !mainCareerPathSearchLoading && !careerPathId && (
+                      <div className="absolute z-50 mt-1 w-full p-4 text-center border border-gray-200 rounded-xl bg-gray-50">
+                        <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">No career paths found matching your search</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={mainCourseSearchTerm}
+                        onChange={(e) => {
+                          setMainCourseSearchTerm(e.target.value);
+                          handleMainCourseSearch(e.target.value);
+                        }}
+                        placeholder="Search courses by title..."
+                        className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                      />
+                      {mainCourseSearchLoading && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Autocomplete Dropdown - Fixed positioning */}
+                    {mainCourseSearchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full border border-gray-200 rounded-xl max-h-48 overflow-y-auto bg-white shadow-lg">
+                        {mainCourseSearchResults.map(course => (
+                          <div
+                            key={course.courseId}
+                            className={`flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                              courseId === course.courseId ? 'bg-blue-50' : ''
+                            }`}
+                            onClick={() => {
+                              setCourseId(course.courseId);
+                              setMainCourseSearchTerm(course.title);
+                              setMainCourseSearchResults([]);
+                            }}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {course.title}
+                              </div>
+                              {course.description && (
+                                <div className="text-xs text-gray-500 truncate mt-1">
+                                  {course.description}
+                                </div>
+                              )}
+                            </div>
+                            {courseId === course.courseId && (
+                              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {mainCourseSearchTerm && mainCourseSearchResults.length === 0 && !mainCourseSearchLoading && !courseId && (
+                      <div className="absolute z-50 mt-1 w-full p-4 text-center border border-gray-200 rounded-xl bg-gray-50">
+                        <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">No courses found matching your search</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-
-            {/* ID Input / Career Path Dropdown / Course Dropdown */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {reviewType === 'careerpath' ? 'Career Path' : 'Course'}
-              </label>
-              {reviewType === 'careerpath' ? (
-                <GenericDropdown
-                  items={careerPaths}
-                  value={careerPathId}
-                  onChange={setCareerPathId}
-                  placeholder="Select career path..."
-                  displayField="title"
-                  valueField="id"
-                  searchable={true}
-                  className="w-full"
-                />
-              ) : (
-                <GenericDropdown
-                  items={courses}
-                  value={courseId}
-                  onChange={setCourseId}
-                  placeholder="Select course..."
-                  displayField="title"
-                  valueField="id"
-                  searchable={true}
-                  className="w-full"
-                />
-              )}
             </div>
 
-            {/* Add Review Button */}
-            <div className="flex items-end">
+            {/* Second Row: Action Buttons */}
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setShowAddModal(true)}
                 disabled={!careerPathId && !courseId}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium shadow-sm"
               >
                 <Plus className="w-4 h-4" />
                 Add Review
               </button>
-            </div>
-
-            {/* Refresh Button */}
-            <div className="flex items-end">
               <button
-                onClick={() => {
-                  if (reviewType === 'careerpath') {
-                    fetchCareerPathReviews(careerPathId);
-                  } else {
-                    fetchCourseReviews(courseId);
-                  }
-                }}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={handleReset}
+                className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
               >
-                Refresh
+                <X className="w-4 h-4" />
+                Reset
               </button>
             </div>
           </div>
@@ -731,25 +1200,30 @@ const ReviewManagementPage = () => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Career Path
                       </label>
-                      <GenericDropdown
-                        items={careerPaths}
-                        value={formData.careerPathId}
-                        onChange={(value) => {
-                          setFormData({ ...formData, careerPathId: value, levelId: '' });
-                          // Fetch career path data to get levels
-                          fetchCareerPathReviews(value);
-                        }}
-                        placeholder="Select career path..."
-                        displayField="title"
-                        valueField="id"
-                        searchable={true}
-                        className="w-full"
-                      />
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          value={careerPathSearchTerm}
+                          onChange={(e) => {
+                            setCareerPathSearchTerm(e.target.value);
+                            handleCareerPathSearch(e.target.value);
+                          }}
+                          placeholder="Search career paths by title..."
+                          className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                          disabled={reviewType === 'careerpath' && careerPathId && mainCareerPathSearchTerm === careerPathSearchTerm}
+                        />
+                        {careerPathSearchLoading && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Career Path Level
+                        Level
                       </label>
                       <GenericDropdown
                         items={careerPathData?.levels || []}
@@ -772,16 +1246,25 @@ const ReviewManagementPage = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Course
                     </label>
-                    <GenericDropdown
-                      items={courses}
-                      value={formData.courseId}
-                      onChange={(value) => setFormData({ ...formData, courseId: value })}
-                      placeholder="Select course..."
-                      displayField="title"
-                      valueField="courseId"
-                      searchable={true}
-                      className="w-full"
-                    />
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={courseSearchTerm}
+                        onChange={(e) => {
+                          setCourseSearchTerm(e.target.value);
+                          handleCourseSearch(e.target.value);
+                        }}
+                        placeholder="Search courses by title..."
+                        className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                        disabled={reviewType === 'course' && courseId && mainCourseSearchTerm === courseSearchTerm}
+                      />
+                      {courseSearchLoading && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -877,25 +1360,25 @@ const ReviewManagementPage = () => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Career Path
                       </label>
-                      <GenericDropdown
-                        items={editModalData.careerPaths}
-                        value={editModalData.selectedCareerPath}
-                        onChange={(value) => {
-                          setEditModalData({ 
-                            ...editModalData, 
-                            selectedCareerPath: value, 
-                            selectedLevel: '',
-                            careerPathLevels: []
-                          });
-                          // Fetch levels for the new career path
-                          fetchCareerPathLevelsForEdit(value);
-                        }}
-                        placeholder="Select career path..."
-                        displayField="title"
-                        valueField="id"
-                        searchable={true}
-                        className="w-full"
-                      />
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          value={editCareerPathSearchTerm}
+                          onChange={(e) => {
+                            setEditCareerPathSearchTerm(e.target.value);
+                            handleEditCareerPathSearch(e.target.value);
+                          }}
+                          placeholder="Search career paths by title..."
+                          className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                          disabled={reviewType === 'careerpath' && careerPathId && mainCareerPathSearchTerm === editCareerPathSearchTerm}
+                        />
+                        {editCareerPathSearchLoading && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -923,16 +1406,25 @@ const ReviewManagementPage = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Course
                     </label>
-                    <GenericDropdown
-                      items={editModalData.courses}
-                      value={editModalData.selectedCourse}
-                      onChange={(value) => setEditModalData({ ...editModalData, selectedCourse: value })}
-                      placeholder="Select course..."
-                      displayField="title"
-                      valueField="courseId"
-                      searchable={true}
-                      className="w-full"
-                    />
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={editCourseSearchTerm}
+                        onChange={(e) => {
+                          setEditCourseSearchTerm(e.target.value);
+                          handleEditCourseSearch(e.target.value);
+                        }}
+                        placeholder="Search courses by title..."
+                        className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                        disabled={reviewType === 'course' && courseId && mainCourseSearchTerm === editCourseSearchTerm}
+                      />
+                      {editCourseSearchLoading && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -986,4 +1478,4 @@ const ReviewManagementPage = () => {
   );
 };
 
-export default ReviewManagementPage;
+export default withAuthCheck(ReviewManagementPage);

@@ -683,6 +683,32 @@ const CareerPath = () => {
                         </div>
                       </div>
                     )}
+                    
+                    {/* Course Certificate Section */}
+                    {path.certificateCount > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Course Certificates</div>
+                          <Award className="w-4 h-4 text-green-500" />
+                        </div>
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-green-800 dark:text-green-200 font-medium">
+                                {path.certificateCount} Certificate{path.certificateCount !== 1 ? 's' : ''} Available
+                              </p>
+                              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                Earn certificates upon course completion
+                              </p>
+                            </div>
+                            <div className="flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full">
+                              <Award className="w-5 h-5 text-green-600 dark:text-green-400" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     {firstCourses.length > 0 && (
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
