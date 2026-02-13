@@ -28,7 +28,8 @@ const useAuthenticatedAccess = () => {
     const [accessData, setAccessData] = useState({
         studentId: null,
         courseId: null,
-        lectureId: null
+        lectureId: null,
+        isPdf: false
     });
 
     const validateAccess = useCallback(async () => {
@@ -50,7 +51,7 @@ const useAuthenticatedAccess = () => {
             }
 
             // Parse URL parameters for new access
-            const { token, courseId, lectureId } = parseAccessParams();
+            const { token, courseId, lectureId, isPdf } = parseAccessParams();
 
             if (!token) {
                 // No token - could be direct access or development mode
@@ -81,12 +82,17 @@ const useAuthenticatedAccess = () => {
             setAccessData({
                 studentId: validationResult.studentId,
                 courseId: validationResult.courseId || parseInt(courseId),
-                lectureId: validationResult.lectureId || lectureId
+                lectureId: validationResult.lectureId || lectureId,
+                isPdf
             });
             setIsAuthenticated(true);
 
             // Clean URL (remove token from address bar for security)
-            const cleanUrl = window.location.pathname;
+            const params = new URLSearchParams(window.location.search);
+            params.delete('token');
+            params.delete('t');
+            const query = params.toString();
+            const cleanUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
 
         } catch (err) {
@@ -117,6 +123,7 @@ const useAuthenticatedAccess = () => {
         studentId: accessData.studentId,
         courseId: accessData.courseId,
         lectureId: accessData.lectureId,
+        isPdf: accessData.isPdf,
         logout,
         revalidate: validateAccess
     };

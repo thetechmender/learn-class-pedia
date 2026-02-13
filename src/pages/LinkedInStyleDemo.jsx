@@ -37,6 +37,7 @@ import { transformApiResponse } from '../utils/courseTransformer';
 import { 
     getCourseDetails, 
     getLectureSections, 
+    getLecturePdfPathForClasspedia,
     getStudentProgress,
     markLectureComplete,
     toggleLectureBookmark,
@@ -72,10 +73,17 @@ const LinkedInStyleDemo = ({
     // Parse URL parameters for courseId
     const urlParams = new URLSearchParams(window.location.search);
     const urlCourseId = urlParams.get('courseId');
+    const isPdfRaw = urlParams.get('Ispdf') || urlParams.get('ispdf');
+    const isPdf = isPdfRaw === '1' || String(isPdfRaw).toLowerCase() === 'true';
+    const urlLectureId = urlParams.get('lectureId');
     
     // Use authenticated IDs if provided, then URL params, otherwise fall back to defaults
     const STUDENT_ID = authenticatedStudentId || DEFAULT_STUDENT_ID;
     const COURSE_ID = authenticatedCourseId || (urlCourseId ? parseInt(urlCourseId, 10) : DEFAULT_COURSE_ID);
+
+    const [pdfLoading, setPdfLoading] = useState(false);
+    const [pdfError, setPdfError] = useState(null);
+    const [pdfUrl, setPdfUrl] = useState(null);
 
     const [courseData, setCourseData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -101,6 +109,59 @@ const LinkedInStyleDemo = ({
     const [isCourseComplete, setIsCourseComplete] = useState(false);
     const [showAssessment, setShowAssessment] = useState(false);
     const assessmentRef = useRef(null);
+
+    useEffect(() => {
+        if (!isPdf || !COURSE_ID) return;
+
+        let cancelled = false;
+
+        const loadPdf = async () => {
+            setPdfLoading(true);
+            setPdfError(null);
+            setPdfUrl(null);
+
+            try {
+                const sections = await getLectureSections(COURSE_ID);
+                if (!Array.isArray(sections) || sections.length === 0) {
+                    throw new Error('No lecture sections found');
+                }
+
+                const targetLectureId = initialLectureId || urlLectureId;
+                const matchingSection = targetLectureId
+                    ? sections.find(s => String(s.courseDetailId ?? s.CourseDetailId ?? s.lectureId ?? s.LectureId) === String(targetLectureId))
+                    : sections[0];
+
+                const lecturePdfId = matchingSection?.lecturePdfId ?? matchingSection?.LecturePdfId;
+                if (!lecturePdfId) {
+                    throw new Error('LecturePdfId not found');
+                }
+
+                const pdfResult = await getLecturePdfPathForClasspedia(lecturePdfId);
+                const resolvedUrl = pdfResult?.pdfPathForClasspedia || pdfResult?.PdfPathForClasspedia || pdfResult?.pdfUrl || pdfResult?.url || pdfResult;
+                if (!resolvedUrl || typeof resolvedUrl !== 'string') {
+                    throw new Error('PDF URL not found');
+                }
+
+                if (!cancelled) {
+                    setPdfUrl(resolvedUrl);
+                }
+            } catch (e) {
+                if (!cancelled) {
+                    setPdfError(e?.message || 'Failed to load PDF');
+                }
+            } finally {
+                if (!cancelled) {
+                    setPdfLoading(false);
+                }
+            }
+        };
+
+        loadPdf();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isPdf, COURSE_ID, initialLectureId, urlLectureId]);
 
     // Fetch course data from API
     const fetchCourseData = useCallback(async () => {
@@ -168,8 +229,9 @@ const LinkedInStyleDemo = ({
     }, [STUDENT_ID, COURSE_ID, initialLectureId]);
 
     useEffect(() => {
+        if (isPdf) return;
         fetchCourseData();
-    }, [fetchCourseData]);
+    }, [fetchCourseData, isPdf]);
 
     const toggleChapter = (chapterId) => {
         setExpandedChapters(prev => {
@@ -203,7 +265,7 @@ const LinkedInStyleDemo = ({
         } catch (err) {
             console.error('Error updating lecture watch progress:', err);
         }
-    }, [selectedLecture]);
+    }, [selectedLecture, STUDENT_ID]);
 
     const toggleBookmark = async (lectureId) => {
         try {
@@ -270,6 +332,51 @@ const LinkedInStyleDemo = ({
         }, 100);
     };
 
+    if (isPdf) {
+        if (pdfLoading) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-800 dark:text-white text-lg font-medium mt-4">Loading PDF...</p>
+                    </div>
+                </div>
+            );
+        }
+
+        if (pdfError || !pdfUrl) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center">
+                    <div className="text-center max-w-md px-6">
+                        <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-8 h-8 text-red-500 dark:text-red-400" />
+                        </div>
+                        <h2 className="text-gray-800 dark:text-white text-xl font-bold mb-2">Unable to load PDF</h2>
+                        <p className="text-gray-600 dark:text-gray-400 mb-6">{pdfError || 'PDF not available.'}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-medium transition-all duration-300 flex items-center gap-2 justify-center shadow-lg hover:shadow-xl mx-auto"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+                <iframe
+                    title="Lecture PDF"
+                    src={pdfUrl}
+                    className="w-full h-screen"
+                    style={{ border: 'none' }}
+                />
+            </div>
+        );
+    }
+
     // Loading state
     if (loading) {
         return (
@@ -281,28 +388,6 @@ const LinkedInStyleDemo = ({
                     </div>
                     <p className="text-gray-800 dark:text-white text-lg font-medium mt-4">Loading your course...</p>
                     <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">Preparing the learning environment</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Error state
-    if (error && !courseData) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center">
-                <div className="text-center max-w-md px-6">
-                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-500 dark:text-red-400" />
-                    </div>
-                    <h2 className="text-gray-800 dark:text-white text-xl font-bold mb-2">Connection Issue</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">We're having trouble loading the course content. Please check your connection and try again.</p>
-                    <button
-                        onClick={fetchCourseData}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-medium transition-all duration-300 flex items-center gap-2 mx-auto shadow-lg hover:shadow-xl"
-                    >
-                        <RefreshCw className="w-4 h-4" />
-                        Try Again
-                    </button>
                 </div>
             </div>
         );

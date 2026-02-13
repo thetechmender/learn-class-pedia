@@ -22,7 +22,7 @@ const ENVIRONMENTS = {
 // ========================================
 // SET CURRENT ENVIRONMENT HERE
 // ========================================
-const CURRENT_ENVIRONMENT = 'production';
+const CURRENT_ENVIRONMENT = 'development';
 // ========================================
 
 const currentConfig = ENVIRONMENTS[CURRENT_ENVIRONMENT] || ENVIRONMENTS.production;

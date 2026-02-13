@@ -104,3 +104,11 @@ export const getLectureDetails = async (lectureId) => {
     if (!response.ok) throw new Error('Failed to fetch lecture details');
     return response.json();
 };
+
+export const getLecturePdfPathForClasspedia = async (lecturePdfId) => {
+    const response = await fetch(`${BASE_URL}/lecture-pdf/${lecturePdfId}`, {
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch lecture PDF path');
+    return response.json();
+};

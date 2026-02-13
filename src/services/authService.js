@@ -3,7 +3,9 @@
  * Handles secure token validation when students access from external apps (e.g., Next.js)
  */
 
-const BASE_URL = 'https://localhost:7043/api/Learning';
+import { appSettings } from '../config/appSettings';
+
+const BASE_URL = `${appSettings.apiUrl}/Learning`;
 
 /**
  * Validate access token from external application
@@ -55,9 +57,10 @@ export const getSessionToken = async (accessToken) => {
 export const parseAccessParams = () => {
     const params = new URLSearchParams(window.location.search);
     return {
-        token: params.get('token'),
+        token: params.get('token') || params.get('t'),
         courseId: params.get('courseId'),
-        lectureId: params.get('lectureId')
+        lectureId: params.get('lectureId'),
+        isPdf: (params.get('Ispdf') || params.get('ispdf')) === '1' || String(params.get('Ispdf') || params.get('ispdf')).toLowerCase() === 'true'
     };
 };
 
