@@ -66,7 +66,10 @@ class AdminApiService {
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
             const errorData = await response.json();
-            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+            // Handle different error response formats - prioritize "message" field
+            errorDetails = errorData.message || errorData.error || errorData.title || 
+                          (errorData.errors && Object.values(errorData.errors)[0]?.[0]) ||
+                          JSON.stringify(errorData);
           } else {
             // If not JSON, try to get text content
             const textData = await response.text();
@@ -772,7 +775,10 @@ class AdminApiService {
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
             const errorData = await response.json();
-            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+            // Handle different error response formats - prioritize "message" field
+            errorDetails = errorData.message || errorData.error || errorData.title || 
+                          (errorData.errors && Object.values(errorData.errors)[0]?.[0]) ||
+                          JSON.stringify(errorData);
           } else {
             const textData = await response.text();
             errorDetails = textData || response.statusText || 'Unknown error';
@@ -828,7 +834,10 @@ class AdminApiService {
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
             const errorData = await response.json();
-            errorDetails = errorData.error || errorData.message || errorData.title || JSON.stringify(errorData);
+            // Handle different error response formats - prioritize "message" field
+            errorDetails = errorData.message || errorData.error || errorData.title || 
+                          (errorData.errors && Object.values(errorData.errors)[0]?.[0]) ||
+                          JSON.stringify(errorData);
           } else {
             const textData = await response.text();
             errorDetails = textData || response.statusText || 'Unknown error';
@@ -1075,6 +1084,128 @@ class AdminApiService {
 
   async deleteEmailTemplate(id) {
     return this.request(ENDPOINTS.EMAIL_TEMPLATE_DELETE(id), {
+      method: 'DELETE',
+    });
+  }
+
+  // ==================== DISCOUNT RATES ====================
+
+  // GET all discount rates with pagination and search
+  async getAllDiscountRates(params = {}) {
+    const queryParams = new URLSearchParams();
+    
+    // Add pagination parameters
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize);
+    
+    // Add search parameter
+    if (params.search && typeof params.search === 'string') {
+      console.log('Original search term:', params.search);
+      console.log('URLSearchParams before append:', queryParams.toString());
+      queryParams.append('search', params.search);
+      console.log('URLSearchParams after append:', queryParams.toString());
+    } else if (params.search) {
+      console.warn('Invalid search parameter type in AdminApi:', typeof params.search, params.search);
+    }
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${ENDPOINTS.DISCOUNT_RATES}?${queryString}` : ENDPOINTS.DISCOUNT_RATES;
+    
+    console.log('Final URL:', url);
+    
+    return this.request(url);
+  }
+
+  // GET discount rate by ID
+  async getDiscountRateById(id) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_BY_ID(id));
+  }
+
+  // CREATE new discount rate
+  async createDiscountRate(discountRateData) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(discountRateData),
+    });
+  }
+
+  // UPDATE discount rate
+  async updateDiscountRate(id, discountRateData) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(discountRateData),
+    });
+  }
+
+  // DELETE discount rate
+  async deleteDiscountRate(id) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_DELETE(id), {
+      method: 'DELETE',
+    });
+  }
+
+  // ==================== DISCOUNT RATE MAPPINGS ====================
+
+  // GET all discount rate mappings
+  async getAllDiscountRateMappings(params = {}) {
+    const queryParams = new URLSearchParams();
+    
+    // Add pagination parameters
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize);
+    
+    // Add search parameter
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${ENDPOINTS.DISCOUNT_RATES_MAPPINGS}?${queryString}` : ENDPOINTS.DISCOUNT_RATES_MAPPINGS;
+    
+    return this.request(url);
+  }
+
+  // GET discount rate mappings by course ID
+  async getDiscountRateMappingsByCourse(courseId) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS_BY_COURSE(courseId));
+  }
+
+  // GET discount rate mapping by ID
+  async getDiscountRateMappingById(id) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS_BY_ID(id));
+  }
+
+  // CREATE new discount rate mapping
+  async createDiscountRateMapping(mappingData) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS, {
+      method: 'POST',
+      body: JSON.stringify(mappingData),
+    });
+  }
+
+  // ASSIGN discount rate to course
+  async assignDiscountRate(courseId, discountRateId, userId = null) {
+    const queryParams = userId ? `?userId=${userId}` : '';
+    const url = `${ENDPOINTS.DISCOUNT_RATES_ASSIGN}${queryParams}`;
+    
+    return this.request(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        courseId,
+        discountRateId
+      }),
+    });
+  }
+
+  // UPDATE discount rate mapping
+  async updateDiscountRateMapping(id, mappingData) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS_UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(mappingData),
+    });
+  }
+
+  // DELETE discount rate mapping
+  async deleteDiscountRateMapping(id) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS_DELETE(id), {
       method: 'DELETE',
     });
   }

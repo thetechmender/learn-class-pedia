@@ -64,13 +64,31 @@
       "order": 7
     },
     {
+      "id": "discount-rates",
+      "path": "/admin/discount-rates",
+      "component": "DiscountRates",
+      "label": "Discount Rates",
+      "icon": "Percent",
+      "category": "management",
+      "order": 8
+    },
+    {
+      "id": "assign-discount-rate",
+      "path": "/admin/assign-discount-rate",
+      "component": "AssignDiscountRate",
+      "label": "Assign Discount Rate",
+      "icon": "Percent",
+      "category": "management",
+      "order": 9
+    },
+    {
       "id": "email-templates",
       "path": "/admin/email-templates",
       "component": "EmailTemplateManagement",
       "label": "Email Templates",
       "icon": "Mail",
       "category": "management",
-      "order": 8
+      "order": 10
     },
     {
       "id": "career-roles",
@@ -79,7 +97,7 @@
       "label": "Career Roles",
       "icon": "Briefcase",
       "category": "management",
-      "order": 9
+      "order": 11
     },
     {
       "id": "change-password",

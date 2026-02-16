@@ -15,6 +15,8 @@ import CareerSkills from '../pages/CareerPath/CareerSkills';
 import CourseSkillMapping from '../pages/CourseSkillMapping/CourseSkillMapping';
 import EmailTemplateManagement from '../pages/EmailTemplateManagement/EmailTemplateManagement';
 import ReviewManagementPage from '../pages/ReviewManagementPage/ReviewManagementPage';
+import AssignDiscountRate from '../pages/AssignDiscountRate/AssignDiscountRate';
+import DiscountRates from '../pages/DiscountRates/DiscountRates';
 
 // Component mapping
 const componentMap = {
@@ -31,6 +33,8 @@ const componentMap = {
   CourseSkillMapping,
   EmailTemplateManagement,
   ReviewManagementPage,
+  AssignDiscountRate,
+  DiscountRates,
 };
 
 // Protected Route Component
@@ -153,6 +157,11 @@ const DynamicRoutes = () => {
       <Route path="review-management" element={
         <ProtectedRoute>
           <ReviewManagementPage />
+        </ProtectedRoute>
+      } />
+      <Route path="assign-discount-rate" element={
+        <ProtectedRoute>
+          <AssignDiscountRate />
         </ProtectedRoute>
       } />
       

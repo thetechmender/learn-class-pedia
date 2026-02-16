@@ -16,7 +16,7 @@ import { courseTableColumns } from '../../../../config/tableConfigurations';
 
 const CourseManagement = () => {
   const { 
-    error, getCourseById,
+    error, getCourseById, clearError,
     getCourseTypes, getCourseLevels, getAllCategories, deleteCourse, getAllCoursesAdmin,
     createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew
   } = useAdmin();
@@ -37,6 +37,12 @@ const CourseManagement = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredCourses, setFilteredCourses] = useState([]);
+
+  // Clear both modal and global errors when closing modal
+  const handleCloseModal = () => {
+    closeModal();
+    clearError();
+  };
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState({});
   const [courseDetails, setCourseDetails] = useState({});
@@ -394,7 +400,7 @@ const CourseManagement = () => {
       await applyFilters();
       closeModal();
     } catch (error) {
-      setModalError(error.response?.data?.message || `Failed to ${modalState.mode} course`);
+      setModalError(error.response?.data || error.message || `Failed to ${modalState.mode} course`);
     } finally {
       setModalLoading(false);
     }
@@ -473,7 +479,7 @@ const CourseManagement = () => {
     return <AdminPageLayout loading={true} skeletonType="table" />;
   }
 
-  if (error) {
+  if (error && !modalState.isOpen) {
     return (
       <AdminPageLayout
         title="Course Management"
@@ -1071,7 +1077,7 @@ const CourseManagement = () => {
       {/* Unified Course Modal */}
       <CourseModal
         isOpen={modalState.isOpen}
-        onClose={closeModal}
+        onClose={handleCloseModal}
         mode={modalState.mode}
         course={modalState.course}
         categories={categories}
@@ -1083,6 +1089,7 @@ const CourseManagement = () => {
         onSubmit={handleModalSubmit}
         dropdownLoading={dropdownLoading}
         dropdownError={dropdownError}
+        onClearError={() => setModalError('')}
       />
 
     </AdminPageLayout>

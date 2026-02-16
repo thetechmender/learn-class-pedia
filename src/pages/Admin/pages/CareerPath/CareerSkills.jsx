@@ -86,7 +86,35 @@ const CareerSkills = () => {
         setTotalPages(Math.ceil(response.length / itemsPerPage));
       }
     } catch (err) {
-      showError('Failed to fetch career skills');
+      // Handle specific error cases with user-friendly messages
+      let errorMessage = 'Failed to fetch career skills';
+      
+      if (err.message) {
+        const errorString = err.message.toLowerCase();
+        
+        // Check for unauthorized errors
+        if (errorString.includes('401') || errorString.includes('unauthorized')) {
+          errorMessage = 'You are not authorized to view career skills. Please log in again.';
+        }
+        // Check for forbidden errors
+        else if (errorString.includes('403') || errorString.includes('forbidden')) {
+          errorMessage = 'You do not have permission to view career skills.';
+        }
+        // Check for server errors
+        else if (errorString.includes('500') || errorString.includes('internal server error')) {
+          errorMessage = 'Server error occurred while loading career skills. Please try again later.';
+        }
+        // Check for network errors
+        else if (errorString.includes('network') || errorString.includes('fetch')) {
+          errorMessage = 'Network error occurred. Please check your internet connection and try again.';
+        }
+        // Use the original error message if it's user-friendly
+        else if (!errorString.includes('http error') && !errorString.includes('status:')) {
+          errorMessage = err.message;
+        }
+      }
+      
+      showError(errorMessage);
       // Reset to empty state on error
       setCareerSkills([]);
       setTotalItems(0);
@@ -138,7 +166,12 @@ const CareerSkills = () => {
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  }, []);
+    
+    // Clear modal error when user starts typing
+    if (modalError) {
+      setModalError('');
+    }
+  }, [modalError]);
 
   // Form management
   const resetForm = useCallback(() => {
@@ -167,7 +200,46 @@ const CareerSkills = () => {
       resetForm();
       fetchCareerSkills();
     } catch (err) {
-      const errorMessage = err.message || 'An unexpected error occurred';
+      // Handle specific error cases with user-friendly messages
+      let errorMessage = 'An unexpected error occurred';
+      
+      if (err.message) {
+        const errorString = err.message.toLowerCase();
+        
+        // Check for 409 Conflict (duplicate name)
+        if (errorString.includes('409') || errorString.includes('conflict')) {
+          if (editingCareerSkill) {
+            errorMessage = 'A career skill with this name already exists. Please choose a different name.';
+          } else {
+            errorMessage = 'A career skill with this name already exists. Please choose a different name.';
+          }
+        }
+        // Check for validation errors
+        else if (errorString.includes('400') || errorString.includes('bad request')) {
+          errorMessage = 'Please check your input and try again. Make sure all required fields are filled.';
+        }
+        // Check for unauthorized errors
+        else if (errorString.includes('401') || errorString.includes('unauthorized')) {
+          errorMessage = 'You are not authorized to perform this action. Please log in again.';
+        }
+        // Check for forbidden errors
+        else if (errorString.includes('403') || errorString.includes('forbidden')) {
+          errorMessage = 'You do not have permission to perform this action.';
+        }
+        // Check for not found errors (for updates)
+        else if (errorString.includes('404') || errorString.includes('not found')) {
+          errorMessage = 'The career skill you are trying to update was not found. It may have been deleted.';
+        }
+        // Check for server errors
+        else if (errorString.includes('500') || errorString.includes('internal server error')) {
+          errorMessage = 'Server error occurred. Please try again later.';
+        }
+        // Use the original error message if it's user-friendly
+        else if (!errorString.includes('http error') && !errorString.includes('status:')) {
+          errorMessage = err.message;
+        }
+      }
+      
       setModalError(errorMessage);
       showError(errorMessage);
     }
@@ -194,7 +266,34 @@ const CareerSkills = () => {
       showSuccess('Career skill deleted successfully!');
       fetchCareerSkills();
     } catch (err) {
-      const errorMessage = err.message || 'Failed to delete career skill';
+      // Handle specific error cases with user-friendly messages
+      let errorMessage = 'Failed to delete career skill';
+      
+      if (err.message) {
+        const errorString = err.message.toLowerCase();
+        
+        // Check for not found errors
+        if (errorString.includes('404') || errorString.includes('not found')) {
+          errorMessage = 'The career skill was not found. It may have already been deleted.';
+        }
+        // Check for forbidden errors
+        else if (errorString.includes('403') || errorString.includes('forbidden')) {
+          errorMessage = 'You do not have permission to delete this career skill.';
+        }
+        // Check for conflict errors (skill in use)
+        else if (errorString.includes('409') || errorString.includes('conflict')) {
+          errorMessage = 'This career skill cannot be deleted because it is currently in use.';
+        }
+        // Check for server errors
+        else if (errorString.includes('500') || errorString.includes('internal server error')) {
+          errorMessage = 'Server error occurred. Please try again later.';
+        }
+        // Use the original error message if it's user-friendly
+        else if (!errorString.includes('http error') && !errorString.includes('status:')) {
+          errorMessage = err.message;
+        }
+      }
+      
       showError(errorMessage);
     }
   }, [fetchCareerSkills, showSuccess, showError]);

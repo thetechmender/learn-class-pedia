@@ -1,4 +1,4 @@
-import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/useDynamicRoutes';
@@ -162,6 +162,24 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             label: 'Course Skill Mapping',
             icon: Brain,
             path: 'course-skill-mapping'
+          }
+        ]
+      };
+    }
+    
+    // Create Discount Rates as main navbar with Assign Discount Rate as child
+    if (item.id === 'discount-rates' || item.label === 'Discount Rates') {
+      return {
+        ...item,
+        id: 'discount-rates',
+        label: 'Discount Rates',
+        path: 'discount-rates', // Make parent clickable
+        children: [
+          {
+            id: 'assign-discount-rate',
+            label: 'Assign Discount Rate',
+            icon: Percent,
+            path: 'assign-discount-rate'
           }
         ]
       };

@@ -41,26 +41,26 @@ const ReviewManagementPage = () => {
   const [error, setError] = useState(null);
   
   // Search states
-  const [careerPathLoading, setCareerPathLoading] = useState(false);
-  const [courseLoading, setCourseLoading] = useState(false);
+  const [, setCareerPathLoading] = useState(false);
+  const [, setCourseLoading] = useState(false);
   
   // Autocomplete states for courses
   const [courseSearchTerm, setCourseSearchTerm] = useState('');
-  const [courseSearchResults, setCourseSearchResults] = useState([]);
-  const [courseSearchLoading, setCourseSearchLoading] = useState(false);
+  const [, setCourseSearchResults] = useState([]);
+  const [, setCourseSearchLoading] = useState(false);
   
   // Autocomplete states for career paths
   const [careerPathSearchTerm, setCareerPathSearchTerm] = useState('');
-  const [careerPathSearchResults, setCareerPathSearchResults] = useState([]);
-  const [careerPathSearchLoading, setCareerPathSearchLoading] = useState(false);
+  const [, setCareerPathSearchResults] = useState([]);
+  const [, setCareerPathSearchLoading] = useState(false);
   
   // Edit modal autocomplete states
   const [editCourseSearchTerm, setEditCourseSearchTerm] = useState('');
-  const [editCourseSearchResults, setEditCourseSearchResults] = useState([]);
-  const [editCourseSearchLoading, setEditCourseSearchLoading] = useState(false);
+  const [, setEditCourseSearchResults] = useState([]);
+  const [, setEditCourseSearchLoading] = useState(false);
   const [editCareerPathSearchTerm, setEditCareerPathSearchTerm] = useState('');
-  const [editCareerPathSearchResults, setEditCareerPathSearchResults] = useState([]);
-  const [editCareerPathSearchLoading, setEditCareerPathSearchLoading] = useState(false);
+  const [, setEditCareerPathSearchResults] = useState([]);
+  const [, setEditCareerPathSearchLoading] = useState(false);
   
   // Main page autocomplete states
   const [mainCareerPathSearchTerm, setMainCareerPathSearchTerm] = useState('');
@@ -494,15 +494,15 @@ const ReviewManagementPage = () => {
       let resourceId, resourceTypeId, courseId;
       
       if (reviewType === 'careerpath') {
-        // Scenario: ResourceTypeId = 2 AND CourseId = 0
-        resourceId = formData.careerPathId;    // Use career path ID for career path reviews
-        resourceTypeId = 2;             // 2 = career path level
-        courseId = 0;                   // CourseId = 0 for career path reviews
+       
+        resourceId = formData.careerPathId;   
+        resourceTypeId = 2;          
+        courseId = 0;                 
       } else {
-        // Scenario: ResourceTypeId = 1 AND CourseId ≠ 0
-        resourceId = 0;                   // Ignore ResourceId for course reviews
-        resourceTypeId = 1;             // 1 = course
-        courseId = formData.courseId;        // Use CourseId for course reviews
+       
+        resourceId = 0;                 
+        resourceTypeId = 1;           
+        courseId = formData.courseId;       
       }
       
       const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
@@ -516,10 +516,10 @@ const ReviewManagementPage = () => {
             rating: formData.rating,
             reviewText: formData.reviewText,
             reviewBy: formData.reviewBy,
-            courseId: courseId  // Include courseId in review object
+            courseId: courseId 
           },
-          resourceId: resourceId,      // CareerPathId for career paths, 0 for courses
-          resourceTypeId: resourceTypeId  // 2 for career paths, 1 for courses
+          resourceId: resourceId,      
+          resourceTypeId: resourceTypeId  
         })
       });
 

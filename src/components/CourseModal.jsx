@@ -31,7 +31,8 @@ const CourseModal = ({
   error,
   onSubmit,
   dropdownLoading,
-  dropdownError
+  dropdownError,
+  onClearError
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -152,6 +153,12 @@ const CourseModal = ({
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
+    
+    // Clear error when user starts making changes
+    if (error && onClearError) {
+      onClearError();
+    }
+    
     setFormData(prev => {
       const newData = {
         ...prev,
@@ -763,13 +770,6 @@ const CourseModal = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          {/* Global Error */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
-              {error}
-            </div>
-          )}
-
           {/* Delete Confirmation */}
           {mode === 'delete' && course && (
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -1493,6 +1493,13 @@ const CourseModal = ({
               {getSubmitButtonText()}
             </button>
           </div>
+
+          {/* Global Error - Display at bottom */}
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
+              {error}
+            </div>
+          )}
         </form>
       </div>
 

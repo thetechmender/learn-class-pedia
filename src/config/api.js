@@ -81,6 +81,21 @@ export const ENDPOINTS = {
   REVIEW_COURSES_DROPDOWN: '/Review/courses/dropdown',
   REVIEW_CAREER_PATH_LEVELS: (careerPathId) => `/Review/careerpaths/${careerPathId}/levels`,
   REVIEW_WITH_DETAILS: (reviewId) => `/Review/${reviewId}/details`,
+
+  // Discount Rates endpoints
+  DISCOUNT_RATES: '/DiscountRates',
+  DISCOUNT_RATES_CREATE: '/admin/discountratescreate',
+  DISCOUNT_RATES_BY_ID: (id) => `/admin/discountrates/${id}`,
+  DISCOUNT_RATES_UPDATE: (id) => `/admin/discountrates/${id}`,
+  DISCOUNT_RATES_DELETE: (id) => `/admin/discountrates/${id}`,
+  DISCOUNT_RATES_ASSIGN: '/DiscountRates/assign-course',
+  
+  // Discount Rate Mapping endpoints
+  DISCOUNT_RATES_MAPPINGS: '/admin/discountrates/mappings',
+  DISCOUNT_RATES_MAPPINGS_BY_COURSE: (courseId) => `/admin/discountrates/mappings/course/${courseId}`,
+  DISCOUNT_RATES_MAPPINGS_BY_ID: (id) => `/admin/discountrates/mappings/${id}`,
+  DISCOUNT_RATES_MAPPINGS_UPDATE: (id) => `/admin/discountrates/mappings/${id}`,
+  DISCOUNT_RATES_MAPPINGS_DELETE: (id) => `/admin/discountrates/mappings/${id}`,
 };
 
 // HTTP Status Codes

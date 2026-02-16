@@ -1,4 +1,4 @@
-import  { useState, useEffect } from 'react';
+import  { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Trash2,
   Save,
@@ -38,6 +38,7 @@ const CareerPathForm = ({
     initializeDropdownData,
     getCoursesByTypeForLevel,
     searchCoursesByTitle,
+    searchSkillsByTitle,
   } = useCareerPath();
   
   // Add a state to track if initial data is loaded
@@ -73,10 +74,16 @@ const CareerPathForm = ({
   const [draggedCourse, setDraggedCourse] = useState(null);
   const [draggedLevelIndex, setDraggedLevelIndex] = useState(null);
   const [expandedLevels, setExpandedLevels] = useState({});
+  const [draggedLevel, setDraggedLevel] = useState(null);
+  const [dragOverLevelIndex, setDragOverLevelIndex] = useState(null);
 
   // Course search autocomplete states
   const [courseSearchResults, setCourseSearchResults] = useState([]);
   const [courseSearchLoading, setCourseSearchLoading] = useState(false);
+
+  // Skills search autocomplete states
+  const [skillSearchResults, setSkillSearchResults] = useState([]);
+  const [skillSearchLoading, setSkillSearchLoading] = useState(false);
 
   // Cache management
   const CACHE_KEY = 'careerPathForm_draft';
@@ -192,6 +199,37 @@ const CareerPathForm = ({
     }
   };
 
+  // Skill search autocomplete handler
+  const handleSkillSearch = async (searchTerm) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setSkillSearchResults([]);
+      return;
+    }
+
+    try {
+      setSkillSearchLoading(true);
+      const results = await searchSkillsByTitle(searchTerm);
+      setSkillSearchResults(results);
+    } catch (error) {
+      console.error('Failed to search skills:', error);
+      setSkillSearchResults([]);
+    } finally {
+      setSkillSearchLoading(false);
+    }
+  };
+
+  // Debounced skill search to only call API when user stops typing
+  const debouncedSkillSearchRef = useRef(null);
+  const debouncedSkillSearch = useCallback((searchTerm) => {
+    if (debouncedSkillSearchRef.current) {
+      clearTimeout(debouncedSkillSearchRef.current);
+    }
+    
+    debouncedSkillSearchRef.current = setTimeout(() => {
+      handleSkillSearch(searchTerm);
+    }, 500); // 500ms delay - wait until user stops typing
+  }, []);
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -235,27 +273,39 @@ const CareerPathForm = ({
     });
   };
 
-  const getAvailableLevels = () => {
-    const selectedLevelIds = formData.levels.map(level => parseInt(level.levelId));
-    const available = levels.filter(level => !selectedLevelIds.includes(parseInt(level.levelId)));
-    console.log('getAvailableLevels - selectedLevelIds:', selectedLevelIds);
-    console.log('getAvailableLevels - available levels:', available);
-    return available;
+  const removeLevelFromPath = (levelIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      levels: prev.levels.filter((_, i) => i !== levelIndex)
+    }));
   };
 
+  // Function to get available levels that haven't been added to the path yet
+  const getAvailableLevels = () => {
+    const addedLevelIds = formData.levels.map(level => level.levelId);
+    return levels.filter(level => !addedLevelIds.includes(level.levelId));
+  };
+
+  // Function to add a level to the career path
   const addLevelToPath = (levelId) => {
-    console.log('addLevelToPath called with levelId:', levelId);
-    console.log('Available levels:', levels);
-    
     const numericLevelId = parseInt(levelId);
     const levelData = levels.find(l => parseInt(l.levelId) === numericLevelId);
     
-    console.log('numericLevelId:', numericLevelId);
-    console.log('levelData found:', levelData);
-    
     if (!levelData) {
-      console.log('No level data found, returning');
       return;
+    }
+    
+    // Auto-set sort order based on course type
+    let sortOrder = 0;
+    if (levelData.title) {
+      const title = levelData.title.toLowerCase();
+      if (title.includes('beginner') || title.includes('basic')) {
+        sortOrder = 1;
+      } else if (title.includes('intermediate')) {
+        sortOrder = 2;
+      } else if (title.includes('advanced') || title.includes('expert')) {
+        sortOrder = 3;
+      }
     }
     
     const newLevel = {
@@ -269,20 +319,13 @@ const CareerPathForm = ({
       durationMaxMonths: 0,
       price: 0,
       discountedPrice: 0,
-      sortOrder: 0,
+      sortOrder: sortOrder, // Auto-set based on course type
       courses: []
     };
     
     setFormData(prev => ({
       ...prev,
       levels: [...prev.levels, newLevel]
-    }));
-  };
-
-  const removeLevelFromPath = (levelIndex) => {
-    setFormData(prev => ({
-      ...prev,
-      levels: prev.levels.filter((_, i) => i !== levelIndex)
     }));
   };
 
@@ -298,30 +341,21 @@ const CareerPathForm = ({
   };
 
   const addCourseToSelectedLevel = (courseId) => {
-    console.log('addCourseToSelectedLevel called with courseId:', courseId);
-    console.log('selectedLevelForCourses:', selectedLevelForCourses);
-    console.log('courseSearchResults:', courseSearchResults);
-    
     if (selectedLevelForCourses === null) return;
     
     const level = formData.levels[selectedLevelForCourses];
-    console.log('level:', level);
     
     const courseExists = level.courses.some(c => c.courseId === courseId);
-    console.log('courseExists:', courseExists);
     
     if (!courseExists) {
       // Find the course details from search results to get the title
       const courseDetails = courseSearchResults.find(c => c.id === courseId);
-      console.log('courseDetails found:', courseDetails);
       
       const newCourse = {
         courseId: courseId,
         courseSequence: level.courses.length + 1,
         title: courseDetails?.title || `Course ID: ${courseId}`
       };
-      
-      console.log('newCourse to add:', newCourse);
       
       setFormData(prev => ({
         ...prev,
@@ -403,6 +437,56 @@ const CareerPathForm = ({
   const handleDragEnd = () => {
     setDraggedCourse(null);
     setDraggedLevelIndex(null);
+  };
+
+  // Level drag and drop handlers
+  const handleLevelDragStart = (e, levelIndex) => {
+    setDraggedLevel(levelIndex);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.outerHTML);
+  };
+
+  const handleLevelDragOver = (e, levelIndex) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverLevelIndex(levelIndex);
+  };
+
+  const handleLevelDragLeave = () => {
+    setDragOverLevelIndex(null);
+  };
+
+  const handleLevelDrop = (e, targetLevelIndex) => {
+    e.preventDefault();
+    setDragOverLevelIndex(null);
+    
+    if (draggedLevel === null || draggedLevel === targetLevelIndex) {
+      return;
+    }
+
+    setFormData(prev => {
+      const newLevels = [...prev.levels];
+      const [draggedLevelData] = newLevels.splice(draggedLevel, 1);
+      newLevels.splice(targetLevelIndex, 0, draggedLevelData);
+      
+      // Update sort orders based on new positions
+      const reorderedLevels = newLevels.map((level, idx) => ({
+        ...level,
+        sortOrder: idx + 1
+      }));
+      
+      return {
+        ...prev,
+        levels: reorderedLevels
+      };
+    });
+
+    setDraggedLevel(null);
+  };
+
+  const handleLevelDragEnd = () => {
+    setDraggedLevel(null);
+    setDragOverLevelIndex(null);
   };
 
   const toggleLevelExpansion = (levelIndex) => {
@@ -1043,6 +1127,12 @@ const CareerPathForm = ({
                 </span>
               </div>
               
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  💡 <strong>Tip:</strong> Drag and drop level cards to reorder them. Sort order will be updated automatically.
+                </p>
+              </div>
+              
               {errors.levels && (
                 <p className="mb-4 text-sm text-red-600">{errors.levels}</p>
               )}
@@ -1086,11 +1176,30 @@ const CareerPathForm = ({
               {/* Selected Levels Cards */}
               <div className="space-y-4">
                 {formData.levels.map((level, levelIndex) => (
-                  <div key={levelIndex} className="border border-gray-200 rounded-xl p-6">
+                  <div
+                    key={levelIndex}
+                    className={`border border-gray-200 rounded-xl p-6 transition-all cursor-move ${
+                      draggedLevel === levelIndex ? 'opacity-50 scale-95' : ''
+                    } ${
+                      dragOverLevelIndex === levelIndex ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+                    }`}
+                    draggable
+                    onDragStart={(e) => handleLevelDragStart(e, levelIndex)}
+                    onDragOver={(e) => handleLevelDragOver(e, levelIndex)}
+                    onDragLeave={handleLevelDragLeave}
+                    onDrop={(e) => handleLevelDrop(e, levelIndex)}
+                    onDragEnd={handleLevelDragEnd}
+                  >
                     <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900">{level.title || level.levelName}</h4>
-                        <p className="text-sm text-gray-600">{level.courses.length} course{level.courses.length !== 1 ? 's' : ''} assigned</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <ChevronRight className="w-5 h-5" />
+                          <ChevronRight className="w-5 h-5 -ml-3" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900">{level.title || level.levelName}</h4>
+                          <p className="text-sm text-gray-600">{level.courses.length} course{level.courses.length !== 1 ? 's' : ''} assigned</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -1194,21 +1303,6 @@ const CareerPathForm = ({
                               />
                             </div>
                           </div>
-                        </div>
-
-                        {/* Sort Order */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Sort Order
-                          </label>
-                          <input
-                            type="number"
-                            value={level.sortOrder || 0}
-                            onChange={(e) => updateLevelField(levelIndex, 'sortOrder', parseInt(e.target.value) || 0)}
-                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="0"
-                            min="0"
-                          />
                         </div>
                       </div>
 
@@ -1320,6 +1414,13 @@ const CareerPathForm = ({
                               <h4 className="text-sm font-medium text-gray-700">
                                 Selected Courses ({formData.levels[levelIndex].courses.length})
                               </h4>
+                              <button
+                                type="button"
+                                onClick={() => toggleCourseExpansion(levelIndex)}
+                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              >
+                                {expandedLevels[levelIndex] ? 'Manage Courses' : 'Manage Courses'}
+                              </button>
                             </div>
                             <div className="space-y-2">
                               {formData.levels[levelIndex].courses.map((course, courseIndex) => (
@@ -1387,56 +1488,64 @@ const CareerPathForm = ({
                   <input
                     type="text"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search skills by name..."
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      debouncedSkillSearch(e.target.value);
+                    }}
+                    placeholder="Search skills by name (min. 2 characters)..."
                     className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
                   />
+                  {skillSearchLoading && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Skills Dropdown */}
-                {searchTerm && skills.length > 0 && (
+                {/* Skills Dropdown - Only show search results */}
+                {skillSearchResults.length > 0 && searchTerm.length >= 2 && (
                   <div className="mt-2 border border-gray-200 rounded-xl max-h-60 overflow-y-auto bg-white shadow-lg">
-                    {skills
-                      .filter(skill => 
-                        (skill.name || skill.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (skill.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (skill.category || '').toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map(skill => {
-                        const isSelected = formData.skills.some(s => s.skillId === (skill.id || skill.skillId));
-                        return (
-                          <div
-                            key={skill.id}
-                            className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0 ${
-                              isSelected ? 'bg-green-50' : 'bg-white'
-                            }`}
-                            onClick={() => handleSkillSelection(skill.id, isSelected ? 0 : 3)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-900">{skill.name || skill.title}</h4>
-                                <p className="text-xs text-gray-500">{skill.category || 'Skill'}</p>
-                              </div>
-                              {isSelected ? (
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <Plus className="w-4 h-4 text-blue-600" />
-                              )}
+                    {skillSearchResults.map(skill => {
+                      const skillId = skill.id || skill.skillId;
+                      const isSelected = formData.skills.some(s => {
+                        const selectedSkillId = s.skillId || s.id;
+                        return selectedSkillId == skillId; // Use == for loose comparison to handle type differences
+                      });
+                      
+                      return (
+                        <div
+                          key={skill.id}
+                          className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0 ${
+                            isSelected ? 'bg-green-50' : 'bg-white'
+                          }`}
+                          onClick={() => handleSkillSelection(skill.id, isSelected ? 0 : 3)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900">{skill.name || skill.title}</h4>
+                              <p className="text-xs text-gray-500">{skill.category || 'Skill'}</p>
                             </div>
+                            {isSelected ? (
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Plus className="w-4 h-4 text-blue-600" />
+                            )}
                           </div>
-                        );
-                      })}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
-                {searchTerm && skills.length > 0 && 
-                  skills.filter(skill => 
-                    (skill.name || skill.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (skill.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (skill.category || '').toLowerCase().includes(searchTerm.toLowerCase())
-                  ).length === 0 && (
+                {searchTerm.length >= 2 && skillSearchResults.length === 0 && !skillSearchLoading && (
                   <div className="mt-2 p-4 text-center border border-gray-200 rounded-xl bg-gray-50">
                     <p className="text-sm text-gray-600">No skills found matching your search</p>
+                  </div>
+                )}
+
+                {searchTerm.length < 2 && (
+                  <div className="mt-2 p-4 text-center border border-gray-200 rounded-xl bg-gray-50">
+                    <p className="text-sm text-gray-600">Type at least 2 characters to search skills</p>
                   </div>
                 )}
 

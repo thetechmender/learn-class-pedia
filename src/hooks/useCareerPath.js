@@ -192,11 +192,58 @@ export const useCareerPath = () => {
       setLoading(true);
       setError(null);
       const data = await adminApiService.getAllCoursesAdminNoPagination({ Title: title });
-      // Handle the response structure where courses are in an 'items' array
+      // Handle response structure where courses are in an 'items' array
       const courses = data.items || data || [];
       return Array.isArray(courses) ? courses : [];
     } catch (err) {
       handleError('Failed to search courses by title', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
+  // Search skills by name/title
+  const searchSkillsByTitle = useCallback(async (searchTerm) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      let skillsData = [];
+      
+      try {
+        // Use the pagination endpoint with search parameter
+        const response = await adminApiService.getAllSkillsWithPagination(`search=${encodeURIComponent(searchTerm)}`);
+        skillsData = response.items || response || [];
+        
+      } catch (skillsError) {
+        console.warn('Skills search failed, trying fallback:', skillsError);
+        
+        // Fallback: try career skills endpoint
+        try {
+          const careerResponse = await adminApiService.getAllCareerSkills();
+          const allCareerSkills = careerResponse.items || careerResponse || [];
+          
+          // Filter client-side as fallback
+          skillsData = allCareerSkills.filter(skill => 
+            (skill.title || skill.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+          );
+        } catch (fallbackError) {
+          console.warn('Fallback also failed:', fallbackError);
+          throw new Error('All skill search methods failed');
+        }
+      }
+      
+      const transformedSkills = Array.isArray(skillsData) ? skillsData.map(skill => ({
+        id: skill.id || skill.skillId || skill.skillMapId, // Try multiple possible ID fields
+        name: skill.title || skill.name,
+        description: skill.description || skill.name,
+        category: 'Skill'
+      })) : [];
+      
+      return transformedSkills;
+    } catch (err) {
+      handleError('Failed to search skills', err);
       return [];
     } finally {
       setLoading(false);
@@ -339,6 +386,7 @@ export const useCareerPath = () => {
     getBadges,
     getCoursesByTypeForLevel,
     searchCoursesByTitle,
+    searchSkillsByTitle,
     createCareerPath,
     updateCareerPath,
     deleteCareerPath,
