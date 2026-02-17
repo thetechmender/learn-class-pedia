@@ -1,11 +1,11 @@
 const appSettings = {
   // Environment: 'development' | 'production'
-  environment: 'production',
+  environment: 'development',
   
   // API Configuration
   api: {
-    baseUrl: 'https://localhost:7043/api',
-    // baseUrlLocal: 'https://localhost:7043/api',
+    baseUrl: 'https://classpediaadminapi.thetechmenders.com/api',
+    baseUrlLocal: 'https://localhost:7043/api',
     chatbotUrl: 'https://chatbot.thetechmenders.com/api',
     timeout: 30000,
     retryAttempts: 3,
