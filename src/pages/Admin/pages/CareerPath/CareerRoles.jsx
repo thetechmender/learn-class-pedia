@@ -29,7 +29,7 @@ const CareerRoles = () => {
   const {
     loading,
     error,
-    clearError,
+   
     getAllCareerRoles,
     getCareerRoleById,
     createCareerRole,
@@ -198,7 +198,49 @@ const CareerRoles = () => {
       resetForm();
       fetchCareerRoles();
     } catch (err) {
-      const errorMessage = err.message || 'An unexpected error occurred';
+      // Handle specific error cases with user-friendly messages
+      let errorMessage = 'An unexpected error occurred';
+      
+      if (err.message) {
+        const errorString = err.message.toLowerCase();
+        
+        // Check for 409 Conflict (duplicate name) or specific duplicate message
+        if (errorString.includes('409') || 
+            errorString.includes('conflict') || 
+            errorString.includes('already exists') ||
+            errorString.includes('duplicate')) {
+          if (editingCareerRole) {
+            errorMessage = 'A career role with this name already exists. Please choose a different name.';
+          } else {
+            errorMessage = 'A career role with this name already exists. Please choose a different name.';
+          }
+        }
+        // Check for validation errors
+        else if (errorString.includes('400') || errorString.includes('bad request')) {
+          errorMessage = 'Please check your input and try again. Make sure all required fields are filled.';
+        }
+        // Check for unauthorized errors
+        else if (errorString.includes('401') || errorString.includes('unauthorized')) {
+          errorMessage = 'You are not authorized to perform this action. Please log in again.';
+        }
+        // Check for forbidden errors
+        else if (errorString.includes('403') || errorString.includes('forbidden')) {
+          errorMessage = 'You do not have permission to perform this action.';
+        }
+        // Check for not found errors (for updates)
+        else if (errorString.includes('404') || errorString.includes('not found')) {
+          errorMessage = 'The career role you are trying to update was not found. It may have been deleted.';
+        }
+        // Check for server errors
+        else if (errorString.includes('500') || errorString.includes('internal server error')) {
+          errorMessage = 'Server error occurred. Please try again later.';
+        }
+        // Use original error message if it's user-friendly
+        else if (!errorString.includes('http error') && !errorString.includes('status:')) {
+          errorMessage = err.message;
+        }
+      }
+      
       setModalError(errorMessage);
       showError(errorMessage);
     }
