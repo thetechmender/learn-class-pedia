@@ -3,7 +3,7 @@ import { adminApiService } from '../services/AdminApi';
 
 export const useDiscountRateMapping = () => {
   const [discountRates, setDiscountRates] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [, setCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
   const [courseTypes, setCourseTypes] = useState([]);
   const [courseLevels, setCourseLevels] = useState([]);
@@ -169,6 +169,25 @@ export const useDiscountRateMapping = () => {
     }
   }, []);
 
+  // Assign discount rate to course type
+  const assignDiscountRateToCourseType = useCallback(async (courseTypeId, discountRateId, courseId = null) => {
+    try {
+      setLoading(true);
+      
+      await adminApiService.assignDiscountRateToCourseType(courseTypeId, discountRateId, courseId);
+      
+      // Refresh course types data
+      await fetchCourseTypes();
+      
+      return true;
+    } catch (err) {
+      setError('Failed to assign discount rate to course type');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Update discount rate mapping
   const updateDiscountRateMapping = useCallback(async (mappingId, mappingData) => {
     try {
@@ -290,7 +309,6 @@ export const useDiscountRateMapping = () => {
   return {
     // State
     discountRates,
-    courses,
     allCourses,
     courseTypes,
     courseLevels,
@@ -307,6 +325,7 @@ export const useDiscountRateMapping = () => {
     fetchCoursesWithFilters,
     fetchDiscountRateMappingsByCourse,
     assignDiscountRateToCourse,
+    assignDiscountRateToCourseType,
     updateDiscountRateMapping,
     deleteDiscountRateMapping,
     fetchCourseTypes,

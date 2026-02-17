@@ -1195,6 +1195,29 @@ class AdminApiService {
     });
   }
 
+  // ASSIGN discount rate to course type
+  async assignDiscountRateToCourseType(courseTypeId, discountRateId, courseId = null) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_ASSIGN_COURSE_TYPE, {
+      method: 'POST',
+      body: JSON.stringify({
+        courseId: courseId || 0,
+        discountRateId,
+        courseTypeId
+      }),
+    });
+  }
+
+  // ASSIGN discount rate to career path
+  async assignDiscountRateToCareerPath(careerPathId, discountRateId) {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_ASSIGN_CAREER_PATH, {
+      method: 'POST',
+      body: JSON.stringify({
+        careerPathId,
+        discountRateId
+      }),
+    });
+  }
+
   // UPDATE discount rate mapping
   async updateDiscountRateMapping(id, mappingData) {
     return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS_UPDATE(id), {

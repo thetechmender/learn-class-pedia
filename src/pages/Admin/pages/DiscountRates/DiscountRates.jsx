@@ -3,7 +3,6 @@ import { useToast } from '../../../../hooks/useToast';
 import { adminApiService } from '../../../../services/AdminApi';
 import {
   Search,
-  RefreshCw,
   Plus,
   Edit2,
   Trash2,

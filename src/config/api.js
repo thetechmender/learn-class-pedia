@@ -89,6 +89,8 @@ export const ENDPOINTS = {
   DISCOUNT_RATES_UPDATE: (id) => `/admin/discountrates/${id}`,
   DISCOUNT_RATES_DELETE: (id) => `/admin/discountrates/${id}`,
   DISCOUNT_RATES_ASSIGN: '/DiscountRates/assign-course',
+  DISCOUNT_RATES_ASSIGN_COURSE_TYPE: '/DiscountRates/assign-course-type',
+  DISCOUNT_RATES_ASSIGN_CAREER_PATH: '/DiscountRates/Assign-CareerPath',
   
   // Discount Rate Mapping endpoints
   DISCOUNT_RATES_MAPPINGS: '/admin/discountrates/mappings',

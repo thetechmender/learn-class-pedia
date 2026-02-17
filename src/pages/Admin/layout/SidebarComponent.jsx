@@ -8,7 +8,7 @@ import { useTheme } from '../../../context/ThemeContext';
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const { theme } = useTheme();
   const { getMainNavItems, getManagementItems, loading, error } = useDynamicRoutes();
   const [activeRoute, setActiveRoute] = useState(location.pathname);
@@ -203,6 +203,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
     
     // Filter out separate Career Roles item
     if (item.id === 'career-roles' || item.label === 'Career Roles') {
+      return null;
+    }
+    
+    // Filter out separate Assign Discount Rate item
+    if (item.id === 'assign-discount-rate' || item.label === 'Assign Discount Rate') {
       return null;
     }
     

@@ -47,20 +47,20 @@ const ReviewManagementPage = () => {
   // Autocomplete states for courses
   const [courseSearchTerm, setCourseSearchTerm] = useState('');
   const [, setCourseSearchResults] = useState([]);
-  const [, setCourseSearchLoading] = useState(false);
+  const [courseSearchLoading, setCourseSearchLoading] = useState(false);
   
   // Autocomplete states for career paths
   const [careerPathSearchTerm, setCareerPathSearchTerm] = useState('');
   const [, setCareerPathSearchResults] = useState([]);
-  const [, setCareerPathSearchLoading] = useState(false);
+  const [careerPathSearchLoading, setCareerPathSearchLoading] = useState(false);
   
   // Edit modal autocomplete states
   const [editCourseSearchTerm, setEditCourseSearchTerm] = useState('');
   const [, setEditCourseSearchResults] = useState([]);
-  const [, setEditCourseSearchLoading] = useState(false);
+  const [editCourseSearchLoading, setEditCourseSearchLoading] = useState(false);
   const [editCareerPathSearchTerm, setEditCareerPathSearchTerm] = useState('');
   const [, setEditCareerPathSearchResults] = useState([]);
-  const [, setEditCareerPathSearchLoading] = useState(false);
+  const [editCareerPathSearchLoading, setEditCareerPathSearchLoading] = useState(false);
   
   // Main page autocomplete states
   const [mainCareerPathSearchTerm, setMainCareerPathSearchTerm] = useState('');
