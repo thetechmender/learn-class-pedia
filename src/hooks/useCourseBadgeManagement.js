@@ -10,14 +10,19 @@ export const useCourseBadgeManagement = () => {
   const [courseTypes, setCourseTypes] = useState([]);
   const [courseLevels, setCourseLevels] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [careerPaths, setCareerPaths] = useState([]);
   const [loadingBadges, setLoadingBadges] = useState(true);
   const [badgesError, setBadgesError] = useState(null);
   const [loadingcourse, setLoadingCourse] = useState(false);
+  const [loadingCareerPaths, setLoadingCareerPaths] = useState(false);
   const [Courseerror, setCourseError] = useState(null);
+  const [careerPathsError, setCareerPathsError] = useState(null);
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCourseAssignmentModal, setShowCourseAssignmentModal] = useState(false);
+  const [showCategoryAssignmentModal, setShowCategoryAssignmentModal] = useState(false);
+  const [showCareerPathAssignmentModal, setShowCareerPathAssignmentModal] = useState(false);
   
   // Pagination state for badges
   const [badgePagination, setBadgePagination] = useState({
@@ -136,6 +141,37 @@ const loadCourses = useCallback(async (filters = {}) => {
 const loadCoursesWithFilters = useCallback(async (filters = {}) => {
   return await loadCourses(filters);
 }, [loadCourses]);
+
+  const loadCareerPaths = useCallback(async (params = {}) => {
+    try {
+      setLoadingCareerPaths(true);
+      setCareerPathsError(null);
+
+      const careerPathsResponse = await adminApiService.getAllCareerPaths(params);
+      let careerPathsArray = [];
+      if (careerPathsResponse?.items) careerPathsArray = careerPathsResponse.items;
+      else if (careerPathsResponse?.data?.items) careerPathsArray = careerPathsResponse.data.items;
+      else if (Array.isArray(careerPathsResponse)) careerPathsArray = careerPathsResponse;
+      else if (careerPathsResponse?.data && Array.isArray(careerPathsResponse.data)) careerPathsArray = careerPathsResponse.data;
+
+      const mapped = careerPathsArray.map((cp) => ({
+        id: cp.id,
+        name: cp.name || cp.title,
+        title: cp.title || cp.name,
+        description: cp.description,
+        careerPathBadges: cp.careerPathBadges || []
+      }));
+
+      setCareerPaths(mapped);
+      return mapped;
+    } catch (err) {
+      setCareerPathsError(err.message || 'Failed to load career paths');
+      setCareerPaths([]);
+      throw err;
+    } finally {
+      setLoadingCareerPaths(false);
+    }
+  }, []);
 
 
   // Initial load - only run once on mount
@@ -295,7 +331,9 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         updatedAt: new Date().toISOString(),
         updatedBy: existingBadge.updatedBy,
         slug: existingBadge.slug,
-        courseIds: finalCourseIds
+        courseIds: finalCourseIds,
+        categoryIds: existingBadge.categoryIds || [],
+        careerPathIds: existingBadge.careerPathIds || []
       };
       
       // Update the badge with complete data
@@ -320,6 +358,96 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
   const getBadgeCourses = useCallback((badgeId) => {
     const badge = badges.find(b => b.id === badgeId);
     return badge ? badge.courseIds || [] : [];
+  }, [badges]);
+
+  const assignCategoriesToBadge = useCallback(async (badgeId, selectedCategoryIds) => {
+    try {
+      const existingBadge = badges.find(b => b.id === badgeId);
+      if (!existingBadge) {
+        throw new Error('Badge not found');
+      }
+
+      const existingCategoryIds = existingBadge.categoryIds || [];
+      const finalCategoryIds = existingCategoryIds.filter(id => !selectedCategoryIds.includes(id))
+        .concat(selectedCategoryIds.filter(id => !existingCategoryIds.includes(id)));
+
+      const updateData = {
+        id: existingBadge.id,
+        badgeKey: existingBadge.badgeKey,
+        badgeName: existingBadge.badgeName,
+        badgeColor: existingBadge.badgeColor,
+        badgeIcon: existingBadge.badgeIcon,
+        description: existingBadge.description,
+        isActive: existingBadge.isActive,
+        isDeleted: existingBadge.isDeleted || false,
+        createdAt: existingBadge.createdAt,
+        createdBy: existingBadge.createdBy,
+        updatedAt: new Date().toISOString(),
+        updatedBy: existingBadge.updatedBy,
+        slug: existingBadge.slug,
+        courseIds: existingBadge.courseIds || [],
+        categoryIds: finalCategoryIds,
+        careerPathIds: existingBadge.careerPathIds || []
+      };
+
+      const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
+      setBadges(prev => prev.map(b => (b.id === badgeId ? updatedBadge : b)));
+      return updatedBadge;
+    } catch (err) {
+      setBadgesError(err.message || 'Failed to assign categories to badge');
+      console.error('Category assignment error:', err);
+      throw err;
+    }
+  }, [badges]);
+
+  const getBadgeCategories = useCallback((badgeId) => {
+    const badge = badges.find(b => b.id === badgeId);
+    return badge ? badge.categoryIds || [] : [];
+  }, [badges]);
+
+  const assignCareerPathsToBadge = useCallback(async (badgeId, selectedCareerPathIds) => {
+    try {
+      const existingBadge = badges.find(b => b.id === badgeId);
+      if (!existingBadge) {
+        throw new Error('Badge not found');
+      }
+
+      const existingCareerPathIds = existingBadge.careerPathIds || [];
+      const finalCareerPathIds = existingCareerPathIds.filter(id => !selectedCareerPathIds.includes(id))
+        .concat(selectedCareerPathIds.filter(id => !existingCareerPathIds.includes(id)));
+
+      const updateData = {
+        id: existingBadge.id,
+        badgeKey: existingBadge.badgeKey,
+        badgeName: existingBadge.badgeName,
+        badgeColor: existingBadge.badgeColor,
+        badgeIcon: existingBadge.badgeIcon,
+        description: existingBadge.description,
+        isActive: existingBadge.isActive,
+        isDeleted: existingBadge.isDeleted || false,
+        createdAt: existingBadge.createdAt,
+        createdBy: existingBadge.createdBy,
+        updatedAt: new Date().toISOString(),
+        updatedBy: existingBadge.updatedBy,
+        slug: existingBadge.slug,
+        courseIds: existingBadge.courseIds || [],
+        categoryIds: existingBadge.categoryIds || [],
+        careerPathIds: finalCareerPathIds
+      };
+
+      const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
+      setBadges(prev => prev.map(b => (b.id === badgeId ? updatedBadge : b)));
+      return updatedBadge;
+    } catch (err) {
+      setBadgesError(err.message || 'Failed to assign career paths to badge');
+      console.error('Career path assignment error:', err);
+      throw err;
+    }
+  }, [badges]);
+
+  const getBadgeCareerPaths = useCallback((badgeId) => {
+    const badge = badges.find(b => b.id === badgeId);
+    return badge ? badge.careerPathIds || [] : [];
   }, [badges]);
 
   // Get unassigned courses for a badge
@@ -384,11 +512,30 @@ const openCourseAssignmentModal = useCallback(async (badge) => {
   setShowCourseAssignmentModal(true);
 }, []);
 
+  const openCategoryAssignmentModal = useCallback(async (badge) => {
+    setSelectedBadge(badge);
+    setShowCategoryAssignmentModal(true);
+  }, []);
+
+  const openCareerPathAssignmentModal = useCallback(async (badge) => {
+    setSelectedBadge(badge);
+    if (!careerPaths || careerPaths.length === 0) {
+      try {
+        await loadCareerPaths();
+      } catch {
+        // errors handled by hook state
+      }
+    }
+    setShowCareerPathAssignmentModal(true);
+  }, [careerPaths, loadCareerPaths]);
+
 
   const closeModals = useCallback(() => {
     setShowCreateModal(false);
     setShowEditModal(false);
     setShowCourseAssignmentModal(false);
+    setShowCategoryAssignmentModal(false);
+    setShowCareerPathAssignmentModal(false);
     setSelectedBadge(null);
     resetForm();
   }, [resetForm]);
@@ -429,20 +576,26 @@ const openCourseAssignmentModal = useCallback(async (badge) => {
     courseTypes,
     courseLevels,
     categories,
+    careerPaths,
     loadingBadges,
     badgesError,
     loadingcourse,
+    loadingCareerPaths,
     Courseerror,
+    careerPathsError,
     selectedBadge,
     showCreateModal,
     showEditModal,
     showCourseAssignmentModal,
+    showCategoryAssignmentModal,
+    showCareerPathAssignmentModal,
     formData,
     badgePagination,
-    
+
     // Actions
-    loadData,
     loadCoursesWithFilters,
+    loadCareerPaths,
+    loadData,
     createBadge,
     updateBadge,
     deleteBadge,
@@ -450,25 +603,30 @@ const openCourseAssignmentModal = useCallback(async (badge) => {
     assignCoursesToBadge,
     getBadgeCourses,
     getUnassignedCourses,
-    
+    assignCategoriesToBadge,
+    getBadgeCategories,
+    assignCareerPathsToBadge,
+    getBadgeCareerPaths,
+
     // Pagination actions
     goToBadgePage,
     nextBadgePage,
     prevBadgePage,
     setBadgePageSize,
-    
+
     // Form handlers
     handleInputChange,
     resetForm,
-    
+
     // Modal handlers
     openCreateModal,
     openEditModal,
     openCourseAssignmentModal,
+    openCategoryAssignmentModal,
+    openCareerPathAssignmentModal,
     closeModals,
-    
+
     // Utilities
-    clearError,
-    loadDropdowns
+    clearError
   };
 };

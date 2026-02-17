@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useCourseBadgeManagement } from '../../../../hooks/useCourseBadgeManagement';
 import { useToast } from '../../../../hooks/useToast';
 import {
@@ -34,24 +34,34 @@ const FeaturedMarking = () => {
     courseTypes,
     courseLevels,
     categories,
+    careerPaths,
     loadingBadges,
     badgesError,
     loadingcourse,
+    loadingCareerPaths,
     Courseerror,
+    careerPathsError,
     selectedBadge,
     showCreateModal,
     showEditModal,
     showCourseAssignmentModal,
+    showCategoryAssignmentModal,
+    showCareerPathAssignmentModal,
     formData,
     badgePagination,
     
     // Actions
     loadCoursesWithFilters,
+    loadCareerPaths,
     createBadge,
     updateBadge,
     deleteBadge,
     assignCoursesToBadge,
     getBadgeCourses,
+    assignCategoriesToBadge,
+    getBadgeCategories,
+    assignCareerPathsToBadge,
+    getBadgeCareerPaths,
     
     // Pagination actions
     goToBadgePage,
@@ -67,6 +77,8 @@ const FeaturedMarking = () => {
     openCreateModal,
     openEditModal,
     openCourseAssignmentModal,
+    openCategoryAssignmentModal,
+    openCareerPathAssignmentModal,
     closeModals,
     clearError
   } = useCourseBadgeManagement();
@@ -88,9 +100,14 @@ const FeaturedMarking = () => {
   };
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [markingType, setMarkingType] = useState('course');
   const [filterBadge, setFilterBadge] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [selectedCourses, setSelectedCourses] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCareerPaths, setSelectedCareerPaths] = useState([]);
+  const [courseSearchTerm, setCourseSearchTerm] = useState('');
+  const courseSearchDebounceRef = useRef(null);
   
   // Course assignment filters
   const [courseFilters, setCourseFilters] = useState({
@@ -176,6 +193,20 @@ const FeaturedMarking = () => {
     }
   };
 
+  const handleOpenAssignmentModal = useCallback((badge) => {
+    if (markingType === 'course') {
+      openCourseAssignmentModal(badge);
+      return;
+    }
+
+    if (markingType === 'category') {
+      openCategoryAssignmentModal(badge);
+      return;
+    }
+
+    openCareerPathAssignmentModal(badge);
+  }, [markingType, openCourseAssignmentModal, openCategoryAssignmentModal, openCareerPathAssignmentModal]);
+
   // Handle course assignment
   const handleCourseAssignment = async () => {
     try {
@@ -185,6 +216,28 @@ const FeaturedMarking = () => {
       showToast('Courses assigned to badge successfully!', 'success');
     } catch (err) {
       showToast('Failed to assign courses to badge', 'error');
+    }
+  };
+
+  const handleCategoryAssignment = async () => {
+    try {
+      await assignCategoriesToBadge(selectedBadge.id, selectedCategories);
+      setSelectedCategories([]);
+      closeModals();
+      showToast('Categories assigned to badge successfully!', 'success');
+    } catch (err) {
+      showToast('Failed to assign categories to badge', 'error');
+    }
+  };
+
+  const handleCareerPathAssignment = async () => {
+    try {
+      await assignCareerPathsToBadge(selectedBadge.id, selectedCareerPaths);
+      setSelectedCareerPaths([]);
+      closeModals();
+      showToast('Career paths assigned to badge successfully!', 'success');
+    } catch (err) {
+      showToast('Failed to assign career paths to badge', 'error');
     }
   };
 
@@ -206,6 +259,34 @@ const FeaturedMarking = () => {
     });
   };
 
+  const toggleCategorySelection = (categoryId) => {
+    const isAssigned = getBadgeCategories(selectedBadge.id).includes(categoryId);
+
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else if (isAssigned) {
+        return [...prev, categoryId];
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+  };
+
+  const toggleCareerPathSelection = (careerPathId) => {
+    const isAssigned = getBadgeCareerPaths(selectedBadge.id).includes(careerPathId);
+
+    setSelectedCareerPaths(prev => {
+      if (prev.includes(careerPathId)) {
+        return prev.filter(id => id !== careerPathId);
+      } else if (isAssigned) {
+        return [...prev, careerPathId];
+      } else {
+        return [...prev, careerPathId];
+      }
+    });
+  };
+
   // Handle course filter changes
   const handleCourseFilterChange = useCallback(async (filterType, value) => {
     const newFilters = { ...courseFilters, [filterType]: value };
@@ -221,13 +302,58 @@ const FeaturedMarking = () => {
     if (newFilters.courseLevelId && newFilters.courseLevelId !== '') {
       apiFilters.CourseLevelId = newFilters.courseLevelId;
     }
+    const trimmedSearch = courseSearchTerm.trim();
+    if (trimmedSearch.length >= 3) {
+      apiFilters.Title = trimmedSearch;
+    }
     
     try {
       await loadCoursesWithFilters(apiFilters);
     } finally {
       // setLoading is handled by the hook
     }
-  }, [loadCoursesWithFilters, courseFilters]);
+  }, [loadCoursesWithFilters, courseFilters, courseSearchTerm]);
+
+  useEffect(() => {
+    if (!showCourseAssignmentModal) return;
+
+    const trimmed = courseSearchTerm.trim();
+    if (trimmed.length < 3) {
+      if (courseSearchDebounceRef.current) {
+        clearTimeout(courseSearchDebounceRef.current);
+        courseSearchDebounceRef.current = null;
+      }
+      return;
+    }
+
+    if (courseSearchDebounceRef.current) {
+      clearTimeout(courseSearchDebounceRef.current);
+    }
+
+    courseSearchDebounceRef.current = setTimeout(async () => {
+      const apiFilters = {};
+      if (courseFilters.courseTypeId && courseFilters.courseTypeId !== '') {
+        apiFilters.CourseTypeId = courseFilters.courseTypeId;
+      }
+      if (courseFilters.categoryId && courseFilters.categoryId !== '') {
+        apiFilters.CategoryId = courseFilters.categoryId;
+      }
+      if (courseFilters.courseLevelId && courseFilters.courseLevelId !== '') {
+        apiFilters.CourseLevelId = courseFilters.courseLevelId;
+      }
+      apiFilters.Title = trimmed;
+
+      setCoursesFiltersApplied(true);
+      await loadCoursesWithFilters(apiFilters);
+    }, 400);
+
+    return () => {
+      if (courseSearchDebounceRef.current) {
+        clearTimeout(courseSearchDebounceRef.current);
+        courseSearchDebounceRef.current = null;
+      }
+    };
+  }, [courseSearchTerm, courseFilters, loadCoursesWithFilters, showCourseAssignmentModal, setCoursesFiltersApplied]);
 
   // Get badge display
   const getBadgeDisplay = (badge) => {
@@ -371,6 +497,20 @@ const FeaturedMarking = () => {
                     {badge.badgeIcon} {badge.badgeName}
                   </option>
                 ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5 pointer-events-none" />
+            </div>
+
+            {/* Marking Type */}
+            <div className="relative">
+              <select
+                value={markingType}
+                onChange={(e) => setMarkingType(e.target.value)}
+                className="appearance-none bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm cursor-pointer"
+              >
+                <option value="course">Course Marking</option>
+                <option value="category">Category Marking</option>
+                <option value="careerpath">Career Path Marking</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5 pointer-events-none" />
             </div>
@@ -524,9 +664,9 @@ const FeaturedMarking = () => {
                     </button>
                     
                     <button
-                      onClick={() => openCourseAssignmentModal(badge)}
+                      onClick={() => handleOpenAssignmentModal(badge)}
                       className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                      title="Manage Courses"
+                      title={markingType === 'course' ? 'Manage Courses' : markingType === 'category' ? 'Manage Categories' : 'Manage Career Paths'}
                     >
                       <Users className="w-4 h-4" />
                     </button>
@@ -647,9 +787,9 @@ const FeaturedMarking = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => openCourseAssignmentModal(badge)}
+                          onClick={() => handleOpenAssignmentModal(badge)}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                          title="Manage Courses"
+                          title={markingType === 'course' ? 'Manage Courses' : markingType === 'category' ? 'Manage Categories' : 'Manage Career Paths'}
                         >
                           <Users className="w-4 h-4" />
                         </button>
@@ -893,6 +1033,7 @@ const FeaturedMarking = () => {
                       categoryId: '',
                       courseLevelId: ''
                     });
+                    setCourseSearchTerm('');
                     // Clear courses instead of loading all
                     setCourses([]);
                     setCoursesFiltersApplied(false);
@@ -903,6 +1044,21 @@ const FeaturedMarking = () => {
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Search
+                  </label>
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={courseSearchTerm}
+                      onChange={(e) => setCourseSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Type at least 3 characters to search courses..."
+                    />
+                  </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Course Type
@@ -1034,6 +1190,238 @@ const FeaturedMarking = () => {
                   }`}
                 >
                   {selectedCourses.length === 0 ? 'Select Courses to Assign' : `Assign ${selectedCourses.length} Course${selectedCourses.length !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Assignment Modal */}
+      {showCategoryAssignmentModal && selectedBadge && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Manage Categories for {selectedBadge.badgeName}
+                </h2>
+                <button
+                  onClick={closeModals}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 flex-1 overflow-hidden flex flex-col">
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Currently assigned: {getBadgeCategories(selectedBadge.id).length} categories
+                </p>
+                <button
+                  onClick={() => setSelectedCategories([])}
+                  className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  Clear Selection
+                </button>
+              </div>
+
+              <div className="space-y-2 flex-1 overflow-y-auto mb-4">
+                {Array.isArray(categories) && categories.map(category => {
+                  const isAssigned = getBadgeCategories(selectedBadge.id).includes(category.id);
+                  const isSelected = selectedCategories.includes(category.id);
+                  const isCurrentlySelected = (isAssigned && !isSelected) || (!isAssigned && isSelected);
+
+                  return (
+                    <div
+                      key={category.id}
+                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                        isCurrentlySelected
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                          : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
+                      onClick={() => toggleCategorySelection(category.id)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isCurrentlySelected}
+                        onChange={() => toggleCategorySelection(category.id)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 dark:text-white">{category.name || 'Unknown Category'}</div>
+                      </div>
+                      {isAssigned && !isSelected && (
+                        <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+                          Assigned
+                        </span>
+                      )}
+                      {isSelected && (
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
+                          {isAssigned ? 'Deselected' : 'Selected'}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+                {!Array.isArray(categories) && (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    No categories available
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={closeModals}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCategoryAssignment}
+                  disabled={selectedCategories.length === 0}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    selectedCategories.length === 0
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {selectedCategories.length === 0 ? 'Select Categories to Assign' : `Assign ${selectedCategories.length} Categor${selectedCategories.length !== 1 ? 'ies' : 'y'}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Career Path Assignment Modal */}
+      {showCareerPathAssignmentModal && selectedBadge && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Manage Career Paths for {selectedBadge.badgeName}
+                </h2>
+                <button
+                  onClick={closeModals}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 flex-1 overflow-hidden flex flex-col">
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Currently assigned: {getBadgeCareerPaths(selectedBadge.id).length} career paths
+                </p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await loadCareerPaths();
+                      } catch {
+                        // handled by hook state
+                      }
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    onClick={() => setSelectedCareerPaths([])}
+                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+
+              {careerPathsError && (
+                <div className="mb-4 text-sm text-red-600 dark:text-red-400">
+                  {careerPathsError}
+                </div>
+              )}
+
+              <div className="space-y-2 flex-1 overflow-y-auto mb-4">
+                {loadingCareerPaths ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="w-6 h-6 animate-spin text-blue-500 mr-2" />
+                    <span className="text-gray-600 dark:text-gray-300">Loading career paths...</span>
+                  </div>
+                ) : (
+                  <>
+                    {Array.isArray(careerPaths) && careerPaths.map(cp => {
+                      const isAssigned = getBadgeCareerPaths(selectedBadge.id).includes(cp.id);
+                      const isSelected = selectedCareerPaths.includes(cp.id);
+                      const isCurrentlySelected = (isAssigned && !isSelected) || (!isAssigned && isSelected);
+
+                      return (
+                        <div
+                          key={cp.id}
+                          className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                            isCurrentlySelected
+                              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                              : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                          }`}
+                          onClick={() => toggleCareerPathSelection(cp.id)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isCurrentlySelected}
+                            onChange={() => toggleCareerPathSelection(cp.id)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900 dark:text-white">{cp.title || cp.name || 'Unknown Career Path'}</div>
+                            {cp.description && (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{cp.description}</div>
+                            )}
+                          </div>
+                          {isAssigned && !isSelected && (
+                            <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+                              Assigned
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
+                              {isAssigned ? 'Deselected' : 'Selected'}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {!Array.isArray(careerPaths) && (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        No career paths available
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={closeModals}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCareerPathAssignment}
+                  disabled={selectedCareerPaths.length === 0}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    selectedCareerPaths.length === 0
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {selectedCareerPaths.length === 0 ? 'Select Career Paths to Assign' : `Assign ${selectedCareerPaths.length} Career Path${selectedCareerPaths.length !== 1 ? 's' : ''}`}
                 </button>
               </div>
             </div>
