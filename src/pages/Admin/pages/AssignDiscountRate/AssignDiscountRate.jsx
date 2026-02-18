@@ -76,15 +76,30 @@ const AssignDiscountRate = () => {
         ...(title && { title })
       };
       const careerPathsData = await adminApiService.getAllCareerPaths(params);
-      const careerPathsArray = careerPathsData?.items || careerPathsData?.data || careerPathsData || [];
+      const careerPathsArray =
+        careerPathsData?.items ||
+        careerPathsData?.Items ||
+        careerPathsData?.data ||
+        careerPathsData?.Data ||
+        careerPathsData ||
+        [];
       setCareerPaths(careerPathsArray);
       
       // Update pagination info
+      const resolvedPage = careerPathsData?.page ?? careerPathsData?.Page ?? careerPathsData?.pageNumber ?? page;
+      const resolvedPageSize = careerPathsData?.pageSize ?? careerPathsData?.PageSize ?? pageSize;
+      const resolvedTotalCount =
+        careerPathsData?.totalCount ??
+        careerPathsData?.TotalCount ??
+        careerPathsData?.totalItems ??
+        careerPathsData?.TotalItems ??
+        careerPathsArray.length;
+
       setPagination(prev => ({
         ...prev,
-        page: careerPathsData?.page || page,
-        totalCount: careerPathsData?.totalCount || careerPathsArray.length,
-        pageSize: careerPathsData?.pageSize || pageSize
+        page: resolvedPage,
+        totalCount: resolvedTotalCount,
+        pageSize: resolvedPageSize
       }));
     } catch (error) {
       console.error('Error fetching career paths:', error);
@@ -104,15 +119,30 @@ const AssignDiscountRate = () => {
         ...(title && { title })
       };
       const coursesData = await adminApiService.getAllCoursesAdmin(params);
-      const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
+      const coursesArray =
+        coursesData?.items ||
+        coursesData?.Items ||
+        coursesData?.data ||
+        coursesData?.Data ||
+        coursesData ||
+        [];
       setCourses(coursesArray);
       
       // Update pagination info
+      const resolvedPage = coursesData?.page ?? coursesData?.Page ?? coursesData?.pageNumber ?? page;
+      const resolvedPageSize = coursesData?.pageSize ?? coursesData?.PageSize ?? pageSize;
+      const resolvedTotalCount =
+        coursesData?.totalCount ??
+        coursesData?.TotalCount ??
+        coursesData?.totalItems ??
+        coursesData?.TotalItems ??
+        coursesArray.length;
+
       setPagination(prev => ({
         ...prev,
-        page: coursesData?.page || page,
-        totalCount: coursesData?.totalCount || coursesData?.totalCount || coursesArray.length,
-        pageSize: coursesData?.pageSize || pageSize
+        page: resolvedPage,
+        totalCount: resolvedTotalCount,
+        pageSize: resolvedPageSize
       }));
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -134,16 +164,28 @@ const AssignDiscountRate = () => {
 
   // Handle page change
   const handlePageChange = useCallback(async (newPage) => {
-    if (newPage < 1 || newPage > Math.ceil(pagination.totalCount / pagination.pageSize)) return;
+    const pageSize = paginationRef.current;
+    if (newPage < 1 || newPage > Math.ceil(pagination.totalCount / pageSize)) return;
     
     setPagination(prev => ({ ...prev, page: newPage }));
     
     if (activeTab === 'courses') {
-      await fetchCourses(newPage, pagination.pageSize, searchTerm);
+      await fetchCourses(newPage, pageSize, searchTerm);
     } else if (activeTab === 'careerPaths') {
-      await fetchCareerPaths(newPage, pagination.pageSize, searchTerm);
+      await fetchCareerPaths(newPage, pageSize, searchTerm);
     }
-  }, [activeTab, fetchCourses, fetchCareerPaths, searchTerm, pagination.pageSize]);
+  }, [activeTab, fetchCourses, fetchCareerPaths, searchTerm, pagination.totalCount]);
+
+  // When switching tabs, reset pagination to page 1 and fetch that tab's data
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1, totalCount: 0 }));
+
+    if (activeTab === 'courses') {
+      fetchCourses(1, paginationRef.current, searchTerm);
+    } else if (activeTab === 'careerPaths') {
+      fetchCareerPaths(1, paginationRef.current, searchTerm);
+    }
+  }, [activeTab, fetchCourses, fetchCareerPaths, searchTerm]);
 
   // Handle career path selection for bulk operations
   const handleCareerPathSelection = useCallback((careerPathId) => {
