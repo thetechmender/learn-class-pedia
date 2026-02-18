@@ -347,6 +347,75 @@ class AdminApiService {
     });
   }
 
+  // New Badge CRUD Operations
+  // GET all badges with pagination
+  async getAllBadges(page = 1, pageSize = 10) {
+    return this.request(`/Badges?page=${page}&pageSize=${pageSize}`);
+  }
+
+  // GET badge by ID
+  async getBadgeById(id) {
+    return this.request(`/Badges/${id}`);
+  }
+
+  // POST create new badge
+  async createBadge(badgeData) {
+    return this.request('/Badges', {
+      method: 'POST',
+      body: JSON.stringify(badgeData),
+    });
+  }
+
+  // PUT update badge
+  async updateBadge(badgeId, badgeData) {
+    return this.request(`/Badges/${badgeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(badgeData),
+    });
+  }
+
+  // DELETE badge
+  async deleteBadge(badgeId) {
+    return this.request(`/Badges/${badgeId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // BadgeMap Assignment methods
+  
+  // GET badge assignments by type
+  async getBadgeAssignments(badgeId, typeId) {
+    debugger;
+    return this.request(`/BadgeMap/${badgeId}/${typeId}`);
+  }
+
+  // POST assign badge to items
+  async assignBadge(badgeId, typeId, assignedIds) {
+    return this.request('/badgemap/assign', {
+      method: 'POST',
+      body: JSON.stringify({
+        badgeId: badgeId,
+        type: typeId,
+        ids: assignedIds
+      }),
+    });
+  }
+
+  // GET all badge assignments for a badge (all types)
+  async getAllBadgeAssignments(badgeId) {
+    const [courses, categories, careerPaths] = await Promise.all([
+      this.getBadgeAssignments(badgeId, 1),
+      this.getBadgeAssignments(badgeId, 2),
+      this.getBadgeAssignments(badgeId, 3)
+    ]);
+    
+    return {
+      courses: courses || [],
+      categories: categories || [],
+      careerPaths: careerPaths || []
+    };
+  }
+
   // GET course badges for dropdown
   async getCourseBadges() {
     return this.request(ENDPOINTS.COURSE_BADGES_DROPDOWN);

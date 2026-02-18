@@ -1,1434 +1,1018 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useCourseBadgeManagement } from '../../../../hooks/useCourseBadgeManagement';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useBadgeManagement } from '../../../../hooks/useBadgeManagement';
 import { useToast } from '../../../../hooks/useToast';
 import {
   Award,
   Search,
-  RefreshCw,
-  Grid,
-  List,
   Plus,
   Edit,
   Trash2,
-  Users,
   X,
-  Check,
-  BookOpen,
-  ChevronDown,
+  AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Palette,
+  Tag,
   CheckCircle,
-  AlertCircle
+  Users
 } from 'lucide-react';
-import GenericDropdown from '../../../../components/GenericDropdown';
-import CategoryDropdown from '../../../../components/CategoryDropdown';
 
 const FeaturedMarking = () => {
-  const { toast, showToast } = useToast();
-  const [formErrors, setFormErrors] = useState({});
+  const { showToast } = useToast();
+  
   const {
-    // Data
     badges,
-    courses,
-    setCourses,
-    courseTypes,
-    courseLevels,
-    categories,
-    careerPaths,
-    loadingBadges,
-    badgesError,
-    loadingcourse,
-    loadingCareerPaths,
-    Courseerror,
-    careerPathsError,
-    selectedBadge,
+    loading,
+    error,
+    pagination,
+    formData,
     showCreateModal,
     showEditModal,
-    showCourseAssignmentModal,
-    showCategoryAssignmentModal,
-    showCareerPathAssignmentModal,
-    formData,
-    badgePagination,
-    
-    // Actions
-    loadCoursesWithFilters,
-    loadCareerPaths,
     createBadge,
     updateBadge,
     deleteBadge,
-    assignCoursesToBadge,
-    getBadgeCourses,
-    assignCategoriesToBadge,
-    getBadgeCategories,
-    assignCareerPathsToBadge,
-    getBadgeCareerPaths,
-    
-    // Pagination actions
-    goToBadgePage,
-    nextBadgePage,
-    prevBadgePage,
-    setBadgePageSize,
-    
-    // Form handlers
     handleInputChange,
-    resetForm,
-    
-    // Modal handlers
     openCreateModal,
     openEditModal,
-    openCourseAssignmentModal,
-    openCategoryAssignmentModal,
-    openCareerPathAssignmentModal,
-    closeModals,
-    clearError
-  } = useCourseBadgeManagement();
-
-  // Clear form errors when modal opens/closes
-  const handleOpenCreateModal = useCallback(() => {
-    setFormErrors({});
-    openCreateModal();
-  }, [openCreateModal]);
-
-  const handleOpenEditModal = (badge) => {
-    setFormErrors({});
-    openEditModal(badge);
-  };
-
-  const handleCloseModals = () => {
-    setFormErrors({});
-    closeModals();
-  };
+    closeCreateModal,
+    closeEditModal,
+    handlePageChange,
+    handlePageSizeChange,
+    getBadgeAssignments,
+    assignBadgeToItems,
+    getAvailableItems
+  } = useBadgeManagement();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [markingType, setMarkingType] = useState('course');
-  const [filterBadge, setFilterBadge] = useState('all');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [selectedCourses, setSelectedCourses] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedCareerPaths, setSelectedCareerPaths] = useState([]);
-  const [courseSearchTerm, setCourseSearchTerm] = useState('');
-  const courseSearchDebounceRef = useRef(null);
-  
-  // Course assignment filters
-  const [courseFilters, setCourseFilters] = useState({
-    courseTypeId: '',
-    categoryId: '',
-    courseLevelId: ''
-  });
-  const [coursesFiltersApplied, setCoursesFiltersApplied] = useState(false);
-  // Removed local isFiltering state - now using loadingcourse from hook
+  const [formErrors, setFormErrors] = useState({});
 
-  // Filter badges
-  const filteredBadges = Array.isArray(badges) ? badges.filter(badge => {
-    const matchesSearch = badge.badgeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         badge.badgeKey?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         badge.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesBadge = filterBadge === 'all' || badge.id === parseInt(filterBadge);
-    
-    return matchesSearch && matchesBadge;
-  }) : [];
+  // Assignment modal state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState(null);
+  const [markingType, setMarkingType] = useState('course'); // course, category, career
+  const [assignedItems, setAssignedItems] = useState([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(false);
+  const [searchTermAssign, setSearchTermAssign] = useState('');
+  const [availableItems, setAvailableItems] = useState([]);
+  const [loadingAvailable, setLoadingAvailable] = useState(false);
 
-  // Validate form before submission
-  const validateForm = () => {
-    const errors = {};
-    
-    if (!formData.badgeKey || formData.badgeKey.trim() === '') {
-      errors.badgeKey = 'Badge Key is required';
-    }
-    
-    if (!formData.badgeName || formData.badgeName.trim() === '') {
-      errors.badgeName = 'Badge Name is required';
-    }
-    
-    if (!formData.badgeIcon || formData.badgeIcon.trim() === '') {
-      errors.badgeIcon = 'Badge Icon is required';
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  // Show success/error messages
+  const showSuccess = useCallback((message) => showToast(message, 'success'), [showToast]);
+  const showError = useCallback((message) => showToast(message, 'error'), [showToast]);
 
-  // Handle badge creation
-  const handleCreateBadge = async () => {
-    if (!validateForm()) {
-      showToast('Please fill in all required fields', 'error');
-      return;
-    }
-    
+  // Handle form submission
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setFormErrors({});
+
     try {
-      await createBadge(formData);
-      showToast('Badge created successfully!', 'success');
-      setFormErrors({}); // Clear errors on success
-    } catch (err) {
-      showToast('Failed to create badge', 'error');
-    }
-  };
-
-  // Handle badge update
-  const handleUpdateBadge = async () => {
-    if (!validateForm()) {
-      showToast('Please fill in all required fields', 'error');
-      return;
-    }
-    
-    try {
-      await updateBadge(selectedBadge.id, formData);
-      showToast('Badge updated successfully!', 'success');
-      setFormErrors({}); // Clear errors on success
-    } catch (err) {
-      showToast('Failed to update badge', 'error');
-    }
-  };
-
-  // Handle badge deletion
-  const handleDeleteBadge = async (badgeId) => {
-    if (window.confirm('Are you sure you want to delete this badge?')) {
-      try {
-        await deleteBadge(badgeId);
-        showToast('Badge deleted successfully!', 'success');
-      } catch (err) {
-        showToast('Failed to delete badge', 'error');
-      }
-    }
-  };
-
-  const handleOpenAssignmentModal = useCallback((badge) => {
-    if (markingType === 'course') {
-      openCourseAssignmentModal(badge);
-      return;
-    }
-
-    if (markingType === 'category') {
-      openCategoryAssignmentModal(badge);
-      return;
-    }
-
-    openCareerPathAssignmentModal(badge);
-  }, [markingType, openCourseAssignmentModal, openCategoryAssignmentModal, openCareerPathAssignmentModal]);
-
-  // Handle course assignment
-  const handleCourseAssignment = async () => {
-    try {
-      await assignCoursesToBadge(selectedBadge.id, selectedCourses);
-      setSelectedCourses([]);
-      closeModals();
-      showToast('Courses assigned to badge successfully!', 'success');
-    } catch (err) {
-      showToast('Failed to assign courses to badge', 'error');
-    }
-  };
-
-  const handleCategoryAssignment = async () => {
-    try {
-      await assignCategoriesToBadge(selectedBadge.id, selectedCategories);
-      setSelectedCategories([]);
-      closeModals();
-      showToast('Categories assigned to badge successfully!', 'success');
-    } catch (err) {
-      showToast('Failed to assign categories to badge', 'error');
-    }
-  };
-
-  const handleCareerPathAssignment = async () => {
-    try {
-      await assignCareerPathsToBadge(selectedBadge.id, selectedCareerPaths);
-      setSelectedCareerPaths([]);
-      closeModals();
-      showToast('Career paths assigned to badge successfully!', 'success');
-    } catch (err) {
-      showToast('Failed to assign career paths to badge', 'error');
-    }
-  };
-
-  // Toggle course selection
-  const toggleCourseSelection = (courseId) => {
-    const isAssigned = getBadgeCourses(selectedBadge.id).includes(courseId);
-    
-    setSelectedCourses(prev => {
-      if (prev.includes(courseId)) {
-        // If already in selection, remove it (deselect)
-        return prev.filter(id => id !== courseId);
-      } else if (isAssigned) {
-        // If assigned but not in selection, add to selection (mark for deselection)
-        return [...prev, courseId];
+      if (showEditModal && formData.id) {
+        await updateBadge(formData.id, formData);
+        showSuccess('Badge updated successfully!');
+        closeEditModal();
       } else {
-        // If not assigned, add to selection (mark for selection)
-        return [...prev, courseId];
+        await createBadge(formData);
+        showSuccess('Badge created successfully!');
+        closeCreateModal();
       }
-    });
-  };
-
-  const toggleCategorySelection = (categoryId) => {
-    const isAssigned = getBadgeCategories(selectedBadge.id).includes(categoryId);
-
-    setSelectedCategories(prev => {
-      if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
-      } else if (isAssigned) {
-        return [...prev, categoryId];
-      } else {
-        return [...prev, categoryId];
-      }
-    });
-  };
-
-  const toggleCareerPathSelection = (careerPathId) => {
-    const isAssigned = getBadgeCareerPaths(selectedBadge.id).includes(careerPathId);
-
-    setSelectedCareerPaths(prev => {
-      if (prev.includes(careerPathId)) {
-        return prev.filter(id => id !== careerPathId);
-      } else if (isAssigned) {
-        return [...prev, careerPathId];
-      } else {
-        return [...prev, careerPathId];
-      }
-    });
-  };
-
-  // Handle course filter changes
-  const handleCourseFilterChange = useCallback(async (filterType, value) => {
-    const newFilters = { ...courseFilters, [filterType]: value };
-    setCourseFilters(newFilters);
-    setCoursesFiltersApplied(true); // Mark that filters have been applied courses
-    const apiFilters = {};
-    if (newFilters.courseTypeId && newFilters.courseTypeId !== '') {
-      apiFilters.CourseTypeId = newFilters.courseTypeId;
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to save badge';
+      showError(errorMessage);
+      setFormErrors({ submit: errorMessage });
     }
-    if (newFilters.categoryId && newFilters.categoryId !== '') {
-      apiFilters.CategoryId = newFilters.categoryId;
+  }, [formData, showEditModal, updateBadge, createBadge, showSuccess, closeEditModal, closeCreateModal, showError]);
+
+  // Handle delete
+  const handleDelete = useCallback(async (badge) => {
+    if (!window.confirm(`Are you sure you want to delete "${badge.badgeName}"?`)) {
+      return;
     }
-    if (newFilters.courseLevelId && newFilters.courseLevelId !== '') {
-      apiFilters.CourseLevelId = newFilters.courseLevelId;
-    }
-    const trimmedSearch = courseSearchTerm.trim();
-    if (trimmedSearch.length >= 3) {
-      apiFilters.Title = trimmedSearch;
-    }
-    
+
     try {
-      await loadCoursesWithFilters(apiFilters);
+      await deleteBadge(badge.id);
+      showSuccess('Badge deleted successfully!');
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to delete badge';
+      showError(errorMessage);
+    }
+  }, [deleteBadge, showSuccess, showError]);
+
+  // Handle search
+  const handleSearch = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  // Filter badges based on search
+  const filteredBadges = badges.filter(badge =>
+    badge.badgeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    badge.badgeKey?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    badge.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Handle pagination controls
+  const goToPage = useCallback((page) => {
+    handlePageChange(page);
+  }, [handlePageChange]);
+
+  const fetchAssignedItems = useCallback(async (badgeId, type) => {
+    debugger;
+    setLoadingAssignments(true);
+    try {
+      const typeId = type === 'course' ? 1 : type === 'category' ? 2 : 3;
+      const result = await getBadgeAssignments(badgeId, typeId);
+      
+      console.log('Assigned items result in component:', {
+        badgeId,
+        type,
+        typeId,
+        result,
+        isArray: Array.isArray(result)
+      });
+      
+      // Hook returns array directly, not object with items property
+      setAssignedItems(result || []);
+    } catch (err) {
+      console.error('Failed to fetch assigned items:', err);
+      setAssignedItems([]);
     } finally {
-      // setLoading is handled by the hook
+      setLoadingAssignments(false);
     }
-  }, [loadCoursesWithFilters, courseFilters, courseSearchTerm]);
+  }, [getBadgeAssignments]);
 
-  useEffect(() => {
-    if (!showCourseAssignmentModal) return;
+  const handleOpenAssignModal = useCallback((badge) => {
+    setSelectedBadge(badge);
+    setMarkingType('course');
+    setShowAssignModal(true);
+    setAssignedItems([]);
+    setSearchTermAssign(''); // Reset search when opening modal
+    setAvailableItems([]); // Reset available items - will only show when user searches
+    
+    // Load assigned items when modal opens
+    fetchAssignedItems(badge.id, 'course');
+  }, [fetchAssignedItems]);
 
-    const trimmed = courseSearchTerm.trim();
-    if (trimmed.length < 3) {
-      if (courseSearchDebounceRef.current) {
-        clearTimeout(courseSearchDebounceRef.current);
-        courseSearchDebounceRef.current = null;
-      }
+  const handleCloseAssignModal = useCallback(() => {
+    setShowAssignModal(false);
+    setSelectedBadge(null);
+    setMarkingType('course');
+    setAssignedItems([]);
+    setSearchTermAssign('');
+    setAvailableItems([]);
+  }, []);
+
+  // Search available items
+  const fetchAvailableItems = useCallback(async (type, searchTerm = '') => {
+    console.log('Fetching available items:', {
+      type,
+      searchTerm,
+      assignedIdsCount: assignedItems.length
+    });
+    
+    // Only fetch if there's a search term
+    if (!searchTerm || searchTerm.trim() === '') {
+      setAvailableItems([]);
+      return;
+    }
+    
+    setLoadingAvailable(true);
+    try {
+      // Get assigned IDs to filter by
+      const assignedIds = assignedItems.map(item => item.id);
+      
+      const result = await getAvailableItems(type, searchTerm, assignedIds);
+      console.log('Available items result:', {
+        result,
+        resultLength: result?.length || 0
+      });
+      
+      setAvailableItems(result || []);
+    } catch (err) {
+      console.error('Failed to fetch available items:', err);
+      setAvailableItems([]);
+    } finally {
+      setLoadingAvailable(false);
+    }
+  }, [getAvailableItems, assignedItems]);
+
+  const handleMarkingTypeChange = useCallback((type) => {
+    console.log('Type change triggered:', {
+      newType: type,
+      currentMarkingType: markingType,
+      selectedBadgeId: selectedBadge?.id
+    });
+    
+    setMarkingType(type);
+    setAssignedItems([]);
+    setAvailableItems([]); // Clear available items when switching types
+    setSearchTermAssign(''); // Clear search when switching types
+    
+    if (selectedBadge) {
+      fetchAssignedItems(selectedBadge.id, type);
+    }
+  }, [selectedBadge, fetchAssignedItems]);
+
+  const toggleItemAssignment = useCallback((item) => {
+    const isAssigned = assignedItems.some(assigned => assigned.id === item.id);
+    
+    if (isAssigned) {
+      setAssignedItems(prev => prev.filter(assigned => assigned.id !== item.id));
+    } else {
+      setAssignedItems(prev => [...prev, item]);
+    }
+  }, [assignedItems]);
+
+  const handleAssignBadge = useCallback(async () => {
+    if (!selectedBadge || assignedItems.length === 0) {
+      showError('Please select at least one item to assign');
       return;
     }
 
-    if (courseSearchDebounceRef.current) {
-      clearTimeout(courseSearchDebounceRef.current);
+    try {
+      const typeId = markingType === 'course' ? 1 : markingType === 'category' ? 2 : 3;
+      let convertedIds = assignedItems.map(item => item.id);
+      
+      // Convert IDs based on type requirements
+      switch (typeId) {
+        case 1: // Courses - use long IDs
+          convertedIds = convertedIds.map(id => parseInt(id));
+          break;
+        case 2: // Categories - use int IDs
+          convertedIds = convertedIds.map(id => parseInt(id));
+          break;
+        case 3: // Career Paths - use int IDs
+          convertedIds = convertedIds.map(id => parseInt(id));
+          break;
+        default:
+          throw new Error('Invalid type');
+      }
+      
+      console.log('Assigning badge:', {
+        badgeId: selectedBadge.id,
+        typeId: typeId,
+        originalIds: assignedItems.map(item => item.id),
+        convertedIds: convertedIds
+      });
+      
+      await assignBadgeToItems(selectedBadge.id, typeId, convertedIds);
+      showSuccess(`Badge assigned to ${assignedItems.length} ${markingType}(s) successfully!`);
+      handleCloseAssignModal();
+    } catch (err) {
+      showError('Failed to assign badge');
     }
+  }, [selectedBadge, assignedItems, markingType, assignBadgeToItems, showSuccess, showError, handleCloseAssignModal]);
 
-    courseSearchDebounceRef.current = setTimeout(async () => {
-      const apiFilters = {};
-      if (courseFilters.courseTypeId && courseFilters.courseTypeId !== '') {
-        apiFilters.CourseTypeId = courseFilters.courseTypeId;
-      }
-      if (courseFilters.categoryId && courseFilters.categoryId !== '') {
-        apiFilters.CategoryId = courseFilters.categoryId;
-      }
-      if (courseFilters.courseLevelId && courseFilters.courseLevelId !== '') {
-        apiFilters.CourseLevelId = courseFilters.courseLevelId;
-      }
-      apiFilters.Title = trimmed;
+  // Load initial data when modal opens
+  useEffect(() => {
+    if (showAssignModal && selectedBadge) {
+      fetchAssignedItems(selectedBadge.id, markingType);
+    }
+  }, [showAssignModal, selectedBadge, markingType, fetchAssignedItems]);
 
-      setCoursesFiltersApplied(true);
-      await loadCoursesWithFilters(apiFilters);
-    }, 400);
-
-    return () => {
-      if (courseSearchDebounceRef.current) {
-        clearTimeout(courseSearchDebounceRef.current);
-        courseSearchDebounceRef.current = null;
-      }
-    };
-  }, [courseSearchTerm, courseFilters, loadCoursesWithFilters, showCourseAssignmentModal, setCoursesFiltersApplied]);
-
-  // Get badge display
-  const getBadgeDisplay = (badge) => {
-    if (!badge) return null;
-    
-    return (
-      <span
-        className="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full"
-        style={{ 
-          backgroundColor: badge.badgeColor + '20', 
-          color: badge.badgeColor,
-          border: `1px solid ${badge.badgeColor}40`
-        }}
-      >
-        <span className="mr-2">{badge.badgeIcon}</span>
-        {badge.badgeName}
-      </span>
-    );
-  };
-
-  if (loadingBadges) {
+  if (loading && badges.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600 dark:text-gray-300">Loading badges...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Loading badges...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
-          toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
-          <div className="flex items-center space-x-2">
-            {toast.type === 'success' ? (
-              <CheckCircle className="w-5 h-5" />
-            ) : (
-              <AlertCircle className="w-5 h-5" />
-            )}
-            <span className="font-medium">{toast.message}</span>
-          </div>
-        </div>
-      )}
-      
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Enhanced Header */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg">
-                  <Award className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                    Course Badge Management
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">
-                      {Array.isArray(badges) ? badges.length : 0} Badges
-                    </span>
-                    <span className="text-gray-400">•</span>
-                    <span>Create and manage course badges with smart course assignments</span>
-                  </p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Header Section */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <Award className="w-8 h-8 text-blue-600 mr-3" />
+                Featured Marking
+              </h1>
+              <p className="text-gray-600 mt-2">Manage and organize badges for featured content</p>
             </div>
             <button
-              onClick={handleOpenCreateModal}
-              className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              onClick={openCreateModal}
+              className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-              <Plus className="w-5 h-5 relative z-10" />
-              <span className="relative z-10 font-medium">Create Badge</span>
+              <Plus className="w-5 h-5 mr-2" />
+              Create Badge
             </button>
           </div>
         </div>
+      </div>
 
-      {/* Enhanced Error Message */}
-      {badgesError && (
-        <div className="mb-6 relative">
-          <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 rounded-xl p-4 shadow-lg">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
-                  <X className="w-5 h-5 text-red-600 dark:text-red-400" />
-                </div>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Badges</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{badges.length}</p>
+                <p className="text-xs text-gray-500 mt-1">All badges</p>
               </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-1">{badgesError}</p>
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <Award className="w-6 h-6 text-blue-600" />
               </div>
-              <button
-                onClick={clearError}
-                className="flex-shrink-0 p-1 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Badges</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">
+                  {badges.filter(b => b.isActive).length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Currently active</p>
+              </div>
+              <div className="bg-green-100 p-3 rounded-lg">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Inactive Badges</p>
+                <p className="text-3xl font-bold text-gray-500 mt-2">
+                  {badges.filter(b => !b.isActive).length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Disabled</p>
+              </div>
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <X className="w-6 h-6 text-gray-500" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Unique Keys</p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">
+                  {new Set(badges.map(b => b.badgeKey)).size}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Distinct types</p>
+              </div>
+              <div className="bg-purple-100 p-3 rounded-lg">
+                <Tag className="w-6 h-6 text-purple-600" />
+              </div>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Enhanced Filters Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-6 p-6 border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
-            {/* Enhanced Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+        {/* Search and Filter Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search badges by name, key, or description..."
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm"
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>{filteredBadges.length} of {badges.length} badges</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+            <span className="text-red-700">{error}</span>
+          </div>
+        )}
+
+        {/* Badges Grid */}
+        {filteredBadges.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Award className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No badges found</h3>
+            <p className="text-gray-600 mb-6">
+              {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first badge'}
+            </p>
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Create Badge
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredBadges.map((badge) => (
+              <div
+                key={badge.id}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden group"
+              >
+                {/* Badge Header */}
+                <div 
+                  className="h-24 relative flex items-center justify-center"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${badge.badgeColor || '#3B82F6'}20 0%, ${badge.badgeColor || '#3B82F6'}10 100%)`
+                  }}
                 >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Enhanced Badge Filter */}
-            <div className="relative">
-              <select
-                value={filterBadge}
-                onChange={(e) => setFilterBadge(e.target.value)}
-                className="appearance-none bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm cursor-pointer"
-              >
-                <option value="all">All Badges</option>
-                {Array.isArray(badges) && badges.map(badge => (
-                  <option key={badge.id} value={badge.id}>
-                    {badge.badgeIcon} {badge.badgeName}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5 pointer-events-none" />
-            </div>
-
-            {/* Marking Type */}
-            <div className="relative">
-              <select
-                value={markingType}
-                onChange={(e) => setMarkingType(e.target.value)}
-                className="appearance-none bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm cursor-pointer"
-              >
-                <option value="course">Course Marking</option>
-                <option value="category">Category Marking</option>
-                <option value="careerpath">Career Path Marking</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Enhanced View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 ${
-                viewMode === 'grid' 
-                  ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-              title="Grid View"
-            >
-              <Grid className="w-4 h-4" />
-              <span className="text-sm font-medium">Grid</span>
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 ${
-                viewMode === 'list' 
-                  ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-              title="List View"
-            >
-              <List className="w-4 h-4" />
-              <span className="text-sm font-medium">List</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Badges</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{Array.isArray(badges) ? badges.length : 0}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All badge types</p>
-              </div>
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Award className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active Badges</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {Array.isArray(badges) ? badges.filter(badge => badge.isActive).length : 0}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Currently active</p>
-              </div>
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Check className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Courses</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{Array.isArray(courses) ? courses.length : 0}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Available courses</p>
-              </div>
-              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Assigned Courses</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {Array.isArray(badges) ? badges.reduce((total, badge) => total + (badge.courseIds?.length || 0), 0) : 0}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Course assignments</p>
-              </div>
-              <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Badges Display */}
-      {viewMode === 'grid' ? (
-        /* Grid View */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBadges.map(badge => (
-            <div key={badge.id} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Badge Header */}
-              <div className="relative h-32" style={{ backgroundColor: badge.badgeColor + '10' }}>
-                <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-4xl mb-2">{badge.badgeIcon}</div>
-                    {getBadgeDisplay(badge)}
-                  </div>
-                </div>
-                {badge.isActive ? (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                    Active
-                  </div>
-                ) : (
-                  <div className="absolute top-2 right-2 bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                    Inactive
-                  </div>
-                )}
-              </div>
-
-              {/* Badge Info */}
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{badge.badgeName}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{badge.description}</p>
-                
-                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  <span>Key: {badge.badgeKey}</span>
-                  <span>{badge.courseIds?.length || 0} courses</span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleOpenEditModal(badge)}
-                      className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                      title="Edit Badge"
+                    <div 
+                      className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg"
+                      style={{ backgroundColor: badge.badgeColor || '#3B82F6' }}
                     >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => handleOpenAssignmentModal(badge)}
-                      className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                      title={markingType === 'course' ? 'Manage Courses' : markingType === 'category' ? 'Manage Categories' : 'Manage Career Paths'}
-                    >
-                      <Users className="w-4 h-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDeleteBadge(badge.id)}
-                      className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                      title="Delete Badge"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        /* List View */
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-          {/* Table Header */}
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Badges</h2>
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <span>{filteredBadges.length} badges</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900/30 border-b border-gray-200 dark:border-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Badge
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Key
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Courses
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredBadges.map((badge, index) => (
-                  <tr key={badge.id} className={`hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors ${
-                    index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-900/20'
-                  }`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm"
-                          style={{ backgroundColor: badge.badgeColor + '20', color: badge.badgeColor }}
-                        >
-                          {badge.badgeIcon}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {badge.badgeName}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {getBadgeDisplay(badge)}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                        {badge.badgeKey}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 dark:text-white max-w-xs truncate">
-                        {badge.description || 'No description'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        badge.isActive 
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' 
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                      {badge.badgeIcon ? (
+                        <span className="text-white text-2xl">{badge.badgeIcon}</span>
+                      ) : (
+                        <Award className="w-8 h-8 text-white" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                        badge.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-600'
                       }`}>
-                        <span className={`w-2 h-2 rounded-full mr-1.5 ${
-                          badge.isActive ? 'bg-green-400' : 'bg-gray-400'
-                        }`}></span>
                         {badge.isActive ? 'Active' : 'Inactive'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badge Content */}
+                <div className="p-6">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2">{badge.badgeName}</h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Tag className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600 font-mono">{badge.badgeKey}</span>
+                  </div>
+                  
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {badge.description || 'No description available'}
+                  </p>
+
+                  {badge.badgeColor && (
+                    <div className="flex items-center gap-2 mb-4">
+                      <Palette className="w-4 h-4 text-gray-400" />
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-900 dark:text-white font-medium">
-                          {badge.courseIds?.length || 0}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          courses
-                        </span>
+                        <div 
+                          className="w-6 h-6 rounded border border-gray-300"
+                          style={{ backgroundColor: badge.badgeColor }}
+                        />
+                        <span className="text-xs text-gray-500">{badge.badgeColor}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEditModal(badge)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                          title="Edit Badge"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenAssignmentModal(badge)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                          title={markingType === 'course' ? 'Manage Courses' : markingType === 'category' ? 'Manage Categories' : 'Manage Career Paths'}
-                        >
-                          <Users className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteBadge(badge.id)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                          title="Delete Badge"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  )}
 
-          {/* Empty State */}
-          {filteredBadges.length === 0 && (
-            <div className="px-6 py-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Award className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="text-xs text-gray-500">
+                      ID: {badge.id}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEditModal(badge)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit Badge"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenAssignModal(badge)}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Assign Badge"
+                      >
+                        <Users className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(badge)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Badge"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No badges found</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                {searchTerm || filterBadge !== 'all' 
-                  ? 'Try adjusting your search or filters' 
-                  : 'Get started by creating your first badge'}
-              </p>
-              {!searchTerm && filterBadge === 'all' && (
-                <button
-                  onClick={handleOpenCreateModal}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+            ))}
+          </div>
+        )}
+
+        {/* Enhanced Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+              {/* Results Info */}
+              <div className="text-sm text-gray-700">
+                Showing {((pagination.page - 1) * pagination.pageSize) + 1} to{' '}
+                {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of{' '}
+                {pagination.totalCount} badges
+              </div>
+
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Show:</span>
+                <select
+                  value={pagination.pageSize}
+                  onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Badge
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="text-sm text-gray-600">per page</span>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center gap-2">
+                {/* Previous Button */}
+                <button
+                  onClick={() => goToPage(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                  className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Pagination */}
-      {badgePagination.totalCount > badgePagination.pageSize && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {((badgePagination.page - 1) * badgePagination.pageSize) + 1} to {Math.min(badgePagination.page * badgePagination.pageSize, badgePagination.totalCount)} of {badgePagination.totalCount} badges
-          </div>
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={prevBadgePage} 
-              disabled={badgePagination.page <= 1}
-              className="p-2 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-3 py-1 text-sm font-medium text-gray-900 dark:text-white">
-              Page {badgePagination.page} of {badgePagination.totalPages}
-            </span>
-            <button 
-              onClick={nextBadgePage} 
-              disabled={badgePagination.page >= badgePagination.totalPages}
-              className="p-2 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {/* First Page */}
+                  {pagination.page > 3 && (
+                    <>
+                      <button
+                        onClick={() => goToPage(1)}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                      >
+                        1
+                      </button>
+                      {pagination.page > 4 && (
+                        <span className="px-2 text-gray-400">...</span>
+                      )}
+                    </>
+                  )}
 
-      {/* Create/Edit Badge Modal */}
-      {(showCreateModal || showEditModal) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {showCreateModal ? 'Create New Badge' : 'Edit Badge'}
-              </h2>
-              <button
-                onClick={handleCloseModals}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+                  {/* Page Range */}
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pagination.page <= 3) {
+                      pageNum = i + 1;
+                    } else if (pagination.page >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = pagination.page - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => goToPage(pageNum)}
+                        className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                          pageNum === pagination.page
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Badge Key <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="badgeKey"
-                  value={formData.badgeKey}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    formErrors.badgeKey 
-                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
-                  } text-gray-900 dark:text-white`}
-                  placeholder="e.g., ALL, FEATURED, NEW"
-                  required
-                />
-                {formErrors.badgeKey && (
-                  <p className="mt-1 text-sm text-red-500">{formErrors.badgeKey}</p>
-                )}
-              </div>
+                  {/* Last Page */}
+                  {pagination.page < pagination.totalPages - 2 && (
+                    <>
+                      {pagination.page < pagination.totalPages - 3 && (
+                        <span className="px-2 text-gray-400">...</span>
+                      )}
+                      <button
+                        onClick={() => goToPage(pagination.totalPages)}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                      >
+                        {pagination.totalPages}
+                      </button>
+                    </>
+                  )}
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Badge Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="badgeName"
-                  value={formData.badgeName}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    formErrors.badgeName 
-                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
-                  } text-gray-900 dark:text-white`}
-                  placeholder="e.g., All Courses, Featured Courses"
-                  required
-                />
-                {formErrors.badgeName && (
-                  <p className="mt-1 text-sm text-red-500">{formErrors.badgeName}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Badge Icon <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="badgeIcon"
-                  value={formData.badgeIcon}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    formErrors.badgeIcon 
-                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700'
-                  } text-gray-900 dark:text-white`}
-                  placeholder="🏆"
-                  required
-                />
-                {formErrors.badgeIcon && (
-                  <p className="mt-1 text-sm text-red-500">{formErrors.badgeIcon}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Badge Color
-                </label>
-                <input
-                  type="color"
-                  name="badgeColor"
-                  value={formData.badgeColor}
-                  onChange={handleInputChange}
-                  className="w-full h-10 px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Describe this badge..."
-                />
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Active
-                </label>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={handleCloseModals}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={showCreateModal ? handleCreateBadge : handleUpdateBadge}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                {showCreateModal ? 'Create' : 'Update'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Course Assignment Modal */}
-      {showCourseAssignmentModal && selectedBadge && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Manage Courses for {selectedBadge.badgeName}
-                </h2>
+                {/* Next Button */}
                 <button
-                  onClick={closeModals}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  onClick={() => goToPage(pagination.page + 1)}
+                  disabled={pagination.page === pagination.totalPages}
+                  className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Next Page"
                 >
-                  <X className="w-6 h-6" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-            </div>
 
-            {/* Course Filters */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter Courses</h3>
-                <button
-                  onClick={async () => {
-                    setCourseFilters({
-                      courseTypeId: '',
-                      categoryId: '',
-                      courseLevelId: ''
-                    });
-                    setCourseSearchTerm('');
-                    // Clear courses instead of loading all
-                    setCourses([]);
-                    setCoursesFiltersApplied(false);
+              {/* Jump to Page */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Go to page:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={pagination.totalPages}
+                  value={pagination.page}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value);
+                    if (page >= 1 && page <= pagination.totalPages) {
+                      goToPage(page);
+                    }
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  Clear Filters
-                </button>
+                  className="w-16 text-sm border border-gray-300 rounded-md px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-500">of {pagination.totalPages}</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Search
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Create/Edit Modal */}
+      {(showCreateModal || showEditModal) && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-screen overflow-y-auto transform transition-all">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                  <Award className="w-5 h-5 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {showEditModal ? 'Edit Badge' : 'Create New Badge'}
+                </h2>
+              </div>
+              <button
+                onClick={showEditModal ? closeEditModal : closeCreateModal}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6">
+              {formErrors.submit && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                  <AlertCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-red-800 font-medium">Error</p>
+                    <p className="text-red-700 text-sm mt-1">{formErrors.submit}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Badge Name <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={formData.badgeName}
+                    onChange={(e) => handleInputChange('badgeName', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter badge name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Badge Key <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.badgeKey}
+                    onChange={(e) => handleInputChange('badgeKey', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors font-mono"
+                    placeholder="e.g., trending, bestseller"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Badge Color
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.badgeColor}
+                        onChange={(e) => handleInputChange('badgeColor', e.target.value)}
+                        className="w-16 h-16 border-2 border-gray-300 rounded-lg cursor-pointer"
+                      />
+                      <div>
+                        <p className="text-sm text-gray-600 font-mono">{formData.badgeColor}</p>
+                        <p className="text-xs text-gray-500">Click to change</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Badge Icon
+                    </label>
                     <input
                       type="text"
-                      value={courseSearchTerm}
-                      onChange={(e) => setCourseSearchTerm(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Type at least 3 characters to search courses..."
+                      value={formData.badgeIcon}
+                      onChange={(e) => handleInputChange('badgeIcon', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder="🏆 or icon-name"
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Course Type
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Description
                   </label>
-                  <GenericDropdown
-                    items={courseTypes}
-                    value={courseFilters.courseTypeId}
-                    onChange={(value) => handleCourseFilterChange('courseTypeId', value)}
-                    placeholder="All Course Types"
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+                    placeholder="Describe what this badge represents..."
                   />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Category
-                  </label>
-                  <CategoryDropdown
-                    categories={categories}
-                    value={courseFilters.categoryId}
-                    onChange={(value) => handleCourseFilterChange('categoryId', value)}
-                    placeholder="All Categories"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Course Level
-                  </label>
-                  <GenericDropdown
-                    items={courseLevels}
-                    value={courseFilters.courseLevelId}
-                    onChange={(value) => handleCourseFilterChange('courseLevelId', value)}
-                    placeholder="All Levels"
-                  />
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={formData.isActive}
+                      onChange={(e) => handleInputChange('isActive', e.target.checked)}
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="isActive" className="ml-3 text-sm font-medium text-gray-700">
+                      Active Badge
+                    </label>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {formData.isActive ? 'Badge will be visible' : 'Badge will be hidden'}
+                  </span>
                 </div>
               </div>
+
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={showEditModal ? closeEditModal : closeCreateModal}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                >
+                  {showEditModal ? 'Update Badge' : 'Create Badge'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Modal */}
+      {showAssignModal && selectedBadge && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto transform transition-all">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center">
+                <div className="bg-green-100 p-2 rounded-lg mr-3">
+                  <Users className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Assign Badge</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Assign "{selectedBadge.badgeName}" to {markingType}s
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseAssignModal}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
             </div>
 
-            <div className="p-6 flex-1 overflow-hidden flex flex-col">
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Currently assigned: {getBadgeCourses(selectedBadge.id).length} courses
-                </p>
+            <div className="p-6">
+              {/* Type Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Type of Marking
+                </label>
+                <select
+                  value={markingType}
+                  onChange={(e) => handleMarkingTypeChange(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                >
+                  <option value="course">Course</option>
+                  <option value="category">Category</option>
+                  <option value="career">Career Path</option>
+                </select>
               </div>
 
-              <div className="space-y-2 flex-1 overflow-y-auto mb-4">
-                {loadingcourse ? (
-                  <div className="flex items-center justify-center py-8">
-                    <RefreshCw className="w-6 h-6 animate-spin text-blue-500 mr-2" />
-                    <span className="text-gray-600 dark:text-gray-300">Applying filters...</span>
-                  </div>
-                ) : (
-                  <>
-                    {Array.isArray(courses) && courses.map(course => {
-                      const isAssigned = getBadgeCourses(selectedBadge.id).includes(course.id);
-                      const isSelected = selectedCourses.includes(course.id);
-                      // Determine the actual current state: selected if it's assigned and not in selection for deselection, or if it's newly selected
-                      const isCurrentlySelected = (isAssigned && !isSelected) || (!isAssigned && isSelected);
-                      
-                      return (
-                        <div
-                          key={course.id}
-                          className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                            isCurrentlySelected
-                              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-                              : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                          }`}
-                          onClick={() => toggleCourseSelection(course.id)}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isCurrentlySelected}
-                            onChange={() => toggleCourseSelection(course.id)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900 dark:text-white">{course.title || course.name || 'Unknown Course'}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {(() => {
-                                const courseType = courseTypes.find(ct => ct.id === course.courseTypeId);
-                                const category = categories.find(cat => cat.id === course.categoryId);
-                                const courseLevel = courseLevels.find(cl => cl.id === course.courseLevelId);
-                                
-                                const parts = [];
-                                if (courseType?.name) parts.push(courseType.name);
-                                if (category?.name) parts.push(category.name);
-                                if (courseLevel?.name) parts.push(courseLevel.name);
-                                
-                                return parts.length > 0 ? parts.join(' • ') : 'No additional info';
-                              })()}
+              {/* Search */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Search {markingType}s
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder={`Search ${markingType}s by name...`}
+                    value={searchTermAssign}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchTermAssign(value);
+                      // Trigger search immediately
+                      fetchAvailableItems(markingType, value);
+                    }}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                  {loadingAvailable && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Available Items List */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Available {markingType}s
+                  </label>
+                  <span className="text-sm text-gray-600">
+                    {availableItems.length} found
+                  </span>
+                </div>
+                
+                <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                  {loadingAvailable ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-3 text-gray-600">Searching...</span>
+                    </div>
+                  ) : availableItems.length === 0 ? (
+                    <div className="text-center p-8 text-gray-500">
+                      No {markingType}s found
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200">
+                      {availableItems
+                        .filter(item => {
+                          // Only show items that match current marking type
+                          return (item.title && markingType === 'course') || 
+                                 (item.name && markingType === 'category') || 
+                                 (item.title && markingType === 'career');
+                        })
+                        .map((item) => {
+                        const isAssigned = assignedItems.some(assigned => assigned.id === item.id);
+                        
+                        // Debug logging to track the issue
+                        console.log('Item assignment check:', {
+                          itemType: markingType,
+                          itemId: item.id,
+                          itemName: item.title || item.name,
+                          isAssigned,
+                          assignedItemsIds: assignedItems.map(a => a.id),
+                          itemMatchesType: (item.title && markingType === 'course') || (item.name && markingType === 'category') || (item.title && markingType === 'career')
+                        });
+                        
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => toggleItemAssignment(item)}
+                            className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                              isAssigned ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isAssigned}
+                                  onChange={() => {}}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
+                                />
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {item.title || item.name}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {item.description || `${markingType} ID: ${item.id}`}
+                                  </p>
+                                </div>
+                              </div>
+                              {isAssigned && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                  Assigned
+                                </span>
+                              )}
                             </div>
                           </div>
-                          {isAssigned && !isSelected && (
-                            <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
-                              Assigned
-                            </span>
-                          )}
-                          {isSelected && (
-                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
-                              {isAssigned ? 'Deselected' : 'Selected'}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {!Array.isArray(courses) && (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No courses available
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={closeModals}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCourseAssignment}
-                  disabled={selectedCourses.length === 0}
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    selectedCourses.length === 0
-                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {selectedCourses.length === 0 ? 'Select Courses to Assign' : `Assign ${selectedCourses.length} Course${selectedCourses.length !== 1 ? 's' : ''}`}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Category Assignment Modal */}
-      {showCategoryAssignmentModal && selectedBadge && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Manage Categories for {selectedBadge.badgeName}
-                </h2>
-                <button
-                  onClick={closeModals}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 flex-1 overflow-hidden flex flex-col">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Currently assigned: {getBadgeCategories(selectedBadge.id).length} categories
-                </p>
-                <button
-                  onClick={() => setSelectedCategories([])}
-                  className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  Clear Selection
-                </button>
-              </div>
-
-              <div className="space-y-2 flex-1 overflow-y-auto mb-4">
-                {Array.isArray(categories) && categories.map(category => {
-                  const isAssigned = getBadgeCategories(selectedBadge.id).includes(category.id);
-                  const isSelected = selectedCategories.includes(category.id);
-                  const isCurrentlySelected = (isAssigned && !isSelected) || (!isAssigned && isSelected);
-
-                  return (
-                    <div
-                      key={category.id}
-                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                        isCurrentlySelected
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-                          : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
-                      onClick={() => toggleCategorySelection(category.id)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isCurrentlySelected}
-                        onChange={() => toggleCategorySelection(category.id)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900 dark:text-white">{category.name || 'Unknown Category'}</div>
-                      </div>
-                      {isAssigned && !isSelected && (
-                        <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
-                          Assigned
-                        </span>
-                      )}
-                      {isSelected && (
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
-                          {isAssigned ? 'Deselected' : 'Selected'}
-                        </span>
-                      )}
+                        );
+                      })}
                     </div>
-                  );
-                })}
-                {!Array.isArray(categories) && (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No categories available
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={closeModals}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCategoryAssignment}
-                  disabled={selectedCategories.length === 0}
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    selectedCategories.length === 0
-                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {selectedCategories.length === 0 ? 'Select Categories to Assign' : `Assign ${selectedCategories.length} Categor${selectedCategories.length !== 1 ? 'ies' : 'y'}`}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Career Path Assignment Modal */}
-      {showCareerPathAssignmentModal && selectedBadge && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Manage Career Paths for {selectedBadge.badgeName}
-                </h2>
-                <button
-                  onClick={closeModals}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 flex-1 overflow-hidden flex flex-col">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Currently assigned: {getBadgeCareerPaths(selectedBadge.id).length} career paths
-                </p>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={async () => {
-                      try {
-                        await loadCareerPaths();
-                      } catch {
-                        // handled by hook state
-                      }
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    Refresh
-                  </button>
-                  <button
-                    onClick={() => setSelectedCareerPaths([])}
-                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    Clear Selection
-                  </button>
+                  )}
                 </div>
               </div>
 
-              {careerPathsError && (
-                <div className="mb-4 text-sm text-red-600 dark:text-red-400">
-                  {careerPathsError}
+              {/* Assigned Items List */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Assigned {markingType}s
+                  </label>
+                  <span className="text-sm text-gray-600">
+                    {assignedItems.length} total
+                  </span>
                 </div>
-              )}
-
-              <div className="space-y-2 flex-1 overflow-y-auto mb-4">
-                {loadingCareerPaths ? (
-                  <div className="flex items-center justify-center py-8">
-                    <RefreshCw className="w-6 h-6 animate-spin text-blue-500 mr-2" />
-                    <span className="text-gray-600 dark:text-gray-300">Loading career paths...</span>
-                  </div>
-                ) : (
-                  <>
-                    {Array.isArray(careerPaths) && careerPaths.map(cp => {
-                      const isAssigned = getBadgeCareerPaths(selectedBadge.id).includes(cp.id);
-                      const isSelected = selectedCareerPaths.includes(cp.id);
-                      const isCurrentlySelected = (isAssigned && !isSelected) || (!isAssigned && isSelected);
-
-                      return (
+                
+                <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                  {loadingAssignments ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-3 text-gray-600">Loading...</span>
+                    </div>
+                  ) : assignedItems.length === 0 ? (
+                    <div className="text-center p-8 text-gray-500">
+                      No {markingType}s assigned to this badge
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200">
+                      {assignedItems.map((item) => (
                         <div
-                          key={cp.id}
-                          className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                            isCurrentlySelected
-                              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-                              : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                          }`}
-                          onClick={() => toggleCareerPathSelection(cp.id)}
+                          key={item.id}
+                          className="p-3 hover:bg-gray-50 transition-colors"
                         >
-                          <input
-                            type="checkbox"
-                            checked={isCurrentlySelected}
-                            onChange={() => toggleCareerPathSelection(cp.id)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900 dark:text-white">{cp.title || cp.name || 'Unknown Career Path'}</div>
-                            {cp.description && (
-                              <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{cp.description}</div>
-                            )}
-                          </div>
-                          {isAssigned && !isSelected && (
-                            <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={true}
+                                onChange={() => toggleItemAssignment(item)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-3"
+                              />
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {item.title || item.name}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {item.description || `${markingType} ID: ${item.id}`}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                               Assigned
                             </span>
-                          )}
-                          {isSelected && (
-                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
-                              {isAssigned ? 'Deselected' : 'Selected'}
-                            </span>
-                          )}
+                          </div>
                         </div>
-                      );
-                    })}
-                    {!Array.isArray(careerPaths) && (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No career paths available
-                      </div>
-                    )}
-                  </>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
-                  onClick={closeModals}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  type="button"
+                  onClick={handleCloseAssignModal}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Cancel
+                  Close
                 </button>
                 <button
-                  onClick={handleCareerPathAssignment}
-                  disabled={selectedCareerPaths.length === 0}
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    selectedCareerPaths.length === 0
-                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
+                  type="button"
+                  onClick={handleAssignBadge}
+                  disabled={assignedItems.length === 0}
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {selectedCareerPaths.length === 0 ? 'Select Career Paths to Assign' : `Assign ${selectedCareerPaths.length} Career Path${selectedCareerPaths.length !== 1 ? 's' : ''}`}
+                  Update Assignments
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 };
