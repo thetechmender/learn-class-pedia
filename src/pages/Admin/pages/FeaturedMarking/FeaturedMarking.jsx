@@ -49,7 +49,7 @@ const FeaturedMarking = () => {
   // Assignment modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState(null);
-  const [markingType, setMarkingType] = useState('course'); // course, category, career
+  const [markingType, setMarkingType] = useState('type'); // course, category, career
   const [assignedItems, setAssignedItems] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [searchTermAssign, setSearchTermAssign] = useState('');
@@ -115,7 +115,11 @@ const FeaturedMarking = () => {
   }, [handlePageChange]);
 
   const fetchAssignedItems = useCallback(async (badgeId, type) => {
-    debugger;
+    if (!type || type === 'type') {
+      setAssignedItems([]);
+      return;
+    }
+
     setLoadingAssignments(true);
     try {
       const typeId = type === 'course' ? 1 : type === 'category' ? 2 : 3;
@@ -141,20 +145,17 @@ const FeaturedMarking = () => {
 
   const handleOpenAssignModal = useCallback((badge) => {
     setSelectedBadge(badge);
-    setMarkingType('course');
+    setMarkingType('type');
     setShowAssignModal(true);
     setAssignedItems([]);
     setSearchTermAssign(''); // Reset search when opening modal
     setAvailableItems([]); // Reset available items - will only show when user searches
-    
-    // Load assigned items when modal opens
-    fetchAssignedItems(badge.id, 'course');
   }, [fetchAssignedItems]);
 
   const handleCloseAssignModal = useCallback(() => {
     setShowAssignModal(false);
     setSelectedBadge(null);
-    setMarkingType('course');
+    setMarkingType('type');
     setAssignedItems([]);
     setSearchTermAssign('');
     setAvailableItems([]);
@@ -168,6 +169,11 @@ const FeaturedMarking = () => {
       assignedIdsCount: assignedItems.length
     });
     
+    if (!type || type === 'type') {
+      setAvailableItems([]);
+      return;
+    }
+
     // Only fetch if there's a search term
     if (!searchTerm || searchTerm.trim() === '') {
       setAvailableItems([]);
@@ -205,8 +211,8 @@ const FeaturedMarking = () => {
     setAssignedItems([]);
     setAvailableItems([]); // Clear available items when switching types
     setSearchTermAssign(''); // Clear search when switching types
-    
-    if (selectedBadge) {
+
+    if (selectedBadge && type !== 'type') {
       fetchAssignedItems(selectedBadge.id, type);
     }
   }, [selectedBadge, fetchAssignedItems]);
@@ -228,6 +234,11 @@ const FeaturedMarking = () => {
     }
 
     try {
+      if (!markingType || markingType === 'type') {
+        showError('Please select a type of marking');
+        return;
+      }
+
       const typeId = markingType === 'course' ? 1 : markingType === 'category' ? 2 : 3;
       let convertedIds = assignedItems.map(item => item.id);
       
@@ -263,7 +274,7 @@ const FeaturedMarking = () => {
 
   // Load initial data when modal opens
   useEffect(() => {
-    if (showAssignModal && selectedBadge) {
+    if (showAssignModal && selectedBadge && markingType !== 'type') {
       fetchAssignedItems(selectedBadge.id, markingType);
     }
   }, [showAssignModal, selectedBadge, markingType, fetchAssignedItems]);
@@ -820,6 +831,7 @@ const FeaturedMarking = () => {
                   onChange={(e) => handleMarkingTypeChange(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 >
+                  <option value="type">Select type</option>
                   <option value="course">Course</option>
                   <option value="category">Category</option>
                   <option value="career">Career Path</option>
