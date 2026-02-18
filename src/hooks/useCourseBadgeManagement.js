@@ -41,6 +41,38 @@ export const useCourseBadgeManagement = () => {
     isActive: true,
     courseIds: []
   });
+
+  const normalizeBadge = useCallback((badge) => {
+    if (!badge) return badge;
+
+    const rawCourseIds = Array.isArray(badge.courseIds)
+      ? badge.courseIds
+      : (Array.isArray(badge.CourseIds) ? badge.CourseIds : []);
+
+    const rawCategoryIds = Array.isArray(badge.categoryIds)
+      ? badge.categoryIds
+      : (Array.isArray(badge.CategoryIds) ? badge.CategoryIds : []);
+
+    const rawCareerPathIds = Array.isArray(badge.careerPathIds)
+      ? badge.careerPathIds
+      : (Array.isArray(badge.CareerPathIds) ? badge.CareerPathIds : []);
+
+    const toNumberArray = (arr) =>
+      (Array.isArray(arr) ? arr : [])
+        .map((x) => (typeof x === 'string' ? Number(x) : x))
+        .filter((x) => Number.isFinite(x));
+
+    const courseIds = toNumberArray(rawCourseIds);
+    const categoryIds = toNumberArray(rawCategoryIds);
+    const careerPathIds = toNumberArray(rawCareerPathIds);
+
+    return {
+      ...badge,
+      courseIds,
+      categoryIds,
+      careerPathIds
+    };
+  }, []);
   const loadDropdowns = useCallback(async () => {
   try {
     setLoadingBadges(true);
@@ -89,7 +121,7 @@ const loadData = useCallback(async (page = 1, pageSize = 100) => {
     const response = await getAllCourseBadgesNew(filters);
     
     // Use the structured response from the API
-    setBadges(response.items || []);
+    setBadges((response.items || []).map(normalizeBadge));
     setBadgePagination(prev => ({
       ...prev,
       page: response.page || page,
@@ -103,7 +135,7 @@ const loadData = useCallback(async (page = 1, pageSize = 100) => {
   } finally {
     setLoadingBadges(false);
   }
-}, [getAllCourseBadgesNew]);
+}, [getAllCourseBadgesNew, normalizeBadge]);
 const loadCourses = useCallback(async (filters = {}) => {
   try {
     setLoadingCourse(true);
@@ -141,6 +173,26 @@ const loadCourses = useCallback(async (filters = {}) => {
 const loadCoursesWithFilters = useCallback(async (filters = {}) => {
   return await loadCourses(filters);
 }, [loadCourses]);
+
+  const resetForm = useCallback(() => {
+    setFormData({
+      badgeKey: '',
+      badgeName: '',
+      badgeColor: '#3B82F6',
+      badgeIcon: '',
+      description: '',
+      isActive: true,
+      courseIds: []
+    });
+  }, []);
+
+  const handleInputChange = useCallback((e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  }, []);
 
   const loadCareerPaths = useCallback(async (params = {}) => {
     try {
@@ -191,7 +243,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         ]);
 
         // Process badges response
-        setBadges(badgesResponse.items || []);
+        setBadges((badgesResponse.items || []).map(normalizeBadge));
         setBadgePagination({
           page: badgesResponse.page || 1,
           pageSize: badgesResponse.pageSize || 100,
@@ -221,13 +273,13 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
     };
 
     loadInitialData();
-  }, [getAllCourseBadgesNew]); // Add dependency
+  }, [getAllCourseBadgesNew, normalizeBadge]); // Add dependency
 
   // Create badge
   const createBadge = useCallback(async (badgeData) => {
     try {
       const newBadge = await adminApiService.createCourseBadge(badgeData);
-      setBadges(prev => [newBadge, ...prev]);
+      setBadges(prev => [normalizeBadge(newBadge), ...prev]);
       setShowCreateModal(false);
       resetForm();
       return newBadge;
@@ -235,7 +287,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
       setBadgesError(err.message || 'Failed to create badge');
       throw err;
     }
-  }, []);
+  }, [normalizeBadge, resetForm]);
 
   // Update badge
   const updateBadge = useCallback(async (badgeId, badgeData) => {
@@ -261,13 +313,15 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         updatedAt: new Date().toISOString(),
         updatedBy: existingBadge.updatedBy,
         slug: existingBadge.slug,
-        courseIds: existingBadge.courseIds || []
+        courseIds: existingBadge.courseIds || [],
+        categoryIds: existingBadge.categoryIds || [],
+        careerPathIds: existingBadge.careerPathIds || []
       };
       
       const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
       setBadges(prev => 
         prev.map(badge => 
-          badge.id === badgeId ? updatedBadge : badge
+          badge.id === badgeId ? normalizeBadge(updatedBadge) : badge
         )
       );
       setShowEditModal(false);
@@ -277,7 +331,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
       setBadgesError(err.message || 'Failed to update badge');
       throw err;
     }
-  }, [badges]);
+  }, [badges, normalizeBadge]);
 
   // Delete badge
   const deleteBadge = useCallback(async (badgeId) => {
@@ -455,25 +509,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
     const assignedCourseIds = getBadgeCourses(badgeId);
     return courses.filter(course => !assignedCourseIds.includes(course.id));
   }, [courses, getBadgeCourses]);
-  const resetForm = useCallback(() => {
-    setFormData({
-      badgeKey: '',
-      badgeName: '',
-      badgeColor: '#3B82F6',
-      badgeIcon: '',
-      description: '',
-      isActive: true,
-      courseIds: []
-    });
-  }, []);
 
-  const handleInputChange = useCallback((e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  }, []);
 const openCreateModal = useCallback(async () => {
   resetForm();
   await Promise.all([
