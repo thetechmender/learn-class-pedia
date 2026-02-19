@@ -286,7 +286,8 @@ const CourseManagement = () => {
               convertedFormData.append(`badgeIds[${index}]`, parseInt(badgeId));
             });
           } else {
-            convertedFormData.append('badgeIds', JSON.stringify([]));
+            // Don't send badgeIds at all if empty to avoid validation error
+            // convertedFormData.append('badgeIds', JSON.stringify([]));
           }
           
           // Add sections array (always include, even if empty)
@@ -353,7 +354,8 @@ const CourseManagement = () => {
               convertedFormData.append(`badgeIds[${index}]`, parseInt(badgeId));
             });
           } else {
-            convertedFormData.append('badgeIds', JSON.stringify([]));
+            // Don't send badgeIds at all if empty to avoid validation error
+            // convertedFormData.append('badgeIds', JSON.stringify([]));
           }
           
           // Add sections array (always include, even if empty)
