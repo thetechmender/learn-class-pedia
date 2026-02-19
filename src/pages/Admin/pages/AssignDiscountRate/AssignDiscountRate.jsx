@@ -116,7 +116,8 @@ const AssignDiscountRate = () => {
       const params = {
         page,
         pageSize,
-        ...(title && { title })
+        ...(title && { title }),
+        isPaid:true
       };
       const coursesData = await adminApiService.getAllCoursesAdmin(params);
       const coursesArray =

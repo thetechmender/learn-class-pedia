@@ -3,7 +3,7 @@ import appSettings from './appSettings';
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || appSettings.api.baseUrl,
-  BASE_URL_Local: process.env.BASE_URL_Local || appSettings.api.baseUrlLocal,
+  BASE_URL_Local: process.env.REACT_APP_BASE_URL_LOCAL || appSettings.api.baseUrlLocal,
   CHATBOT_URL: appSettings.api.chatbotUrl,
   TIMEOUT: appSettings.api.timeout,
   RETRY_ATTEMPTS: appSettings.api.retryAttempts,

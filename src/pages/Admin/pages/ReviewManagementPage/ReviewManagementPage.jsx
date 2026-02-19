@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, X, Search, BookOpen, Trash2 } from 'lucide-react';
 import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
+import { isProduction } from '../../../../config/appSettings';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import { useAdmin } from '../../../../hooks/useAdmin';
@@ -30,6 +31,11 @@ const withAuthCheck = (WrappedComponent) => {
 const ReviewManagementPage = () => {
   const { getAllCareerPaths, getAllCoursesAdmin } = useAdmin();
   const { searchCoursesByTitle } = useCareerPath();
+  
+  // Helper function to get correct base URL based on environment
+  const getBaseURL = () => {
+    return isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
+  };
   const [reviewType, setReviewType] = useState('careerpath');
   const [careerPathId, setCareerPathId] = useState('');
   const [courseId, setCourseId] = useState('');
@@ -365,6 +371,18 @@ const ReviewManagementPage = () => {
     setError(null);
   };
 
+  // Reset form to empty state for add modal
+  const resetFormForAdd = useCallback(() => {
+    setFormData({
+      rating: 5,
+      reviewText: '',
+      reviewBy: '',
+      careerPathId: reviewType === 'careerpath' ? careerPathId : '',
+      levelId: '',
+      courseId: reviewType === 'course' ? courseId : ''
+    });
+  }, [reviewType, careerPathId, courseId]);
+
   // Sync main page selections with modal form data
   useEffect(() => {
     if (showAddModal) {
@@ -407,7 +425,7 @@ const ReviewManagementPage = () => {
 
   const fetchCareerPathLevels = async (careerPathId) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
+      const response = await fetch(`${getBaseURL()}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -437,7 +455,8 @@ const ReviewManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEWS(id)}`);
+      const baseURL = isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
+      const response = await fetch(`${baseURL}${ENDPOINTS.CAREER_PATH_REVIEWS(id)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -454,7 +473,7 @@ const ReviewManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.COURSE_REVIEWS(id)}`);
+      const response = await fetch(`${getBaseURL()}${ENDPOINTS.COURSE_REVIEWS(id)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -491,21 +510,22 @@ const ReviewManagementPage = () => {
     setError(null);
     
     try {
-      let resourceId, resourceTypeId, courseId;
+      debugger;
+      let careerPathId, levelId, resourceTypeId, courseId;
       
       if (reviewType === 'careerpath') {
-       
-        resourceId = formData.careerPathId;   
+        careerPathId = formData.careerPathId;   
+        levelId = formData.levelId;           
         resourceTypeId = 2;          
         courseId = 0;                 
       } else {
-       
-        resourceId = 0;                 
+        careerPathId = 0;                 
+        levelId = 0;                 
         resourceTypeId = 1;           
         courseId = formData.courseId;       
       }
       
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
+      const response = await fetch(`${getBaseURL()}${ENDPOINTS.CAREER_PATH_REVIEW_CREATE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -518,7 +538,8 @@ const ReviewManagementPage = () => {
             reviewBy: formData.reviewBy,
             courseId: courseId 
           },
-          resourceId: resourceId,      
+          careerPathId: careerPathId,
+          levelId: levelId,
           resourceTypeId: resourceTypeId  
         })
       });
@@ -552,7 +573,7 @@ const ReviewManagementPage = () => {
 
   const fetchCareerPathLevelsForEdit = async (careerPathId) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
+      const response = await fetch(`${getBaseURL()}${ENDPOINTS.REVIEW_CAREER_PATH_LEVELS(careerPathId)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -570,7 +591,7 @@ const ReviewManagementPage = () => {
   const handleEditReview = async (review) => {
     try {
       // Fetch review with details
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.REVIEW_WITH_DETAILS(review.id)}`, {
+      const response = await fetch(`${getBaseURL()}${ENDPOINTS.REVIEW_WITH_DETAILS(review.id)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -605,14 +626,12 @@ const ReviewManagementPage = () => {
             courses: [],
             careerPathLevels: [],
             selectedCareerPath: reviewDetails.careerPath?.id || '',
-            selectedLevel: reviewDetails.careerPathLevel?.id || '',
+            selectedLevel: reviewDetails.resourceId || '', // Use resourceId as the level ID for career path reviews
             selectedCourse: ''
           });
           
           // Fetch levels for the career path
-          if (reviewDetails.careerPath?.id) {
-            await fetchCareerPathLevelsForEdit(reviewDetails.careerPath.id);
-          }
+          fetchCareerPathLevelsForEdit(reviewDetails.careerPath?.id || '');
         }
         
         setShowEditModal(true);
@@ -632,22 +651,24 @@ const ReviewManagementPage = () => {
     setError(null);
     
     try {
-      let resourceId, resourceTypeId, courseId;
+      let careerPathId, levelId, resourceTypeId, courseId;
       
       // Determine resource type and ID based on the original review
       if (editingReview.resourceTypeId === 2) {
         // Career path level review: ResourceTypeId = 2 AND CourseId = 0
-        resourceId = editModalData.selectedCareerPath || editingReview.resourceId;
+        careerPathId = editModalData.selectedCareerPath || editingReview.careerPath?.id;
+        levelId = editModalData.selectedLevel || editingReview.resourceId; // Use level ID as levelId
         resourceTypeId = 2; // 2 = career path level
         courseId = 0;       // CourseId = 0 for career path reviews
       } else {
         // Course review: ResourceTypeId = 1 AND CourseId ≠ 0
-        resourceId = 0; // Ignore ResourceId for course reviews
+        careerPathId = 0; // Ignore CareerPathId for course reviews
+        levelId = 0; // Ignore LevelId for course reviews
         resourceTypeId = 1; // 1 = course
         courseId = editModalData.selectedCourse || editingReview.courseId;
       }
       
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_UPDATE(editingReview.id)}`, {
+      const response = await fetch(`${getBaseURL()}${ENDPOINTS.CAREER_PATH_REVIEW_UPDATE(editingReview.id)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -660,8 +681,9 @@ const ReviewManagementPage = () => {
             reviewBy: formData.reviewBy,
             courseId: courseId  // Include courseId in review object
           },
-          resourceId: resourceId,      // CareerPathId for career paths, 0 for courses
-          resourceTypeId: resourceTypeId  // 2 for career paths, 1 for courses
+          careerPathId: careerPathId,
+          levelId: levelId,
+          resourceTypeId: resourceTypeId
         })
       });
 
@@ -708,7 +730,7 @@ const ReviewManagementPage = () => {
         resourceTypeId = 1; // 1 = course
       }
       
-      const response = await fetch(`${API_CONFIG.BASE_URL}${ENDPOINTS.CAREER_PATH_REVIEW_DELETE(review.id)}?resourceId=${resourceId}&resourceTypeId=${resourceTypeId}`, {
+      const response = await fetch(`${getBaseURL()}${ENDPOINTS.CAREER_PATH_REVIEW_DELETE(review.id)}?resourceId=${resourceId}&resourceTypeId=${resourceTypeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -738,12 +760,15 @@ const ReviewManagementPage = () => {
   }, [fetchCareerPaths, fetchCourses]);
 
   useEffect(() => {
-    if (reviewType === 'careerpath' && careerPathId) {
-      fetchCareerPathReviews(careerPathId);
-    } else if (reviewType === 'course' && courseId) {
-      fetchCourseReviews(courseId);
+    // Only fetch data when no modal is open to prevent unnecessary refreshes
+    if (!showAddModal && !showEditModal) {
+      if (reviewType === 'careerpath' && careerPathId) {
+        fetchCareerPathReviews(careerPathId);
+      } else if (reviewType === 'course' && courseId) {
+        fetchCourseReviews(courseId);
+      }
     }
-  }, [reviewType, careerPathId, courseId]);
+  }, [reviewType, careerPathId, courseId, showAddModal, showEditModal]);
 
   const StarRating = ({ rating }) => {
     return (
@@ -1119,7 +1144,10 @@ const ReviewManagementPage = () => {
             {/* Second Row: Action Buttons */}
             <div className="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
               <button
-                onClick={() => setShowAddModal(true)}
+                onClick={() => {
+                  resetFormForAdd();
+                  setShowAddModal(true);
+                }}
                 disabled={!careerPathId && !courseId}
                 className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium shadow-sm"
               >
