@@ -8,13 +8,11 @@ export const useCareerSkills = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Error handling helper
-  const handleError = useCallback((message, err) => {
-    console.error(message, err);
-    setError(message);
-    throw err;
-  }, []);
-
+ const handleError = useCallback((message, err) => {
+  console.error(message, err);
+  setError(err?.message || message);   
+  throw err;
+}, []);
   // Clear error
   const clearError = useCallback(() => {
     setError(null);
@@ -70,6 +68,7 @@ export const useCareerSkills = () => {
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (err) {
+        console.error('Failed to create career skill', err);
       handleError('Failed to fetch career skills', err);
       return [];
     } finally {
@@ -158,7 +157,8 @@ export const useCareerSkills = () => {
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (err) {
-      handleError('Failed to create career skill', err);
+        console.error('Failed to create career skill', err);
+      // handleError('Failed to create career skill', err);
       throw err;
     } finally {
       setLoading(false);
@@ -202,7 +202,8 @@ export const useCareerSkills = () => {
         return textData ? { success: true, message: textData } : { success: true };
       }
     } catch (err) {
-      handleError('Failed to update career skill', err);
+      // handleError('Failed to update career skill', err);
+        console.error('Failed to create career skill', err);
       throw err;
     } finally {
       setLoading(false);
