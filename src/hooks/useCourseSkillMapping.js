@@ -30,10 +30,8 @@ export const useCourseSkillMapping = () => {
     totalPages: 0
   });
 
-  // Fetch all skills with pagination and search
+  // Fetch all skills with pagination
   const fetchAllSkills = useCallback(async (params = {}) => {
-    setLoading(true);
-    setError(null);
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
@@ -44,11 +42,24 @@ export const useCourseSkillMapping = () => {
       const data = await adminApiService.getAllSkillsWithPagination(queryParams.toString());
       
       // Handle the response structure from the backend
-      // The new endpoint returns a direct array: [{id: 653, title: "21st Century", description: "", slug: "21st-century"}, ...]
-      if (Array.isArray(data)) {
-        // Backend returns direct array
+      // The API returns paginated data: {items: [...], page: 1, pageSize: 100, totalCount: 16097}
+      if (data && typeof data === 'object' && data.items && Array.isArray(data.items)) {
+        // Backend returns paginated data with items array
+        setAllSkills(data.items);
+        const totalPages = data.totalPages || Math.ceil((data.totalCount || data.total || 0) / (params.pageSize || skillsPagination.pageSize));
+        setSkillsPagination(prev => ({
+          ...prev,
+          totalItems: data.totalCount || data.total || 0,
+          totalPages: totalPages,
+          currentPage: params.page || 1
+        }));
+        
+        // Backend already returns paginated items, so use them directly
+        setSkills(data.items);
+      } else if (Array.isArray(data)) {
+        // Fallback: Backend returns direct array (no pagination)
         setAllSkills(data);
-        const totalPages = Math.ceil(data.length / skillsPagination.pageSize);
+        const totalPages = Math.ceil(data.length / (params.pageSize || skillsPagination.pageSize));
         setSkillsPagination(prev => ({
           ...prev,
           totalItems: data.length,
@@ -57,57 +68,32 @@ export const useCourseSkillMapping = () => {
         }));
         
         // Set current page skills
-        const startIndex = ((params.page || 1) - 1) * skillsPagination.pageSize;
-        const endIndex = startIndex + skillsPagination.pageSize;
+        const startIndex = ((params.page || 1) - 1) * (params.pageSize || skillsPagination.pageSize);
+        const endIndex = startIndex + (params.pageSize || skillsPagination.pageSize);
         const paginatedSkills = data.slice(startIndex, endIndex);
         setSkills(paginatedSkills);
-      } else if (data && typeof data === 'object') {
-        // Handle potential paginated response structure
-        if (data.items && Array.isArray(data.items)) {
-          // Backend returns paginated data with items array
-          setAllSkills(data.items);
-          const totalPages = data.totalPages || Math.ceil((data.totalCount || data.total || 0) / skillsPagination.pageSize);
-          setSkillsPagination(prev => ({
-            ...prev,
-            totalItems: data.totalCount || data.total || 0,
-            totalPages: totalPages,
-            currentPage: params.page || 1
-          }));
-          
-          // Backend already returns paginated items, so use them directly
-          setSkills(data.items);
-        } else {
-          // Fallback: treat as array if possible
-          const dataArray = Object.values(data).filter(item => 
-            typeof item === 'object' && item.id && item.title
-          );
-          setAllSkills(dataArray);
-          const totalPages = Math.ceil(dataArray.length / skillsPagination.pageSize);
-          setSkillsPagination(prev => ({
-            ...prev,
-            totalItems: dataArray.length,
-            totalPages: totalPages,
-            currentPage: params.page || 1
-          }));
-          
-          const startIndex = ((params.page || 1) - 1) * skillsPagination.pageSize;
-          const endIndex = startIndex + skillsPagination.pageSize;
-          const paginatedSkills = dataArray.slice(startIndex, endIndex);
-          setSkills(paginatedSkills);
-        }
+      } else {
+        // Fallback: treat as array if possible
+        const dataArray = Object.values(data).filter(item => 
+          typeof item === 'object' && item.id && item.title
+        );
+        setAllSkills(dataArray);
+        const totalPages = Math.ceil(dataArray.length / (params.pageSize || skillsPagination.pageSize));
+        setSkillsPagination(prev => ({
+          ...prev,
+          totalItems: dataArray.length,
+          totalPages: totalPages,
+          currentPage: params.page || 1
+        }));
+        
+        const startIndex = ((params.page || 1) - 1) * (params.pageSize || skillsPagination.pageSize);
+        const endIndex = startIndex + (params.pageSize || skillsPagination.pageSize);
+        const paginatedSkills = dataArray.slice(startIndex, endIndex);
+        setSkills(paginatedSkills);
       }
     } catch (err) {
-      setError(err.message || 'Failed to fetch skills');
       console.error('Failed to fetch skills:', err);
-      // Reset to empty state on error
-      setAllSkills([]);
-      setSkills([]);
-      setSkillsPagination(prev => ({
-        ...prev,
-        totalItems: 0,
-        totalPages: 0,
-        currentPage: 1
-      }));
+      setError(err.message);
     } finally {
       setLoading(false);
     }

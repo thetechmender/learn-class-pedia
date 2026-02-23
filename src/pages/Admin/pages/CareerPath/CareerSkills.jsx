@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Award,
-  Target
+  Target,
+  X
 } from 'lucide-react';
 
 const CareerSkills = () => {
@@ -58,7 +59,7 @@ const CareerSkills = () => {
   });
 
   // Fetch all career skills with pagination and search
-  const fetchCareerSkills = useCallback(async (page = currentPage, search = searchTerm) => {
+  const fetchCareerSkills = useCallback(async (page = 1, search = '') => {
     try {
       const response = await getAllCareerSkills({
         page,
@@ -120,12 +121,12 @@ const CareerSkills = () => {
       setTotalItems(0);
       setTotalPages(0);
     }
-  }, [getAllCareerSkills, currentPage, itemsPerPage, searchTerm, showError]);
+  }, [getAllCareerSkills, itemsPerPage, showError]);
 
   // Initial fetch and when page changes
   useEffect(() => {
-    fetchCareerSkills();
-  }, [fetchCareerSkills, currentPage, itemsPerPage]); // Don't include searchTerm here to avoid double calls
+    fetchCareerSkills(currentPage, '');
+  }, [currentPage, itemsPerPage, fetchCareerSkills]);
 
   // Debounced search - only triggers when user stops typing
   useEffect(() => {
@@ -363,13 +364,13 @@ const CareerSkills = () => {
             </div>
             <input
               type="text"
-              placeholder={isTyping ? "Type to search..." : "Search career skills..."}
+              placeholder={isTyping ? "Type to search..." : "Search career skills by title..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full pl-12 pr-12 py-4 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 ${
+              className={`w-full pl-12 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 shadow-sm ${
                 isTyping 
                   ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400' 
-                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400'
               }`}
             />
             <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
@@ -388,15 +389,15 @@ const CareerSkills = () => {
               {!isTyping && !loading && searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
-                  <AlertCircle className="h-5 w-5" />
+                  <X className="h-5 w-5" />
                 </button>
               )}
             </div>
           </div>
           {isTyping && (
-            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
               Searching when you stop typing...
             </div>
           )}

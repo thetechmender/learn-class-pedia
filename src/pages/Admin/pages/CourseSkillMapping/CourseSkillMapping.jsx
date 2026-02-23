@@ -4,8 +4,6 @@ import { useCourseSkillMapping } from '../../../../hooks/useCourseSkillMapping';
 import {
   Search,
   RefreshCw,
-  Grid,
-  List,
   Users,
   X,
   Check,
@@ -76,7 +74,6 @@ const SkillMapping = () => {
   // Search and view states
   const [searchTerm, setSearchTerm] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
 
   // API functions are now handled by the custom hook
 
@@ -398,13 +395,23 @@ const SkillMapping = () => {
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
                     <span className="inline-flex items-center px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full">
-                      {Array.isArray(skills) ? skills.length : 0} Skills
+                      {skillsPagination.totalItems || 0} Skills
                     </span>
                     <span className="text-gray-400">•</span>
                     <span>Manage skill assignments for courses and career paths</span>
                   </p>
                 </div>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.location.href = '/admin/career-skills'}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                <Brain className="w-5 h-5" />
+                Manage Skills
+              </button>
             </div>
           </div>
         </div>
@@ -433,7 +440,7 @@ const SkillMapping = () => {
           <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
               {/* Search */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-2xl">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                 <input
                   type="text"
@@ -475,159 +482,60 @@ const SkillMapping = () => {
                 )}
               </div>
             </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 ${
-                  viewMode === 'grid' 
-                    ? 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm' 
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-                title="Grid View"
-              >
-                <Grid className="w-4 h-4" />
-                <span className="text-sm font-medium">Grid</span>
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 ${
-                  viewMode === 'list' 
-                    ? 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm' 
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
-                title="List View"
-              >
-                <List className="w-4 h-4" />
-                <span className="text-sm font-medium">List</span>
-              </button>
-            </div>
           </div>
         </div>
 
         {/* Skills Display */}
-        {viewMode === 'grid' ? (
-          /* Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedFilteredSkills.map(skill => (
-              <div key={skill.id} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
-                {/* Skill Header */}
-                <div className="relative h-32 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">🎯</div>
-                      <span className="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
-                        {skill.title}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Skill Info */}
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{skill.title}</h3>
-                  
-                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    <span>ID: {skill.id}</span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => openSkillMappingModal(skill)}
-                        className="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
-                        title="Skill Mapping"
-                      >
-                        <Brain className="w-4 h-4" />
-                      </button>
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {paginatedFilteredSkills.map(skill => (
+            <div key={skill.id} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
+              {/* Skill Header */}
+              <div className="relative h-32 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">🎯</div>
+                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
+                      {skill.title}
+                    </span>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          /* List View */
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-            {/* Table Header */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Skills</h2>
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <span>{filteredSkills.length} skills</span>
+
+              {/* Skill Info */}
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{skill.title}</h3>
+                
+                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <span>ID: {skill.id}</span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => openSkillMappingModal(skill)}
+                      className="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                      title="Skill Mapping"
+                    >
+                      <Brain className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Skill
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {paginatedFilteredSkills.map((skill, index) => (
-                    <tr key={skill.id} className={`hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors ${
-                      index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-900/20'
-                    }`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 shadow-sm">
-                            🎯
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {skill.title}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                          {skill.id}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openSkillMappingModal(skill)}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
-                            title="Skill Mapping"
-                          >
-                            <Brain className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Empty State */}
+        {paginatedFilteredSkills.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Brain className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
-
-            {/* Empty State */}
-            {paginatedFilteredSkills.length === 0 && (
-              <div className="px-6 py-12 text-center">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Brain className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No skills found</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  {searchTerm ? 'Try adjusting your search' : 'No skills available'}
-                </p>
-              </div>
-            )}
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No skills found</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {searchTerm ? 'Try adjusting your search' : 'No skills available'}
+            </p>
           </div>
         )}
 
