@@ -1052,15 +1052,15 @@ class AdminApiService {
 
   // Course Skill Mapping methods
   
-  // GET all skills
-  async getAllSkills() {
-    return this.request(ENDPOINTS.COURSE_SKILL_MAP_ALL);
+  // GET all skills (updated to correct endpoint)
+  async getAllSkillsWithPagination(queryParams = '') {
+    const url = queryParams ? `${ENDPOINTS.SKILLS_ALL}?${queryParams}` : ENDPOINTS.SKILLS_ALL;
+    return this.request(url);
   }
 
-  // GET all skills with pagination and search
-  async getAllSkillsWithPagination(queryParams = '') {
-    const url = queryParams ? `${ENDPOINTS.COURSE_SKILL_MAP_ALL}?${queryParams}` : ENDPOINTS.COURSE_SKILL_MAP_ALL;
-    return this.request(url);
+  // GET all skills (legacy method for compatibility)
+  async getAllSkills() {
+    return this.request(ENDPOINTS.SKILLS_ALL);
   }
 
   // GET all career skills
@@ -1082,6 +1082,25 @@ class AdminApiService {
         courseIds: courseIds
       })
     });
+  }
+
+  // Skill Mapping methods (similar to badge assignment)
+  
+  // POST assign skill mapping
+  async assignSkillMapping(skillId, type, ids) {
+    return this.request(ENDPOINTS.SKILL_MAPPING_ASSIGN, {
+      method: 'POST',
+      body: JSON.stringify({
+        skillId: skillId,
+        type: type,
+        ids: ids
+      })
+    });
+  }
+
+  // GET skill mapping by skillId and type
+  async getSkillMapping(skillId, type) {
+    return this.request(ENDPOINTS.SKILL_MAPPING_GET(skillId, type));
   }
 
   // GET filtered courses

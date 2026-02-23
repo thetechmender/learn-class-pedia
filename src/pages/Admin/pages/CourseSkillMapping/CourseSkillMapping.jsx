@@ -20,7 +20,7 @@ import {
 import GenericDropdown from '../../../../components/GenericDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 
-const CourseSkillMapping = () => {
+const SkillMapping = () => {
   const { toast, showToast } = useToast();
   
   // Use custom hook for API operations
@@ -43,7 +43,11 @@ const CourseSkillMapping = () => {
     fetchSkillById,
     fetchCoursesWithFilters,
     fetchAllSkills,
-    assignCoursesToSkill
+    assignCoursesToSkill,
+    // Skill mapping methods
+    getSkillMappingAssignments,
+    assignSkillMapping,
+    getSkillMappingAvailableItems
   } = useCourseSkillMapping();
   
   // Component-specific state
@@ -51,6 +55,16 @@ const CourseSkillMapping = () => {
   const [showCourseAssignmentModal, setShowCourseAssignmentModal] = useState(false);
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [activeModalTab, setActiveModalTab] = useState('assign'); // 'assign' or 'selected'
+  
+  // Skill mapping state (similar to featured marking)
+  const [showSkillMappingModal, setShowSkillMappingModal] = useState(false);
+  const [selectedSkillForMapping, setSelectedSkillForMapping] = useState(null);
+  const [mappingType, setMappingType] = useState('type'); // course, category, career
+  const [assignedMappingItems, setAssignedMappingItems] = useState([]);
+  const [loadingMappingAssignments, setLoadingMappingAssignments] = useState(false);
+  const [searchTermMapping, setSearchTermMapping] = useState('');
+  const [availableMappingItems, setAvailableMappingItems] = useState([]);
+  const [loadingMappingAvailable, setLoadingMappingAvailable] = useState(false);
   
   // Course assignment filters
   const [courseFilters, setCourseFilters] = useState({
@@ -207,6 +221,141 @@ const CourseSkillMapping = () => {
     return skillCourses[skillId] || [];
   };
 
+  // Skill mapping functions (similar to featured marking)
+  
+  // Fetch assigned mapping items
+  const fetchAssignedMappingItems = useCallback(async (skillId, type) => {
+    if (!type || type === 'type') {
+      setAssignedMappingItems([]);
+      return;
+    }
+
+    setLoadingMappingAssignments(true);
+    try {
+      const typeId = type === 'course' ? 1 : type === 'career' ? 2 : 1;
+      const result = await getSkillMappingAssignments(skillId, typeId);
+      
+      setAssignedMappingItems(result || []);
+    } catch (err) {
+      console.error('Failed to fetch assigned mapping items:', err);
+      setAssignedMappingItems([]);
+    } finally {
+      setLoadingMappingAssignments(false);
+    }
+  }, [getSkillMappingAssignments]);
+
+  // Open skill mapping modal
+  const openSkillMappingModal = useCallback((skill) => {
+    setSelectedSkillForMapping(skill);
+    setMappingType('type');
+    setShowSkillMappingModal(true);
+    setAssignedMappingItems([]);
+    setSearchTermMapping('');
+    setAvailableMappingItems([]);
+  }, []);
+
+  // Close skill mapping modal
+  const closeSkillMappingModal = useCallback(() => {
+    setShowSkillMappingModal(false);
+    setSelectedSkillForMapping(null);
+    setMappingType('type');
+    setAssignedMappingItems([]);
+    setSearchTermMapping('');
+    setAvailableMappingItems([]);
+  }, []);
+
+  // Handle mapping type change
+  const handleMappingTypeChange = useCallback((type) => {
+    setMappingType(type);
+    setAssignedMappingItems([]);
+    setAvailableMappingItems([]);
+    setSearchTermMapping('');
+
+    if (selectedSkillForMapping && type !== 'type') {
+      fetchAssignedMappingItems(selectedSkillForMapping.id, type);
+    }
+  }, [selectedSkillForMapping, fetchAssignedMappingItems]);
+
+  // Search available mapping items
+  const fetchAvailableMappingItems = useCallback(async (type, searchTerm = '') => {
+    if (!type || type === 'type') {
+      setAvailableMappingItems([]);
+      return;
+    }
+
+    if (!searchTerm || searchTerm.trim() === '') {
+      setAvailableMappingItems([]);
+      return;
+    }
+    
+    setLoadingMappingAvailable(true);
+    try {
+      const assignedIds = assignedMappingItems.map(item => item.id);
+      const result = await getSkillMappingAvailableItems(type, searchTerm, assignedIds);
+      
+      setAvailableMappingItems(result || []);
+    } catch (err) {
+      console.error('Failed to fetch available mapping items:', err);
+      setAvailableMappingItems([]);
+    } finally {
+      setLoadingMappingAvailable(false);
+    }
+  }, [getSkillMappingAvailableItems, assignedMappingItems]);
+
+  // Toggle mapping item assignment
+  const toggleMappingItemAssignment = useCallback((item) => {
+    const isAssigned = assignedMappingItems.some(assigned => assigned.id === item.id);
+    
+    if (isAssigned) {
+      setAssignedMappingItems(prev => prev.filter(assigned => assigned.id !== item.id));
+    } else {
+      setAssignedMappingItems(prev => [...prev, item]);
+    }
+  }, [assignedMappingItems]);
+
+  // Handle skill mapping assignment
+  const handleSkillMappingAssignment = useCallback(async () => {
+    if (!selectedSkillForMapping || assignedMappingItems.length === 0) {
+      showToast('Please select at least one item to assign', 'error');
+      return;
+    }
+
+    try {
+      if (!mappingType || mappingType === 'type') {
+        showToast('Please select a type of mapping', 'error');
+        return;
+      }
+
+      const typeId = mappingType === 'course' ? 1 : mappingType === 'career' ? 2 : 1;
+      let convertedIds = assignedMappingItems.map(item => item.id);
+      
+      // Convert IDs based on type requirements
+      switch (typeId) {
+        case 1: // Courses - use long IDs
+          convertedIds = convertedIds.map(id => parseInt(id));
+          break;
+        case 2: // Career Paths - use int IDs
+          convertedIds = convertedIds.map(id => parseInt(id));
+          break;
+        default:
+          throw new Error('Invalid type');
+      }
+      
+      await assignSkillMapping(selectedSkillForMapping.id, typeId, convertedIds);
+      showToast(`Skill assigned to ${assignedMappingItems.length} ${mappingType}(s) successfully!`, 'success');
+      closeSkillMappingModal();
+    } catch (err) {
+      showToast('Failed to assign skill mapping', 'error');
+    }
+  }, [selectedSkillForMapping, assignedMappingItems, mappingType, assignSkillMapping, showToast, closeSkillMappingModal]);
+
+  // Load initial data when modal opens
+  useEffect(() => {
+    if (showSkillMappingModal && selectedSkillForMapping && mappingType !== 'type') {
+      fetchAssignedMappingItems(selectedSkillForMapping.id, mappingType);
+    }
+  }, [showSkillMappingModal, selectedSkillForMapping, mappingType, fetchAssignedMappingItems]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -245,14 +394,14 @@ const CourseSkillMapping = () => {
                 </div>
                 <div>
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                    Course Skill Mapping
+                    Skill Mapping
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
                     <span className="inline-flex items-center px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium rounded-full">
                       {Array.isArray(skills) ? skills.length : 0} Skills
                     </span>
                     <span className="text-gray-400">•</span>
-                    <span>Manage course assignments for skills</span>
+                    <span>Manage skill assignments for courses and career paths</span>
                   </p>
                 </div>
               </div>
@@ -357,83 +506,12 @@ const CourseSkillMapping = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Skills</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{Array.isArray(skills) ? skills.length : 0}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All skills</p>
-                </div>
-                <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Brain className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Skills with Courses</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {Array.isArray(skills) ? skills.filter(skill => skill.courseCount > 0).length : 0}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Have assignments</p>
-                </div>
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Check className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Courses</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">{Array.isArray(courses) ? courses.length : 0}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Available courses</p>
-                </div>
-                <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <BookOpen className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Assignments</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {Array.isArray(skills) ? skills.reduce((total, skill) => total + (skill.courseCount || 0), 0) : 0}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Course assignments</p>
-                </div>
-                <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-2xl p-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Skills Display */}
         {viewMode === 'grid' ? (
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedFilteredSkills.map(skill => (
-              <div key={skill.skillId} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
+              <div key={skill.id} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Skill Header */}
                 <div className="relative h-32 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -444,35 +522,25 @@ const CourseSkillMapping = () => {
                       </span>
                     </div>
                   </div>
-                  {skill.courseCount > 0 ? (
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                      {skill.courseCount} courses
-                    </div>
-                  ) : (
-                    <div className="absolute top-2 right-2 bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                      No courses
-                    </div>
-                  )}
                 </div>
 
                 {/* Skill Info */}
                 <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{skill.title}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{skill.title}</h3>
                   
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    <span>ID: {skill.skillId}</span>
-                    <span>{skill.courseCount || 0} courses</span>
+                    <span>ID: {skill.id}</span>
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => openCourseAssignmentModal(skill)}
-                        className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                        title="Manage Courses"
+                        onClick={() => openSkillMappingModal(skill)}
+                        className="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                        title="Skill Mapping"
                       >
-                        <Users className="w-4 h-4" />
+                        <Brain className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -495,20 +563,14 @@ const CourseSkillMapping = () => {
 
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-900/30 border-b border-gray-200 dark:border-gray-700">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Skill
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Skill ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Courses
+                      ID
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Actions
@@ -517,7 +579,7 @@ const CourseSkillMapping = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {paginatedFilteredSkills.map((skill, index) => (
-                    <tr key={skill.skillId} className={`hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors ${
+                    <tr key={skill.id} className={`hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors ${
                       index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-900/20'
                     }`}>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -534,39 +596,17 @@ const CourseSkillMapping = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                          {skill.skillId}
+                          {skill.id}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          skill.courseCount > 0 
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' 
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                        }`}>
-                          <span className={`w-2 h-2 rounded-full mr-1.5 ${
-                            skill.courseCount > 0 ? 'bg-green-400' : 'bg-gray-400'
-                          }`}></span>
-                          {skill.courseCount > 0 ? 'Has Courses' : 'No Courses'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-900 dark:text-white font-medium">
-                            {skill.courseCount || 0}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            courses
-                          </span>
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => openCourseAssignmentModal(skill)}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                            title="Manage Courses"
+                            onClick={() => openSkillMappingModal(skill)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                            title="Skill Mapping"
                           >
-                            <Users className="w-4 h-4" />
+                            <Brain className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -1002,9 +1042,227 @@ const CourseSkillMapping = () => {
             </div>
           </div>
         )}
+
+        {/* Skill Mapping Modal */}
+        {showSkillMappingModal && selectedSkillForMapping && (
+          <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto transform transition-all">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div className="flex items-center">
+                  <div className="bg-green-100 p-2 rounded-lg mr-3">
+                    <Brain className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">Skill Mapping</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Map "{selectedSkillForMapping.title}" to {mappingType}s
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeSkillMappingModal}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {/* Type Selection */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Type of Mapping
+                  </label>
+                  <select
+                    value={mappingType}
+                    onChange={(e) => handleMappingTypeChange(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  >
+                    <option value="type">Select type</option>
+                    <option value="course">Course</option>
+                    <option value="career">Career Path</option>
+                  </select>
+                </div>
+
+                {/* Search */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Search {mappingType}s
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder={`Search ${mappingType}s by name...`}
+                      value={searchTermMapping}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSearchTermMapping(value);
+                        // Trigger search immediately
+                        fetchAvailableMappingItems(mappingType, value);
+                      }}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                    />
+                    {loadingMappingAvailable && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Available Items List */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-semibold text-gray-700">
+                      Available {mappingType}s
+                    </label>
+                    <span className="text-sm text-gray-600">
+                      {availableMappingItems.length} found
+                    </span>
+                  </div>
+                  
+                  <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                    {loadingMappingAvailable ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                        <span className="ml-3 text-gray-600">Searching...</span>
+                      </div>
+                    ) : availableMappingItems.length === 0 ? (
+                      <div className="text-center p-8 text-gray-500">
+                        No {mappingType}s found
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-200">
+                        {availableMappingItems
+                          .filter(item => {
+                            // Only show items that match current mapping type
+                            return (item.title && mappingType === 'course') || 
+                                   (item.title && mappingType === 'career');
+                          })
+                          .map((item) => {
+                          const isAssigned = assignedMappingItems.some(assigned => assigned.id === item.id);
+                          
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={() => toggleMappingItemAssignment(item)}
+                              className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                isAssigned ? 'bg-green-50 border-l-4 border-green-500' : ''
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={isAssigned}
+                                    onChange={() => {}}
+                                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3"
+                                  />
+                                  <div>
+                                    <p className="font-medium text-gray-900">
+                                      {item.title || item.name}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {item.description || `${mappingType} ID: ${item.id}`}
+                                    </p>
+                                  </div>
+                                </div>
+                                {isAssigned && (
+                                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                    Assigned
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Assigned Items List */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-semibold text-gray-700">
+                      Assigned {mappingType}s
+                    </label>
+                    <span className="text-sm text-gray-600">
+                      {assignedMappingItems.length} total
+                    </span>
+                  </div>
+                  
+                  <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                    {loadingMappingAssignments ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                        <span className="ml-3 text-gray-600">Loading...</span>
+                      </div>
+                    ) : assignedMappingItems.length === 0 ? (
+                      <div className="text-center p-8 text-gray-500">
+                        No {mappingType}s assigned to this skill
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-200">
+                        {assignedMappingItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="p-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={true}
+                                  onChange={() => toggleMappingItemAssignment(item)}
+                                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3"
+                                />
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {item.title || item.name}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {item.description || `${mappingType} ID: ${item.id}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                Assigned
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={closeSkillMappingModal}
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSkillMappingAssignment}
+                    disabled={assignedMappingItems.length === 0}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Update Mappings
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default CourseSkillMapping;
+export default SkillMapping;

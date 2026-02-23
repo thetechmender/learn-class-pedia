@@ -17,7 +17,7 @@ export const useCourseSkillMapping = () => {
   // Pagination state for skills
   const [skillsPagination, setSkillsPagination] = useState({
     currentPage: 1,
-    pageSize: 8, // 8 items per page
+    pageSize: 100, // 100 items per page
     totalItems: 0,
     totalPages: 0
   });
@@ -44,39 +44,9 @@ export const useCourseSkillMapping = () => {
       const data = await adminApiService.getAllSkillsWithPagination(queryParams.toString());
       
       // Handle the response structure from the backend
-      if (data && typeof data === 'object') {
-        if (data.items && Array.isArray(data.items)) {
-          // Backend returns paginated data with items array
-          setAllSkills(data.items);
-          const totalPages = data.totalPages || Math.ceil((data.totalCount || data.total || 0) / skillsPagination.pageSize);
-          setSkillsPagination(prev => ({
-            ...prev,
-            totalItems: data.totalCount || data.total || 0,
-            totalPages: totalPages,
-            currentPage: params.page || 1
-          }));
-          
-          // Backend already returns paginated items, so use them directly
-          setSkills(data.items);
-        } else if (Array.isArray(data)) {
-          // Backend returns direct array (fallback)
-          setAllSkills(data);
-          const totalPages = Math.ceil(data.length / skillsPagination.pageSize);
-          setSkillsPagination(prev => ({
-            ...prev,
-            totalItems: data.length,
-            totalPages: totalPages,
-            currentPage: params.page || 1
-          }));
-          
-          // Set current page skills
-          const startIndex = ((params.page || 1) - 1) * skillsPagination.pageSize;
-          const endIndex = startIndex + skillsPagination.pageSize;
-          const paginatedSkills = data.slice(startIndex, endIndex);
-          setSkills(paginatedSkills);
-        }
-      } else if (Array.isArray(data)) {
-        // Backend returns direct array (fallback)
+      // The new endpoint returns a direct array: [{id: 653, title: "21st Century", description: "", slug: "21st-century"}, ...]
+      if (Array.isArray(data)) {
+        // Backend returns direct array
         setAllSkills(data);
         const totalPages = Math.ceil(data.length / skillsPagination.pageSize);
         setSkillsPagination(prev => ({
@@ -91,6 +61,40 @@ export const useCourseSkillMapping = () => {
         const endIndex = startIndex + skillsPagination.pageSize;
         const paginatedSkills = data.slice(startIndex, endIndex);
         setSkills(paginatedSkills);
+      } else if (data && typeof data === 'object') {
+        // Handle potential paginated response structure
+        if (data.items && Array.isArray(data.items)) {
+          // Backend returns paginated data with items array
+          setAllSkills(data.items);
+          const totalPages = data.totalPages || Math.ceil((data.totalCount || data.total || 0) / skillsPagination.pageSize);
+          setSkillsPagination(prev => ({
+            ...prev,
+            totalItems: data.totalCount || data.total || 0,
+            totalPages: totalPages,
+            currentPage: params.page || 1
+          }));
+          
+          // Backend already returns paginated items, so use them directly
+          setSkills(data.items);
+        } else {
+          // Fallback: treat as array if possible
+          const dataArray = Object.values(data).filter(item => 
+            typeof item === 'object' && item.id && item.title
+          );
+          setAllSkills(dataArray);
+          const totalPages = Math.ceil(dataArray.length / skillsPagination.pageSize);
+          setSkillsPagination(prev => ({
+            ...prev,
+            totalItems: dataArray.length,
+            totalPages: totalPages,
+            currentPage: params.page || 1
+          }));
+          
+          const startIndex = ((params.page || 1) - 1) * skillsPagination.pageSize;
+          const endIndex = startIndex + skillsPagination.pageSize;
+          const paginatedSkills = dataArray.slice(startIndex, endIndex);
+          setSkills(paginatedSkills);
+        }
       }
     } catch (err) {
       setError(err.message || 'Failed to fetch skills');
@@ -323,6 +327,99 @@ export const useCourseSkillMapping = () => {
     }
   }, [fetchAllSkills]);
 
+  // Skill Mapping methods (similar to badge assignment)
+  
+  // Get skill mapping assignments
+  const getSkillMappingAssignments = useCallback(async (skillId, typeId) => {
+    try {
+      const assignedIds = await adminApiService.getSkillMapping(skillId, typeId);
+      
+      console.log('Skill mapping assigned IDs from API:', {
+        skillId,
+        typeId,
+        assignedIds,
+        isArray: Array.isArray(assignedIds)
+      });
+      
+      if (assignedIds && Array.isArray(assignedIds) && assignedIds.length > 0) {
+        let allItems;
+        
+        // Get all items without pagination
+        switch(typeId) {
+          case 1:
+            // Courses
+            allItems = await adminApiService.getAllCoursesAdminNoPagination();
+            break;
+          case 2:
+            // Career Paths
+            allItems = await adminApiService.getAllCareerPaths();
+            break;
+          default:
+            allItems = await adminApiService.getAllCoursesAdminNoPagination();
+        }
+        
+        const items = allItems.items || allItems || [];
+        
+        // Filter to get only assigned items with full details
+        const assignedItemsDetails = items.filter(item => assignedIds.includes(item.id));
+        
+        console.log('Skill mapping assigned items details:', {
+          assignedIds,
+          totalItems: items.length,
+          assignedItemsDetails: assignedItemsDetails
+        });
+        
+        return assignedItemsDetails;
+      }
+      
+      // Return empty array if no assignments
+      return [];
+    } catch (err) {
+      console.error('Failed to fetch skill mapping assignments:', err);
+      return [];
+    }
+  }, []);
+
+  // Assign skill mapping
+  const assignSkillMapping = useCallback(async (skillId, typeId, assignedIds) => {
+    try {
+      await adminApiService.assignSkillMapping(skillId, typeId, assignedIds);
+      return true;
+    } catch (err) {
+      console.error('Failed to assign skill mapping:', err);
+      throw err;
+    }
+  }, []);
+
+  // Get available items for skill mapping (similar to badge assignment)
+  const getSkillMappingAvailableItems = useCallback(async (type, searchTerm = '', selectedIds = []) => {
+    try {
+      let allItems;
+      
+      // Get all items with search if provided
+      switch(type) {
+        case 'course':
+          allItems = await adminApiService.getAllCoursesAdminNoPagination({ Title: searchTerm });
+          break;
+        case 'career':
+          allItems = await adminApiService.getAllCareerPaths({ Title: searchTerm });
+          break;
+        default:
+          allItems = await adminApiService.getAllCoursesAdminNoPagination({ title: searchTerm });
+      }
+      
+      // Ensure we have an array
+      const items = allItems.items || allItems || [];
+      
+      // Return all items (don't filter out selected ones)
+      // The UI will handle marking selected items
+      return items;
+    } catch (err) {
+      console.error('Failed to fetch available items for skill mapping:', err);
+      return [];
+    }
+  }, []);
+
   // Get skill courses
   const getSkillCourses = useCallback((skillId) => {
     return skillCourses[skillId] || [];
@@ -385,6 +482,11 @@ export const useCourseSkillMapping = () => {
     assignCoursesToSkill,
     getSkillCourses,
     loadInitialData,
+    
+    // Skill Mapping methods (similar to badge assignment)
+    getSkillMappingAssignments,
+    assignSkillMapping,
+    getSkillMappingAvailableItems,
     
     // Setters for component state
     setSkills,

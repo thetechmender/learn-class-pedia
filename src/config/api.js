@@ -54,6 +54,11 @@ export const ENDPOINTS = {
   COURSE_SKILL_MAP_ALL: '/CourseSkillMap/all',
   COURSE_SKILL_MAP_BY_ID: (id) => `/CourseSkillMap/skill/${id}`,
   COURSE_SKILL_MAP_SYNC: '/CourseSkillMap/sync',
+  // Skills endpoint (updated to correct API)
+  SKILLS_ALL: '/careerskills',
+  // Skill Mapping endpoints (similar to badge assignment)
+  SKILL_MAPPING_ASSIGN: '/SkillMapping/assign',
+  SKILL_MAPPING_GET: (skillId, type) => `/SkillMapping/${skillId}/${type ? `${type}` : ''}`,
   // Email Template endpoints
   EMAIL_TEMPLATE_ALL: '/EmailTemplate',
   EMAIL_TEMPLATE_BY_ID: (id) => `/EmailTemplate/${id}`,

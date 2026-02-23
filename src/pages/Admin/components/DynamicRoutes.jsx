@@ -144,7 +144,7 @@ const DynamicRoutes = () => {
           <CareerSkills />
         </ProtectedRoute>
       } />
-      <Route path="course-skill-mapping" element={
+      <Route path="skill-mapping" element={
         <ProtectedRoute>
           <CourseSkillMapping />
         </ProtectedRoute>

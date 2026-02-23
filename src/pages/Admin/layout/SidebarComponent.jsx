@@ -43,8 +43,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   // Render menu item with submenu support
   const renderMenuItem = (item, level = 0) => {
     const hasChildren = item.children && item.children.length > 0;
-    const fullPath = item.path.startsWith('/admin/') ? item.path : `/admin/${item.path}`;
-    const isActive = activeRoute === fullPath || activeRoute.startsWith(fullPath + '/');
+    const fullPath = item.path && item.path.startsWith('/admin/') ? item.path : item.path ? `/admin/${item.path}` : '';
+    const isActive = fullPath && (activeRoute === fullPath || activeRoute.startsWith(fullPath + '/'));
     const isExpanded = isMenuExpanded(item.id);
 
     if (hasChildren && !isCollapsed) {
@@ -53,7 +53,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
           <div className="flex items-center gap-1">
             <button
               onClick={() => {
-                // If item has a path, navigate to it
+                // Navigate if item has a path
                 if (item.path) {
                   handleNavigation(item.path);
                 }
@@ -99,7 +99,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
     return (
       <button
         key={item.id}
-        onClick={() => handleNavigation(item.path)}
+        onClick={() => item.path && handleNavigation(item.path)}
         className={`
           w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-2 rounded-lg
           transition-all duration-200 relative
@@ -130,22 +130,22 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
     ...managementItems,
     // Fallback items to ensure they always appear
     {
-      id: 'skill',
-      label: 'Skill',
-      icon: Star,
-      path: 'career-skills',
+      id: 'skills-management',
+      label: 'Skills',
+      icon: Brain,
+      path: 'career-skills', // Add path for navigation
       children: [
         {
-          id: 'course-skill-mapping',
-          label: 'Course Skill Mapping',
+          id: 'skill-mapping',
+          label: 'Skill Mapping',
           icon: Brain,
-          path: 'course-skill-mapping'
+          path: 'skill-mapping'
         }
       ]
     }
   ].map(item => {
     // Filter out separate Course Skill Mapping item
-    if (item.id === 'course-skill-mapping' || item.label === 'Course Skill Mapping') {
+    if (item.id === 'skill-mapping' || item.label === 'Skill Mapping') {
       return null;
     }
     
@@ -158,10 +158,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
         path: 'career-skills', // Make parent clickable
         children: [
           {
-            id: 'course-skill-mapping',
-            label: 'Course Skill Mapping',
+            id: 'skill-mapping',
+            label: 'Skill Mapping',
             icon: Brain,
-            path: 'course-skill-mapping'
+            path: 'skill-mapping'
           }
         ]
       };
@@ -323,14 +323,14 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
               <div className="space-y-1">
                 {mainNavItems.map((item) => {
                   // Ensure we're comparing full paths
-                  const fullPath = item.path.startsWith('/admin/') ? item.path : `/admin/${item.path}`;
+                  const fullPath = item.path && item.path.startsWith('/admin/') ? item.path : item.path ? `/admin/${item.path}` : '';
                   // Check if current route starts with the item path for sub-routes
-                  const isActive = activeRoute === fullPath || activeRoute.startsWith(fullPath + '/');
+                  const isActive = fullPath && (activeRoute === fullPath || activeRoute.startsWith(fullPath + '/'));
                   
                   return (
                     <button
                       key={item.id}
-                      onClick={() => handleNavigation(item.path)}
+                      onClick={() => item.path && handleNavigation(item.path)}
                       className={`
                         w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-2 lg:px-3 py-2 lg:py-2 rounded-lg
                         transition-all duration-200 relative
