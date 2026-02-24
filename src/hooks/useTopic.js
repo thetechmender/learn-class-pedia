@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback,useEffect } from 'react';
 import { adminApiService } from '../services/AdminApi';
 
 export const useTopic = () => {
@@ -167,29 +167,34 @@ export const useTopic = () => {
 
   // Get all courses for mapping
   const getAllCoursesForMapping = useCallback(async () => {
-    // Return cached data if available
+    // Return cached data immediately if available
     if (coursesCache) {
       return coursesCache;
     }
     
     try {
-      setLoading(true);
+      // Don't set loading state to avoid blocking UI
       setError(null);
       const data = await adminApiService.getAllCoursesAdminNoPagination();
       // Handle response structure where courses are in an 'items' array
       const courses = data.items || data || [];
       const courseArray = Array.isArray(courses) ? courses : [];
       
-      // Cache the results
+      // Cache the results immediately
       setCoursesCache(courseArray);
       return courseArray;
     } catch (err) {
       handleError('Failed to get all courses for mapping', err);
       return [];
-    } finally {
-      setLoading(false);
     }
   }, [handleError, coursesCache]);
+
+  // Preload courses immediately when hook initializes
+  useEffect(() => {
+    if (!coursesCache) {
+      getAllCoursesForMapping();
+    }
+  }, [coursesCache, getAllCoursesForMapping]);
 
   return {
     // Global state

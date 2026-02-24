@@ -54,17 +54,25 @@ const TopicManagement = () => {
   const [loadingAvailableCourses, setLoadingAvailableCourses] = useState(false);
   const [allCourses, setAllCourses] = useState([]); // Cache all courses locally
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [coursesPreloaded, setCoursesPreloaded] = useState(false);
 
   // Load topics on component mount
   useEffect(() => {
     getAllTopics();
-    // Load all courses once for mapping functionality
-    if (allCourses.length === 0) {
+    
+    // Use preloaded courses from hook cache for instant loading
+    if (coursesCache && coursesCache.length > 0) {
+      setAllCourses(coursesCache);
+      setCoursesPreloaded(true);
+    } else if (!coursesPreloaded) {
+      // Fallback: Load courses if not preloaded
       getAllCoursesForMapping().then(courses => {
         setAllCourses(courses);
+        setCoursesPreloaded(true);
       });
     }
-  }, [getAllTopics, getAllCoursesForMapping, allCourses.length]);
+  }, [getAllTopics, coursesCache, coursesPreloaded, getAllCoursesForMapping]);
 
   // Debounce search term to avoid excessive filtering
   useEffect(() => {
@@ -236,7 +244,6 @@ const TopicManagement = () => {
   
   // Fetch mapped courses for a topic
   const fetchMappedCourses = useCallback(async (topicId) => {
-    setLoadingMappedCourses(true);
     try {
       const result = await getTopicMapping(topicId);
       console.log('Get topic mapping response:', result);
@@ -275,8 +282,6 @@ const TopicManagement = () => {
     } catch (err) {
       console.error('Failed to fetch mapped courses:', err);
       setMappedCourses([]);
-    } finally {
-      setLoadingMappedCourses(false);
     }
   }, [getTopicMapping, allCourses, getAllCoursesForMapping]);
 
@@ -287,6 +292,8 @@ const TopicManagement = () => {
     setMappedCourses([]);
     setSearchTermMapping('');
     setAvailableCourses([]);
+    
+    // Always fetch mapped courses immediately - no loading state
     fetchMappedCourses(topic.id);
   }, [fetchMappedCourses]);
 
@@ -347,13 +354,13 @@ const TopicManagement = () => {
         toRemove
       });
       
-      // Add new mappings using the correct payload format
-      for (const courseId of toAdd) {
+      // Send all selected courses in a single API call
+      if (toAdd.length > 0) {
         const mappingData = {
           topicId: selectedTopicForMapping.id,
-          courseIds: [courseId]
+          courseIds: toAdd
         };
-        console.log('Creating mapping:', mappingData);
+        console.log('Creating mappings for all courses:', mappingData);
         await createCourseTopicMapping(mappingData);
       }
       
@@ -364,7 +371,14 @@ const TopicManagement = () => {
       }
       
       closeMappingModal();
-      // Show success message (you might want to add a toast notification)
+      // Show success message
+      setSuccessMessage(`Successfully assigned ${toAdd.length} course${toAdd.length === 1 ? '' : 's'} to topic "${selectedTopicForMapping.title}"`);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      
       console.log('Course mappings saved successfully');
     } catch (err) {
       console.error('Failed to save course mappings:', err);
@@ -411,6 +425,18 @@ const TopicManagement = () => {
           />
         </div>
       </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mx-6 mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
+          <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center">
+            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p className="text-green-800 dark:text-green-200 font-medium">{successMessage}</p>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
