@@ -191,7 +191,10 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCoursesAdminNoPagination({ Title: title });
+      const data = await adminApiService.getAllCoursesAdminNoPagination({ 
+        Title: title,
+        CourseTypeId: 2 // Filter for coursetypeid=2 only
+      });
       // Handle response structure where courses are in an 'items' array
       const courses = data.items || data || [];
       return Array.isArray(courses) ? courses : [];

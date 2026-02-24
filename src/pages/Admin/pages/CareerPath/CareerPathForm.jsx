@@ -271,6 +271,10 @@ const CareerPathForm = ({
       
       return { ...prev, skills: newSkills };
     });
+    
+    // Clear search results and search term when skill is selected
+    setSkillSearchResults([]);
+    setSearchTerm('');
   };
 
   const removeLevelFromPath = (levelIndex) => {
@@ -365,6 +369,10 @@ const CareerPathForm = ({
             : lvl
         )
       }));
+      
+      // Clear search results and search term when course is selected
+      setCourseSearchResults([]);
+      setCourseSearchTerm('');
     }
   };
 
@@ -555,6 +563,18 @@ const CareerPathForm = ({
       case 2:
         if (formData.levels.length === 0) {
           newErrors.levels = 'At least one level is required';
+        } else {
+          // Check if each level has minimum 3 courses
+          const levelErrors = {};
+          formData.levels.forEach((level, index) => {
+            if (level.courses.length < 3) {
+              levelErrors[`level_${index}`] = `Level "${level.title || `Level ${index + 1}`}" must have at least 3 courses (currently has ${level.courses.length})`;
+            }
+          });
+          
+          if (Object.keys(levelErrors).length > 0) {
+            newErrors.levels = levelErrors;
+          }
         }
         break;
         
@@ -638,6 +658,18 @@ const CareerPathForm = ({
     
     if (formData.levels.length === 0) {
       newErrors.levels = 'At least one level is required';
+    } else {
+      // Check if each level has minimum 3 courses
+      const levelErrors = {};
+      formData.levels.forEach((level, index) => {
+        if (level.courses.length < 3) {
+          levelErrors[`level_${index}`] = `Level "${level.title || `Level ${index + 1}`}" must have at least 3 courses (currently has ${level.courses.length})`;
+        }
+      });
+      
+      if (Object.keys(levelErrors).length > 0) {
+        newErrors.levels = levelErrors;
+      }
     }
     
     if (formData.skills.length === 0) {
@@ -1131,10 +1163,23 @@ const CareerPathForm = ({
                 <p className="text-sm text-blue-700">
                   💡 <strong>Tip:</strong> Drag and drop level cards to reorder them. Sort order will be updated automatically.
                 </p>
+                <p className="text-sm text-blue-700 mt-2">
+                  📚 <strong>Requirement:</strong> Each level must have at least 3 courses with coursetypeid=2 to proceed.
+                </p>
               </div>
               
               {errors.levels && (
-                <p className="mb-4 text-sm text-red-600">{errors.levels}</p>
+                <div className="mb-4">
+                  {typeof errors.levels === 'string' ? (
+                    <p className="text-sm text-red-600">{errors.levels}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {Object.values(errors.levels).map((error, index) => (
+                        <p key={index} className="text-sm text-red-600">⚠️ {error}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Available Levels */}
@@ -1198,7 +1243,19 @@ const CareerPathForm = ({
                         </div>
                         <div>
                           <h4 className="text-lg font-semibold text-gray-900">{level.title || level.levelName}</h4>
-                          <p className="text-sm text-gray-600">{level.courses.length} course{level.courses.length !== 1 ? 's' : ''} assigned</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-gray-600">{level.courses.length} course{level.courses.length !== 1 ? 's' : ''} assigned</p>
+                            {level.courses.length < 3 && (
+                              <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                                ⚠️ Min 3 required
+                              </span>
+                            )}
+                            {level.courses.length >= 3 && (
+                              <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                ✓ Requirement met
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
