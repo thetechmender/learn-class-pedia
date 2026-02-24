@@ -7,7 +7,6 @@ import CourseManagement from '../pages/CourseManagement/CourseManagement';
 import CareerPath from '../pages/CareerPath/CareerPath';
 import CareerPathDetail from '../pages/CareerPath/CareerPathDetail';
 import FeaturedMarking from '../pages/FeaturedMarking/FeaturedMarking';
-import CourseUrlManagement from '../pages/CourseUrlManagement/CourseUrlManagement';
 import ChangePassword from '../pages/ChangePassword/ChangePassword';
 import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
 import CareerRoles from '../pages/CareerPath/CareerRoles';
@@ -17,6 +16,7 @@ import EmailTemplateManagement from '../pages/EmailTemplateManagement/EmailTempl
 import ReviewManagementPage from '../pages/ReviewManagementPage/ReviewManagementPage';
 import AssignDiscountRate from '../pages/AssignDiscountRate/AssignDiscountRate';
 import DiscountRates from '../pages/DiscountRates/DiscountRates';
+import TopicManagement from '../pages/TopicManagement/TopicManagement';
 
 // Component mapping
 const componentMap = {
@@ -25,7 +25,6 @@ const componentMap = {
   CareerPath,
   CareerPathDetail,
   FeaturedMarking,
-  CourseUrlManagement,
   ChangePassword,
   CategoryManagement,
   CareerRoles,
@@ -35,6 +34,7 @@ const componentMap = {
   ReviewManagementPage,
   AssignDiscountRate,
   DiscountRates,
+  TopicManagement,
 };
 
 // Protected Route Component

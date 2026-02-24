@@ -46,22 +46,13 @@
       "order": 5
     },
     {
-      "id": "course-urls",
-      "path": "/admin/course-urls",
-      "component": "CourseUrlManagement",
-      "label": "Course URL Management",
-      "icon": "Link2",
-      "category": "management",
-      "order": 6
-    },
-    {
       "id": "categories",
       "path": "/admin/categories",
       "component": "CategoryManagement",
       "label": "Category Management",
       "icon": "FolderTree",
       "category": "management",
-      "order": 7
+      "order": 6
     },
     {
       "id": "discount-rates",
@@ -70,7 +61,7 @@
       "label": "Discount Rates",
       "icon": "Percent",
       "category": "management",
-      "order": 8
+      "order": 7
     },
     {
       "id": "assign-discount-rate",
@@ -79,7 +70,7 @@
       "label": "Assign Discount Rate",
       "icon": "Percent",
       "category": "management",
-      "order": 9
+      "order": 8
     },
     {
       "id": "email-templates",
@@ -88,7 +79,7 @@
       "label": "Email Templates",
       "icon": "Mail",
       "category": "management",
-      "order": 10
+      "order": 9
     },
     {
       "id": "career-roles",
@@ -96,6 +87,15 @@
       "component": "CareerRoles",
       "label": "Career Roles",
       "icon": "Briefcase",
+      "category": "management",
+      "order": 10
+    },
+    {
+      "id": "topics",
+      "path": "/admin/topics",
+      "component": "TopicManagement",
+      "label": "Topic Management",
+      "icon": "BookOpen",
       "category": "management",
       "order": 11
     },
