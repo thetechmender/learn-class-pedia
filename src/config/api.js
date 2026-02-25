@@ -37,11 +37,11 @@ export const ENDPOINTS = {
   COURSE_BADGES_DROPDOWN: '/admin/course-badges',
   CAREER_PATHS: '/career-paths',
   // Course Badge Management endpoints
-  COURSE_BADGE_ALL: '/CourseBadge/GetAllCourseBadges',
-  COURSE_BADGE_BY_ID: (id) => `/CourseBadge/${id}`,
-  COURSE_BADGE_UPDATE: (id) => `/CourseBadge/UpdateCourseBadge/${id}`,
-  COURSE_BADGE_CREATE: '/CourseBadge/CreateCourseBadge',
-  COURSE_BADGE_DELETE: (id) => `/CourseBadge/${id}`,
+  COURSE_BADGE_ALL: '/Badges',
+  COURSE_BADGE_BY_ID: (id) => `/Badges/${id}`,
+  COURSE_BADGE_UPDATE: (id) => `/Badges/${id}`,
+  COURSE_BADGE_CREATE: '/Badges',
+  COURSE_BADGE_DELETE: (id) => `/Badges/${id}`,
   CAREER_ROLES: '/career-roles',
   CAREER_ROLE_BY_ID: (id) => `/career-roles/${id}`,
   CAREER_SKILLS: '/careerskills',
@@ -89,20 +89,20 @@ export const ENDPOINTS = {
 
   // Discount Rates endpoints
   DISCOUNT_RATES: '/DiscountRates',
-  DISCOUNT_RATES_CREATE: '/admin/discountratescreate',
-  DISCOUNT_RATES_BY_ID: (id) => `/admin/discountrates/${id}`,
-  DISCOUNT_RATES_UPDATE: (id) => `/admin/discountrates/${id}`,
-  DISCOUNT_RATES_DELETE: (id) => `/admin/discountrates/${id}`,
+  DISCOUNT_RATES_CREATE: '/DiscountRatescreate',
+  DISCOUNT_RATES_BY_ID: (id) => `/DiscountRates/${id}`,
+  DISCOUNT_RATES_UPDATE: (id) => `/DiscountRates/${id}`,
+  DISCOUNT_RATES_DELETE: (id) => `/DiscountRates/${id}`,
   DISCOUNT_RATES_ASSIGN: '/DiscountRates/assign-course',
   DISCOUNT_RATES_ASSIGN_COURSE_TYPE: '/DiscountRates/assign-course-type',
   DISCOUNT_RATES_ASSIGN_CAREER_PATH: '/DiscountRates/Assign-CareerPath',
   
   // Discount Rate Mapping endpoints
-  DISCOUNT_RATES_MAPPINGS: '/admin/discountrates/mappings',
-  DISCOUNT_RATES_MAPPINGS_BY_COURSE: (courseId) => `/admin/discountrates/mappings/course/${courseId}`,
-  DISCOUNT_RATES_MAPPINGS_BY_ID: (id) => `/admin/discountrates/mappings/${id}`,
-  DISCOUNT_RATES_MAPPINGS_UPDATE: (id) => `/admin/discountrates/mappings/${id}`,
-  DISCOUNT_RATES_MAPPINGS_DELETE: (id) => `/admin/discountrates/mappings/${id}`,
+  DISCOUNT_RATES_MAPPINGS: '/DiscountRates/mappings',
+  DISCOUNT_RATES_MAPPINGS_BY_COURSE: (courseId) => `/DiscountRates/mappings/course/${courseId}`,
+  DISCOUNT_RATES_MAPPINGS_BY_ID: (id) => `/DiscountRates/mappings/${id}`,
+  DISCOUNT_RATES_MAPPINGS_UPDATE: (id) => `/DiscountRates/mappings/${id}`,
+  DISCOUNT_RATES_MAPPINGS_DELETE: (id) => `/DiscountRates/mappings/${id}`,
 };
 
 // HTTP Status Codes
