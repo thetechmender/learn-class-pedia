@@ -23,11 +23,10 @@ const TopicManagement = () => {
     updateTopic,
     deleteTopic,
     getTopicMapping,
-    createCourseTopicMapping,
-    deleteCourseTopicMapping,
+    createTopicMapping,
     getAllCoursesForMapping,
+    getAllCareerPathsForMapping,
     coursesCache,
-    setCoursesCache,
     clearError
   } = useTopic();
 
@@ -57,6 +56,14 @@ const TopicManagement = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [coursesPreloaded, setCoursesPreloaded] = useState(false);
 
+  // Career path mapping state
+  const [mappedCareerPaths, setMappedCareerPaths] = useState([]);
+  const [allCareerPaths, setAllCareerPaths] = useState([]); // Cache all career paths locally
+  const [careerPathsPreloaded, setCareerPathsPreloaded] = useState(false);
+
+  // Type parameter: 1 = course, 2 = career path
+  const [mappingType, setMappingType] = useState(1);
+
   // Load topics on component mount
   useEffect(() => {
     getAllTopics();
@@ -74,6 +81,16 @@ const TopicManagement = () => {
     }
   }, [getAllTopics, coursesCache, coursesPreloaded, getAllCoursesForMapping]);
 
+  // Preload career paths for instant access
+  useEffect(() => {
+    if (!careerPathsPreloaded) {
+      getAllCareerPathsForMapping().then(careerPaths => {
+        setAllCareerPaths(careerPaths);
+        setCareerPathsPreloaded(true);
+      });
+    }
+  }, [careerPathsPreloaded, getAllCareerPathsForMapping]);
+
   // Debounce search term to avoid excessive filtering
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -83,25 +100,43 @@ const TopicManagement = () => {
     return () => clearTimeout(timer);
   }, [searchTermMapping]);
 
-  // Memoized filtered courses for instant search results
-  const filteredAvailableCourses = useMemo(() => {
+  // Memoized filtered results for instant search results
+  const filteredAvailableItems = useMemo(() => {
     if (!debouncedSearchTerm.trim()) return [];
     
-    const mappedIds = Array.isArray(mappedCourses) ? mappedCourses.map(course => course.courseId || course.id) : [];
-    
-    return allCourses.filter(course => 
-      course.title && course.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    ).map(course => ({
-      ...course,
-      isSelected: mappedIds.includes(course.id)
-    }));
-  }, [allCourses, debouncedSearchTerm, mappedCourses]);
+    if (mappingType === 1) {
+      // Course mapping
+      const mappedIds = Array.isArray(mappedCourses) ? mappedCourses.map(course => course.courseId || course.id) : [];
+      
+      return allCourses.filter(course => 
+        course.title && course.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      ).map(course => ({
+        ...course,
+        isSelected: mappedIds.includes(course.id)
+      }));
+    } else {
+      // Career path mapping
+      const mappedIds = Array.isArray(mappedCareerPaths) ? mappedCareerPaths.map(careerPath => careerPath.careerPathId || careerPath.id) : [];
+      
+      return allCareerPaths.filter(careerPath => 
+        careerPath.title && careerPath.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      ).map(careerPath => ({
+        ...careerPath,
+        isSelected: mappedIds.includes(careerPath.id)
+      }));
+    }
+  }, [allCourses, allCareerPaths, debouncedSearchTerm, mappedCourses, mappedCareerPaths, mappingType]);
 
-  // Update available courses when filtered results change
+  // Update available items when filtered results change
   useEffect(() => {
-    setAvailableCourses(filteredAvailableCourses);
-    setLoadingAvailableCourses(false);
-  }, [filteredAvailableCourses]);
+    if (mappingType === 1) {
+      setAvailableCourses(filteredAvailableItems);
+    } else {
+      // For career paths, we'll use the same availableCourses state for now
+      // This will be updated when UI is implemented for career path mapping
+      setAvailableCourses(filteredAvailableItems);
+    }
+  }, [filteredAvailableItems, mappingType]);
 
   // Filter topics based on search term
   const filteredTopics = topics.filter(topic =>
@@ -244,17 +279,17 @@ const TopicManagement = () => {
   
   // Fetch mapped courses for a topic
   const fetchMappedCourses = useCallback(async (topicId) => {
+    setLoadingMappedCourses(true);
     try {
-      const result = await getTopicMapping(topicId);
+      const result = await getTopicMapping(topicId, 1); // type 1 for courses
       console.log('Get topic mapping response:', result);
       
-      // Handle different response formats
+      // Handle new API response format: {success: true, topicId: X, type: 1, ids: [id1, id2]}
       let courses = [];
-      if (result && result.success === true && Array.isArray(result.courseIds)) {
-        // API returns {success: true, topicId: X, courseIds: [id1, id2, ...]}
+      if (result && result.success === true && Array.isArray(result.ids)) {
         // Use local cache instead of API call for better performance
         const allCoursesData = allCourses.length > 0 ? allCourses : await getAllCoursesForMapping();
-        const mappedIds = result.courseIds;
+        const mappedIds = result.ids;
         
         // Filter all courses to get only the mapped ones
         courses = allCoursesData.filter(course => mappedIds.includes(course.id));
@@ -282,28 +317,80 @@ const TopicManagement = () => {
     } catch (err) {
       console.error('Failed to fetch mapped courses:', err);
       setMappedCourses([]);
+    } finally {
+      setLoadingMappedCourses(false);
     }
-  }, [getTopicMapping, allCourses, getAllCoursesForMapping]);
+  }, [allCourses, getAllCoursesForMapping, getTopicMapping]);
+
+  // Fetch mapped career paths for a topic
+  const fetchMappedCareerPaths = useCallback(async (topicId) => {
+    try {
+      const result = await getTopicMapping(topicId, 2); // type 2 for career paths
+      console.log('Get topic career path mapping response:', result);
+      
+      // Handle new API response format: {success: true, topicId: X, type: 2, ids: [id1, id2]}
+      let careerPaths = [];
+      if (result && result.success === true && Array.isArray(result.ids)) {
+        // Use local cache instead of API call for better performance
+        const allCareerPathsData = allCareerPaths.length > 0 ? allCareerPaths : await getAllCareerPathsForMapping();
+        const mappedIds = result.ids;
+        
+        // Filter all career paths to get only the mapped ones
+        careerPaths = allCareerPathsData.filter(careerPath => mappedIds.includes(careerPath.id));
+        
+        // If any mapped IDs don't have career path details, create fallback entries
+        mappedIds.forEach(careerPathId => {
+          if (!careerPaths.some(careerPath => careerPath.id === careerPathId)) {
+            careerPaths.push({ 
+              id: careerPathId, 
+              title: `Career Path ${careerPathId}`, 
+              description: 'Career path details not found' 
+            });
+          }
+        });
+      } else if (result?.items) {
+        // API returns {items: [...]} with full career path details
+        careerPaths = result.items;
+      } else if (Array.isArray(result)) {
+        // API returns direct array
+        careerPaths = result;
+      }
+      
+      console.log('Processed mapped career paths:', careerPaths);
+      setMappedCareerPaths(Array.isArray(careerPaths) ? careerPaths : []);
+    } catch (err) {
+      console.error('Failed to fetch mapped career paths:', err);
+      setMappedCareerPaths([]);
+    }
+  }, [allCareerPaths, getAllCareerPathsForMapping, getTopicMapping]);
 
   // Open mapping modal
-  const openMappingModal = useCallback((topic) => {
+  const openMappingModal = useCallback((topic, type = 1) => {
     setSelectedTopicForMapping(topic);
     setShowMappingModal(true);
+    setMappingType(type);
     setMappedCourses([]);
+    setMappedCareerPaths([]);
     setSearchTermMapping('');
     setAvailableCourses([]);
     
-    // Always fetch mapped courses immediately - no loading state
-    fetchMappedCourses(topic.id);
-  }, [fetchMappedCourses]);
+    // Fetch mapped items based on type
+    if (type === 1) {
+      fetchMappedCourses(topic.id);
+    } else {
+      fetchMappedCareerPaths(topic.id);
+    }
+  }, [fetchMappedCourses, fetchMappedCareerPaths]);
 
   // Close mapping modal
   const closeMappingModal = useCallback(() => {
     setShowMappingModal(false);
     setSelectedTopicForMapping(null);
     setMappedCourses([]);
+    setMappedCareerPaths([]);
     setSearchTermMapping('');
     setAvailableCourses([]);
+    setMappingType(1);
   }, []);
 
   // Toggle course assignment
@@ -322,68 +409,98 @@ const TopicManagement = () => {
       ) : []);
     } else {
       // Add to mapped courses
-      setMappedCourses(prev => [...(Array.isArray(prev) ? prev : []), { ...course, courseId: course.id }]);
+      setMappedCourses(prev => Array.isArray(prev) ? [...prev, { id: course.id, title: course.title, description: course.description }] : [{ id: course.id, title: course.title, description: course.description }]);
     }
   }, [mappedCourses]);
 
-  // Save course mappings
-  const saveCourseMappings = useCallback(async () => {
+  // Toggle career path assignment
+  const toggleCareerPathAssignment = useCallback((careerPath) => {
+    // Ensure mappedCareerPaths is an array
+    const currentMapped = Array.isArray(mappedCareerPaths) ? mappedCareerPaths : [];
+    
+    const isAssigned = currentMapped.some(mapped => 
+      (mapped.careerPathId || mapped.id) === careerPath.id
+    );
+    
+    if (isAssigned) {
+      // Remove from mapped career paths
+      setMappedCareerPaths(prev => Array.isArray(prev) ? prev.filter(mapped => 
+        (mapped.careerPathId || mapped.id) !== careerPath.id
+      ) : []);
+    } else {
+      // Add to mapped career paths
+      setMappedCareerPaths(prev => Array.isArray(prev) ? [...prev, { id: careerPath.id, title: careerPath.title, description: careerPath.description }] : [{ id: careerPath.id, title: careerPath.title, description: careerPath.description }]);
+    }
+  }, [mappedCareerPaths]);
+
+  // Save mappings (handles both courses and career paths using only assign API)
+  const saveMappings = useCallback(async () => {
     if (!selectedTopicForMapping) return;
 
     try {
-      // Get current mapped courses from API
-      const currentMappings = await getTopicMapping(selectedTopicForMapping.id);
-      // Ensure currentMappings is an array and handle different response formats
-      const currentArray = currentMappings?.items || currentMappings || [];
-      const currentIds = Array.isArray(currentArray) ? currentArray.map(m => m.courseId || m.id) : [];
+      // Get current mappings from API based on type
+      const currentMappings = await getTopicMapping(selectedTopicForMapping.id, mappingType);
+      let currentIds = [];
       
-      // Get new mapped course IDs
-      const newIds = Array.isArray(mappedCourses) ? mappedCourses.map(m => m.courseId || m.id) : [];
+      if (currentMappings && currentMappings.success === true && Array.isArray(currentMappings.ids)) {
+        currentIds = currentMappings.ids;
+      } else if (currentMappings?.items) {
+        currentIds = currentMappings.items.map(item => item.id);
+      } else if (Array.isArray(currentMappings)) {
+        currentIds = currentMappings.map(item => item.id);
+      }
       
-      // Find courses to add (in new but not in current)
+      const newIds = mappingType === 1 
+        ? Array.isArray(mappedCourses) ? mappedCourses.map(course => course.courseId || course.id) : []
+        : Array.isArray(mappedCareerPaths) ? mappedCareerPaths.map(careerPath => careerPath.careerPathId || careerPath.id) : [];
+      
+      // Find items to add (in new but not in current)
       const toAdd = newIds.filter(id => !currentIds.includes(id));
       
-      // Find courses to remove (in current but not in new)
+      // Find items to remove (in current but not in new)
       const toRemove = currentIds.filter(id => !newIds.includes(id));
       
-      console.log('Saving course mappings:', {
+      console.log('Saving mappings:', {
         topicId: selectedTopicForMapping.id,
+        type: mappingType,
         currentIds,
         newIds,
         toAdd,
         toRemove
       });
       
-      // Send all selected courses in a single API call
-      if (toAdd.length > 0) {
+      // Use assign API for both add and delete operations
+      if (toAdd.length > 0 || toRemove.length > 0) {
         const mappingData = {
           topicId: selectedTopicForMapping.id,
-          courseIds: toAdd
+          ids: newIds, // Send the complete list of IDs to assign
+          type: mappingType
         };
-        console.log('Creating mappings for all courses:', mappingData);
-        await createCourseTopicMapping(mappingData);
+        console.log('Assigning mappings:', mappingData);
+        await createTopicMapping(mappingData);
       }
       
-      // Remove mappings
-      for (const courseId of toRemove) {
-        console.log('Removing mapping:', { topicId: selectedTopicForMapping.id, courseId });
-        await deleteCourseTopicMapping(selectedTopicForMapping.id, courseId);
-      }
+      // Show success message
+      const itemType = mappingType === 1 ? 'course' : 'career path';
+      const action = toAdd.length > 0 && toRemove.length > 0 
+        ? 'updated' 
+        : toAdd.length > 0 
+          ? 'assigned' 
+          : 'removed';
+      setSuccessMessage(`Successfully ${action} ${itemType}${toAdd.length > 1 || toRemove.length > 1 ? 's' : ''} for topic "${selectedTopicForMapping.title}"`);
       
       closeMappingModal();
-      // Show success message
-      setSuccessMessage(`Successfully assigned ${toAdd.length} course${toAdd.length === 1 ? '' : 's'} to topic "${selectedTopicForMapping.title}"`);
       
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
       
-      console.log('Course mappings saved successfully');
+      console.log('Mappings saved successfully');
     } catch (err) {
-      console.error('Failed to save course mappings:', err);
+      console.error('Failed to save mappings:', err);
     }
-  }, [selectedTopicForMapping, mappedCourses, getTopicMapping, createCourseTopicMapping, deleteCourseTopicMapping, closeMappingModal]);
+  }, [selectedTopicForMapping, mappedCourses, mappedCareerPaths, mappingType, getTopicMapping, createTopicMapping, closeMappingModal]);
 
   // Handle search in mapping modal
   const handleMappingSearch = useCallback((value) => {
@@ -514,8 +631,8 @@ const TopicManagement = () => {
                     </button>
                     <button
                       onClick={() => openMappingModal(topic)}
-                      className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                      title="Map Courses"
+                      className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                      title="Map Items"
                     >
                       <Users className="w-4 h-4" />
                     </button>
@@ -714,38 +831,67 @@ const TopicManagement = () => {
         </div>
       )}
 
-      {/* Course Mapping Modal */}
+      {/* Course/Career Path Mapping Modal */}
       {showMappingModal && selectedTopicForMapping && (
         <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto transform transition-all">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-green-600" />
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Map Courses to Topic</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    Assign courses to "{selectedTopicForMapping.title}"
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Topic Mapping</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Topic: {selectedTopicForMapping.title}
                   </p>
                 </div>
               </div>
               <button
                 onClick={closeMappingModal}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <X size={20} className="text-gray-500" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6">
+              {/* Type Selector Dropdown */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Mapping Type
+                </label>
+                <select
+                  value={mappingType}
+                  onChange={(e) => {
+                    const newType = parseInt(e.target.value);
+                    setMappingType(newType);
+                    if (newType === 1) {
+                      setMappedCourses([]);
+                      setSearchTermMapping('');
+                      setAvailableCourses([]);
+                      fetchMappedCourses(selectedTopicForMapping.id);
+                    } else {
+                      setMappedCareerPaths([]);
+                      setSearchTermMapping('');
+                      setAvailableCourses([]);
+                      fetchMappedCareerPaths(selectedTopicForMapping.id);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value={1}>Courses</option>
+                  <option value={2}>Career Paths</option>
+                </select>
+              </div>
+
               {/* Search */}
               <div className="mb-6">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    placeholder="Search courses by title..."
+                    placeholder={mappingType === 1 ? "Search courses by title..." : "Search career paths by title..."}
                     value={searchTermMapping}
                     onChange={(e) => handleMappingSearch(e.target.value)}
                     className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
@@ -753,36 +899,36 @@ const TopicManagement = () => {
                 </div>
               </div>
 
-              {/* Mapped Courses */}
+              {/* Mapped Items */}
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  Mapped Courses ({mappedCourses.length})
+                  Mapped {mappingType === 1 ? 'Courses' : 'Career Paths'} ({mappingType === 1 ? mappedCourses.length : mappedCareerPaths.length})
                 </h3>
                 {loadingMappedCourses ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                    <span className="ml-2 text-gray-600">Loading mapped courses...</span>
+                    <span className="ml-2 text-gray-600">Loading mapped {mappingType === 1 ? 'courses' : 'career paths'}...</span>
                   </div>
-                ) : mappedCourses.length === 0 ? (
+                ) : (mappingType === 1 ? mappedCourses.length : mappedCareerPaths.length) === 0 ? (
                   <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600 dark:text-gray-300">No courses mapped yet</p>
+                    <p className="text-gray-600 dark:text-gray-300">No {mappingType === 1 ? 'courses' : 'career paths'} mapped yet</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
-                    {mappedCourses.map((course) => (
+                    {(mappingType === 1 ? mappedCourses : mappedCareerPaths).map((item) => (
                       <div
-                        key={course.courseId || course.id}
-                        className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                        key={item.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
                       >
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white">{course.title}</h4>
-                          {course.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-300">{course.description}</p>
+                          <h4 className="font-medium text-gray-900 dark:text-white">{item.title}</h4>
+                          {item.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
                           )}
                         </div>
                         <button
-                          onClick={() => toggleCourseAssignment(course)}
+                          onClick={() => mappingType === 1 ? toggleCourseAssignment(item) : toggleCareerPathAssignment(item)}
                           className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Remove mapping"
                         >
@@ -798,7 +944,7 @@ const TopicManagement = () => {
               {searchTermMapping && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                    Available Courses ({availableCourses.length})
+                    Available {mappingType === 1 ? 'Courses' : 'Career Paths'} ({availableCourses.length})
                   </h3>
                   {loadingAvailableCourses ? (
                     <div className="flex items-center justify-center py-8">
@@ -828,7 +974,7 @@ const TopicManagement = () => {
                             )}
                           </div>
                           <button
-                            onClick={() => toggleCourseAssignment(course)}
+                            onClick={() => mappingType === 1 ? toggleCourseAssignment(course) : toggleCareerPathAssignment(course)}
                             className={`p-2 rounded-lg transition-colors ${
                               course.isSelected
                                 ? 'text-gray-400 bg-gray-100 dark:bg-gray-600 cursor-not-allowed'
@@ -862,7 +1008,7 @@ const TopicManagement = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={saveCourseMappings}
+                  onClick={saveMappings}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   Save Mappings

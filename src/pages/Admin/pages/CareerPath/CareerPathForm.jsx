@@ -1160,11 +1160,8 @@ const CareerPathForm = ({
               </div>
               
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  💡 <strong>Tip:</strong> Drag and drop level cards to reorder them. Sort order will be updated automatically.
-                </p>
                 <p className="text-sm text-blue-700 mt-2">
-                  📚 <strong>Requirement:</strong> Each level must have at least 3 courses with coursetypeid=2 to proceed.
+                  💡 <strong>Tip:</strong> Drag and drop level cards to reorder them. Sort order will be updated automatically.
                 </p>
               </div>
               

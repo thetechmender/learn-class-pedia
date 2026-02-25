@@ -240,6 +240,24 @@ class AdminApiService {
     return this.request(url);
   }
 
+  // GET all career paths for admin (without pagination)
+  async getAllCareerPathsAdminNoPagination(filters = {}) {
+    const queryParams = new URLSearchParams();
+    
+    // Add filter parameters - only add if they have values
+    if (filters.Title && filters.Title !== '') {
+      queryParams.append('Title', filters.Title);
+    }
+    if (filters.Status && filters.Status !== '') {
+      queryParams.append('Status', filters.Status);
+    }
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${ENDPOINTS.CAREER_PATHS}?${queryString}` : ENDPOINTS.CAREER_PATHS;
+    
+    return this.request(url);
+  }
+
   // GET all course types
   async getAllCourseTypes() {
     return this.request(ENDPOINTS.COURSE_TYPES);

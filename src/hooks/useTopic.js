@@ -116,12 +116,12 @@ export const useTopic = () => {
   // Cache for courses to avoid repeated API calls
   const [coursesCache, setCoursesCache] = useState(null);
 
-  // Get courses mapped to a topic
-  const getTopicMapping = useCallback(async (topicId) => {
+  // Get items mapped to a topic (supports both courses and career paths)
+  const getTopicMapping = useCallback(async (topicId, type = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.get(`/CourseTopicMapping/${topicId}`);
+      const response = await adminApiService.get(`/TopicMapping/${topicId}/${type}`);
       console.log('Get topic mapping response:', response);
       return response;
     } catch (err) {
@@ -130,36 +130,38 @@ export const useTopic = () => {
     } finally {
       setLoading(false);
     }
-  }, [handleError]);
+  }, []);
 
-  // Create course topic mapping
-  const createCourseTopicMapping = useCallback(async (mappingData) => {
+  // Create topic mapping assignment (handles both add and delete)
+  const createTopicMapping = useCallback(async (mappingData) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Creating course topic mapping with payload:', mappingData);
-      const response = await adminApiService.post('/CourseTopicMapping/assign', mappingData);
+      console.log('Creating topic mapping with payload:', mappingData);
+      const response = await adminApiService.post('/TopicMapping/Assign', mappingData);
       console.log('Create mapping response:', response);
       return response;
     } catch (err) {
-      console.error('Create course topic mapping error:', err);
-      handleError('Failed to create course topic mapping', err);
+      console.error('Create topic mapping error:', err);
+      handleError('Failed to create topic mapping', err);
       throw err;
     } finally {
       setLoading(false);
     }
   }, [handleError]);
 
-  // Delete course topic mapping
-  const deleteCourseTopicMapping = useCallback(async (topicId, courseId) => {
+  // Get all career paths for mapping
+  const getAllCareerPathsForMapping = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.delete(`/CourseTopicMapping/${topicId}/${courseId}`);
-      return response;
+      const data = await adminApiService.getAllCareerPathsAdminNoPagination();
+      // Handle response structure where career paths are in an 'items' array
+      const careerPaths = data.items || data || [];
+      return Array.isArray(careerPaths) ? careerPaths : [];
     } catch (err) {
-      handleError('Failed to delete course topic mapping', err);
-      throw err;
+      handleError('Failed to get all career paths for mapping', err);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -184,10 +186,10 @@ export const useTopic = () => {
       setCoursesCache(courseArray);
       return courseArray;
     } catch (err) {
-      handleError('Failed to get all courses for mapping', err);
+      console.error('Failed to get all courses for mapping:', err);
       return [];
     }
-  }, [handleError, coursesCache]);
+  }, [coursesCache]);
 
   // Preload courses immediately when hook initializes
   useEffect(() => {
@@ -212,13 +214,12 @@ export const useTopic = () => {
     updateTopic,
     deleteTopic,
 
-    // Course Topic Mapping functions
+    // Topic Mapping functions (unified for both courses and career paths)
     getTopicMapping,
-    createCourseTopicMapping,
-    deleteCourseTopicMapping,
+    createTopicMapping,
     getAllCoursesForMapping,
+    getAllCareerPathsForMapping,
     coursesCache,
-    setCoursesCache,
 
     // Setters for direct state management if needed
     setTopics,
