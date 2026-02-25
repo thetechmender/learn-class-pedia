@@ -73,7 +73,12 @@ const LmsLecturesDropdown = ({
   };
 
   const getLectureDisplayName = (lecture) => {
-    return lecture.displayName || `${lecture.lmsCourseName} - ${lecture.lmsLectureName}`;
+    return (
+      lecture.title ||
+      lecture.displayName ||
+      lecture.lmsLectureName ||
+      `${lecture.lmsCourseName || ''}${lecture.lmsCourseName ? ' - ' : ''}${lecture.lmsLectureName || ''}`.trim()
+    );
   };
 
   return (
@@ -133,12 +138,19 @@ const LmsLecturesDropdown = ({
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {getLectureDisplayName(lecture)}
                       </p>
-                      <div className="mt-1 text-xs text-gray-500 space-y-1">
-                        <p>Course: {lecture.lmsCourseName}</p>
-                        <p>Module: {lecture.lmsModuleName}</p>
-                        <p>Subject: {lecture.lmsSubjectName}</p>
-                        <p>Lecture: {lecture.lmsLectureName}</p>
-                      </div>
+                      {lecture.source && (
+                        <div className="mt-1 text-xs text-gray-500">
+                          <p>{lecture.source}</p>
+                        </div>
+                      )}
+
+                      {(lecture.lmsCourseName || lecture.lmsModuleName || lecture.lmsSubjectName) && (
+                        <div className="mt-1 text-xs text-gray-500 space-y-1">
+                          {lecture.lmsCourseName && <p>Course: {lecture.lmsCourseName}</p>}
+                          {lecture.lmsModuleName && <p>Module: {lecture.lmsModuleName}</p>}
+                          {lecture.lmsSubjectName && <p>Subject: {lecture.lmsSubjectName}</p>}
+                        </div>
+                      )}
                       {lecture.tags && lecture.tags.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {lecture.tags.slice(0, 3).map((tag, index) => (

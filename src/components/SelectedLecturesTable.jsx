@@ -135,12 +135,6 @@ const SelectedLecturesTable = ({
                       {getLectureDisplayName(lecture)}
                     </h4>
                     
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <p><span className="font-medium">Course:</span> {lecture.lmsCourseName}</p>
-                      <p><span className="font-medium">Module:</span> {lecture.lmsModuleName}</p>
-                      <p><span className="font-medium">Subject:</span> {lecture.lmsSubjectName}</p>
-                      <p><span className="font-medium">Lecture:</span> {lecture.lmsLectureName}</p>
-                    </div>
 
                     {lecture.lectureOverview && (
                       <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
@@ -187,20 +181,6 @@ const SelectedLecturesTable = ({
         ))}
       </div>
 
-      {/* Instructions */}
-      <div className="bg-blue-50 px-4 py-3 border-t border-blue-200">
-        <div className="flex items-start space-x-2">
-          <GripVertical className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-blue-800">
-            <p className="font-medium mb-1">How to reorder lectures:</p>
-            <ul className="text-xs space-y-1 text-blue-700">
-              <li>• Drag and drop lectures to reorder them</li>
-              <li>• Use the arrow buttons for precise positioning</li>
-              <li>• Lecture order determines the course structure</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
