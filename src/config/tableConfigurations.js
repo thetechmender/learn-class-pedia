@@ -55,13 +55,13 @@ export const courseTableColumns = [
     badgeClass: () => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700'
   },
   {
-    key: 'courseLevelName',
-    title: 'Level',
+    key: 'courseTypeName',
+    title: 'Type',
     width: '15%',
     minWidth: '80px',
     type: 'badge',
     align: 'left',
-    badgeClass: () => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-300 dark:border-orange-700'
+    badgeClass: () => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 border-indigo-300 dark:border-indigo-700'
   },
   {
     key: 'actions',

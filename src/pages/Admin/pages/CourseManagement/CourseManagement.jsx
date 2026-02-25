@@ -5,9 +5,8 @@ import { useCourseFilters } from '../../../../hooks/useCourseFilters';
 import { useModalState } from '../../../../hooks/useModalState';
 import { useToast } from '../../../../hooks/useToast';
 import { COURSE_MANAGEMENT_CONSTANTS } from '../../../../constants/courseManagement';
-import { calculateCourseStats, filterCoursesBySearch } from '../../../../utils/courseUtils';
+import { filterCoursesBySearch } from '../../../../utils/courseUtils';
 import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2, Star, MessageSquare, Clock, Tag, Layers, Video, FileText } from 'lucide-react';
-import GenericDropdown from '../../../../components/GenericDropdown';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 import CourseModal from '../../../../components/CourseModal';
 import UniversalVirtualizedTable from '../../../../components/UniversalVirtualizedTable';
@@ -37,6 +36,11 @@ const CourseManagement = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredCourses, setFilteredCourses] = useState([]);
+  const [courseTypeTotals, setCourseTypeTotals] = useState({
+    basic: undefined,
+    intermediate: undefined,
+    advanced: undefined
+  });
 
   // Clear both modal and global errors when closing modal
   const handleCloseModal = () => {
@@ -76,38 +80,123 @@ const CourseManagement = () => {
     [filteredCourses, debouncedSearchTerm]
   );
 
-  const stats = useMemo(() => 
-    calculateCourseStats(filteredCourses),
-    [filteredCourses]
-  );
+  const typeCounts = useMemo(() => {
+    const counts = {
+      advanced: 0,
+      intermediate: 0,
+      basic: 0
+    };
+
+    for (const course of filteredCourses || []) {
+      const typeId = course?.courseTypeId ?? course?.courseTypeID ?? course?.typeId;
+      const typeName = (course?.courseTypeName || course?.courseTypeTitle || '').toString().toLowerCase();
+
+      if (typeId === 1 || typeName.includes('advanced')) counts.advanced += 1;
+      else if (typeId === 2 || typeName.includes('intermediate')) counts.intermediate += 1;
+      else if (typeId === 3 || typeName.includes('basic')) counts.basic += 1;
+    }
+
+    return counts;
+  }, [filteredCourses]);
+
+  const handleCourseTypeSelect = useCallback(async (courseTypeId) => {
+    const updatedFilters = {
+      ...filters,
+      page: 1,
+      courseTypeId
+    };
+
+    setFilters(updatedFilters);
+
+    if (filtersLoading) return;
+
+    setFiltersLoading(true);
+    try {
+      const activeFilters = Object.fromEntries(
+        Object.entries(updatedFilters).filter(([key, value]) => {
+          if (key === 'page' || key === 'pageSize') return true;
+          return value !== '' && value !== 0 && value !== null && value !== undefined;
+        })
+      );
+
+      const coursesData = await getAllCoursesAdmin(activeFilters);
+      const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
+      setFilteredCourses(coursesArray);
+
+      setCourseTypeTotals({
+        basic: coursesData?.totalBasicCount,
+        intermediate: coursesData?.totalIntermediateCount,
+        advanced: coursesData?.totalAdvanceCount
+      });
+
+      if (coursesData?.page !== undefined) {
+        setPaginationInfo({
+          page: coursesData.page,
+          pageSize: coursesData.pageSize,
+          totalCount: coursesData.totalCount || coursesArray.length
+        });
+      }
+    } catch (error) {
+      showToast('Failed to apply course type filter', 'error');
+    } finally {
+      setFiltersLoading(false);
+    }
+  }, [filters, filtersLoading, getAllCoursesAdmin, setCourseTypeTotals, setFilters, setFilteredCourses, setFiltersLoading, setPaginationInfo, showToast]);
 
   // Memoized stats for header
-  const statsCards = useMemo(() => [
-    {
-      label: 'Total',
-      value: stats.totalCourses,
-      icon: <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
-      iconBg: 'bg-blue-100 dark:bg-blue-900'
-    },
-    {
-      label: 'Active',
-      value: stats.activeCourses,
-      icon: <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />,
-      iconBg: 'bg-green-100 dark:bg-green-900'
-    },
-    {
-      label: 'Paid',
-      value: stats.paidCourses,
-      icon: <DollarSign className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
-      iconBg: 'bg-purple-100 dark:bg-purple-900'
-    },
-    {
-      label: 'Free',
-      value: stats.freeCourses,
-      icon: <Users className="w-4 h-4 text-orange-600 dark:text-orange-400" />,
-      iconBg: 'bg-orange-100 dark:bg-orange-900'
-    }
-  ], [stats]);
+  const statsCards = useMemo(() => {
+    const selectedTypeId = filters.courseTypeId;
+
+    const makeCard = (typeId, label, value, icon, iconBg) => ({
+      label,
+      value,
+      icon,
+      iconBg,
+      selected: selectedTypeId === typeId,
+      onClick: () => {
+        const nextTypeId = selectedTypeId === typeId ? 0 : typeId;
+        handleCourseTypeSelect(nextTypeId);
+      }
+    });
+
+    return [
+      makeCard(
+        0,
+        'All Courses',
+        paginationInfo.totalCount || 0,
+        <Users className="w-4 h-4 text-orange-600 dark:text-orange-400" />,
+        'bg-orange-100 dark:bg-orange-900'
+      ),
+      makeCard(
+        3,
+        'Basic Course',
+        courseTypeTotals.basic ?? typeCounts.basic,
+        <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+        'bg-blue-100 dark:bg-blue-900'
+      ),
+      makeCard(
+        2,
+        'Intermediate Course',
+        courseTypeTotals.intermediate ?? typeCounts.intermediate,
+        <Layers className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
+        'bg-purple-100 dark:bg-purple-900'
+      ),
+      makeCard(
+        1,
+        'Advanced Course',
+        courseTypeTotals.advanced ?? typeCounts.advanced,
+        <Award className="w-4 h-4 text-green-600 dark:text-green-400" />,
+        'bg-green-100 dark:bg-green-900'
+      )
+    ];
+  }, [courseTypeTotals.advanced, courseTypeTotals.basic, courseTypeTotals.intermediate, filters.courseTypeId, paginationInfo.totalCount, typeCounts]);
+
+  const displayTotalCount = useMemo(() => {
+    if (filters.courseTypeId === 3) return courseTypeTotals.basic ?? paginationInfo.totalCount ?? 0;
+    if (filters.courseTypeId === 2) return courseTypeTotals.intermediate ?? paginationInfo.totalCount ?? 0;
+    if (filters.courseTypeId === 1) return courseTypeTotals.advanced ?? paginationInfo.totalCount ?? 0;
+    return paginationInfo.totalCount ?? 0;
+  }, [courseTypeTotals.advanced, courseTypeTotals.basic, courseTypeTotals.intermediate, filters.courseTypeId, paginationInfo.totalCount]);
   useEffect(() => {
     const fetchDropdownData = async () => {
       setDropdownLoading(prev => ({ ...prev, categories: true }));
@@ -414,15 +503,28 @@ const CourseManagement = () => {
   };
 
   // Apply filters with optimized loading state
-  const applyFilters = useCallback(async () => {
+  const applyFilters = useCallback(async (overrideFilters) => {
     if (filtersLoading) return;
     
     setFiltersLoading(true);
     try {
-      const activeFilters = getActiveFilters();
+      const effectiveFilters = overrideFilters || filters;
+      const activeFilters = Object.fromEntries(
+        Object.entries(effectiveFilters).filter(([key, value]) => {
+          if (key === 'page' || key === 'pageSize') return true;
+          return value !== '' && value !== 0 && value !== null && value !== undefined;
+        })
+      );
+
       const coursesData = await getAllCoursesAdmin(activeFilters);
       const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
       setFilteredCourses(coursesArray);
+
+      setCourseTypeTotals({
+        basic: coursesData?.totalBasicCount,
+        intermediate: coursesData?.totalIntermediateCount,
+        advanced: coursesData?.totalAdvanceCount
+      });
       
       // Update pagination info from response
       if (coursesData?.page !== undefined) {
@@ -437,49 +539,33 @@ const CourseManagement = () => {
     } finally {
       setFiltersLoading(false);
     }
-  }, [filtersLoading, getActiveFilters, getAllCoursesAdmin, showToast, setFiltersLoading, setFilters, setFilteredCourses, setPaginationInfo]);
+  }, [filtersLoading, filters, getAllCoursesAdmin, showToast, setCourseTypeTotals, setFiltersLoading, setFilteredCourses, setPaginationInfo]);
   const handlePageChange = useCallback(async (newPage) => {
     if (newPage < 1) return;
     
     const updatedFilters = { ...filters, page: newPage };
     setFilters(updatedFilters);
-    
-    try {
-      setFiltersLoading(true);
-      const activeFilters = Object.fromEntries(
-        Object.entries(updatedFilters).filter(([key, value]) => {
-          if (key === 'page' || key === 'pageSize') return true;
-          return value !== '' && value !== 0 && value !== null && value !== undefined;
-        })
-      );
-      
-      const coursesData = await getAllCoursesAdmin(activeFilters);
-      const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
-      setFilteredCourses(coursesArray);
-      
-      if (coursesData?.page !== undefined) {
-        setPaginationInfo({
-          page: coursesData.page,
-          pageSize: coursesData.pageSize,
-          totalCount: coursesData.totalCount || coursesArray.length
-        });
-      }
-    } catch (error) {
-      showToast('Failed to load page', 'error');
-    } finally {
-      setFiltersLoading(false);
-    }
-  }, [filters, getAllCoursesAdmin, showToast]);
+
+    await applyFilters(updatedFilters);
+  }, [applyFilters, filters, setFilters]);
+
+  const handlePageSizeChange = useCallback(async (newPageSize) => {
+    const updatedFilters = {
+      ...filters,
+      page: 1,
+      pageSize: newPageSize
+    };
+
+    setFilters(updatedFilters);
+    setPaginationInfo(prev => ({ ...prev, page: 1, pageSize: newPageSize }));
+    await applyFilters(updatedFilters);
+  }, [applyFilters, filters, setFilters, setPaginationInfo]);
 
   // Load filtered courses on component mount and when filters change
   useEffect(() => {
     applyFilters();
    
   }, []); // Only run on mount
-
-  if (filtersLoading) {
-    return <AdminPageLayout loading={true} skeletonType="table" />;
-  }
 
   if (error && !modalState.isOpen) {
     return (
@@ -505,6 +591,25 @@ const CourseManagement = () => {
       stats={statsCards}
       actions={
         <>
+          <div className="relative w-full sm:w-72 lg:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search courses..."
+              className="w-full pl-9 pr-10 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
           <button
             onClick={() => setFiltersExpanded(!filtersExpanded)}
             className={`flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 font-medium text-sm ${
@@ -562,7 +667,7 @@ const CourseManagement = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
                 <input
@@ -570,16 +675,6 @@ const CourseManagement = () => {
                   value={filters.title}
                   onChange={(e) => handleFilterChange('title', e.target.value)}
                   placeholder="Search by title..."
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subtitle</label>
-                <input
-                  type="text"
-                  value={filters.subtitle}
-                  onChange={(e) => handleFilterChange('subtitle', e.target.value)}
-                  placeholder="Search by subtitle..."
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
                 />
               </div>
@@ -594,30 +689,6 @@ const CourseManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Type</label>
-                <GenericDropdown
-                  items={courseTypes.map(type => ({ value: type.id, label: type.description }))}
-                  value={filters.courseTypeId}
-                  onChange={(value) => handleFilterChange('courseTypeId', value)}
-                  placeholder="Select course type..."
-                  className="w-full"
-                  displayField="label"
-                  valueField="value"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Level</label>
-                <GenericDropdown
-                  items={courseLevels.map(level => ({ value: level.id, label: level.title }))}
-                  value={filters.courseLevelId}
-                  onChange={(value) => handleFilterChange('courseLevelId', value)}
-                  placeholder="Select course level..."
-                  className="w-full"
-                  displayField="label"
-                  valueField="value"
-                />
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Is Paid</label>
                 <select
                   value={filters.isPaid}
@@ -628,26 +699,6 @@ const CourseManagement = () => {
                   <option value="true">Yes</option>
                   <option value="false">No</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price</label>
-                <input
-                  type="text"
-                  value={filters.price}
-                  onChange={(e) => handleFilterChange('price', e.target.value)}
-                  placeholder="Enter price..."
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Discounted Price</label>
-                <input
-                  type="text"
-                  value={filters.discountedPrice}
-                  onChange={(e) => handleFilterChange('discountedPrice', e.target.value)}
-                  placeholder="Enter discounted price..."
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
-                />
               </div>
             </div>
             <div className="flex justify-end mt-4">
@@ -661,24 +712,26 @@ const CourseManagement = () => {
           </div>
         </div>
       )}
-      <UniversalVirtualizedTable
-        data={searchFilteredCourses}
-        columns={courseTableColumns}
-        onEdit={handleEditCourse}
-        onDelete={handleDeleteCourse}
-        onViewDetails={handleViewDetails}
-        onToggleExpand={handleToggleExpand}
-        expandedItems={expandedCourses}
-        itemDetails={courseDetails}
-        detailsLoading={detailsLoading}
-        loading={filtersLoading}
-        searchTerm={debouncedSearchTerm}
-        itemHeight={COURSE_MANAGEMENT_CONSTANTS.ITEM_HEIGHT}
-        containerHeight={COURSE_MANAGEMENT_CONSTANTS.CONTAINER_HEIGHT}
-        bufferSize={searchFilteredCourses.length}
-        expandable={true}
-        renderExpandedContent={(course, details) => (
-          <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+      <div className="mt-6 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="p-2 sm:p-4">
+          <UniversalVirtualizedTable
+            data={searchFilteredCourses}
+            columns={courseTableColumns}
+            onEdit={handleEditCourse}
+            onDelete={handleDeleteCourse}
+            onViewDetails={handleViewDetails}
+            onToggleExpand={handleToggleExpand}
+            expandedItems={expandedCourses}
+            itemDetails={courseDetails}
+            detailsLoading={detailsLoading}
+            loading={filtersLoading}
+            searchTerm={debouncedSearchTerm}
+            itemHeight={COURSE_MANAGEMENT_CONSTANTS.ITEM_HEIGHT}
+            containerHeight={COURSE_MANAGEMENT_CONSTANTS.CONTAINER_HEIGHT}
+            bufferSize={searchFilteredCourses.length}
+            expandable={true}
+            renderExpandedContent={(course, details) => (
+              <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
             {/* Course Header with Thumbnail and Basic Info */}
             <div className="flex items-start gap-4">
               {/* Thumbnail */}
@@ -996,7 +1049,7 @@ const CourseManagement = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {details.reviews.map((review, index) => (
                     <div key={review.id || index} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-yellow-200 dark:border-yellow-700">
@@ -1024,55 +1077,77 @@ const CourseManagement = () => {
             )}
           </div>
         )}
-        emptyMessage="No courses found"
-        loadingMessage="Loading courses..."
-      />
-
-      {/* Enhanced Pagination */}
-      <div className="mt-8 flex flex-col sm:flex-row items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="text-sm text-gray-700 dark:text-gray-300 mb-4 sm:mb-0">
-          <span className="font-medium text-gray-900 dark:text-white">{searchFilteredCourses?.length || 0}</span> of{' '}
-          <span className="font-medium text-gray-900 dark:text-white">{paginationInfo.totalCount || 0}</span> courses
-          {searchTerm && (
-            <span className="ml-2 text-blue-600 dark:text-blue-400">
-              (filtered)
-            </span>
-          )}
+            emptyMessage="No courses found"
+            loadingMessage="Loading courses..."
+          />
         </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handlePageChange(paginationInfo.page - 1)}
-            disabled={paginationInfo.page === 1}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
-              paginationInfo.page === 1 
-                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm'
-            }`}
-          >
-            <div className="flex items-center space-x-1">
-              <ChevronDown className="w-4 h-4 rotate-90" />
-              <span>Previous</span>
+
+        {/* Enhanced Pagination */}
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/40 p-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between">
+            <div className="text-sm text-gray-700 dark:text-gray-300 mb-4 sm:mb-0">
+              <span className="font-medium text-gray-900 dark:text-white">{searchFilteredCourses?.length || 0}</span> of{' '}
+              <span className="font-medium text-gray-900 dark:text-white">{displayTotalCount}</span> courses
+              {searchTerm && (
+                <span className="ml-2 text-blue-600 dark:text-blue-400">
+                  (filtered)
+                </span>
+              )}
             </div>
-          </button>
-          
-          <div className="flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl font-medium">
-            <span>Page {paginationInfo.page}</span>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2">
+              <div className="flex items-center justify-between sm:justify-start gap-2">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Page size</span>
+                <select
+                  value={paginationInfo.pageSize}
+                  onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
+                  className="px-3 py-2 text-sm rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handlePageChange(paginationInfo.page - 1)}
+                  disabled={paginationInfo.page === 1}
+                  className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
+                    paginationInfo.page === 1 
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center space-x-1">
+                    <ChevronDown className="w-4 h-4 rotate-90" />
+                    <span>Previous</span>
+                  </div>
+                </button>
+                
+                <div className="flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl font-medium">
+                  <span>Page {paginationInfo.page}</span>
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(paginationInfo.page + 1)}
+                  disabled={(paginationInfo.page * paginationInfo.pageSize) >= displayTotalCount}
+                  className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
+                    (paginationInfo.page * paginationInfo.pageSize) >= displayTotalCount
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Next</span>
+                    <ChevronDown className="w-4 h-4 -rotate-90" />
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
-          
-          <button
-            onClick={() => handlePageChange(paginationInfo.page + 1)}
-            disabled={searchFilteredCourses?.length < paginationInfo.pageSize}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
-              searchFilteredCourses?.length < paginationInfo.pageSize
-                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm'
-            }`}
-          >
-            <div className="flex items-center space-x-1">
-              <span>Next</span>
-              <ChevronDown className="w-4 h-4 -rotate-90" />
-            </div>
-          </button>
         </div>
       </div>
 

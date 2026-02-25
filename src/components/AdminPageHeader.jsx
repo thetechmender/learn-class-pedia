@@ -43,20 +43,41 @@ const AdminPageHeader = ({
         
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-6">
             {stats.map((stat, index) => (
-              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div
+                key={index}
+                onClick={stat.onClick}
+                role={stat.onClick ? 'button' : undefined}
+                tabIndex={stat.onClick ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (!stat.onClick) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    stat.onClick();
+                  }
+                }}
+                className={`bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border transition-all duration-200 ${
+                  stat.selected
+                    ? 'border-blue-400 dark:border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900/40'
+                    : 'border-gray-100 dark:border-gray-700'
+                } ${
+                  stat.onClick
+                    ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5'
+                    : ''
+                }`}
+              >
                 <div className="flex items-center justify-between">
-                  <div className={`${stat.iconBg} p-2 rounded-lg`}>
-                    <div className="w-4 h-4">
+                  <div className={`${stat.iconBg} p-3 rounded-xl`}>
+                    <div className="w-5 h-5">
                       {stat.icon}
                     </div>
                   </div>
                   <div className="text-right">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {stat.value}
                     </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-tight break-words">
                       {stat.label}
                     </p>
                   </div>
