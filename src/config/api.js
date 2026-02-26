@@ -12,6 +12,7 @@ export const API_CONFIG = {
 // API Endpoints
 export const ENDPOINTS = {
   COURSES: '/courses',
+  COURSE_CREATE: '/courses/CreateCourse',
   COURSES_PAGINATED: '/coursedata/paginated',
   COURSE_HIERARCHY: '/CourseData/hierarchy',
   COURSE_BY_ID: (id) => `/courses/${id}`,
@@ -66,7 +67,7 @@ export const ENDPOINTS = {
   EMAIL_TEMPLATE_UPDATE: (id) => `/EmailTemplate/${id}`,
   EMAIL_TEMPLATE_DELETE: (id) => `/EmailTemplate/${id}`,
   // LMS Lectures endpoints
-  LMS_LECTURES_SEARCH: '/admin/lms-lectures/search',
+  LMS_LECTURES_SEARCH: '/courses/lms-lectures/search',
   // Reviews endpoints
   CAREER_PATH_REVIEWS: (id) => `/Review/careerpath/${id}`,
   COURSE_REVIEWS: (id) => `/Review/course/${id}`,

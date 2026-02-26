@@ -4,13 +4,16 @@ import apiHelper from './apiHelper';
 class LmsLecturesService {
   async searchLmsLectures(params = {}) {
     try {
-      const { page = 1, pageSize = 50, search = '' } = params;
+      const { page = 1, pageSize = 50, search = '', courseTypeId } = params;
       
       // Build query string
       const queryParams = new URLSearchParams();
       if (page) queryParams.append('page', page);
       if (pageSize) queryParams.append('pageSize', pageSize);
       if (search) queryParams.append('search', search);
+      if (courseTypeId !== undefined && courseTypeId !== null && courseTypeId !== '') {
+        queryParams.append('courseTypeId', courseTypeId);
+      }
       
       const queryString = queryParams.toString();
       const endpoint = `${ENDPOINTS.LMS_LECTURES_SEARCH}${queryString ? `?${queryString}` : ''}`;

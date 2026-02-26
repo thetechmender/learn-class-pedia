@@ -840,7 +840,7 @@ class AdminApiService {
 
   // Create course with file upload (FormData)
   async createCourseWithFile(formData) {
-    const url = `${this.baseURL}${ENDPOINTS.COURSES_ADMIN}`;
+    const url = `${this.baseURL}${ENDPOINTS.COURSE_CREATE}`;
     
     const config = {
       method: 'POST',

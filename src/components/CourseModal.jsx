@@ -2,6 +2,7 @@ import  { useState, useEffect } from 'react';
 import {
   XCircle,
   Trash2,
+  Plus,
   Save,
   DollarSign,
   Image,
@@ -48,9 +49,17 @@ const CourseModal = ({
     badgeIds: [],
     mapExistingLectures: false,
     mappedLectures: [],
+    sections: [],
     thumbnailFile: null,
     promoVideoFile: null
   });
+
+  const courseTypeIdNumber = Number(formData.courseTypeId);
+  const shouldShowExistingCreationCheckbox = courseTypeIdNumber !== 1 && courseTypeIdNumber !== 2;
+  const shouldShowLectureMapping =
+    (courseTypeIdNumber === 1 || courseTypeIdNumber === 2)
+      ? courseTypeIdNumber > 0
+      : formData.mapExistingLectures === true && courseTypeIdNumber > 0;
 
   const [formErrors, setFormErrors] = useState({});
 
@@ -106,8 +115,9 @@ const CourseModal = ({
         thumbnailUrl: course.thumbnailUrl || '',
         promoVideoUrl: course.promoVideoUrl || '',
         badgeIds: course.badgeIds || [],
-        mapExistingLectures: existingLectures.length > 0,
+        mapExistingLectures: Boolean(existingLectures.length > 0),
         mappedLectures: existingLectures,
+        sections: [],
         thumbnailFile: null,
         promoVideoFile: null
       });
@@ -129,11 +139,121 @@ const CourseModal = ({
         badgeIds: [],
         mapExistingLectures: false,
         mappedLectures: [],
+        sections: [],
         thumbnailFile: null,
         promoVideoFile: null
       });
     }
   }, [course, mode]);
+
+  const createLectureData = (lecture, sortOrder) => {
+    const mappingId = lecture.lmscourseMappingId || lecture.id;
+    return {
+      id: mappingId,
+      title: lecture.lmsLectureName || lecture.title || '',
+      source: lecture.source,
+      lectureType: 1,
+      isFreePreview: false,
+      sortOrder,
+      lmscourseMappingId: mappingId,
+      displayName: lecture.displayName || lecture.lmsLectureName || lecture.title,
+      lmsCourseId: lecture.lmsCourseId,
+      lmsCourseName: lecture.lmsCourseName || '',
+      lmsModuleId: lecture.lmsModuleId,
+      lmsModuleName: lecture.lmsModuleName || '',
+      lmsSubjectId: lecture.lmsSubjectId,
+      lmsSubjectName: lecture.lmsSubjectName,
+      lmsLectureId: lecture.lmsLectureId,
+      lmsLectureName: lecture.lmsLectureName || lecture.title,
+      lectureOverview: lecture.lectureOverview,
+      lectureDescription: lecture.lectureDescription,
+      tags: lecture.tags
+    };
+  };
+
+  const createEmptySection = (sortOrder) => ({
+    moduleName: sortOrder === 0 ? 'Module 1' : '',
+    title: `Section ${sortOrder + 1}`,
+    description: '',
+    sortOrder,
+    lectures: []
+  });
+
+  const handleAddSection = () => {
+    setFormData((prev) => {
+      const nextSections = [...(prev.sections || [])];
+      nextSections.push(createEmptySection(nextSections.length));
+      return { ...prev, sections: nextSections };
+    });
+  };
+
+  const handleRemoveSection = (sectionIndex) => {
+    setFormData((prev) => {
+      const remaining = (prev.sections || []).filter((_, idx) => idx !== sectionIndex);
+      const reSorted = remaining.map((section, idx) => ({
+        ...section,
+        sortOrder: idx,
+        title: section.title || `Section ${idx + 1}`
+      }));
+      return { ...prev, sections: reSorted.length > 0 ? reSorted : [createEmptySection(0)] };
+    });
+  };
+
+  const handleSectionFieldChange = (sectionIndex, field, value) => {
+    setFormData((prev) => {
+      const nextSections = [...(prev.sections || [])];
+      const current = nextSections[sectionIndex] || createEmptySection(sectionIndex);
+      nextSections[sectionIndex] = { ...current, [field]: value };
+      return { ...prev, sections: nextSections };
+    });
+  };
+
+  const handleSectionLectureSelect = (sectionIndex, lecture) => {
+    const mappingId = lecture.lmscourseMappingId || lecture.id;
+    setFormData((prev) => {
+      const nextSections = [...(prev.sections || [])];
+      const current = nextSections[sectionIndex] || createEmptySection(sectionIndex);
+      const lectures = [...(current.lectures || [])];
+
+      const alreadySelected = lectures.some((l) => (l.lmscourseMappingId || l.id) === mappingId);
+      if (alreadySelected) return prev;
+
+      lectures.push(createLectureData(lecture, lectures.length));
+      nextSections[sectionIndex] = { ...current, lectures };
+      return { ...prev, sections: nextSections };
+    });
+  };
+
+  const handleSectionLectureRemove = (sectionIndex, lectureId) => {
+    setFormData((prev) => {
+      const nextSections = [...(prev.sections || [])];
+      const current = nextSections[sectionIndex];
+      if (!current) return prev;
+
+      const remaining = (current.lectures || []).filter((l) => (l.lmscourseMappingId || l.id) !== lectureId);
+      const reSorted = remaining.map((l, idx) => ({ ...l, sortOrder: idx }));
+
+      nextSections[sectionIndex] = { ...current, lectures: reSorted };
+      return { ...prev, sections: nextSections };
+    });
+  };
+
+  const handleSectionLectureReorder = (sectionIndex, dragIndex, dropIndex) => {
+    setFormData((prev) => {
+      const nextSections = [...(prev.sections || [])];
+      const current = nextSections[sectionIndex];
+      if (!current) return prev;
+
+      const next = [...(current.lectures || [])];
+      const dragged = next[dragIndex];
+      next.splice(dragIndex, 1);
+      next.splice(dropIndex, 0, dragged);
+      const reSorted = next.map((l, idx) => ({ ...l, sortOrder: idx }));
+
+      nextSections[sectionIndex] = { ...current, lectures: reSorted };
+      return { ...prev, sections: nextSections };
+    });
+  };
 
   const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
@@ -148,10 +268,41 @@ const CourseModal = ({
         ...prev,
         [name]: type === 'checkbox' ? checked : value
       };
+
+      if (name === 'courseTypeId') {
+        const nextTypeId = Number(value);
+
+        if (nextTypeId === 1 || nextTypeId === 2 || nextTypeId === 3) {
+          newData.mapExistingLectures = true;
+        }
+
+        if (nextTypeId === 1) {
+          newData.sections = prev.sections && prev.sections.length > 0 ? prev.sections : [createEmptySection(0)];
+          newData.mappedLectures = [];
+        }
+
+        if (nextTypeId === 2 || nextTypeId === 3) {
+          newData.sections = [];
+        }
+
+        if (!(nextTypeId === 1 || nextTypeId === 2 || nextTypeId === 3)) {
+          newData.mapExistingLectures = false;
+          newData.mappedLectures = [];
+          newData.sections = [];
+        }
+      }
+
+      if (name === 'mapExistingLectures') {
+        newData.mapExistingLectures = checked === true;
+      }
       if (name === 'isPaid' && !checked) {
         newData.price = '0';
         newData.discountedPrice = '0';
         newData.currencyCode = 'USD';
+      }
+
+      if (name === 'mapExistingLectures' && !checked) {
+        newData.mappedLectures = [];
       }
       
       return newData;
@@ -168,26 +319,14 @@ const CourseModal = ({
       const alreadySelected = (prev.mappedLectures || []).some((l) => (l.lmscourseMappingId || l.id) === mappingId);
       if (alreadySelected) return prev;
 
-      const lectureData = {
-        id: mappingId,
-        title: lecture.lmsLectureName || lecture.title || '',
-        lectureType: 1,
-        isFreePreview: false,
-        sortOrder: (prev.mappedLectures || []).length,
-        lmscourseMappingId: mappingId,
-        displayName: lecture.displayName || lecture.lmsLectureName || lecture.title,
-        lmsCourseId: lecture.lmsCourseId,
-        lmsCourseName: lecture.lmsCourseName || '',
-        lmsModuleId: lecture.lmsModuleId,
-        lmsModuleName: lecture.lmsModuleName || '',
-        lmsSubjectId: lecture.lmsSubjectId,
-        lmsSubjectName: lecture.lmsSubjectName,
-        lmsLectureId: lecture.lmsLectureId,
-        lmsLectureName: lecture.lmsLectureName || lecture.title,
-        lectureOverview: lecture.lectureOverview,
-        lectureDescription: lecture.lectureDescription,
-        tags: lecture.tags
-      };
+      const lectureData = createLectureData(lecture, (prev.mappedLectures || []).length);
+
+      if (Number(prev.courseTypeId) === 3) {
+        return {
+          ...prev,
+          mappedLectures: [{ ...lectureData, sortOrder: 0 }]
+        };
+      }
 
       return {
         ...prev,
@@ -299,119 +438,83 @@ const CourseModal = ({
       return;
     }
 
-    let submitData;
-    let isFormData = false;
-    
-    // If there's a file, use FormData
-    if (formData.thumbnailFile || formData.promoVideoFile) {
-      isFormData = true;
-      submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('subtitle', formData.subtitle);
-      submitData.append('description', formData.description);
-      submitData.append('overview', formData.overview);
-      submitData.append('languageCode', formData.languageCode);
-      submitData.append('courseTypeId', parseInt(formData.courseTypeId));
-      submitData.append('categoryId', parseInt(formData.categoryId));
-      submitData.append('isPaid', formData.isPaid);
-      submitData.append('price', parseFloat(formData.price) || 0);
-      submitData.append('discountedPrice', parseFloat(formData.discountedPrice) || 0);
-      submitData.append('currencyCode', formData.currencyCode);
-      submitData.append('promoVideoUrl', formData.promoVideoUrl);
-      submitData.append('IsThumbnailRemoved', formData.IsThumbnailRemoved || false);
-      submitData.append('IsPromoVideoRemoved', formData.IsPromoVideoRemoved || false);
+    const submitData = new FormData();
 
-      
-      // Add badges array (always include, even if empty)
-      if (formData.badgeIds && formData.badgeIds.length > 0) {
-        formData.badgeIds.forEach((badgeId, index) => {
-          submitData.append(`badgeIds[${index}]`, parseInt(badgeId));
+    submitData.append('title', formData.title);
+    submitData.append('subtitle', formData.subtitle || '');
+    submitData.append('description', formData.description || '');
+    submitData.append('overview', formData.overview || '');
+    submitData.append('languageCode', formData.languageCode);
+    submitData.append('courseTypeId', String(parseInt(formData.courseTypeId)));
+    submitData.append('categoryId', String(parseInt(formData.categoryId)));
+    submitData.append('isNew', String(formData.mapExistingLectures !== true));
+    submitData.append('isPaid', String(!!formData.isPaid));
+    submitData.append('price', String(parseFloat(formData.price) || 0));
+    submitData.append('discountedPrice', String(parseFloat(formData.discountedPrice) || 0));
+    submitData.append('currencyCode', formData.currencyCode || '');
+    submitData.append('promoVideoUrl', formData.promoVideoUrl || '');
+    submitData.append('IsThumbnailRemoved', String(!!formData.IsThumbnailRemoved));
+    submitData.append('IsPromoVideoRemoved', String(!!formData.IsPromoVideoRemoved));
+
+    if (formData.badgeIds && formData.badgeIds.length > 0) {
+      formData.badgeIds.forEach((badgeId, index) => {
+        submitData.append(`badgeIds[${index}]`, String(parseInt(badgeId)));
+      });
+    }
+
+    if (parseInt(formData.courseTypeId) === 1) {
+      const sections = formData.sections && formData.sections.length > 0 ? formData.sections : [createEmptySection(0)];
+
+      sections.forEach((section, sectionIndex) => {
+        submitData.append(`sections[${sectionIndex}].moduleName`, section.moduleName || '');
+        submitData.append(`sections[${sectionIndex}].title`, section.title || `Section ${sectionIndex + 1}`);
+        submitData.append(`sections[${sectionIndex}].description`, section.description || '');
+        submitData.append(`sections[${sectionIndex}].sortOrder`, String(section.sortOrder ?? sectionIndex));
+
+        (section.lectures || []).forEach((lecture, lectureIndex) => {
+          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].title`, lecture.title || '');
+          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lectureType`, String(lecture.lectureType || 1));
+          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].isFreePreview`, String(!!lecture.isFreePreview));
+          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].sortOrder`, String(lecture.sortOrder ?? lectureIndex));
+          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lmscourseMappingId`, String(lecture.lmscourseMappingId || lecture.id || 0));
+          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].source`, String(lecture.source || ''));
+        });
+      });
+    } else if (formData.mapExistingLectures && formData.mappedLectures && formData.mappedLectures.length > 0) {
+      if (parseInt(formData.courseTypeId) === 3) {
+        formData.mappedLectures.forEach((lecture, index) => {
+          submitData.append(`directLectures[${index}].title`, lecture.title || '');
+          submitData.append(`directLectures[${index}].lectureType`, String(lecture.lectureType || 1));
+          submitData.append(`directLectures[${index}].isFreePreview`, String(!!lecture.isFreePreview));
+          submitData.append(`directLectures[${index}].sortOrder`, String(lecture.sortOrder ?? index));
+          submitData.append(`directLectures[${index}].lmscourseMappingId`, String(lecture.lmscourseMappingId || lecture.id || 0));
+          submitData.append(`directLectures[${index}].source`, String(lecture.source || ''));
         });
       } else {
-        // Always include badges, even if empty array
-        submitData.append('badgeIds', JSON.stringify([]));
-      }
+        submitData.append('sections[0].moduleName', '');
+        submitData.append('sections[0].title', 'Section 1');
+        submitData.append('sections[0].description', '');
+        submitData.append('sections[0].sortOrder', '0');
 
-      if (formData.mapExistingLectures && formData.mappedLectures && formData.mappedLectures.length > 0) {
-        if (parseInt(formData.courseTypeId) === 3) {
-          formData.mappedLectures.forEach((lecture, index) => {
-            submitData.append(`directLectures[${index}].title`, lecture.title || '');
-            submitData.append(`directLectures[${index}].lectureType`, lecture.lectureType || 1);
-            submitData.append(`directLectures[${index}].isFreePreview`, lecture.isFreePreview || false);
-            submitData.append(`directLectures[${index}].sortOrder`, lecture.sortOrder ?? index);
-            submitData.append(`directLectures[${index}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
-          });
-        } else {
-          submitData.append('sections[0].moduleName', parseInt(formData.courseTypeId) === 1 ? 'Module 1' : '');
-          submitData.append('sections[0].title', 'Section 1');
-          submitData.append('sections[0].description', '');
-          submitData.append('sections[0].sortOrder', 0);
-
-          formData.mappedLectures.forEach((lecture, index) => {
-            submitData.append(`sections[0].lectures[${index}].title`, lecture.title || '');
-            submitData.append(`sections[0].lectures[${index}].lectureType`, lecture.lectureType || 1);
-            submitData.append(`sections[0].lectures[${index}].isFreePreview`, lecture.isFreePreview || false);
-            submitData.append(`sections[0].lectures[${index}].sortOrder`, lecture.sortOrder ?? index);
-            submitData.append(`sections[0].lectures[${index}].lmscourseMappingId`, lecture.lmscourseMappingId || lecture.id);
-          });
-        }
-      }
-      
-      // Add the files
-      if (formData.thumbnailFile) {
-        submitData.append('File', formData.thumbnailFile);
-      }
-      if (formData.promoVideoFile) {
-        submitData.append('PromoVideoFile', formData.promoVideoFile);
-      }
-    } else {
-      // No file, use regular JSON
-      submitData = {
-        ...formData,
-        courseTypeId: parseInt(formData.courseTypeId),
-        categoryId: parseInt(formData.categoryId),
-        price: parseFloat(formData.price) || 0,
-        discountedPrice: parseFloat(formData.discountedPrice) || 0,
-        badgeIds: formData.badgeIds.map(id => parseInt(id)),
-         IsThumbnailRemoved: formData.IsThumbnailRemoved || false,
-  IsPromoVideoRemoved: formData.IsPromoVideoRemoved || false
-      };
-
-      if (submitData.mapExistingLectures && submitData.mappedLectures && submitData.mappedLectures.length > 0) {
-        if (submitData.courseTypeId === 3) {
-          submitData.directLectures = submitData.mappedLectures.map((lecture, index) => ({
-            title: lecture.title || '',
-            lectureType: lecture.lectureType || 1,
-            isFreePreview: lecture.isFreePreview || false,
-            sortOrder: lecture.sortOrder ?? index,
-            lmscourseMappingId: lecture.lmscourseMappingId || lecture.id
-          }));
-        } else {
-          submitData.sections = [
-            {
-              moduleName: submitData.courseTypeId === 1 ? 'Module 1' : '',
-              title: 'Section 1',
-              description: '',
-              sortOrder: 0,
-              lectures: submitData.mappedLectures.map((lecture, index) => ({
-                title: lecture.title || '',
-                lectureType: lecture.lectureType || 1,
-                isFreePreview: lecture.isFreePreview || false,
-                sortOrder: lecture.sortOrder ?? index,
-                lmscourseMappingId: lecture.lmscourseMappingId || lecture.id
-              }))
-            }
-          ];
-        }
-      }
-      
-      // Don't send blob URLs
-      if (submitData.thumbnailUrl && submitData.thumbnailUrl.startsWith('blob:')) {
-        submitData.thumbnailUrl = '';
+        formData.mappedLectures.forEach((lecture, index) => {
+          submitData.append(`sections[0].lectures[${index}].title`, lecture.title || '');
+          submitData.append(`sections[0].lectures[${index}].lectureType`, String(lecture.lectureType || 1));
+          submitData.append(`sections[0].lectures[${index}].isFreePreview`, String(!!lecture.isFreePreview));
+          submitData.append(`sections[0].lectures[${index}].sortOrder`, String(lecture.sortOrder ?? index));
+          submitData.append(`sections[0].lectures[${index}].lmscourseMappingId`, String(lecture.lmscourseMappingId || lecture.id || 0));
+          submitData.append(`sections[0].lectures[${index}].source`, String(lecture.source || ''));
+        });
       }
     }
-    
-    onSubmit(submitData, isFormData);
+
+    if (formData.thumbnailFile) {
+      submitData.append('File', formData.thumbnailFile);
+    }
+    if (formData.promoVideoFile) {
+      submitData.append('PromoVideoFile', formData.promoVideoFile);
+    }
+
+    onSubmit(submitData, true);
   };
 
   const getModalTitle = () => {
@@ -560,7 +663,6 @@ const CourseModal = ({
                 {formErrors.overview && <p className="mt-1 text-sm text-red-600">{formErrors.overview}</p>}
               </div>
 
-
               <div className="md:col-span-2">
                 <div className="flex flex-col md:flex-row md:items-end gap-4">
                   <div className="flex-1 min-w-0">
@@ -578,17 +680,19 @@ const CourseModal = ({
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4 pb-1">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="mapExistingLectures"
-                        checked={!!formData.mapExistingLectures}
-                        onChange={handleInputChange}
-                        className="mr-2"
-                        disabled={loading}
-                      />
-                      <label className="text-sm font-medium text-gray-700">Existing creation</label>
-                    </div>
+                    {shouldShowExistingCreationCheckbox && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="mapExistingLectures"
+                          checked={!!formData.mapExistingLectures}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                          disabled={loading}
+                        />
+                        <label className="text-sm font-medium text-gray-700">Existing creation</label>
+                      </div>
+                    )}
 
                     <div className="flex items-center gap-2">
                       <input
@@ -665,28 +769,126 @@ const CourseModal = ({
               
          
 
-              {formData.mapExistingLectures && formData.courseTypeId > 0 && (
+              {shouldShowLectureMapping && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select lectures to map
-                  </label>
+                  {courseTypeIdNumber === 1 ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Sections
+                        </label>
 
-                  <div className="mb-4">
-                    <LmsLecturesDropdown
-                      onLectureSelect={handleLectureSelect}
-                      selectedLectures={formData.mappedLectures}
-                      disabled={loading}
-                      placeholder="Search and add LMS lectures..."
-                    />
-                  </div>
+                        <button
+                          type="button"
+                          onClick={handleAddSection}
+                          disabled={loading}
+                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-60"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Section
+                        </button>
+                      </div>
 
-                  <SelectedLecturesTable
-                    selectedLectures={formData.mappedLectures}
-                    onLectureRemove={handleLectureRemove}
-                    onLectureReorder={handleLectureReorder}
-                    courseType={formData.courseTypeId}
-                    disabled={loading}
-                  />
+                      {(formData.sections && formData.sections.length > 0 ? formData.sections : [createEmptySection(0)]).map((section, sectionIndex) => (
+                        <div key={sectionIndex} className="mb-6 p-4 border border-gray-200 rounded-lg">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                                <input
+                                  type="text"
+                                  value={section.title || ''}
+                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'title', e.target.value)}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  disabled={loading}
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Module Name</label>
+                                <input
+                                  type="text"
+                                  value={section.moduleName || ''}
+                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'moduleName', e.target.value)}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  disabled={loading}
+                                />
+                              </div>
+
+                              <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Description</label>
+                                <textarea
+                                  value={section.description || ''}
+                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'description', e.target.value)}
+                                  rows={2}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  disabled={loading}
+                                />
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSection(sectionIndex)}
+                              disabled={loading}
+                              className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-60"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove
+                            </button>
+                          </div>
+
+                          <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Select lectures to map
+                            </label>
+
+                            <div className="mb-4">
+                              <LmsLecturesDropdown
+                                onLectureSelect={(lecture) => handleSectionLectureSelect(sectionIndex, lecture)}
+                                selectedLectures={section.lectures || []}
+                                courseTypeId={formData.courseTypeId}
+                                disabled={loading}
+                                placeholder="Search and add LMS lectures..."
+                              />
+                            </div>
+
+                            <SelectedLecturesTable
+                              selectedLectures={section.lectures || []}
+                              onLectureRemove={(lectureId) => handleSectionLectureRemove(sectionIndex, lectureId)}
+                              onLectureReorder={(dragIndex, dropIndex) => handleSectionLectureReorder(sectionIndex, dragIndex, dropIndex)}
+                              courseType={formData.courseTypeId}
+                              disabled={loading}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select lectures to map
+                      </label>
+
+                      <div className="mb-4">
+                        <LmsLecturesDropdown
+                          onLectureSelect={handleLectureSelect}
+                          selectedLectures={formData.mappedLectures}
+                          courseTypeId={formData.courseTypeId}
+                          disabled={loading}
+                          placeholder="Search and add LMS lectures..."
+                        />
+                      </div>
+
+                      <SelectedLecturesTable
+                        selectedLectures={formData.mappedLectures}
+                        onLectureRemove={handleLectureRemove}
+                        onLectureReorder={handleLectureReorder}
+                        courseType={formData.courseTypeId}
+                        disabled={loading}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

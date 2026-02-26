@@ -5,6 +5,7 @@ import lmsLecturesService from '../services/lmsLecturesService';
 const LmsLecturesDropdown = ({ 
   onLectureSelect, 
   selectedLectures = [], 
+  courseTypeId,
   disabled = false,
   placeholder = "Search and select LMS lectures..."
 }) => {
@@ -40,7 +41,8 @@ const LmsLecturesDropdown = ({
         const response = await lmsLecturesService.searchLmsLectures({
           search: searchTerm,
           page: 1,
-          pageSize: 50
+          pageSize: 50,
+          courseTypeId
         });
         
         // Filter out already selected lectures by lmscourseMappingId
