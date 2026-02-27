@@ -48,6 +48,12 @@ const SelectedLecturesTable = ({
     return types[lectureType] || 'Unknown';
   };
 
+  const getMappedItemLabel = (lecture) => {
+    if (lecture?.itemType === 'CERTIFICATE') return 'Course Certificate';
+    if (lecture?.itemType === 'SHORT_COURSE') return 'Basic Course';
+    return null;
+  };
+
   if (selectedLectures.length === 0) {
     return (
       <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
@@ -68,7 +74,7 @@ const SelectedLecturesTable = ({
       <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-gray-900">
-            Selected Lectures ({selectedLectures.length})
+            Selected Lectures ({selectedLectures.length-1})
           </h3>
           <div className="text-xs text-gray-500">
             {courseType === 1 ? 'Direct Lectures' : 'Section Lectures'}
@@ -121,6 +127,11 @@ const SelectedLecturesTable = ({
                       <span className="text-sm font-medium text-gray-900">
                         #{index + 1}
                       </span>
+                      {getMappedItemLabel(lecture) && (
+                        <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">
+                          {getMappedItemLabel(lecture)}
+                        </span>
+                      )}
                       <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
                         {getLectureTypeLabel(lecture.lectureType)}
                       </span>
