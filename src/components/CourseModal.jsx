@@ -100,6 +100,38 @@ const CourseModal = ({
         })
         .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
+      // Process existing sections for Professional Certificate courses
+      const existingSections = (course.sections || []).map((section, index) => ({
+        id: section.id,
+        moduleName: section.moduleName || `Module ${index + 1}`,
+        title: section.title || `Section ${index + 1}`,
+        description: section.description || '',
+        sortOrder: section.sortOrder || index,
+        lectures: (section.lectures || []).map((lecture, lectureIndex) => {
+          const mappingId = lecture.lmscourseMappingId || lecture.id;
+          return {
+            id: mappingId,
+            title: lecture.title || lecture.lmsLectureName || '',
+            lectureType: lecture.lectureType || 1,
+            isFreePreview: lecture.isFreePreview || false,
+            sortOrder: lecture.sortOrder || lectureIndex,
+            lmscourseMappingId: mappingId,
+            displayName: lecture.displayName || lecture.title || lecture.lmsLectureName,
+            lmsCourseId: lecture.lmsContent?.lmsCourseId,
+            lmsCourseName: lecture.lmsContent?.lmsCourseName || '',
+            lmsModuleId: lecture.lmsContent?.lmsModuleId,
+            lmsModuleName: lecture.lmsContent?.lmsModuleName || '',
+            lmsSubjectId: lecture.lmsContent?.lmsSubjectId,
+            lmsSubjectName: lecture.lmsContent?.lmsSubjectName,
+            lmsLectureId: lecture.lmsContent?.lmsLectureId,
+            lmsLectureName: lecture.lmsContent?.lmsLectureName || lecture.title,
+            lectureOverview: lecture.lmsContent?.lectureOverview,
+            lectureDescription: lecture.lmsContent?.lectureDescription,
+            tags: lecture.lmsContent?.tags || []
+          };
+        })
+      }));
+
       setFormData({
         title: course.title || '',
         subtitle: course.subtitle || '',
@@ -117,7 +149,7 @@ const CourseModal = ({
         badgeIds: course.badgeIds || [],
         mapExistingLectures: Boolean(existingLectures.length > 0),
         mappedLectures: existingLectures,
-        sections: [],
+        sections: course.courseTypeId === 1 ? existingSections : [],
         thumbnailFile: null,
         promoVideoFile: null
       });

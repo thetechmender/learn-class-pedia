@@ -27,7 +27,7 @@ export const ENDPOINTS = {
   AUTH_CHANGE_PASSWORD: '/auth/change-password',
   AUTH_USER: '/auth/me',
     COURSES_ADMIN: '/admin/courses',
-  COURSE_BY_ID_ADMIN: (id) => `/admin/courses/${id}`,
+  COURSE_BY_ID_ADMIN: (id) => `/courses/${id}`,
   COURSE_TAGS: '/admin/courses/tags',
   COURSE_BADGES: '/admin/courses/badges',
   COURSE_FEATURED: '/admin/courses/featured',
