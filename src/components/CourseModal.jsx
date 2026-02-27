@@ -76,29 +76,75 @@ const CourseModal = ({
     if (course && mode === 'edit') {
       const existingLectures = (course.directLectures || course.courseDetails || [])
         .map((lecture) => {
-          const mappingId = lecture.lmscourseMappingId || lecture.id;
+          const mappingId = lecture.lmscourseMappingId || lecture.lmsCourseMappingId || lecture.id;
+          const normalizedLectureType = Number(lecture.lectureType) || 1;
+          const lectureSourceType = Number(lecture.lectureSourceType);
+          const normalizedSource =
+            lectureSourceType === 1
+              ? 'LMS'
+              : lecture.internalLectureId
+                ? 'COURSE'
+                : 'INTERNAL';
+
+          const lmsContent = lecture.lmsContent;
           return {
             id: mappingId,
-            title: lecture.lmsLectureName || lecture.title || '',
-            lectureType: lecture.lectureType || 1,
+            title: lecture.title || lmsContent?.lmsLectureName || lecture.lmsLectureName || '',
+            source: lecture.source || normalizedSource,
+            lectureType: normalizedLectureType,
             isFreePreview: lecture.isFreePreview || false,
             sortOrder: lecture.sortOrder || 0,
             lmscourseMappingId: mappingId,
-            displayName: lecture.displayName || lecture.lmsLectureName || lecture.title,
-            lmsCourseId: lecture.lmsCourseId,
-            lmsCourseName: lecture.lmsCourseName || '',
-            lmsModuleId: lecture.lmsModuleId,
-            lmsModuleName: lecture.lmsModuleName || '',
-            lmsSubjectId: lecture.lmsSubjectId,
-            lmsSubjectName: lecture.lmsSubjectName,
-            lmsLectureId: lecture.lmsLectureId,
-            lmsLectureName: lecture.lmsLectureName || lecture.title,
-            lectureOverview: lecture.lectureOverview,
-            lectureDescription: lecture.lectureDescription,
-            tags: lecture.tags
+            displayName: lecture.displayName || lecture.title || lmsContent?.lmsLectureName || lecture.lmsLectureName,
+            lmsCourseId: lmsContent?.lmsCourseId ?? lecture.lmsCourseId,
+            lmsCourseName: lmsContent?.lmsCourseName || lecture.lmsCourseName || '',
+            lmsModuleId: lmsContent?.lmsModuleId ?? lecture.lmsModuleId,
+            lmsModuleName: lmsContent?.lmsModuleName || lecture.lmsModuleName || '',
+            lmsSubjectId: lmsContent?.lmsSubjectId ?? lecture.lmsSubjectId,
+            lmsSubjectName: lmsContent?.lmsSubjectName || lecture.lmsSubjectName,
+            lmsLectureId: lmsContent?.lmsLectureId ?? lecture.lmsLectureId,
+            lmsLectureName: lmsContent?.lmsLectureName || lecture.lmsLectureName || lecture.title,
+            lectureOverview: lmsContent?.lectureOverview ?? lecture.lectureOverview,
+            lectureDescription: lmsContent?.lectureDescription ?? lecture.lectureDescription,
+            tags: lmsContent?.tags || lecture.tags
           };
         })
         .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+      const existingShortCourses = (course.shortCourses || [])
+        .map((shortCourse, index) => {
+          const courseId = shortCourse.shortCourseId || shortCourse.courseId || shortCourse.id;
+          return {
+            id: courseId,
+            title: shortCourse.shortCourseTitle || shortCourse.title || '',
+            source: 'COURSE',
+            lectureType: 1,
+            isFreePreview: false,
+            sortOrder: index,
+            lmscourseMappingId: courseId,
+            displayName: shortCourse.shortCourseTitle || shortCourse.title || ''
+          };
+        });
+
+      const mappedLecturesResolved = (() => {
+        if (Number(course.courseTypeId) === 2 && existingShortCourses.length > 0) {
+          const maxSortOrder = existingLectures.reduce(
+            (max, l) => Math.max(max, Number(l.sortOrder ?? 0)),
+            0
+          );
+
+          const shortCoursesWithOrder = existingShortCourses.map((sc, idx) => ({
+            ...sc,
+            sortOrder: maxSortOrder + 1 + idx
+          }));
+
+          return [...existingLectures, ...shortCoursesWithOrder].sort(
+            (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+          );
+        }
+
+        return existingLectures;
+      })();
 
       // Process existing sections for Professional Certificate courses
       const existingSections = (course.sections || []).map((section, index) => ({
@@ -108,29 +154,93 @@ const CourseModal = ({
         description: section.description || '',
         sortOrder: section.sortOrder || index,
         lectures: (section.lectures || []).map((lecture, lectureIndex) => {
-          const mappingId = lecture.lmscourseMappingId || lecture.id;
+          const mappingId = lecture.lmscourseMappingId || lecture.lmsCourseMappingId || lecture.id;
+          const normalizedLectureType = Number(lecture.lectureType) || 1;
+          const lectureSourceType = Number(lecture.lectureSourceType);
+          const normalizedSource =
+            lectureSourceType === 1
+              ? 'LMS'
+              : lecture.internalLectureId
+                ? 'COURSE'
+                : 'INTERNAL';
+
+          const lmsContent = lecture.lmsContent;
           return {
             id: mappingId,
-            title: lecture.title || lecture.lmsLectureName || '',
-            lectureType: lecture.lectureType || 1,
+            title: lecture.title || lmsContent?.lmsLectureName || lecture.lmsLectureName || '',
+            source: lecture.source || normalizedSource,
+            lectureType: normalizedLectureType,
             isFreePreview: lecture.isFreePreview || false,
             sortOrder: lecture.sortOrder || lectureIndex,
             lmscourseMappingId: mappingId,
-            displayName: lecture.displayName || lecture.title || lecture.lmsLectureName,
-            lmsCourseId: lecture.lmsContent?.lmsCourseId,
-            lmsCourseName: lecture.lmsContent?.lmsCourseName || '',
-            lmsModuleId: lecture.lmsContent?.lmsModuleId,
-            lmsModuleName: lecture.lmsContent?.lmsModuleName || '',
-            lmsSubjectId: lecture.lmsContent?.lmsSubjectId,
-            lmsSubjectName: lecture.lmsContent?.lmsSubjectName,
-            lmsLectureId: lecture.lmsContent?.lmsLectureId,
-            lmsLectureName: lecture.lmsContent?.lmsLectureName || lecture.title,
-            lectureOverview: lecture.lmsContent?.lectureOverview,
-            lectureDescription: lecture.lmsContent?.lectureDescription,
-            tags: lecture.lmsContent?.tags || []
+            displayName: lecture.displayName || lecture.title || lmsContent?.lmsLectureName || lecture.lmsLectureName,
+            lmsCourseId: lmsContent?.lmsCourseId,
+            lmsCourseName: lmsContent?.lmsCourseName || '',
+            lmsModuleId: lmsContent?.lmsModuleId,
+            lmsModuleName: lmsContent?.lmsModuleName || '',
+            lmsSubjectId: lmsContent?.lmsSubjectId,
+            lmsSubjectName: lmsContent?.lmsSubjectName,
+            lmsLectureId: lmsContent?.lmsLectureId,
+            lmsLectureName: lmsContent?.lmsLectureName || lecture.title,
+            lectureOverview: lmsContent?.lectureOverview,
+            lectureDescription: lmsContent?.lectureDescription,
+            tags: lmsContent?.tags || []
           };
         })
       }));
+
+      const hierarchySections = (course.professionalHierarchy?.sections || []).map((section, index) => {
+        const certificateId = section.courseCertificateId;
+        const certificateTitle = section.courseCertificateTitle;
+
+        const lectures = [];
+        if (certificateId) {
+          lectures.push({
+            id: certificateId,
+            title: certificateTitle || '',
+            source: 'COURSE',
+            lectureType: 1,
+            isFreePreview: false,
+            sortOrder: 0,
+            lmscourseMappingId: certificateId,
+            displayName: certificateTitle || ''
+          });
+        }
+
+        (section.shortCourses || []).forEach((shortCourse, shortIndex) => {
+          const shortId = shortCourse.shortCourseId;
+          const shortTitle = shortCourse.shortCourseTitle;
+          lectures.push({
+            id: shortId,
+            title: shortTitle || '',
+            source: 'COURSE',
+            lectureType: 1,
+            isFreePreview: false,
+            sortOrder: lectures.length,
+            lmscourseMappingId: shortId,
+            displayName: shortTitle || ''
+          });
+        });
+
+        return {
+          moduleName: section.sectionTitle || `Module ${index + 1}`,
+          title: section.sectionTitle || `Section ${index + 1}`,
+          description: '',
+          sortOrder: index,
+          lectures
+        };
+      });
+
+      const resolvedSections =
+        course.courseTypeId === 1
+          ? (
+              existingSections.length > 0
+                ? existingSections
+                : hierarchySections.length > 0
+                  ? hierarchySections
+                  : [createEmptySection(0)]
+            )
+          : [];
 
       setFormData({
         title: course.title || '',
@@ -147,9 +257,9 @@ const CourseModal = ({
         thumbnailUrl: course.thumbnailUrl || '',
         promoVideoUrl: course.promoVideoUrl || '',
         badgeIds: course.badgeIds || [],
-        mapExistingLectures: Boolean(existingLectures.length > 0),
-        mappedLectures: existingLectures,
-        sections: course.courseTypeId === 1 ? existingSections : [],
+        mapExistingLectures: Boolean(mappedLecturesResolved.length > 0),
+        mappedLectures: mappedLecturesResolved,
+        sections: resolvedSections,
         thumbnailFile: null,
         promoVideoFile: null
       });
