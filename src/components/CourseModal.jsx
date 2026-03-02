@@ -55,7 +55,7 @@ const CourseModal = ({
   });
 
   const courseTypeIdNumber = Number(formData.courseTypeId);
-  const shouldShowExistingCreationCheckbox = courseTypeIdNumber !== 1 && courseTypeIdNumber !== 2;
+  const shouldShowExistingCreationCheckbox = courseTypeIdNumber !== 1 && courseTypeIdNumber !== 2 && (mode === 'create' || course?.isNew === false);
   const shouldShowLectureMapping =
     (courseTypeIdNumber === 1 || courseTypeIdNumber === 2)
       ? courseTypeIdNumber > 0
