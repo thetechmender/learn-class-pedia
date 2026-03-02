@@ -259,7 +259,7 @@ const CourseModal = ({
         thumbnailUrl: course.thumbnailUrl || '',
         promoVideoUrl: course.promoVideoUrl || '',
         badgeIds: course.badgeIds || [],
-        mapExistingLectures: Boolean(mappedLecturesResolved.length > 0),
+        mapExistingLectures: Boolean(mappedLecturesResolved.length > 0) || course?.isNew === false,
         mappedLectures: mappedLecturesResolved,
         sections: resolvedSections,
         thumbnailFile: null,
