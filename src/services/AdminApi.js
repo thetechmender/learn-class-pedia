@@ -182,18 +182,8 @@ class AdminApiService {
     
     // Add course filter parameters
     if (filters.title) queryParams.append('Title', filters.title);
-    if (filters.subtitle) queryParams.append('Subtitle', filters.subtitle);
-    if (filters.description) queryParams.append('Description', filters.description);
-    if (filters.overview) queryParams.append('Overview', filters.overview);
     if (filters.courseTypeId !== undefined) queryParams.append('CourseTypeId', filters.courseTypeId);
-    if (filters.categoryId !== undefined) queryParams.append('CategoryId', filters.categoryId);
-    if (filters.courseLevelId !== undefined) queryParams.append('CourseLevelId', filters.courseLevelId);
-    if (filters.slug) queryParams.append('Slug', filters.slug);
-    if (filters.thumbnailUrl) queryParams.append('ThumbnailUrl', filters.thumbnailUrl);
-    if (filters.promoVideoUrl) queryParams.append('PromoVideoUrl', filters.promoVideoUrl);
-    if (filters.price !== undefined) queryParams.append('Price', filters.price);
-    if (filters.discountedPrice !== undefined) queryParams.append('DiscountedPrice', filters.discountedPrice);
-    if (filters.currencyCode) queryParams.append('CurrencyCode', filters.currencyCode);
+    if (filters.categoryId !== undefined) queryParams.append('CategoryId', filters.categoryId);   
     if (filters.isPaid !== undefined) queryParams.append('IsPaid', filters.isPaid);
     
     const queryString = queryParams.toString();

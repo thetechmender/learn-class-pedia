@@ -504,7 +504,9 @@ const CourseManagement = () => {
 
   // Apply filters with optimized loading state
   const applyFilters = useCallback(async (overrideFilters) => {
-    if (filtersLoading) return;
+  if (filtersLoading) {
+    return;
+  }
     
     setFiltersLoading(true);
     try {
@@ -515,7 +517,7 @@ const CourseManagement = () => {
           return value !== '' && value !== 0 && value !== null && value !== undefined;
         })
       );
-
+    
       const coursesData = await getAllCoursesAdmin(activeFilters);
       const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
       setFilteredCourses(coursesArray);
@@ -703,7 +705,10 @@ const CourseManagement = () => {
             </div>
             <div className="flex justify-end mt-4">
               <button
-                onClick={applyFilters}
+              
+  
+  onClick={() => applyFilters()}
+
                 className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
               >
                 Apply Filters

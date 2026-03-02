@@ -82,7 +82,7 @@ const SelectedLecturesTable = ({
         </div>
       </div>
 
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
         {selectedLectures.map((lecture, index) => (
           <div
             key={lecture.id}

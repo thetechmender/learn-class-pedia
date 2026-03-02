@@ -933,6 +933,7 @@ const CourseModal = ({
                         </button>
                       </div>
 
+                      <div className="max-h-96 overflow-y-auto">
                       {(formData.sections && formData.sections.length > 0 ? formData.sections : [createEmptySection(0)]).map((section, sectionIndex) => (
                         <div key={sectionIndex} className="mb-6 p-4 border border-gray-200 rounded-lg">
                           <div className="flex items-start justify-between gap-4">
@@ -1007,6 +1008,7 @@ const CourseModal = ({
                           </div>
                         </div>
                       ))}
+                      </div>
                     </div>
                   ) : (
                     <div>
