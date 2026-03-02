@@ -32,7 +32,7 @@ const appSettings = {
   // App Info
   app: {
     name: 'ClassPedia',
-    version: '1.0.0',
+    version: '1.1.1',
   }
 };
 
