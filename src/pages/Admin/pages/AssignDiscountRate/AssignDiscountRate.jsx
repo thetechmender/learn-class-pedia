@@ -50,6 +50,10 @@ const AssignDiscountRate = () => {
   const [selectedCourseType, setSelectedCourseType] = useState(null);
   const [selectedCourseTypeDiscountRate, setSelectedCourseTypeDiscountRate] = useState('');
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [selectedCourseTypeForPrice, setSelectedCourseTypeForPrice] = useState(null);
+  const [courseTypePrice, setCourseTypePrice] = useState('');
+  const [settingPrice, setSettingPrice] = useState(false);
   const [selectedCareerPath, setSelectedCareerPath] = useState(null);
   const [selectedCareerPathDiscountRate, setSelectedCareerPathDiscountRate] = useState('');
   const [showCareerPathModal, setShowCareerPathModal] = useState(false);
@@ -438,6 +442,40 @@ const AssignDiscountRate = () => {
       setAssigning(false);
     }
   }, [selectedCourseType, selectedCourseTypeDiscountRate, assignDiscountRateToCourseType, fetchAllDiscountRates, showToast]);
+
+  // Handle set price for course type
+  const handleSetPriceForCourseType = useCallback(async (courseType) => {
+    setSelectedCourseTypeForPrice(courseType);
+    // Pre-fill current price if exists
+    if (courseType.price) {
+      setCourseTypePrice(courseType.price.toString());
+    } else {
+      setCourseTypePrice('');
+    }
+    setShowPriceModal(true);
+  }, []);
+
+  // Handle price modal submit
+  const handlePriceModalSubmit = useCallback(async () => {
+    if (!selectedCourseTypeForPrice) return;
+
+    setSettingPrice(true);
+    try {
+      await adminApiService.assignPriceToCourseType(selectedCourseTypeForPrice.id, parseFloat(courseTypePrice));
+      showToast('Price assigned to course type successfully', 'success');
+      
+      // Refresh course types data
+      await fetchAllDiscountRates({});
+      setShowPriceModal(false);
+      setSelectedCourseTypeForPrice(null);
+      setCourseTypePrice('');
+    } catch (error) {
+      console.error('Error assigning price to course type:', error);
+      showToast('Failed to assign price to course type', 'error');
+    } finally {
+      setSettingPrice(false);
+    }
+  }, [selectedCourseTypeForPrice, courseTypePrice, fetchAllDiscountRates, showToast]);
 
   // Initialize data
   useEffect(() => {
@@ -1209,14 +1247,23 @@ const AssignDiscountRate = () => {
                     )}
                   </div>
 
-                  {/* Enhanced Action Button */}
-                  <button
-                    onClick={() => handleAssignCourseTypeDiscount(courseType)}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 font-medium transform hover:scale-105 shadow-md hover:shadow-lg"
-                  >
-                    <Percent className="w-4 h-4 mr-2" />
-                    {courseType.discountedRateId ? 'Change Discount' : 'Assign Discount'}
-                  </button>
+                  {/* Enhanced Action Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => handleAssignCourseTypeDiscount(courseType)}
+                      className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 font-medium transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      <Percent className="w-4 h-4 mr-2" />
+                      {courseType.discountedRateId ? 'Change Discount' : 'Assign Discount'}
+                    </button>
+                    <button
+                      onClick={() => handleSetPriceForCourseType(courseType)}
+                      className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Set Price
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -1664,6 +1711,78 @@ const AssignDiscountRate = () => {
                   <>
                     <Save className="w-4 h-4 mr-2" />
                     Save
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Price Assignment Modal */}
+      {showPriceModal && selectedCourseTypeForPrice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                Set Price for Course Type
+              </h3>
+              <button
+                onClick={() => setShowPriceModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Course Type: <span className="font-medium">{selectedCourseTypeForPrice.name || selectedCourseTypeForPrice.title}</span>
+              </p>
+              <p className="text-sm text-gray-600">
+                Current Price: <span className="font-medium text-green-600">
+                  ${selectedCourseTypeForPrice.price || 0}
+                </span>
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Price *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={courseTypePrice}
+                onChange={(e) => setCourseTypePrice(e.target.value)}
+                placeholder="Enter price"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowPriceModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePriceModalSubmit}
+                disabled={settingPrice || !courseTypePrice || parseFloat(courseTypePrice) < 0}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+              >
+                {settingPrice ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Set Price
                   </>
                 )}
               </button>

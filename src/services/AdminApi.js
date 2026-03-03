@@ -1314,6 +1314,13 @@ class AdminApiService {
     });
   }
 
+  // ASSIGN price to course type
+  async assignPriceToCourseType(courseTypeId, price) {
+    return this.request(`/courses/assign-price?courseTypeId=${courseTypeId}&price=${price}`, {
+      method: 'POST',
+    });
+  }
+
   // UPDATE discount rate mapping
   async updateDiscountRateMapping(id, mappingData) {
     return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS_UPDATE(id), {

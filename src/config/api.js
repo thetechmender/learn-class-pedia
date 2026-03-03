@@ -90,7 +90,7 @@ export const ENDPOINTS = {
 
   // Discount Rates endpoints
   DISCOUNT_RATES: '/DiscountRates',
-  DISCOUNT_RATES_CREATE: '/DiscountRatescreate',
+  DISCOUNT_RATES_CREATE: '/DiscountRates',
   DISCOUNT_RATES_BY_ID: (id) => `/DiscountRates/${id}`,
   DISCOUNT_RATES_UPDATE: (id) => `/DiscountRates/${id}`,
   DISCOUNT_RATES_DELETE: (id) => `/DiscountRates/${id}`,
