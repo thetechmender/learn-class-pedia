@@ -1726,7 +1726,7 @@ const AssignDiscountRate = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-                Set Price for Course Type
+                Set Price for {selectedCourseTypeForPrice.name || selectedCourseTypeForPrice.title || selectedCourseTypeForPrice.typeName || 'Course Type'}
               </h3>
               <button
                 onClick={() => setShowPriceModal(false)}
@@ -1738,12 +1738,7 @@ const AssignDiscountRate = () => {
 
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">
-                Course Type: <span className="font-medium">{selectedCourseTypeForPrice.name || selectedCourseTypeForPrice.title}</span>
-              </p>
-              <p className="text-sm text-gray-600">
-                Current Price: <span className="font-medium text-green-600">
-                  ${selectedCourseTypeForPrice.price || 0}
-                </span>
+                Course Type: <span className="font-medium">{selectedCourseTypeForPrice.name || selectedCourseTypeForPrice.title || selectedCourseTypeForPrice.typeName}</span>
               </p>
             </div>
 
