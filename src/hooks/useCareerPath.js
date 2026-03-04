@@ -187,24 +187,16 @@ export const useCareerPath = () => {
   }, [handleError]);
 
   // Search courses by title
-  const searchCoursesByTitle = useCallback(async (title, levelId = null) => {
+  const searchCoursesByTitle = useCallback(async (title) => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Determine course type ID based on level
-      let courseTypeId = 1; // default
-      if (levelId) {
-        const numericLevelId = parseInt(levelId);
-        // If course level is 1 or 2, coursetypeid will be 2, else coursetypeid will be 1
-        courseTypeId = (numericLevelId === 1 || numericLevelId === 2) ? 2 : 1;
-      }
+  
       
       const data = await adminApiService.getAllCoursesAdminNoPagination({ 
         Title: title,
-        CourseTypeId: courseTypeId
+        CourseTypeId: 2
       });
-      // Handle response structure where courses are in an 'items' array
       const courses = data.items || data || [];
       return Array.isArray(courses) ? courses : [];
     } catch (err) {
