@@ -36,7 +36,6 @@ const CareerPathForm = ({
     courseTypes,
     badges,
     initializeDropdownData,
-    getCoursesByTypeForLevel,
     searchCoursesByTitle,
     searchSkillsByTitle,
   } = useCareerPath();
@@ -63,10 +62,8 @@ const CareerPathForm = ({
     iconFile: null,
     RemoveIcon: false // Track if user explicitly removes icon (uppercase to match backend)
   });
-  const [filteredCourses, setFilteredCourses] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedLevelForCourses, setSelectedLevelForCourses] = useState(null);
-  const [selectedCourseTypeForLevel, setSelectedCourseTypeForLevel] = useState('');
   const [expandedCourses, setExpandedCourses] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [courseSearchTerm, setCourseSearchTerm] = useState('');
@@ -188,15 +185,8 @@ const CareerPathForm = ({
     }
 
     try {
-      setCourseSearchLoading(true);
-      
-      // Get level ID if levelIndex is provided
-      let levelId = null;
-      if (levelIndex !== null && formData.levels[levelIndex]) {
-        levelId = formData.levels[levelIndex].levelId;
-      }
-      
-      const results = await searchCoursesByTitle(searchTerm, levelId);
+      setCourseSearchLoading(true);  
+      const results = await searchCoursesByTitle(searchTerm);
       setCourseSearchResults(results);
     } catch (error) {
       console.error('Failed to search courses:', error);
@@ -571,11 +561,11 @@ const CareerPathForm = ({
         if (formData.levels.length === 0) {
           newErrors.levels = 'At least one level is required';
         } else {
-          // Check if each level has minimum 3 courses
+          // Check if each level has minimum 1 course
           const levelErrors = {};
           formData.levels.forEach((level, index) => {
-            if (level.courses.length < 3) {
-              levelErrors[`level_${index}`] = `Level "${level.title || `Level ${index + 1}`}" must have at least 3 courses (currently has ${level.courses.length})`;
+            if (level.courses.length < 1) {
+              levelErrors[`level_${index}`] = `Level "${level.title || `Level ${index + 1}`}" must have at least 1 course (currently has ${level.courses.length})`;
             }
           });
           
@@ -666,11 +656,11 @@ const CareerPathForm = ({
     if (formData.levels.length === 0) {
       newErrors.levels = 'At least one level is required';
     } else {
-      // Check if each level has minimum 3 courses
+      // Check if each level has minimum 1 course
       const levelErrors = {};
       formData.levels.forEach((level, index) => {
-        if (level.courses.length < 3) {
-          levelErrors[`level_${index}`] = `Level "${level.title || `Level ${index + 1}`}" must have at least 3 courses (currently has ${level.courses.length})`;
+        if (level.courses.length < 1) {
+          levelErrors[`level_${index}`] = `Level "${level.title || `Level ${index + 1}`}" must have at least 1 course (currently has ${level.courses.length})`;
         }
       });
       
@@ -721,8 +711,6 @@ const CareerPathForm = ({
         
         // Add arrays using only proper form field notation
         const levelsArray = formData.levels.map(level => {
-          console.log('Processing level:', level);
-          console.log('Level courses:', level.courses);
           return {
             levelMapId: parseInt(level.levelMapId) || parseInt(level.levelId) || 0,
             levelId: parseInt(level.levelId) || 0,
@@ -1249,12 +1237,12 @@ const CareerPathForm = ({
                           <h4 className="text-lg font-semibold text-gray-900">{level.title || level.levelName}</h4>
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-gray-600">{level.courses.length} course{level.courses.length !== 1 ? 's' : ''} assigned</p>
-                            {level.courses.length < 3 && (
+                            {level.courses.length < 1 && (
                               <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
-                                ⚠️ Min 3 required
+                                ⚠️ At least one course required
                               </span>
                             )}
-                            {level.courses.length >= 3 && (
+                            {level.courses.length >= 1 && (
                               <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
                                 ✓ Requirement met
                               </span>
@@ -1424,7 +1412,7 @@ const CareerPathForm = ({
                               value={courseSearchTerm}
                               onChange={(e) => {
                                 setCourseSearchTerm(e.target.value);
-                                handleCourseSearch(e.target.value, levelIndex);
+                                handleCourseSearch(e.target.value);
                                 setSelectedLevelForCourses(levelIndex);
                               }}
                               placeholder="Search courses by title..."
