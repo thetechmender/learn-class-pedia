@@ -181,7 +181,7 @@ const CareerPathForm = ({
   };
 
   // Course search autocomplete handler
-  const handleCourseSearch = async (searchTerm) => {
+  const handleCourseSearch = async (searchTerm, levelIndex = null) => {
     if (!searchTerm || searchTerm.length < 2) {
       setCourseSearchResults([]);
       return;
@@ -189,7 +189,14 @@ const CareerPathForm = ({
 
     try {
       setCourseSearchLoading(true);
-      const results = await searchCoursesByTitle(searchTerm);
+      
+      // Get level ID if levelIndex is provided
+      let levelId = null;
+      if (levelIndex !== null && formData.levels[levelIndex]) {
+        levelId = formData.levels[levelIndex].levelId;
+      }
+      
+      const results = await searchCoursesByTitle(searchTerm, levelId);
       setCourseSearchResults(results);
     } catch (error) {
       console.error('Failed to search courses:', error);
@@ -1417,7 +1424,7 @@ const CareerPathForm = ({
                               value={courseSearchTerm}
                               onChange={(e) => {
                                 setCourseSearchTerm(e.target.value);
-                                handleCourseSearch(e.target.value);
+                                handleCourseSearch(e.target.value, levelIndex);
                                 setSelectedLevelForCourses(levelIndex);
                               }}
                               placeholder="Search courses by title..."

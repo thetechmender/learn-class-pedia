@@ -411,6 +411,7 @@ const ReviewManagementPage = () => {
           ...prev,
           selectedCourse: courseId
         }));
+        
         setEditCourseSearchTerm(mainCourseSearchTerm);
       } else if (reviewType === 'careerpath' && careerPathId && mainCareerPathSearchTerm) {
         setEditModalData(prev => ({
@@ -718,7 +719,9 @@ const ReviewManagementPage = () => {
     
     try {
       let resourceId, resourceTypeId;
-      
+      console.log(review?.
+courseId
+);
       // Determine resource type and ID based on review
       if (review.resourceTypeId === 2) {
         // Career path level review: ResourceTypeId = 2 AND CourseId = 0
@@ -726,7 +729,7 @@ const ReviewManagementPage = () => {
         resourceTypeId = 2; // 2 = career path level
       } else {
         // Course review: ResourceTypeId = 1 AND CourseId ≠ 0
-        resourceId = 0; // Ignore ResourceId for course reviews
+        resourceId = review.courseId; // Ignore ResourceId for course reviews
         resourceTypeId = 1; // 1 = course
       }
       
