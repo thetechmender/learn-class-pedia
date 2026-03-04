@@ -1,13 +1,15 @@
 import { useState, useCallback } from 'react';
+import appSettings from '../config/appSettings';
 
 /**
  * Custom hook for managing course filters
  * @returns {Object} Filter state and handlers
  */
 export const useCourseFilters = () => {
+  const defaultPageSize = appSettings.pagination?.defaultPageSize ?? 100;
   const [filters, setFilters] = useState({
     page: 1,
-    pageSize: 5,
+    pageSize: defaultPageSize,
     title: '',
     subtitle: '',
     description: '',
@@ -27,7 +29,7 @@ export const useCourseFilters = () => {
   const [filtersLoading, setFiltersLoading] = useState(false);
   const [paginationInfo, setPaginationInfo] = useState({ 
     page: 1, 
-    pageSize: 5, 
+    pageSize: defaultPageSize, 
     totalCount: 0 
   });
 
@@ -43,7 +45,7 @@ export const useCourseFilters = () => {
   const resetFilters = useCallback(() => {
     setFilters({
       page: 1,
-      pageSize: 5,
+      pageSize: defaultPageSize,
       title: '',
       subtitle: '',
       description: '',
@@ -59,8 +61,8 @@ export const useCourseFilters = () => {
       currencyCode: '',
       isPaid: ''
     });
-    setPaginationInfo({ page: 1, pageSize: 5, totalCount: 0 });
-  }, []);
+    setPaginationInfo({ page: 1, pageSize: defaultPageSize, totalCount: 0 });
+  }, [defaultPageSize]);
 
   // Get active filters (non-empty values)
   const getActiveFilters = useCallback(() => {
