@@ -543,10 +543,10 @@ const CareerPathForm = ({
         if (!formData.description.trim()) {
           newErrors.description = 'Description is required';
         }
-        if (!formData.price || formData.price < 0) {
+        if (formData.price && formData.price < 0) {
           newErrors.price = 'Price must be greater than or equal to 0';
         }
-        if (!formData.discountedPrice || formData.discountedPrice < 0) {
+        if (formData.discountedPrice && formData.discountedPrice < 0) {
           newErrors.discountedPrice = 'Discounted price must be greater than or equal to 0';
         }
         if (formData.price && formData.discountedPrice && parseFloat(formData.discountedPrice) > parseFloat(formData.price)) {
@@ -582,21 +582,15 @@ const CareerPathForm = ({
         break;
         
       case 4:
-        if (!formData.durationMinMonths || formData.durationMinMonths <= 0) {
+        if (formData.durationMinMonths && formData.durationMinMonths <= 0) {
           newErrors.durationMinMonths = 'Minimum duration must be greater than 0';
         }
-        if (!formData.durationMaxMonths || formData.durationMaxMonths <= 0) {
+        if (formData.durationMaxMonths && formData.durationMaxMonths <= 0) {
           newErrors.durationMaxMonths = 'Maximum duration must be greater than 0';
         }
         if (formData.durationMinMonths && formData.durationMaxMonths && 
             parseInt(formData.durationMinMonths) > parseInt(formData.durationMaxMonths)) {
           newErrors.durationMaxMonths = 'Maximum duration must be greater than minimum duration';
-        }
-        if (!formData.outcome.trim()) {
-          newErrors.outcome = 'Outcome is required';
-        }
-        if (!formData.Overview.trim()) {
-          newErrors.Overview = 'Overview is required';
         }
         break;
     }
@@ -616,11 +610,11 @@ const CareerPathForm = ({
       newErrors.description = 'Description is required';
     }
     
-    if (!formData.price || formData.price < 0) {
+    if (formData.price && formData.price < 0) {
       newErrors.price = 'Price must be greater than or equal to 0';
     }
     
-    if (!formData.discountedPrice || formData.discountedPrice < 0) {
+    if (formData.discountedPrice && formData.discountedPrice < 0) {
       newErrors.discountedPrice = 'Discounted price must be greater than or equal to 0';
     }
     
@@ -628,25 +622,17 @@ const CareerPathForm = ({
       newErrors.discountedPrice = 'Discounted price cannot be greater than regular price';
     }
     
-    if (!formData.durationMinMonths || formData.durationMinMonths <= 0) {
+    if (formData.durationMinMonths && formData.durationMinMonths <= 0) {
       newErrors.durationMinMonths = 'Minimum duration must be greater than 0';
     }
     
-    if (!formData.durationMaxMonths || formData.durationMaxMonths <= 0) {
+    if (formData.durationMaxMonths && formData.durationMaxMonths <= 0) {
       newErrors.durationMaxMonths = 'Maximum duration must be greater than 0';
     }
     
     if (formData.durationMinMonths && formData.durationMaxMonths && 
         parseInt(formData.durationMinMonths) > parseInt(formData.durationMaxMonths)) {
       newErrors.durationMaxMonths = 'Maximum duration must be greater than minimum duration';
-    }
-    
-    if (!formData.outcome.trim()) {
-      newErrors.outcome = 'Outcome is required';
-    }
-    
-    if (!formData.Overview.trim()) {
-      newErrors.Overview = 'Overview is required';
     }
     
     if (!formData.roleId) {
@@ -787,9 +773,9 @@ const CareerPathForm = ({
           description: formData.description,
           price: parseFloat(formData.price) || 0,
           discountedPrice: parseFloat(formData.discountedPrice) || 0,
-          durationMinMonths: parseInt(formData.durationMinMonths),
+          durationMinMonths: parseInt(formData.durationMinMonths) || 0,
           sortOrder: 0,
-          durationMaxMonths: parseInt(formData.durationMaxMonths),
+          durationMaxMonths: parseInt(formData.durationMaxMonths) || 0,
           outcome: formData.outcome,
           overview: formData.Overview,
           roleId: parseInt(formData.roleId),
@@ -973,7 +959,7 @@ const CareerPathForm = ({
               {/* Price */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Price *
+                  Price
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -997,7 +983,7 @@ const CareerPathForm = ({
               {/* Discounted Price */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Discounted Price *
+                  Discounted Price
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -1744,13 +1730,13 @@ const CareerPathForm = ({
                 </label>
                 <input
                   type="number"
-                  value={formData.durationMinMonths}
+                  value={formData.durationMinMonths || ''}
                   onChange={(e) => handleInputChange('durationMinMonths', e.target.value)}
                   className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     errors.durationMinMonths ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
                   placeholder="e.g., 3"
-                  min="1"
+                  min="0"
                 />
                 {errors.durationMinMonths && (
                   <p className="mt-1 text-sm text-red-600">{errors.durationMinMonths}</p>
@@ -1764,13 +1750,13 @@ const CareerPathForm = ({
                 </label>
                 <input
                   type="number"
-                  value={formData.durationMaxMonths}
+                  value={formData.durationMaxMonths || ''}
                   onChange={(e) => handleInputChange('durationMaxMonths', e.target.value)}
                   className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     errors.durationMaxMonths ? 'border-red-300 bg-red-50' : 'border-gray-200'
                   }`}
                   placeholder="e.g., 6"
-                  min="1"
+                  min="0"
                 />
                 {errors.durationMaxMonths && (
                   <p className="mt-1 text-sm text-red-600">{errors.durationMaxMonths}</p>
@@ -1781,7 +1767,7 @@ const CareerPathForm = ({
             {/* Outcome */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Learning Outcome *
+                Learning Outcome
               </label>
               <textarea
                 value={formData.outcome}
@@ -1800,7 +1786,7 @@ const CareerPathForm = ({
             {/* Overview */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Career Path Overview *
+                Career Path Overview
               </label>
               <textarea
                 value={formData.Overview}
