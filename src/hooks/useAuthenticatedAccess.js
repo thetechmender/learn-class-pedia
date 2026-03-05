@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
+    getAuthenticatedCustomer,
     validateAccessToken,
     parseAccessParams,
     storeSession,
@@ -62,30 +63,54 @@ const useAuthenticatedAccess = () => {
             }
 
             // Validate token with backend
-            const validationResult = await validateAccessToken(token);
+            try {
+                const authenticatedCustomer = await getAuthenticatedCustomer(token);
+                const resolvedStudentId = authenticatedCustomer?.customerId ?? authenticatedCustomer?.CustomerId;
 
-            if (!validationResult.valid) {
-                setError('Invalid or expired access token. Please try again from the main portal.');
-                setIsLoading(false);
-                return;
+                if (!resolvedStudentId) {
+                    throw new Error('Invalid authentication response');
+                }
+
+                storeSession({
+                    studentId: resolvedStudentId,
+                    courseId,
+                    lectureId,
+                    sessionToken: token
+                });
+
+                setAccessData({
+                    studentId: resolvedStudentId,
+                    courseId: courseId ? parseInt(courseId) : null,
+                    lectureId: lectureId || null,
+                    isPdf
+                });
+                setIsAuthenticated(true);
+            } catch (jwtErr) {
+                const validationResult = await validateAccessToken(token);
+
+                if (!validationResult.valid) {
+                    setError('Invalid or expired access token. Please try again from the main portal.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Store session for subsequent API calls
+                storeSession({
+                    studentId: validationResult.studentId,
+                    courseId: validationResult.courseId || courseId,
+                    lectureId: validationResult.lectureId || lectureId,
+                    sessionToken: validationResult.sessionToken,
+                    expiresAt: validationResult.expiresAt
+                });
+
+                setAccessData({
+                    studentId: validationResult.studentId,
+                    courseId: validationResult.courseId || parseInt(courseId),
+                    lectureId: validationResult.lectureId || lectureId,
+                    isPdf
+                });
+                setIsAuthenticated(true);
             }
-
-            // Store session for subsequent API calls
-            storeSession({
-                studentId: validationResult.studentId,
-                courseId: validationResult.courseId || courseId,
-                lectureId: validationResult.lectureId || lectureId,
-                sessionToken: validationResult.sessionToken,
-                expiresAt: validationResult.expiresAt
-            });
-
-            setAccessData({
-                studentId: validationResult.studentId,
-                courseId: validationResult.courseId || parseInt(courseId),
-                lectureId: validationResult.lectureId || lectureId,
-                isPdf
-            });
-            setIsAuthenticated(true);
 
             // Clean URL (remove token from address bar for security)
             const params = new URLSearchParams(window.location.search);

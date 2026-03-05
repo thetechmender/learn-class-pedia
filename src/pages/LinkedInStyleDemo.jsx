@@ -34,6 +34,7 @@ import VideoCourseExplainerSimple from '../components/VideoCourseExplainerSimple
 import ChatBox from '../components/video-explainer/ChatBox';
 import Assessment from './Assessment';
 import { transformApiResponse } from '../utils/courseTransformer';
+import { parseAccessParams, storeSession, getStoredSession } from '../services/authService';
 import { 
     getCourseDetails, 
     getLectureSections, 
@@ -47,7 +48,7 @@ import {
 
 // Default IDs for development/testing (overridden by authenticated props)
 const DEFAULT_STUDENT_ID = 1;
-const DEFAULT_COURSE_ID = 15;
+const DEFAULT_COURSE_ID = 13101;
 
 const parseDurationToSeconds = (duration) => {
     if (!duration) return 0;
@@ -110,7 +111,42 @@ const LinkedInStyleDemo = ({
     const [showAssessment, setShowAssessment] = useState(false);
     const assessmentRef = useRef(null);
 
+    const [authError, setAuthError] = useState(null);
+    const [authReady, setAuthReady] = useState(false);
+
     useEffect(() => {
+        const existingSession = getStoredSession();
+        if (existingSession?.sessionToken) {
+            setAuthReady(true);
+            return;
+        }
+
+        if (authenticatedStudentId) {
+            setAuthReady(true);
+            return;
+        }
+
+        const { token } = parseAccessParams();
+        if (!token) {
+            setAuthError('You are not authenticated. Please open this course from the main portal or login to continue.');
+            setAuthReady(false);
+            return;
+        }
+
+        storeSession({ sessionToken: token });
+
+        setAuthReady(true);
+
+        const params = new URLSearchParams(window.location.search);
+        params.delete('token');
+        params.delete('t');
+        const query = params.toString();
+        const cleanUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }, [authenticatedStudentId]);
+
+    useEffect(() => {
+        if (!authReady || authError) return;
         if (!isPdf || !COURSE_ID) return;
 
         let cancelled = false;
@@ -161,7 +197,7 @@ const LinkedInStyleDemo = ({
         return () => {
             cancelled = true;
         };
-    }, [isPdf, COURSE_ID, initialLectureId, urlLectureId]);
+    }, [authReady, authError, isPdf, COURSE_ID, initialLectureId, urlLectureId]);
 
     // Fetch course data from API
     const fetchCourseData = useCallback(async () => {
@@ -230,8 +266,9 @@ const LinkedInStyleDemo = ({
 
     useEffect(() => {
         if (isPdf) return;
+        if (!authReady || authError) return;
         fetchCourseData();
-    }, [fetchCourseData, isPdf]);
+    }, [fetchCourseData, isPdf, authReady, authError]);
 
     const toggleChapter = (chapterId) => {
         setExpandedChapters(prev => {
@@ -331,6 +368,27 @@ const LinkedInStyleDemo = ({
             assessmentRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
     };
+
+    if (authError && !authReady) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center">
+                <div className="text-center max-w-md px-6">
+                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-8 h-8 text-red-500 dark:text-red-400" />
+                    </div>
+                    <h2 className="text-gray-800 dark:text-white text-xl font-bold mb-2">Access Required</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">{authError}</p>
+                    <a
+                        href="/"
+                        className="px-6 py-3 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-all duration-300 inline-flex items-center gap-2 justify-center"
+                    >
+                        <GraduationCap className="w-4 h-4" />
+                        Go to Portal
+                    </a>
+                </div>
+            </div>
+        );
+    }
 
     if (isPdf) {
         if (pdfLoading) {

@@ -3,7 +3,7 @@
 
 const ENVIRONMENTS = {
     development: {
-        API_URL: 'https://localhost:7043/api',
+        API_URL: 'https://localhost:7224/api',
         DEBUG: true,
         ENV_NAME: 'development'
     },
@@ -13,7 +13,7 @@ const ENVIRONMENTS = {
         ENV_NAME: 'staging'
     },
     production: {
-        API_URL: 'https://classroomapi.thetechmenders.com/api',
+        API_URL: 'https://class.thetechmenders.com/api',
         DEBUG: false,
         ENV_NAME: 'production'
     }
@@ -22,7 +22,7 @@ const ENVIRONMENTS = {
 // ========================================
 // SET CURRENT ENVIRONMENT HERE
 // ========================================
-const CURRENT_ENVIRONMENT = 'development';
+const CURRENT_ENVIRONMENT = 'production';
 // ========================================
 
 const currentConfig = ENVIRONMENTS[CURRENT_ENVIRONMENT] || ENVIRONMENTS.production;

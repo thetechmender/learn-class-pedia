@@ -7,6 +7,23 @@ import { appSettings } from '../config/appSettings';
 
 const BASE_URL = `${appSettings.apiUrl}/Learning`;
 
+export const getAuthenticatedCustomer = async (jwtToken) => {
+    const response = await fetch(`${BASE_URL}/authenticate`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${jwtToken}`
+        }
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Unauthorized' }));
+        throw new Error(error.message || 'Unauthorized');
+    }
+
+    return response.json();
+};
+
 /**
  * Validate access token from external application
  * POST /api/Learning/auth/validate-access
