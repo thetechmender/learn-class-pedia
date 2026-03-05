@@ -447,8 +447,8 @@ const AssignDiscountRate = () => {
   const handleSetPriceForCourseType = useCallback(async (courseType) => {
     setSelectedCourseTypeForPrice(courseType);
     // Pre-fill current price if exists
-    if (courseType.price) {
-      setCourseTypePrice(courseType.price.toString());
+    if (courseType.coursePrice) {
+      setCourseTypePrice(courseType.coursePrice.toString());
     } else {
       setCourseTypePrice('');
     }
@@ -1234,7 +1234,7 @@ const AssignDiscountRate = () => {
                   )}
 
                   {/* Enhanced Course Type Meta */}
-                  <div className="flex flex-wrap gap-2 mb-5">
+                  <div className="flex flex-wrap gap-2 mb-4">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
                       <Grid3X3 className="w-3 h-3 mr-1" />
                       Course Type
@@ -1245,6 +1245,25 @@ const AssignDiscountRate = () => {
                         Active
                       </span>
                     )}
+                  </div>
+
+                  {/* Price Display */}
+                  <div className="mb-5 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm text-gray-600">Current Price:</span>
+                        <div className="text-lg font-bold text-gray-900">
+                          ${courseType.coursePrice || 0}
+                        </div>
+                      </div>
+                      {courseType.discountedRateId && (
+                        <div className="text-right">
+                          <span className="text-xs text-green-600 font-medium">
+                            {courseType.discountRateTitle}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Enhanced Action Buttons */}
@@ -1261,7 +1280,7 @@ const AssignDiscountRate = () => {
                       className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium transform hover:scale-105 shadow-md hover:shadow-lg"
                     >
                       <DollarSign className="w-4 h-4 mr-2" />
-                      Set Price
+                      {courseType.coursePrice ? 'Update Price' : 'Set Price'}
                     </button>
                   </div>
                 </div>
