@@ -501,11 +501,11 @@ const CareerPathForm = ({
     }));
   };
 
-  const toggleCourseExpansion = (levelIndex, courseId) => {
-    const key = `${levelIndex}-${courseId}`;
+  const toggleCourseExpansion = (levelIndex, courseIndex) => {
+    const courseKey = `${levelIndex}-${courseIndex}`;
     setExpandedCourses(prev => ({
       ...prev,
-      [key]: !prev[key]
+      [courseKey]: !prev[courseKey]
     }));
   };
 
@@ -1472,33 +1472,79 @@ const CareerPathForm = ({
                               </button>
                             </div>
                             <div className="space-y-2">
-                              {formData.levels[levelIndex].courses.map((course, courseIndex) => (
-                                <div
-                                  key={course.courseId}
-                                  className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
-                                >
-                                  <div className="flex-1 min-w-0 mr-3">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded-full">
-                                        {course.courseSequence}
-                                      </span>
-                                      <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                        {course.title}
-                                      </h4>
+                              {formData.levels[levelIndex].courses.map((course, courseIndex) => {
+                                const courseKey = `${levelIndex}-${courseIndex}`;
+                                const isCourseExpanded = expandedCourses[courseKey];
+                                const hasShortCourses = course.shortCourses && course.shortCourses.length > 0;
+                                
+                                return (
+                                  <div key={course.courseId} className="border border-blue-200 dark:border-blue-800 rounded-xl overflow-hidden">
+                                    <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20">
+                                      <div className="flex-1 min-w-0 mr-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded-full">
+                                            {course.courseSequence}
+                                          </span>
+                                          <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                            {course.title}
+                                          </h4>
+                                          {hasShortCourses && (
+                                            <button
+                                              type="button"
+                                              onClick={() => toggleCourseExpansion(levelIndex, courseIndex)}
+                                              className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
+                                              title="Toggle short courses"
+                                            >
+                                              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCourseExpanded ? 'rotate-180' : ''}`} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => removeCourseFromLevel(levelIndex, courseIndex)}
+                                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                          title="Remove course"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
                                     </div>
+                                    
+                                    {/* Short Courses Nested Display */}
+                                    {hasShortCourses && isCourseExpanded && (
+                                      <div className="border-t border-blue-200 dark:border-blue-800 bg-gray-50 dark:bg-gray-800/50 p-3">
+                                        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                                          Short Courses ({course.shortCourses.length})
+                                        </div>
+                                        <div className="space-y-1">
+                                          {course.shortCourses.map((shortCourse, shortCourseIndex) => (
+                                            <div
+                                              key={shortCourse.shortCourseId}
+                                              className="flex items-center justify-between p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
+                                            >
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                    {shortCourseIndex + 1}.
+                                                  </span>
+                                                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                                                    {shortCourse.shortCourseTitle}
+                                                  </span>
+                                                </div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                  Certificate ID: {shortCourse.courseCertificateId}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => removeCourseFromLevel(levelIndex, courseIndex)}
-                                      className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                      title="Remove course"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
