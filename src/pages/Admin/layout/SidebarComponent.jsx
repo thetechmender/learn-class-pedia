@@ -185,24 +185,24 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
       };
     }
     
-    // Handle Career Path with existing children (if it comes from API)
-    if (item.id === 'career-path' || item.label === 'Career Path') {
+    // Handle Career Roles with Career Path as child
+    if (item.id === 'career-roles' || item.label === 'Career Roles') {
       return {
         ...item,
-        path: 'career-path', // Make parent clickable
+        path: 'career-roles', // Make parent clickable
         children: [
           {
-            id: 'career-roles',
-            label: 'Career Roles',
+            id: 'career-path',
+            label: 'Career Path',
             icon: User,
-            path: 'career-roles'
+            path: 'career-path'
           }
         ]
       };
     }
     
-    // Filter out separate Career Roles item
-    if (item.id === 'career-roles' || item.label === 'Career Roles') {
+    // Filter out separate Career Path item
+    if (item.id === 'career-path' || item.label === 'Career Path') {
       return null;
     }
     

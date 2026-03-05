@@ -19,11 +19,11 @@
       "order": 2
     },
     {
-      "id": "career-path",
-      "path": "/admin/career-path",
-      "component": "CareerPath",
-      "label": "Career Path",
-      "icon": "TrendingUp",
+      "id": "career-roles",
+      "path": "/admin/career-roles",
+      "component": "CareerRoles",
+      "label": "Career Roles",
+      "icon": "Briefcase",
       "category": "management",
       "order": 3
     },
@@ -34,7 +34,7 @@
       "label": "Featured Marking",
       "icon": "Star",
       "category": "management",
-      "order": 4
+      "order": 5
     },
     {
       "id": "review-management-page",
@@ -43,7 +43,7 @@
       "label": "Course & Career Reviews",
       "icon": "Star",
       "category": "management",
-      "order": 5
+      "order": 6
     },
     {
       "id": "categories",
@@ -52,7 +52,7 @@
       "label": "Category Management",
       "icon": "FolderTree",
       "category": "management",
-      "order": 6
+      "order": 7
     },
     {
       "id": "discount-rates",
@@ -61,7 +61,7 @@
       "label": "Discount Rates",
       "icon": "Percent",
       "category": "management",
-      "order": 7
+      "order": 8
     },
     {
       "id": "assign-discount-rate",
@@ -70,7 +70,7 @@
       "label": "Assign Discount Rate",
       "icon": "Percent",
       "category": "management",
-      "order": 8
+      "order": 9
     },
     {
       "id": "email-templates",
@@ -79,16 +79,16 @@
       "label": "Email Templates",
       "icon": "Mail",
       "category": "management",
-      "order": 9
+      "order": 10
     },
     {
-      "id": "career-roles",
-      "path": "/admin/career-roles",
-      "component": "CareerRoles",
-      "label": "Career Roles",
-      "icon": "Briefcase",
+      "id": "career-path",
+      "path": "/admin/career-path",
+      "component": "CareerPath",
+      "label": "Career Path",
+      "icon": "TrendingUp",
       "category": "management",
-      "order": 10
+      "order": 4
     },
     {
       "id": "topics",
