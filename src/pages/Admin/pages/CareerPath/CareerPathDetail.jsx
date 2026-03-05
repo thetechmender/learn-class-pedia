@@ -10,6 +10,7 @@ import {
   PlayCircle,
   DollarSign,
   ChevronRight,
+  ChevronDown,
   Search
 } from 'lucide-react';
 
@@ -22,6 +23,7 @@ const CareerPathDetail = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
+  const [expandedCourses, setExpandedCourses] = useState({});
 
   useEffect(() => {
     fetchCareerPathDetails();
@@ -107,6 +109,13 @@ const CareerPathDetail = () => {
     });
     
     return stats;
+  };
+
+  const toggleCourseExpansion = (courseId) => {
+    setExpandedCourses(prev => ({
+      ...prev,
+      [courseId]: !prev[courseId]
+    }));
   };
 
   const getTotalStats = () => {
@@ -427,58 +436,118 @@ const CareerPathDetail = () => {
                 ) : (
                   filteredCourses.map((course, index) => {
                     const displaySequence = index + 1;
+                    const isCourseExpanded = expandedCourses[course.courseId];
+                    const hasShortCourses = course.shortCourses && course.shortCourses.length > 0;
+                    
                     return (
-                      <div key={`${course.levelId}-${course.courseId}`} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-300 hover:-translate-y-1">
+                      <div key={`${course.levelId}-${course.courseId}`} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-300 hover:-translate-y-1">
                         {/* Course Header */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
-                              {course.levelName || 'Unknown Level'}
-                            </span>
-                            <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                              {course.categoryName || 'General'}
-                            </span>
-                            <span className="text-xs text-gray-500 font-medium">#{displaySequence}</span>
+                        <div className="p-6 pb-4">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                                {course.levelName || 'Unknown Level'}
+                              </span>
+                              <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                                {course.categoryName || 'General'}
+                              </span>
+                              <span className="text-xs text-gray-500 font-medium">#{displaySequence}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                                Course {displaySequence}
+                              </span>
+                              {hasShortCourses && (
+                                <button
+                                  onClick={() => toggleCourseExpansion(course.courseId)}
+                                  className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  title="Toggle short courses"
+                                >
+                                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCourseExpanded ? 'rotate-180' : ''}`} />
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                            Course {displaySequence}
-                          </span>
-                        </div>
 
-                      {/* Course Title */}
-                      <h4 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 leading-tight min-h-[3.5rem]">
-                        {course.title}
-                      </h4>
+                          {/* Course Title */}
+                          <h4 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 leading-tight min-h-[3.5rem]">
+                            {course.title}
+                          </h4>
 
-                      {/* Course Meta */}
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Target className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="truncate">{course.levelName || 'Unknown Level'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <PlayCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="truncate">{course.categoryName || 'General'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span>Sequence: {course.courseSequence || index + 1}</span>
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <BookOpen className="w-4 h-4 text-blue-600" />
+                          {/* Course Meta */}
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Target className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{course.levelName || 'Unknown Level'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <PlayCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{course.categoryName || 'General'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span>Sequence: {course.courseSequence || index + 1}</span>
+                            </div>
+                            {hasShortCourses && (
+                              <div className="flex items-center gap-2 text-sm text-blue-600">
+                                <BookOpen className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                <span>{course.shortCourses.length} Short Course{course.shortCourses.length !== 1 ? 's' : ''}</span>
+                              </div>
+                            )}
                           </div>
-                          <span className="text-xs text-gray-500 font-medium">Course Details</span>
+
+                          {/* Action Button */}
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <BookOpen className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <span className="text-xs text-gray-500 font-medium">Course Details</span>
+                            </div>
+                            <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 hover:scale-105">
+                              <ChevronRight className="w-5 h-5" />
+                            </button>
+                          </div>
                         </div>
-                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 hover:scale-105">
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
+
+                        {/* Short Courses Nested Display */}
+                        {hasShortCourses && isCourseExpanded && (
+                          <div className="border-t border-gray-200 bg-gray-50 p-6">
+                            <div className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">
+                              Short Courses ({course.shortCourses.length})
+                            </div>
+                            <div className="grid gap-3">
+                              {course.shortCourses.map((shortCourse, shortCourseIndex) => (
+                                <div
+                                  key={shortCourse.shortCourseId}
+                                  className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200"
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                          {shortCourseIndex + 1}
+                                        </span>
+                                        <h5 className="text-sm font-semibold text-gray-900 truncate">
+                                          {shortCourse.shortCourseTitle}
+                                        </h5>
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        Certificate ID: {shortCourse.courseCertificateId}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <BookOpen className="w-3 h-3 text-green-600" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
                     );
                   })
                 )}
