@@ -9,6 +9,11 @@ const SlugManagement = () => {
   const { getAllCoursesAdmin, getAllCareerPaths, getAllCategories } = useAdmin();
   const { updateCourseSlug, updateAllCourseSlugs, updateCareerPathSlug, updateAllCareerPathSlugs, updateCategorySlug, updateAllCategorySlugs, loading: slugLoading } = useSlugManagement();
 
+// Separate loading states for each entity type
+const [coursesUpdating, setCoursesUpdating] = useState(false);
+const [categoriesUpdating, setCategoriesUpdating] = useState(false);
+const [careerPathsUpdating, setCareerPathsUpdating] = useState(false);
+
   const [activeModal, setActiveModal] = useState(null);
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [courses, setCourses] = useState([]);
@@ -116,9 +121,12 @@ const SlugManagement = () => {
   // Update all category slugs
   const handleUpdateAllCategorySlugs = async () => {
     try {
+      setCategoriesUpdating(true);
       await updateAllCategorySlugs();
     } catch (error) {
       // Error is handled by the hook
+    } finally {
+      setCategoriesUpdating(false);
     }
   };
 
@@ -318,12 +326,15 @@ const SlugManagement = () => {
   // Update all slugs
   const handleUpdateAllSlugs = async () => {
     try {
+      setCoursesUpdating(true);
       await updateAllCourseSlugs();
       if (searchTerm.trim()) {
         searchCourses(); // Refresh search results if there's a search term
       }
     } catch (error) {
       // Error is handled by the hook
+    } finally {
+      setCoursesUpdating(false);
     }
   };
 
@@ -416,7 +427,9 @@ const SlugManagement = () => {
                   </button>
                   
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Update All clicked for:', card.id);
                       if (card.id === 'courses') {
                         handleUpdateAllSlugs();
                       } else if (card.id === 'career-paths') {
@@ -425,15 +438,23 @@ const SlugManagement = () => {
                         handleUpdateAllCategorySlugs();
                       }
                     }}
-                    disabled={(card.id !== 'courses' && card.id !== 'career-paths' && card.id !== 'categories') || slugLoading}
+                    disabled={(card.id !== 'courses' && card.id !== 'career-paths' && card.id !== 'categories') || 
+                      (card.id === 'courses' && coursesUpdating) || 
+                      (card.id === 'career-paths' && careerPathsUpdating) || 
+                      (card.id === 'categories' && categoriesUpdating)}
                     className={`w-full px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-medium shadow-md transition-all duration-200 transform hover:scale-[1.02] ${
                       (card.id === 'courses' || card.id === 'career-paths' || card.id === 'categories')
                         ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed'
                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     }`}
                   >
-                    <RefreshCw className={`w-4 h-4 ${slugLoading && (card.id === 'courses' || card.id === 'career-paths' || card.id === 'categories') ? 'animate-spin' : ''}`} />
-                    {slugLoading && (card.id === 'courses' || card.id === 'career-paths' || card.id === 'categories') ? 'Updating...' : 'Update All'}
+                    <RefreshCw className={`w-4 h-4 ${
+                      (card.id === 'courses' && coursesUpdating) || 
+                      (card.id === 'career-paths' && careerPathsUpdating) || 
+                      (card.id === 'categories' && categoriesUpdating) ? 'animate-spin' : ''}`} />
+                    {(card.id === 'courses' && coursesUpdating) || 
+                     (card.id === 'career-paths' && careerPathsUpdating) || 
+                     (card.id === 'categories' && categoriesUpdating) ? 'Updating...' : 'Update All'}
                   </button>
                 </div>
 
