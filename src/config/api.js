@@ -20,13 +20,13 @@ export const ENDPOINTS = {
   MEDIA_AUDIO_BY_ID: (id) => `/media/audio/${id}`,
   MEDIA_IMAGE_BY_ID: (id) => `/media/image/${id}`,
  // Admin Routes and Authentication
-  ADMINCOURSE:'/admin/courses',
+  ADMINCOURSE:'/courses',
   ROUTES: '/admin/routes',
   ROLES: '/admin/roles',
   AUTH_LOGIN: '/auth/login',
   AUTH_CHANGE_PASSWORD: '/auth/change-password',
   AUTH_USER: '/auth/me',
-    COURSES_ADMIN: '/admin/courses',
+    COURSES_ADMIN: '/courses',
   COURSE_BY_ID_ADMIN: (id) => `/courses/${id}`,
   COURSE_TAGS: '/admin/courses/tags',
   COURSE_BADGES: '/admin/courses/badges',
@@ -127,6 +127,16 @@ export const ENDPOINTS = {
   DISCOUNT_RATES_MAPPINGS_BY_ID: (id) => `/DiscountRates/mappings/${id}`,
   DISCOUNT_RATES_MAPPINGS_UPDATE: (id) => `/DiscountRates/mappings/${id}`,
   DISCOUNT_RATES_MAPPINGS_DELETE: (id) => `/DiscountRates/mappings/${id}`,
+
+  // Slug Management endpoints
+  SLUG_MANAGEMENT: {
+    UPDATE_ALL_COURSE_SLUGS: '/SlugManagment/update-all-course-slugs',
+    UPDATE_COURSE_SLUG: '/SlugManagment/update-course-slug',
+    GET_SLUG_BY_COURSE_ID: (courseId) => `/SlugManagment/getSlugByCourseId/${courseId}`,
+    UPDATE_ALL_CAREER_PATH_SLUGS: '/SlugManagment/Update-All-CareerPath-Slugs',
+    UPDATE_CAREER_PATH_SLUG: '/SlugManagment/Update-CareerPath-Slug',
+    GET_SLUG_BY_CAREER_PATH_ID: (careerPathId) => `/SlugManagment/getSlugByCareerPathId/${careerPathId}`,
+  },
 };
 
 // HTTP Status Codes

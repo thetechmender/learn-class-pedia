@@ -100,6 +100,15 @@
       "order": 11
     },
     {
+      "id": "slug-management",
+      "path": "/admin/slug-management",
+      "component": "SlugManagement",
+      "label": "URL & Slug Management",
+      "icon": "Link",
+      "category": "management",
+      "order": 12
+    },
+    {
       "id": "change-password",
       "path": "/admin/change-password",
       "component": "ChangePassword",

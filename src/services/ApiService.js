@@ -1524,6 +1524,71 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // ==================== SLUG MANAGEMENT ====================
+
+  // Update course slug
+  async updateCourseSlug(courseId, slug) {
+    return this.request(`/SlugManagment/update-course-slug?courseId=${courseId}&slug=${encodeURIComponent(slug)}`, {
+      method: 'POST',
+    });
+  }
+
+  // Update all course slugs
+  async updateAllCourseSlugs() {
+    return this.request('/SlugManagment/update-all-course-slugs', {
+      method: 'POST',
+    });
+  }
+
+  // Get slug by course ID
+  async getSlugByCourseId(courseId) {
+    return this.request(`/SlugManagment/getSlugByCourseId/${courseId}`, {
+      method: 'GET',
+    });
+  }
+
+  // Update all career path slugs
+  async updateAllCareerPathSlugs() {
+    return this.request('/SlugManagment/Update-All-CareerPath-Slugs', {
+      method: 'POST',
+    });
+  }
+
+  // Update career path slug
+  async updateCareerPathSlug(careerPathId, slug) {
+    return this.request(`/SlugManagment/Update-CareerPath-Slug?careerPathId=${careerPathId}&slug=${encodeURIComponent(slug)}`, {
+      method: 'POST',
+    });
+  }
+
+  // Get slug by career path ID
+  async getSlugByCareerPathId(careerPathId) {
+    return this.request(`/SlugManagment/getSlugByCareerPathId/${careerPathId}`, {
+      method: 'GET',
+    });
+  }
+
+  // Update all category slugs
+  async updateAllCategorySlugs() {
+    return this.request('/SlugManagment/update-all-categories-slugs', {
+      method: 'POST',
+    });
+  }
+
+  // Update category slug
+  async updateCategorySlug(categoryId, slug) {
+    return this.request(`/SlugManagment/update-category-slug?categoryId=${categoryId}&slug=${encodeURIComponent(slug)}`, {
+      method: 'POST',
+    });
+  }
+
+  // Get slug by category ID
+  async getSlugByCategoryId(categoryId) {
+    return this.request(`/SlugManagment/getSlugByCategoryId/${categoryId}`, {
+      method: 'GET',
+    });
+  }
 }
 
 export default new ApiService();

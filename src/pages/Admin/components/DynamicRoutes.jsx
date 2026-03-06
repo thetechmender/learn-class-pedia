@@ -17,6 +17,7 @@ import ReviewManagementPage from '../pages/ReviewManagementPage/ReviewManagement
 import AssignDiscountRate from '../pages/AssignDiscountRate/AssignDiscountRate';
 import DiscountRates from '../pages/DiscountRates/DiscountRates';
 import TopicManagement from '../pages/TopicManagement/TopicManagement';
+import SlugManagement from '../pages/SlugManagement/SlugManagement';
 
 // Component mapping
 const componentMap = {
@@ -35,6 +36,7 @@ const componentMap = {
   AssignDiscountRate,
   DiscountRates,
   TopicManagement,
+  SlugManagement,
 };
 
 // Protected Route Component
