@@ -89,7 +89,6 @@ const CareerPathForm = ({
     initializeDropdownData();
     // Always clear cache on mount to ensure fresh start
     clearCache();
-    console.log('CareerPathForm mounted, levels:', levels);
   }, []);
 
   useEffect(() => {
@@ -711,7 +710,7 @@ const CareerPathForm = ({
             sortOrder: parseInt(level.sortOrder) || 0,
             certificateCount: level.courses?.length || 0, // Auto-calculate from courses
             courses: level.courses.map(course => {
-              console.log('Processing course:', course);
+            
               return {
                 courseId: parseInt(course.courseId),
                 courseSequence: course.courseSequence || 0

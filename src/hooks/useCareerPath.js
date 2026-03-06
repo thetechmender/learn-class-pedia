@@ -37,13 +37,13 @@ export const useCareerPath = () => {
       setLoading(true);
       setError(null);
       const response = await adminApiService.getCareerPathLevels();
-      console.log('API response for levels:', response);
+     
       const levelsData = Array.isArray(response) ? response.map(level => ({
         ...level,
         levelId: level.id, // Map 'id' to 'levelId' for consistency
         levelMapId: level.id // Also map to levelMapId
       })) : [];
-      console.log('Processed levelsData:', levelsData);
+     
       setLevels(levelsData);
       return levelsData;
     } catch (err) {

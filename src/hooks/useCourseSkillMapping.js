@@ -320,12 +320,7 @@ export const useCourseSkillMapping = () => {
     try {
       const assignedIds = await adminApiService.getSkillMapping(skillId, typeId);
       
-      console.log('Skill mapping assigned IDs from API:', {
-        skillId,
-        typeId,
-        assignedIds,
-        isArray: Array.isArray(assignedIds)
-      });
+     
       
       if (assignedIds && Array.isArray(assignedIds) && assignedIds.length > 0) {
         let allItems;
@@ -348,13 +343,6 @@ export const useCourseSkillMapping = () => {
         
         // Filter to get only assigned items with full details
         const assignedItemsDetails = items.filter(item => assignedIds.includes(item.id));
-        
-        console.log('Skill mapping assigned items details:', {
-          assignedIds,
-          totalItems: items.length,
-          assignedItemsDetails: assignedItemsDetails
-        });
-        
         return assignedItemsDetails;
       }
       

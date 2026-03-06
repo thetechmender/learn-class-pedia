@@ -68,15 +68,13 @@ const GenericDropdown = ({
 
   // Handle item selection
   const handleSelect = (itemValue) => {
-    console.log('handleSelect called with:', { itemValue, valueField });
+    
     
     // Ensure itemValue is not undefined
     if (itemValue === undefined || itemValue === null) {
       console.error('itemValue is undefined, skipping selection');
       return;
     }
-    
-    debugger;
     if (multiple) {
       const currentValue = Array.isArray(value) ? value : [];
       const newValue = currentValue.includes(itemValue)
@@ -169,13 +167,10 @@ const GenericDropdown = ({
           <div className="overflow-y-auto max-h-60">
             {filteredItems.length > 0 ? (
               filteredItems.map((item, index) => {
-                console.log(`Rendering item ${index}:`, item);
-                console.log('valueField:', valueField);
-                console.log('item[valueField]:', item[valueField]);
-                
+               
                 // Handle different field access patterns
                 const itemValue = item[valueField] || item.courseId || item.id;
-                console.log('Resolved itemValue:', itemValue);
+                
                 
                 const isSelected = multiple 
                   ? (Array.isArray(value) && value.includes(itemValue))
@@ -188,7 +183,7 @@ const GenericDropdown = ({
                       isSelected ? 'bg-blue-50 text-blue-600' : ''
                     }`}
                     onClick={() => {
-                      console.log('Clicking item:', item, 'valueField:', valueField, 'itemValue:', itemValue);
+                     
                       handleSelect(itemValue);
                     }}
                   >

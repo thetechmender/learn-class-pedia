@@ -124,14 +124,7 @@ const FeaturedMarking = () => {
     try {
       const typeId = type === 'course' ? 1 : type === 'category' ? 2 : 3;
       const result = await getBadgeAssignments(badgeId, typeId);
-      
-      console.log('Assigned items result in component:', {
-        badgeId,
-        type,
-        typeId,
-        result,
-        isArray: Array.isArray(result)
-      });
+
       
       // Hook returns array directly, not object with items property
       setAssignedItems(result || []);
@@ -163,11 +156,7 @@ const FeaturedMarking = () => {
 
   // Search available items
   const fetchAvailableItems = useCallback(async (type, searchTerm = '') => {
-    console.log('Fetching available items:', {
-      type,
-      searchTerm,
-      assignedIdsCount: assignedItems.length
-    });
+   
     
     if (!type || type === 'type') {
       setAvailableItems([]);
@@ -186,10 +175,6 @@ const FeaturedMarking = () => {
       const assignedIds = assignedItems.map(item => item.id);
       
       const result = await getAvailableItems(type, searchTerm, assignedIds);
-      console.log('Available items result:', {
-        result,
-        resultLength: result?.length || 0
-      });
       
       setAvailableItems(result || []);
     } catch (err) {
@@ -201,11 +186,6 @@ const FeaturedMarking = () => {
   }, [getAvailableItems, assignedItems]);
 
   const handleMarkingTypeChange = useCallback((type) => {
-    console.log('Type change triggered:', {
-      newType: type,
-      currentMarkingType: markingType,
-      selectedBadgeId: selectedBadge?.id
-    });
     
     setMarkingType(type);
     setAssignedItems([]);
@@ -256,13 +236,6 @@ const FeaturedMarking = () => {
         default:
           throw new Error('Invalid type');
       }
-      
-      console.log('Assigning badge:', {
-        badgeId: selectedBadge.id,
-        typeId: typeId,
-        originalIds: assignedItems.map(item => item.id),
-        convertedIds: convertedIds
-      });
       
       await assignBadgeToItems(selectedBadge.id, typeId, convertedIds);
       showSuccess(`Badge assigned to ${assignedItems.length} ${markingType}(s) successfully!`);
@@ -897,17 +870,7 @@ const FeaturedMarking = () => {
                         })
                         .map((item) => {
                         const isAssigned = assignedItems.some(assigned => assigned.id === item.id);
-                        
-                        // Debug logging to track the issue
-                        console.log('Item assignment check:', {
-                          itemType: markingType,
-                          itemId: item.id,
-                          itemName: item.title || item.name,
-                          isAssigned,
-                          assignedItemsIds: assignedItems.map(a => a.id),
-                          itemMatchesType: (item.title && markingType === 'course') || (item.name && markingType === 'category') || (item.title && markingType === 'career')
-                        });
-                        
+                       
                         return (
                           <div
                             key={item.id}

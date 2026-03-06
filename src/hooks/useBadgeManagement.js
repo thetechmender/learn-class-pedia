@@ -204,12 +204,7 @@ export const useBadgeManagement = () => {
       // First get the assigned IDs - API returns array directly
       const assignedIds = await adminApiService.getBadgeAssignments(badgeId, typeId);
       
-      console.log('Assigned IDs from API:', {
-        badgeId,
-        typeId,
-        assignedIds,
-        isArray: Array.isArray(assignedIds)
-      });
+      
       
       if (assignedIds && Array.isArray(assignedIds) && assignedIds.length > 0) {
         let allItems;
@@ -237,11 +232,7 @@ export const useBadgeManagement = () => {
         // Filter to get only assigned items with full details
         const assignedItemsDetails = items.filter(item => assignedIds.includes(item.id));
         
-        console.log('Assigned items details:', {
-          assignedIds,
-          totalItems: items.length,
-          assignedItemsDetails: assignedItemsDetails
-        });
+       
         
         return assignedItemsDetails;
       }

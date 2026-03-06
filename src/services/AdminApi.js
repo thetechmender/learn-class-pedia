@@ -393,7 +393,6 @@ class AdminApiService {
   
   // GET badge assignments by type
   async getBadgeAssignments(badgeId, typeId) {
-    debugger;
     return this.request(`/BadgeMap/${badgeId}/${typeId}`);
   }
 
@@ -1196,19 +1195,13 @@ class AdminApiService {
     
     // Add search parameter
     if (params.search && typeof params.search === 'string') {
-      console.log('Original search term:', params.search);
-      console.log('URLSearchParams before append:', queryParams.toString());
       queryParams.append('search', params.search);
-      console.log('URLSearchParams after append:', queryParams.toString());
     } else if (params.search) {
       console.warn('Invalid search parameter type in AdminApi:', typeof params.search, params.search);
     }
     
     const queryString = queryParams.toString();
     const url = queryString ? `${ENDPOINTS.DISCOUNT_RATES}?${queryString}` : ENDPOINTS.DISCOUNT_RATES;
-    
-    console.log('Final URL:', url);
-    
     return this.request(url);
   }
 

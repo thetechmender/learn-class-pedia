@@ -23,13 +23,11 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
 
       // Add search parameter if provided
       if (searchQuery && typeof searchQuery === 'string') {
-        console.log('Search term received in hook:', searchQuery);
+       
         params.search = searchQuery;
       } else if (searchQuery) {
         console.warn('Invalid search parameter type in useDiscountRates:', typeof searchQuery, searchQuery);
       }
-
-      console.log('Params being sent to API:', params);
       const response = await adminApiService.getAllDiscountRates(params);
       
       // Handle response structure - based on the API response you provided

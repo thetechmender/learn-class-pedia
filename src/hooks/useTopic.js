@@ -122,7 +122,7 @@ export const useTopic = () => {
       setLoading(true);
       setError(null);
       const response = await adminApiService.get(`/TopicMapping/${topicId}/${type}`);
-      console.log('Get topic mapping response:', response);
+     
       return response;
     } catch (err) {
       console.error('Failed to fetch topic mapping:', err);
@@ -137,9 +137,9 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Creating topic mapping with payload:', mappingData);
+      
       const response = await adminApiService.post('/TopicMapping/Assign', mappingData);
-      console.log('Create mapping response:', response);
+     
       return response;
     } catch (err) {
       console.error('Create topic mapping error:', err);

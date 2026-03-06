@@ -110,11 +110,9 @@ const ReviewManagementPage = () => {
         params.Title = searchTerm; // Use Title (capital T) as per CareerPath page
       }
       
-      console.log('Fetching career paths with params:', params);
+   
       const response = await getAllCareerPaths(params);
-      console.log('Career Paths API Response:', response);
       const careerPathsArray = response?.data || response?.items || response || [];
-      console.log('Career Paths Array:', careerPathsArray);
       
       // Format for dropdown
       const formattedPaths = careerPathsArray.map(path => ({
@@ -144,11 +142,8 @@ const ReviewManagementPage = () => {
         params.Title = searchTerm; // Use Title (capital T) as per API endpoint
       }
       
-      console.log('Fetching courses with params:', params);
       const response = await getAllCoursesAdmin(params);
-      console.log('Courses API Response:', response);
       const coursesArray = response?.items || response?.data || response || [];
-      console.log('Courses Array:', coursesArray);
       
       // Format for dropdown
       const formattedCourses = coursesArray.map(course => ({
@@ -511,7 +506,6 @@ const ReviewManagementPage = () => {
     setError(null);
     
     try {
-      debugger;
       let careerPathId, levelId, resourceTypeId, courseId;
       
       if (reviewType === 'careerpath') {
@@ -719,9 +713,7 @@ const ReviewManagementPage = () => {
     
     try {
       let resourceId, resourceTypeId;
-      console.log(review?.
-courseId
-);
+    
       // Determine resource type and ID based on review
       if (review.resourceTypeId === 2) {
         // Career path level review: ResourceTypeId = 2 AND CourseId = 0

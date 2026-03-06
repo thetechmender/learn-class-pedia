@@ -33,9 +33,6 @@ const CareerPathDetail = () => {
     try {
       setLoading(true);
       const response = await getCareerPathById(id);
-      console.log('Career Path Response:', response);
-      console.log('Levels:', response?.levels);
-      console.log('Levels count:', response?.levels?.length);
       setCareerPath(response);
       setError(null);
     } catch (err) {
@@ -289,10 +286,8 @@ const CareerPathDetail = () => {
             <div className="mb-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Learning Levels Structure</h3>
               <div className="space-y-4">
-                {console.log('Rendering levels:', careerPath?.levels)}
-                {console.log('Levels length in render:', careerPath?.levels?.length)}
+               
                 {careerPath?.levels?.map((level, levelIndex) => {
-                  console.log('Rendering level:', level, 'Index:', levelIndex);
                   return (
                   <div key={level.levelId} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
                     <div className="flex items-center justify-between mb-4">

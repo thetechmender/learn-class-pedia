@@ -282,8 +282,7 @@ const TopicManagement = () => {
     setLoadingMappedCourses(true);
     try {
       const result = await getTopicMapping(topicId, 1); // type 1 for courses
-      console.log('Get topic mapping response:', result);
-      
+    
       // Handle new API response format: {success: true, topicId: X, type: 1, ids: [id1, id2]}
       let courses = [];
       if (result && result.success === true && Array.isArray(result.ids)) {
@@ -311,8 +310,6 @@ const TopicManagement = () => {
         // API returns direct array
         courses = result;
       }
-      
-      console.log('Processed mapped courses:', courses);
       setMappedCourses(Array.isArray(courses) ? courses : []);
     } catch (err) {
       console.error('Failed to fetch mapped courses:', err);
@@ -325,9 +322,7 @@ const TopicManagement = () => {
   // Fetch mapped career paths for a topic
   const fetchMappedCareerPaths = useCallback(async (topicId) => {
     try {
-      const result = await getTopicMapping(topicId, 2); // type 2 for career paths
-      console.log('Get topic career path mapping response:', result);
-      
+      const result = await getTopicMapping(topicId, 2); 
       // Handle new API response format: {success: true, topicId: X, type: 2, ids: [id1, id2]}
       let careerPaths = [];
       if (result && result.success === true && Array.isArray(result.ids)) {
@@ -355,8 +350,6 @@ const TopicManagement = () => {
         // API returns direct array
         careerPaths = result;
       }
-      
-      console.log('Processed mapped career paths:', careerPaths);
       setMappedCareerPaths(Array.isArray(careerPaths) ? careerPaths : []);
     } catch (err) {
       console.error('Failed to fetch mapped career paths:', err);
@@ -459,16 +452,7 @@ const TopicManagement = () => {
       
       // Find items to remove (in current but not in new)
       const toRemove = currentIds.filter(id => !newIds.includes(id));
-      
-      console.log('Saving mappings:', {
-        topicId: selectedTopicForMapping.id,
-        type: mappingType,
-        currentIds,
-        newIds,
-        toAdd,
-        toRemove
-      });
-      
+     
       // Use assign API for both add and delete operations
       if (toAdd.length > 0 || toRemove.length > 0) {
         const mappingData = {
@@ -476,7 +460,7 @@ const TopicManagement = () => {
           ids: newIds, // Send the complete list of IDs to assign
           type: mappingType
         };
-        console.log('Assigning mappings:', mappingData);
+       
         await createTopicMapping(mappingData);
       }
       
@@ -495,8 +479,7 @@ const TopicManagement = () => {
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
-      
-      console.log('Mappings saved successfully');
+   
     } catch (err) {
       console.error('Failed to save mappings:', err);
     }

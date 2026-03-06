@@ -58,8 +58,6 @@ export const useDiscountRateMapping = () => {
           (data.totalCount || 0) / (params.pageSize || prev.pageSize)
         )
       }));
-
-      console.log("API items:", data.items); // correct log
     } 
     else if (Array.isArray(data)) {
       setDiscountRates(data);
@@ -69,8 +67,6 @@ export const useDiscountRateMapping = () => {
         totalItems: data.length,
         totalPages: Math.ceil(data.length / prev.pageSize)
       }));
-
-      console.log("API array:", data); // correct log
     }
 
   } catch (err) {
@@ -231,9 +227,7 @@ export const useDiscountRateMapping = () => {
   // Fetch course types
   const fetchCourseTypes = useCallback(async () => {
     try {
-      console.log('Fetching course types...');
       const data = await adminApiService.getCourseTypes();
-      console.log('Course types response:', data);
       setCourseTypes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch course types:', err);
@@ -244,9 +238,9 @@ export const useDiscountRateMapping = () => {
   // Fetch course levels
   const fetchCourseLevels = useCallback(async () => {
     try {
-      console.log('Fetching course levels...');
+      
       const data = await adminApiService.getCourseLevels();
-      console.log('Course levels response:', data);
+     
       setCourseLevels(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch course levels:', err);
@@ -257,9 +251,9 @@ export const useDiscountRateMapping = () => {
   // Fetch categories
   const fetchAllCategories = useCallback(async () => {
     try {
-      console.log('Fetching categories...');
+    
       const data = await adminApiService.getAllCategories();
-      console.log('Categories response:', data);
+      
       setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
