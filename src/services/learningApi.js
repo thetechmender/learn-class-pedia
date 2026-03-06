@@ -29,10 +29,10 @@ export const getLectureSections = async (courseId) => {
 
 /**
  * Get student course progress
- * GET /api/Learning/student/{studentId}/course/{courseId}/progress
+ * GET /api/Learning/course/{courseId}/progress
  */
 export const getStudentProgress = async (studentId, courseId) => {
-    const response = await fetch(`${BASE_URL}/student/${studentId}/course/${courseId}/progress`, {
+    const response = await fetch(`${BASE_URL}/course/${courseId}/progress`, {
         headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to fetch student progress');
@@ -41,10 +41,10 @@ export const getStudentProgress = async (studentId, courseId) => {
 
 /**
  * Mark lecture as complete
- * POST /api/Learning/student/{studentId}/lecture/{lectureId}/complete
+ * POST /api/Learning/lecture/{lectureId}/complete
  */
 export const markLectureComplete = async (studentId, lectureId) => {
-    const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/complete`, {
+    const response = await fetch(`${BASE_URL}/lecture/${lectureId}/complete`, {
         method: 'POST',
         headers: getAuthHeaders()
     });
@@ -54,10 +54,10 @@ export const markLectureComplete = async (studentId, lectureId) => {
 
 /**
  * Toggle lecture bookmark
- * POST /api/Learning/student/{studentId}/lecture/{lectureId}/bookmark
+ * POST /api/Learning/lecture/{lectureId}/bookmark
  */
 export const toggleLectureBookmark = async (studentId, lectureId) => {
-    const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/bookmark`, {
+    const response = await fetch(`${BASE_URL}/lecture/${lectureId}/bookmark`, {
         method: 'POST',
         headers: getAuthHeaders()
     });
@@ -67,10 +67,10 @@ export const toggleLectureBookmark = async (studentId, lectureId) => {
 
 /**
  * Save lecture notes
- * PUT /api/Learning/student/{studentId}/lecture/{lectureId}/notes
+ * PUT /api/Learning/lecture/{lectureId}/notes
  */
 export const saveLectureNotes = async (studentId, lectureId, notes) => {
-    const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/notes`, {
+    const response = await fetch(`${BASE_URL}/lecture/${lectureId}/notes`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ notes })
@@ -81,10 +81,10 @@ export const saveLectureNotes = async (studentId, lectureId, notes) => {
 
 /**
  * Update lecture watch progress
- * POST /api/Learning/student/{studentId}/lecture/{lectureId}/watch
+ * POST /api/Learning/lecture/{lectureId}/watch
  */
 export const updateLectureWatch = async (studentId, lectureId, payload) => {
-    const response = await fetch(`${BASE_URL}/student/${studentId}/lecture/${lectureId}/watch`, {
+    const response = await fetch(`${BASE_URL}/lecture/${lectureId}/watch`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)
