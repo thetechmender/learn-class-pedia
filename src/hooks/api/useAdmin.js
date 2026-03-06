@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { adminApiService } from '../services/AdminApi';
-import { ENDPOINTS } from '../config/api';
-import { useAuth } from '../context/AuthContext';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import ApiService from '../../services/ApiService';
+import { ENDPOINTS } from '../../config/api';
+import { useAuth } from '../../context/AuthContext';
 
 // Simple cache implementation
 const cache = new Map();
@@ -76,7 +76,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     setError(null);
 
     try {
-      const response = await adminApiService.getCoursesPaginatedAdmin({ page: pageNum, pageSize: pageSizeVal });
+      const response = await ApiService.getCoursesPaginatedAdmin({ page: pageNum, pageSize: pageSizeVal });
       
       // Handle different response structures
       if (response && response.data) {
@@ -116,7 +116,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getCourseByIdAdmin(courseId);
+      const data = await ApiService.getCourseByIdAdmin(courseId);
       return data;
     } catch (err) {
       setError('Failed to fetch course');
@@ -131,7 +131,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.createCourse(courseData);
+      const data = await ApiService.createCourse(courseData);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {
@@ -147,7 +147,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCourse(courseId, courseData);
+      const data = await ApiService.updateCourse(courseId, courseData);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {
@@ -163,7 +163,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.deleteCourse(courseId);
+      const data = await ApiService.deleteCourse(courseId);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {
@@ -189,7 +189,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
       if (filters.courseTypeId !== undefined) queryParams.append('CourseTypeId', filters.courseTypeId);
       if (filters.categoryId !== undefined) queryParams.append('CategoryId', filters.categoryId);
       if (filters.isPaid !== undefined) queryParams.append('IsPaid', filters.isPaid);
-      const response = await adminApiService.getAllCoursesAdmin(filters);
+      const response = await ApiService.getAllCoursesAdmin(filters);
       const data = response || response || [];
     
       return data;
@@ -206,7 +206,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCourseTags();
+      const data = await ApiService.getAllCourseTags();
       return data;
     } catch (err) {
       setError('Failed to fetch course tags');
@@ -220,7 +220,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCourseBadges();
+      const data = await ApiService.getAllCourseBadges();
       return data;
     } catch (err) {
       setError('Failed to fetch course badges');
@@ -234,7 +234,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCourseTags(courseId, tagIds);
+      const data = await ApiService.updateCourseTags(courseId, tagIds);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {
@@ -249,7 +249,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCourseBadgeAssignment(courseId, badgeId);
+      const data = await ApiService.updateCourseBadgeAssignment(courseId, badgeId);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {
@@ -264,7 +264,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCourseFeatured(courseId, featured);
+      const data = await ApiService.updateCourseFeatured(courseId, featured);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {
@@ -279,7 +279,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCourseStatus(courseId, status);
+      const data = await ApiService.updateCourseStatus(courseId, status);
       await fetchCourses(); // Refresh the list
       return data;
     } catch (err) {
@@ -311,7 +311,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
       if (filters.parentCategoryId) queryParams.append('parentCategoryId', filters.parentCategoryId);
       
       const queryString = queryParams.toString();
-      const response = await adminApiService.getAllCategories(null, null, queryString);
+      const response = await ApiService.getAllCategories(null, null, queryString);
       const data = response.items || response || [];
       
       // Handle new nested structure - flatten categories for backward compatibility
@@ -356,7 +356,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getCategoryById(id);
+      const data = await ApiService.getCategoryById(id);
       return data;
     } catch (err) {
       setError('Failed to fetch category');
@@ -370,7 +370,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.createCategory(categoryData);
+      const data = await ApiService.createCategory(categoryData);
       return data;
     } catch (err) {
       setError('Failed to create category');
@@ -384,7 +384,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCategory(id, categoryData);
+      const data = await ApiService.updateCategory(id, categoryData);
       return data;
     } catch (err) {
       setError('Failed to update category');
@@ -398,7 +398,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.deleteCategory(id);
+      const data = await ApiService.deleteCategory(id);
       return data;
     } catch (err) {
       setError('Failed to delete category');
@@ -412,7 +412,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.createCategoryWithFile(formData);
+      const data = await ApiService.createCategoryWithFile(formData);
       return data;
     } catch (err) {
       setError('Failed to create category');
@@ -426,7 +426,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCategoryWithFile(id, formData);
+      const data = await ApiService.updateCategoryWithFile(id, formData);
       return data;
     } catch (err) {
       setError('Failed to update category');
@@ -442,7 +442,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCareerPaths(params);
+      const data = await ApiService.getAllCareerPaths(params);
       return data;
     } catch (err) {
       setError('Failed to fetch career paths');
@@ -456,7 +456,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getCareerPathById(id);
+      const data = await ApiService.getCareerPathById(id);
       return data;
     } catch (err) {
       setError('Failed to fetch career path');
@@ -470,7 +470,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.createCareerPathWithFile(formData);
+      const data = await ApiService.createCareerPathWithFile(formData);
       return data;
     } catch (err) {
       setError('Failed to create career path');
@@ -484,7 +484,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCareerPathWithFile(id, formData);
+      const data = await ApiService.updateCareerPathWithFile(id, formData);
       return data;
     } catch (err) {
       setError('Failed to update career path');
@@ -498,7 +498,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.deleteCareerPath(id);
+      const data = await ApiService.deleteCareerPath(id);
       return data;
     } catch (err) {
       setError('Failed to delete career path');
@@ -514,7 +514,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.createCourseWithFile(formData);
+      const data = await ApiService.createCourseWithFile(formData);
       return data;
     } catch (err) {
       setError(err.response?.data || err.message || 'Failed to create course');
@@ -528,7 +528,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCourseWithFile(id, formData);
+      const data = await ApiService.updateCourseWithFile(id, formData);
       return data;
     } catch (err) {
       setError(err.response?.data || err.message || 'Failed to update course');
@@ -544,7 +544,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.login(username, password);
+      const data = await ApiService.login(username, password);
       return data;
     } catch (err) {
       setError('Failed to login');
@@ -558,7 +558,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.changePassword(currentPassword, newPassword, confirmPassword);
+      const data = await ApiService.changePassword(currentPassword, newPassword, confirmPassword);
       return data;
     } catch (err) {
       setError('Failed to change password');
@@ -574,7 +574,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getRoutesByRole(roleId);
+      const data = await ApiService.getRoutesByRole(roleId);
       return data;
     } catch (err) {
       setError('Failed to fetch routes');
@@ -590,7 +590,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getCourseTypes();
+      const data = await ApiService.getCourseTypes();
       return data;
     } catch (err) {
       setError('Failed to fetch course types');
@@ -604,7 +604,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getCourseLevels();
+      const data = await ApiService.getCourseLevels();
       return data;
     } catch (err) {
       setError('Failed to fetch course levels');
@@ -618,7 +618,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getCourseBadges();
+      const data = await ApiService.getCourseBadges();
       return data;
     } catch (err) {
       setError('Failed to fetch course badges');
@@ -641,7 +641,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
       if (filters.pageSize !== undefined) queryParams.append('pageSize', filters.pageSize);
       
       const queryString = queryParams.toString();
-      const response = await adminApiService.getAllCourseBadgesNew(queryString);
+      const response = await ApiService.getAllCourseBadgesNew(queryString);
       const data = response.items || response || [];
     
       return {

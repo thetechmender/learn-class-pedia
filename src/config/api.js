@@ -45,10 +45,25 @@ export const ENDPOINTS = {
   COURSE_BADGE_DELETE: (id) => `/Badges/${id}`,
   CAREER_ROLES: '/career-roles',
   CAREER_ROLE_BY_ID: (id) => `/career-roles/${id}`,
+  CAREER_ROLE_CREATE: '/career-roles',
+  CAREER_ROLE_UPDATE: (id) => `/career-roles/${id}`,
+  CAREER_ROLE_DELETE: (id) => `/career-roles/${id}`,
   CAREER_SKILLS: '/careerskills',
   CAREER_SKILL_BY_ID: (id) => `/careerskills/${id}`,
+  CAREER_SKILL_CREATE: '/careerskills',
+  CAREER_SKILL_UPDATE: (id) => `/careerskills/${id}`,
+  CAREER_SKILL_DELETE: (id) => `/careerskills/${id}`,
   CAREER_PATH_LEVELS: '/career-paths/levels',
   ALL_SKILLS: '/skills',
+  // Topic endpoints
+  TOPICS_ALL: '/Topic',
+  TOPIC_BY_ID: (id) => `/Topic/${id}`,
+  TOPIC_CREATE: '/Topic',
+  TOPIC_UPDATE: (id) => `/Topic/${id}`,
+  TOPIC_DELETE: (id) => `/Topic/${id}`,
+  // Topic Mapping endpoints
+  TOPIC_MAPPING_GET: (topicId, type) => `/TopicMapping/${topicId}/${type}`,
+  TOPIC_MAPPING_ASSIGN: '/TopicMapping/Assign',
   COURSES_BY_TYPE: (typeId) => `/admin/courses?CourseTypeId=${typeId}`,
   CAREER_SKILLS_ENDPOINT: '/careerskills', // Added career skills endpoint
   // Course Skill Mapping endpoints
@@ -82,6 +97,14 @@ export const ENDPOINTS = {
   CAREER_PATH_REVIEW_ALL: '/Review/careerpath',
   COURSE_REVIEW_ALL: '/Review/course',
   
+  // Review Management endpoints
+  REVIEWS_ALL: '/reviews',
+  REVIEW_BY_ID: (id) => `/reviews/${id}`,
+  REVIEW_UPDATE_STATUS: (id) => `/reviews/${id}/status`,
+  REVIEW_RESPOND: (id) => `/reviews/${id}/respond`,
+  REVIEW_DELETE: (id) => `/reviews/${id}`,
+  REVIEW_MARK_HELPFUL: (id) => `/reviews/${id}/helpful`,
+
   // Review dropdown endpoints
   REVIEW_CAREER_PATHS_DROPDOWN: '/Review/careerpaths/dropdown',
   REVIEW_COURSES_DROPDOWN: '/Review/courses/dropdown',

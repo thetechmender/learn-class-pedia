@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useBadgeManagement } from '../../../../hooks/useBadgeManagement';
-import { useToast } from '../../../../hooks/useToast';
+import { useBadgeManagement } from '../../../../hooks/api/useBadgeManagement';
+import { useToast } from '../../../../hooks/utils/useToast';
 import {
   Award,
   Search,

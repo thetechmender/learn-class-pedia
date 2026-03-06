@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useReducer } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdmin } from '../../../../hooks/useAdmin';
-import { useCareerPath } from '../../../../hooks/useCareerPath';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import { useCareerPath } from '../../../../hooks/api/useCareerPath';
 import CareerPathForm from './CareerPathForm';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 import GenericDropdown from '../../../../components/GenericDropdown';

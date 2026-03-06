@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminApiService } from '../services/AdminApi';
+import ApiService from '../../services/ApiService';
 
 export const useBadgeManagement = () => {
   const [badges, setBadges] = useState([]);
@@ -41,7 +41,7 @@ export const useBadgeManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.getAllBadges(page, pageSize);
+      const response = await ApiService.getAllBadges(page, pageSize);
       
       // Handle the response structure from the backend
       if (response && response.items) {
@@ -75,7 +75,7 @@ export const useBadgeManagement = () => {
   // Create new badge
   const createBadge = useCallback(async (badgeData) => {
     try {
-      const response = await adminApiService.createBadge(badgeData);
+      const response = await ApiService.createBadge(badgeData);
       await fetchBadges(pagination.page, pagination.pageSize);
       return response;
     } catch (err) {
@@ -86,7 +86,7 @@ export const useBadgeManagement = () => {
   // Update badge
   const updateBadge = useCallback(async (badgeId, badgeData) => {
     try {
-      const response = await adminApiService.updateBadge(badgeId, badgeData);
+      const response = await ApiService.updateBadge(badgeId, badgeData);
       await fetchBadges(pagination.page, pagination.pageSize);
       return response;
     } catch (err) {
@@ -97,7 +97,7 @@ export const useBadgeManagement = () => {
   // Delete badge
   const deleteBadge = useCallback(async (badgeId) => {
     try {
-      const response = await adminApiService.deleteBadge(badgeId);
+      const response = await ApiService.deleteBadge(badgeId);
       await fetchBadges(pagination.page, pagination.pageSize);
       return response;
     } catch (err) {
@@ -108,7 +108,7 @@ export const useBadgeManagement = () => {
   // Get badge by ID
   const getBadgeById = useCallback(async (badgeId) => {
     try {
-      const response = await adminApiService.getBadgeById(badgeId);
+      const response = await ApiService.getBadgeById(badgeId);
       return response;
     } catch (err) {
       throw err;
@@ -202,7 +202,7 @@ export const useBadgeManagement = () => {
   const getBadgeAssignments = useCallback(async (badgeId, typeId) => {
     try {
       // First get the assigned IDs - API returns array directly
-      const assignedIds = await adminApiService.getBadgeAssignments(badgeId, typeId);
+      const assignedIds = await ApiService.getBadgeAssignments(badgeId, typeId);
       
       
       
@@ -213,18 +213,18 @@ export const useBadgeManagement = () => {
         switch(typeId) {
           case 1:
             // Use no-pagination method for courses
-            allItems = await adminApiService.getAllCoursesAdminNoPagination();
+            allItems = await ApiService.getAllCoursesAdminNoPagination();
             break;
           case 2:
             // Use no-pagination method for categories
-            allItems = await adminApiService.getAllCategories();
+            allItems = await ApiService.getAllCategories();
             break;
           case 3:
             // Use no-pagination method for career paths
-            allItems = await adminApiService.getAllCareerPaths();
+            allItems = await ApiService.getAllCareerPaths();
             break;
           default:
-            allItems = await adminApiService.getAllCoursesAdminNoPagination();
+            allItems = await ApiService.getAllCoursesAdminNoPagination();
         }
         
         const items = allItems.items || allItems || [];
@@ -247,7 +247,7 @@ export const useBadgeManagement = () => {
 
   const getAllBadgeAssignments = useCallback(async (badgeId) => {
     try {
-      return await adminApiService.getAllBadgeAssignments(badgeId);
+      return await ApiService.getAllBadgeAssignments(badgeId);
     } catch (err) {
       console.error('Failed to fetch all badge assignments:', err);
       return {
@@ -260,7 +260,7 @@ export const useBadgeManagement = () => {
 
   const assignBadgeToItems = useCallback(async (badgeId, typeId, assignedIds) => {
     try {
-      await adminApiService.assignBadge(badgeId, typeId, assignedIds);
+      await ApiService.assignBadge(badgeId, typeId, assignedIds);
       return true;
     } catch (err) {
       console.error('Failed to assign badge:', err);
@@ -276,18 +276,18 @@ export const useBadgeManagement = () => {
       switch(type) {
         case 'course':
           // Use getAllCoursesAdminNoPagination with Title parameter
-          allItems = await adminApiService.getAllCoursesAdminNoPagination({ Title: searchTerm });
+          allItems = await ApiService.getAllCoursesAdminNoPagination({ Title: searchTerm });
           break;
         case 'category':
           // Use getAllCategories with search parameter
-          allItems = await adminApiService.getAllCategories(1, 1000, searchTerm ? `name=${searchTerm}` : '');
+          allItems = await ApiService.getAllCategories(1, 1000, searchTerm ? `name=${searchTerm}` : '');
           break;
         case 'career':
           // Use getAllCareerPaths with search
-          allItems = await adminApiService.getAllCareerPaths({ Title: searchTerm });
+          allItems = await ApiService.getAllCareerPaths({ Title: searchTerm });
           break;
         default:
-          allItems = await adminApiService.getAllCoursesAdminNoPagination({ title: searchTerm });
+          allItems = await ApiService.getAllCoursesAdminNoPagination({ title: searchTerm });
       }
       
       // Ensure we have an array

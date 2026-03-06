@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Users
 } from 'lucide-react';
-import { useTopic } from '../../../../hooks/useTopic';
+import { useTopic } from '../../../../hooks/api/useTopic';
 
 const TopicManagement = () => {
   const {

@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useToast } from '../../../../hooks/useToast';
-import {adminApiService} from '../../../../services/AdminApi';
-import { useDiscountRateMapping } from '../../../../hooks/useDiscountRateMapping';
+import { useToast } from '../../../../hooks/utils/useToast';
+import { useDiscountRateMapping } from '../../../../hooks/api/useDiscountRateMapping';
+import { useCareerPath } from '../../../../hooks/api/useCareerPath';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import { useCareerPathDiscount } from '../../../../hooks/api/useCareerPathDiscount';
 import {
   Search,
   RefreshCw,
@@ -34,8 +36,13 @@ const AssignDiscountRate = () => {
     courseTypes,
     error,
     fetchAllDiscountRates,
-    assignDiscountRateToCourseType
+    assignDiscountRateToCourseType,
+    assignDiscountRateToCourse
   } = useDiscountRateMapping();
+  
+  const { getAllCareerPaths } = useCareerPath();
+  const { getAllCoursesAdmin } = useAdmin();
+  const { assignDiscountRateToCareerPath, assignPriceToCourseType } = useCareerPathDiscount();
   
   // Component-specific state
   const [courses, setCourses] = useState([]);
@@ -79,7 +86,7 @@ const AssignDiscountRate = () => {
         pageSize,
         ...(title && { title })
       };
-      const careerPathsData = await adminApiService.getAllCareerPaths(params);
+      const careerPathsData = await getAllCareerPaths(params);
       const careerPathsArray =
         careerPathsData?.items ||
         careerPathsData?.Items ||
@@ -111,7 +118,7 @@ const AssignDiscountRate = () => {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [getAllCareerPaths, showToast]);
 
   // Fetch courses with discount rates
   const fetchCourses = useCallback(async (page = 1, pageSize = 20, title = '') => {
@@ -123,7 +130,7 @@ const AssignDiscountRate = () => {
         ...(title && { title }),
         isPaid:true
       };
-      const coursesData = await adminApiService.getAllCoursesAdmin(params);
+      const coursesData = await getAllCoursesAdmin(params);
       const coursesArray =
         coursesData?.items ||
         coursesData?.Items ||
@@ -155,7 +162,7 @@ const AssignDiscountRate = () => {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [getAllCoursesAdmin, showToast]);
 
 
   // Debounced search - use ref to avoid dependency issues
@@ -244,11 +251,11 @@ const AssignDiscountRate = () => {
     try {
       if (selectedCareerPathDiscountRate && selectedCareerPathDiscountRate !== 'NO_DISCOUNT') {
         // Assign discount rate to career path
-        await adminApiService.assignDiscountRateToCareerPath(selectedCareerPath.id, parseInt(selectedCareerPathDiscountRate));
+        await assignDiscountRateToCareerPath(selectedCareerPath.id, parseInt(selectedCareerPathDiscountRate));
         showToast('Discount rate assigned to career path successfully', 'success');
       } else if (selectedCareerPathDiscountRate === 'NO_DISCOUNT') {
         // Remove discount from career path
-        await adminApiService.assignDiscountRateToCareerPath(selectedCareerPath.id, null);
+        await assignDiscountRateToCareerPath(selectedCareerPath.id, null);
         showToast('Discount removed from career path successfully', 'success');
       } else {
         showToast('Please select a discount rate', 'error');
@@ -266,7 +273,7 @@ const AssignDiscountRate = () => {
     } finally {
       setAssigning(false);
     }
-  }, [selectedCareerPath, selectedCareerPathDiscountRate, fetchCareerPaths, pagination.page, pagination.pageSize, searchTerm, showToast]);
+  }, [selectedCareerPath, selectedCareerPathDiscountRate, fetchCareerPaths, pagination.page, pagination.pageSize, searchTerm, showToast, assignDiscountRateToCareerPath]);
 
   // Handle course selection for bulk operations
   const handleCourseSelection = useCallback((courseId) => {
@@ -315,7 +322,7 @@ const AssignDiscountRate = () => {
         // Assign discount to all selected courses
         await Promise.all(
           selectedArray.map(courseId => 
-            adminApiService.assignDiscountRate(courseId, bulkDiscountRate === 'NO_DISCOUNT' ? null : parseInt(bulkDiscountRate))
+            assignDiscountRateToCourse([courseId], bulkDiscountRate === 'NO_DISCOUNT' ? null : parseInt(bulkDiscountRate))
           )
         );
         showToast(`Discount rate assigned to ${selectedArray.length} course(s) successfully`, 'success');
@@ -325,7 +332,7 @@ const AssignDiscountRate = () => {
         // Assign discount to all selected career paths
         await Promise.all(
           selectedArray.map(careerPathId => 
-            adminApiService.assignDiscountRateToCareerPath(careerPathId, bulkDiscountRate === 'NO_DISCOUNT' ? null : parseInt(bulkDiscountRate))
+            assignDiscountRateToCareerPath(careerPathId, bulkDiscountRate === 'NO_DISCOUNT' ? null : parseInt(bulkDiscountRate))
           )
         );
         showToast(`Discount rate assigned to ${selectedArray.length} career path(s) successfully`, 'success');
@@ -347,7 +354,7 @@ const AssignDiscountRate = () => {
     } finally {
       setBulkAssigning(false);
     }
-  }, [bulkDiscountRate, selectedCourses, selectedCareerPaths, activeTab, fetchCourses, fetchCareerPaths, pagination.page, pagination.pageSize, searchTerm, showToast]);
+  }, [bulkDiscountRate, selectedCourses, selectedCareerPaths, activeTab, fetchCourses, fetchCareerPaths, pagination.page, pagination.pageSize, searchTerm, showToast, assignDiscountRateToCourse, assignDiscountRateToCareerPath]);
 
   // Handle select all courses
 
@@ -371,11 +378,11 @@ const AssignDiscountRate = () => {
     try {
       if (selectedDiscountRate && selectedDiscountRate !== 'NO_DISCOUNT') {
         // Assign discount rate
-        await adminApiService.assignDiscountRate(selectedCourse.id, parseInt(selectedDiscountRate));
+        await assignDiscountRateToCourse([selectedCourse.id], parseInt(selectedDiscountRate));
         showToast('Discount rate assigned successfully', 'success');
       } else if (selectedDiscountRate === 'NO_DISCOUNT') {
         // Remove discount from course
-        await adminApiService.assignDiscountRate(selectedCourse.id, null);
+        await assignDiscountRateToCourse([selectedCourse.id], null);
         showToast('Discount removed from course successfully', 'success');
       } else {
         showToast('Please select a discount rate', 'error');
@@ -392,7 +399,7 @@ const AssignDiscountRate = () => {
     } finally {
       setAssigning(false);
     }
-  }, [selectedCourse, selectedDiscountRate, fetchCourses, showToast]);
+  }, [selectedCourse, selectedDiscountRate, fetchCourses, showToast, assignDiscountRateToCourse]);
 
   // Refresh data
   const handleRefresh = useCallback(() => {
@@ -461,7 +468,7 @@ const AssignDiscountRate = () => {
 
     setSettingPrice(true);
     try {
-      await adminApiService.assignPriceToCourseType(selectedCourseTypeForPrice.id, parseFloat(courseTypePrice));
+      await assignPriceToCourseType(selectedCourseTypeForPrice.id, parseFloat(courseTypePrice));
       showToast('Price assigned to course type successfully', 'success');
       
       // Refresh course types data
@@ -475,7 +482,7 @@ const AssignDiscountRate = () => {
     } finally {
       setSettingPrice(false);
     }
-  }, [selectedCourseTypeForPrice, courseTypePrice, fetchAllDiscountRates, showToast]);
+  }, [selectedCourseTypeForPrice, courseTypePrice, fetchAllDiscountRates, showToast, assignPriceToCourseType]);
 
   // Initialize data
   useEffect(() => {
@@ -485,7 +492,7 @@ const AssignDiscountRate = () => {
       fetchCareerPaths();
     }
     // fetchAllDiscountRates is already called by useDiscountRateMapping hook on mount
-  }, [activeTab]); // Remove fetchCourses dependency to prevent infinite loop
+  }, [activeTab, fetchCourses, fetchCareerPaths]); // Include fetchCareerPaths dependency
 
   return (
     <AdminPageLayout

@@ -1,7 +1,7 @@
 import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useDynamicRoutes } from '../../../hooks/useDynamicRoutes';
+import { useDynamicRoutes } from '../../../hooks/api/useDynamicRoutes';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 

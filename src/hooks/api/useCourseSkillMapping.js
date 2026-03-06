@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminApiService } from '../services/AdminApi';
+import ApiService from '../../services/ApiService';
 
 export const useCourseSkillMapping = () => {
   const [skills, setSkills] = useState([]);
@@ -39,7 +39,7 @@ export const useCourseSkillMapping = () => {
       if (params.pageSize) queryParams.append('pageSize', params.pageSize);
       if (params.search) queryParams.append('search', params.search);
       
-      const data = await adminApiService.getAllSkillsWithPagination(queryParams.toString());
+      const data = await ApiService.getAllSkillsWithPagination(queryParams.toString());
       
       // Handle the response structure from the backend
       // The API returns paginated data: {items: [...], page: 1, pageSize: 100, totalCount: 16097}
@@ -103,7 +103,7 @@ export const useCourseSkillMapping = () => {
   const fetchCoursesWithFilters = useCallback(async (filters = {}) => {
     setLoadingCourses(true);
     try {
-      const data = await adminApiService.getAllCoursesAdminNoPagination(filters);
+      const data = await ApiService.getAllCoursesAdminNoPagination(filters);
       // Handle both direct array and paginated response formats
       const coursesData = Array.isArray(data) ? data : data?.items || [];
       
@@ -212,7 +212,7 @@ export const useCourseSkillMapping = () => {
     setLoadingCourses(true);
     try {
       // Fetch all courses and then filter for the ones we need
-      const data = await adminApiService.getAllCoursesAdminNoPagination({});
+      const data = await ApiService.getAllCoursesAdminNoPagination({});
       const coursesData = Array.isArray(data) ? data : data?.items || [];
       
       // Filter to get only the courses we need
@@ -242,7 +242,7 @@ export const useCourseSkillMapping = () => {
   // Fetch skill by ID with course mappings
   const fetchSkillById = useCallback(async (skillId) => {
     try {
-      const data = await adminApiService.getSkillById(skillId);
+      const data = await ApiService.getSkillById(skillId);
       
       // Update skillCourses with the fetched data
       setSkillCourses(prev => ({
@@ -265,7 +265,7 @@ export const useCourseSkillMapping = () => {
   // Fetch course types
   const fetchCourseTypes = useCallback(async () => {
     try {
-      const data = await adminApiService.getAllCourseTypes();
+      const data = await ApiService.getAllCourseTypes();
       // Handle both direct array and paginated response formats
       const courseTypesData = Array.isArray(data) ? data : data?.items || [];
       setCourseTypes(courseTypesData);
@@ -277,7 +277,7 @@ export const useCourseSkillMapping = () => {
   // Fetch course levels
   const fetchCourseLevels = useCallback(async () => {
     try {
-      const data = await adminApiService.getAllCourseLevels();
+      const data = await ApiService.getAllCourseLevels();
       // Handle both direct array and paginated response formats
       const courseLevelsData = Array.isArray(data) ? data : data?.items || [];
       setCourseLevels(courseLevelsData);
@@ -289,7 +289,7 @@ export const useCourseSkillMapping = () => {
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await adminApiService.getAllCategories();
+      const data = await ApiService.getAllCategories();
       // Handle both direct array and paginated response formats
       const categoriesData = Array.isArray(data) ? data : data?.items || [];
       setCategories(categoriesData);
@@ -301,7 +301,7 @@ export const useCourseSkillMapping = () => {
   // Assign courses to skill
   const assignCoursesToSkill = useCallback(async (skillId, courseIds, currentSearch = '', currentPage = 1, pageSize = 100) => {
     try {
-      await adminApiService.syncCoursesToSkill(skillId, courseIds);
+      await ApiService.syncCoursesToSkill(skillId, courseIds);
       
       // Refresh skill data with current search and pagination
       await fetchAllSkills({ page: currentPage, pageSize: pageSize, search: currentSearch });
@@ -318,7 +318,7 @@ export const useCourseSkillMapping = () => {
   // Get skill mapping assignments
   const getSkillMappingAssignments = useCallback(async (skillId, typeId) => {
     try {
-      const assignedIds = await adminApiService.getSkillMapping(skillId, typeId);
+      const assignedIds = await ApiService.getSkillMapping(skillId, typeId);
       
      
       
@@ -329,14 +329,14 @@ export const useCourseSkillMapping = () => {
         switch(typeId) {
           case 1:
             // Courses
-            allItems = await adminApiService.getAllCoursesAdminNoPagination();
+            allItems = await ApiService.getAllCoursesAdminNoPagination();
             break;
           case 2:
             // Career Paths
-            allItems = await adminApiService.getAllCareerPaths();
+            allItems = await ApiService.getAllCareerPaths();
             break;
           default:
-            allItems = await adminApiService.getAllCoursesAdminNoPagination();
+            allItems = await ApiService.getAllCoursesAdminNoPagination();
         }
         
         const items = allItems.items || allItems || [];
@@ -357,7 +357,7 @@ export const useCourseSkillMapping = () => {
   // Assign skill mapping
   const assignSkillMapping = useCallback(async (skillId, typeId, assignedIds) => {
     try {
-      await adminApiService.assignSkillMapping(skillId, typeId, assignedIds);
+      await ApiService.assignSkillMapping(skillId, typeId, assignedIds);
       return true;
     } catch (err) {
       console.error('Failed to assign skill mapping:', err);
@@ -373,13 +373,13 @@ export const useCourseSkillMapping = () => {
       // Get all items with search if provided
       switch(type) {
         case 'course':
-          allItems = await adminApiService.getAllCoursesAdminNoPagination({ Title: searchTerm });
+          allItems = await ApiService.getAllCoursesAdminNoPagination({ Title: searchTerm });
           break;
         case 'career':
-          allItems = await adminApiService.getAllCareerPaths({ Title: searchTerm });
+          allItems = await ApiService.getAllCareerPaths({ Title: searchTerm });
           break;
         default:
-          allItems = await adminApiService.getAllCoursesAdminNoPagination({ title: searchTerm });
+          allItems = await ApiService.getAllCoursesAdminNoPagination({ title: searchTerm });
       }
       
       // Ensure we have an array

@@ -1,5 +1,5 @@
 import { useState, useCallback,useEffect } from 'react';
-import { adminApiService } from '../services/AdminApi';
+import ApiService from '../../services/ApiService';
 
 export const useTopic = () => {
 
@@ -27,8 +27,8 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.get('/Topic');
-      const topicsData = response.items || response || [];
+      const data = await ApiService.getAllTopics();
+      const topicsData = data.items || data || [];
       setTopics(Array.isArray(topicsData) ? topicsData : []);
       return Array.isArray(topicsData) ? topicsData : [];
     } catch (err) {
@@ -44,8 +44,8 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.get(`/Topic/${id}`);
-      return response;
+      const data = await ApiService.getTopicById(id);
+      return data;
     } catch (err) {
       handleError('Failed to fetch topic', err);
       throw err;
@@ -59,12 +59,12 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.post('/Topic', topicData);
+      const data = await ApiService.createTopic(topicData);
       
       // Refresh topics list after creation
       await getAllTopics();
       
-      return response;
+      return data;
     } catch (err) {
       handleError('Failed to create topic', err);
       throw err;
@@ -78,12 +78,12 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.put(`/Topic/${id}`, topicData);
+      const data = await ApiService.updateTopic(id, topicData);
       
       // Refresh topics list after update
       await getAllTopics();
       
-      return response;
+      return data;
     } catch (err) {
       handleError('Failed to update topic', err);
       throw err;
@@ -97,12 +97,12 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.delete(`/Topic/${id}`);
+      const data = await ApiService.deleteTopic(id);
       
       // Refresh topics list after deletion
       await getAllTopics();
       
-      return response;
+      return data;
     } catch (err) {
       handleError('Failed to delete topic', err);
       throw err;
@@ -121,9 +121,9 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.get(`/TopicMapping/${topicId}/${type}`);
+      const data = await ApiService.getTopicMapping(topicId, type);
      
-      return response;
+      return data;
     } catch (err) {
       console.error('Failed to fetch topic mapping:', err);
       throw err;
@@ -138,9 +138,9 @@ export const useTopic = () => {
       setLoading(true);
       setError(null);
       
-      const response = await adminApiService.post('/TopicMapping/Assign', mappingData);
+      const data = await ApiService.createTopicMapping(mappingData);
      
-      return response;
+      return data;
     } catch (err) {
       console.error('Create topic mapping error:', err);
       handleError('Failed to create topic mapping', err);
@@ -155,7 +155,7 @@ export const useTopic = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCareerPathsAdminNoPagination();
+      const data = await ApiService.getAllCareerPathsAdminNoPagination();
       // Handle response structure where career paths are in an 'items' array
       const careerPaths = data.items || data || [];
       return Array.isArray(careerPaths) ? careerPaths : [];
@@ -177,7 +177,7 @@ export const useTopic = () => {
     try {
       // Don't set loading state to avoid blocking UI
       setError(null);
-      const data = await adminApiService.getAllCoursesAdminNoPagination();
+      const data = await ApiService.getAllCoursesAdminNoPagination();
       // Handle response structure where courses are in an 'items' array
       const courses = data.items || data || [];
       const courseArray = Array.isArray(courses) ? courses : [];

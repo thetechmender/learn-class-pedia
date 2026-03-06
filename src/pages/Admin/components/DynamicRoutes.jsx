@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAdmin } from '../../../hooks/useAdmin';
+import { useAdmin } from '../../../hooks/api/useAdmin';
 import { useAuth } from '../../../context/AuthContext';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import CourseManagement from '../pages/CourseManagement/CourseManagement';

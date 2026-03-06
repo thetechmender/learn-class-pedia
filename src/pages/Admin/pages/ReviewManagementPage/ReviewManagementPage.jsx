@@ -4,8 +4,8 @@ import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
 import { isProduction } from '../../../../config/appSettings';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 import GenericDropdown from '../../../../components/GenericDropdown';
-import { useAdmin } from '../../../../hooks/useAdmin';
-import { useCareerPath } from '../../../../hooks/useCareerPath';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import { useCareerPath } from '../../../../hooks/api/useCareerPath';
 import { debugAuth } from '../../../../utils/authDebug';
 
 // Authentication wrapper component

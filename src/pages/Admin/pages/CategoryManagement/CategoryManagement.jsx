@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAdmin } from '../../../../hooks/useAdmin';
-import { useToast } from '../../../../hooks/useToast';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import { useToast } from '../../../../hooks/utils/useToast';
 import { useTheme } from '../../../../context/ThemeContext';
 import Modal from '../../../../components/Modal';
 import CategoryDropdown from '../../../../components/CategoryDropdown';

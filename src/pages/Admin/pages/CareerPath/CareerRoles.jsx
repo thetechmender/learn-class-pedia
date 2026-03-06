@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useToast } from '../../../../hooks/useToast';
-import { useCareerRoles } from '../../../../hooks/useCareerRoles';
+import { useToast } from '../../../../hooks/utils/useToast';
+import { useCareerRoles } from '../../../../hooks/api/useCareerRoles';
 import { useTheme } from '../../../../context/ThemeContext';
 import Modal from '../../../../components/Modal';
 import AdminPageLayout from '../../../../components/AdminPageLayout';

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useToast } from '../../../../hooks/useToast';
-import { useCourseSkillMapping } from '../../../../hooks/useCourseSkillMapping';
+import { useToast } from '../../../../hooks/utils/useToast';
+import { useCourseSkillMapping } from '../../../../hooks/api/useCourseSkillMapping';
 import {
   Search,
   RefreshCw,

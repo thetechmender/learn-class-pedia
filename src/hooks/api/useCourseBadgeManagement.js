@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from './useAdmin';
-import { adminApiService } from '../services/AdminApi';
+import ApiService from '../../services/ApiService';
 
 export const useCourseBadgeManagement = () => {
   const { getAllCourseBadgesNew } = useAdmin();
@@ -73,41 +73,6 @@ export const useCourseBadgeManagement = () => {
       careerPathIds
     };
   }, []);
-  const loadDropdowns = useCallback(async () => {
-  try {
-    setLoadingBadges(true);
-
-    const [
-      courseTypesData,
-      courseLevelsData,
-      categoriesData
-    ] = await Promise.all([
-      adminApiService.getAllCourseTypes(),
-      adminApiService.getAllCourseLevels(),
-      adminApiService.getAllCategories()
-    ]);
-
-    const normalize = (data) => {
-      if (Array.isArray(data)) return data;
-      if (data?.items) return data.items;
-      if (data?.data) return data.data;
-      return [];
-    };
-
-    setCourseTypes(normalize(courseTypesData));
-    setCourseLevels(normalize(courseLevelsData));
-    setCategories(normalize(categoriesData));
-  } catch (err) {
-    console.error('Dropdown load error:', err);
-    setBadgesError('Failed to load dropdown data');
-  } finally {
-    // Only set loading to false if badges are not loading
-    // This prevents interfering with the main badge loading state
-    if (!loadingBadges) {
-      setLoadingBadges(false);
-    }
-  }
-}, []);
 
 
 const loadData = useCallback(async (page = 1, pageSize = 100) => {
@@ -142,7 +107,7 @@ const loadCourses = useCallback(async (filters = {}) => {
     setCourseError(null);
 
     const coursesResponse =
-      await adminApiService.getAllCoursesAdminNoPagination(filters);
+      await ApiService.getAllCoursesAdminNoPagination(filters);
 
     let coursesArray = [];
     if (coursesResponse?.items) coursesArray = coursesResponse.items;
@@ -199,7 +164,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
       setLoadingCareerPaths(true);
       setCareerPathsError(null);
 
-      const careerPathsResponse = await adminApiService.getAllCareerPaths(params);
+      const careerPathsResponse = await ApiService.getAllCareerPaths(params);
       let careerPathsArray = [];
       if (careerPathsResponse?.items) careerPathsArray = careerPathsResponse.items;
       else if (careerPathsResponse?.data?.items) careerPathsArray = careerPathsResponse.data.items;
@@ -237,9 +202,9 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         // Load badges and dropdowns in parallel for better performance
         const [badgesResponse, courseTypesData, courseLevelsData, categoriesData] = await Promise.all([
           getAllCourseBadgesNew({ page: 1, pageSize: 100 }),
-          adminApiService.getAllCourseTypes(),
-          adminApiService.getAllCourseLevels(),
-          adminApiService.getAllCategories()
+          ApiService.getAllCourseTypes(),
+          ApiService.getAllCourseLevels(),
+          ApiService.getAllCategories()
         ]);
 
         // Process badges response
@@ -278,7 +243,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
   // Create badge
   const createBadge = useCallback(async (badgeData) => {
     try {
-      const newBadge = await adminApiService.createCourseBadge(badgeData);
+      const newBadge = await ApiService.createCourseBadge(badgeData);
       setBadges(prev => [normalizeBadge(newBadge), ...prev]);
       setShowCreateModal(false);
       resetForm();
@@ -318,7 +283,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         careerPathIds: existingBadge.careerPathIds || []
       };
       
-      const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
+      const updatedBadge = await ApiService.updateCourseBadge(badgeId, updateData);
       setBadges(prev => 
         prev.map(badge => 
           badge.id === badgeId ? normalizeBadge(updatedBadge) : badge
@@ -336,7 +301,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
   // Delete badge
   const deleteBadge = useCallback(async (badgeId) => {
     try {
-      await adminApiService.deleteCourseBadge(badgeId);
+      await ApiService.deleteCourseBadge(badgeId);
       setBadges(prev => prev.filter(badge => badge.id !== badgeId));
     } catch (err) {
       setBadgesError(err.message || 'Failed to delete badge');
@@ -347,7 +312,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
   // Get badge by ID
   const getBadgeById = useCallback(async (badgeId) => {
     try {
-      return await adminApiService.getCourseBadgeById(badgeId);
+      return await ApiService.getCourseBadgeById(badgeId);
     } catch (err) {
       setBadgesError(err.message || 'Failed to get badge');
       throw err;
@@ -391,7 +356,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
       };
       
       // Update the badge with complete data
-      const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
+      const updatedBadge = await ApiService.updateCourseBadge(badgeId, updateData);
       
       // Update local state with the API response to ensure consistency
       setBadges(prev => 
@@ -444,7 +409,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         careerPathIds: existingBadge.careerPathIds || []
       };
 
-      const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
+      const updatedBadge = await ApiService.updateCourseBadge(badgeId, updateData);
       setBadges(prev => prev.map(b => (b.id === badgeId ? updatedBadge : b)));
       return updatedBadge;
     } catch (err) {
@@ -489,7 +454,7 @@ const loadCoursesWithFilters = useCallback(async (filters = {}) => {
         careerPathIds: finalCareerPathIds
       };
 
-      const updatedBadge = await adminApiService.updateCourseBadge(badgeId, updateData);
+      const updatedBadge = await ApiService.updateCourseBadge(badgeId, updateData);
       setBadges(prev => prev.map(b => (b.id === badgeId ? updatedBadge : b)));
       return updatedBadge;
     } catch (err) {

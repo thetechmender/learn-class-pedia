@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import appSettings from '../config/appSettings';
+import appSettings from '../../config/appSettings';
 
 /**
  * Custom hook for managing course filters

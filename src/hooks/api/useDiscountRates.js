@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminApiService } from '../services/AdminApi';
+import ApiService from '../../services/ApiService';
 
 export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
   // State management
@@ -28,7 +28,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
       } else if (searchQuery) {
         console.warn('Invalid search parameter type in useDiscountRates:', typeof searchQuery, searchQuery);
       }
-      const response = await adminApiService.getAllDiscountRates(params);
+      const response = await ApiService.getAllDiscountRates(params);
       
       // Handle response structure - based on the API response you provided
       if (response && typeof response === 'object') {
@@ -68,7 +68,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getDiscountRateById(id);
+      const data = await ApiService.getDiscountRateById(id);
       return data;
     } catch (err) {
       setError('Failed to fetch discount rate');
@@ -83,7 +83,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.createDiscountRate(discountRateData);
+      const data = await ApiService.createDiscountRate(discountRateData);
       await fetchDiscountRates(); // Refresh the list
       return data;
     } catch (err) {
@@ -99,7 +99,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateDiscountRate(id, discountRateData);
+      const data = await ApiService.updateDiscountRate(id, discountRateData);
       await fetchDiscountRates(); // Refresh the list
       return data;
     } catch (err) {
@@ -115,7 +115,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.deleteDiscountRate(id);
+      const data = await ApiService.deleteDiscountRate(id);
       await fetchDiscountRates(); // Refresh the list
       return data;
     } catch (err) {

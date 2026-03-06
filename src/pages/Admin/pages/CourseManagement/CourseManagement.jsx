@@ -1,9 +1,9 @@
 import  { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAdmin } from '../../../../hooks/useAdmin';
-import { useDebounce } from '../../../../hooks/useDebounce';
-import { useCourseFilters } from '../../../../hooks/useCourseFilters';
-import { useModalState } from '../../../../hooks/useModalState';
-import { useToast } from '../../../../hooks/useToast';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import { useDebounce } from '../../../../hooks/utils/useDebounce';
+import { useCourseFilters } from '../../../../hooks/utils/useCourseFilters';
+import { useModalState } from '../../../../hooks/utils/useModalState';
+import { useToast } from '../../../../hooks/utils/useToast';
 import { COURSE_MANAGEMENT_CONSTANTS } from '../../../../constants/courseManagement';
 import { filterCoursesBySearch } from '../../../../utils/courseUtils';
 import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2, Star, MessageSquare, Clock, Tag, Layers, Video, FileText } from 'lucide-react';

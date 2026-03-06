@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useToast } from '../../../../hooks/useToast';
-import { adminApiService } from '../../../../services/AdminApi';
+import { useToast } from '../../../../hooks/utils/useToast';
+import { useDiscountRates } from '../../../../hooks/api/useDiscountRates';
 import {
   Search,
   Plus,
@@ -16,10 +16,20 @@ import AdminPageLayout from '../../../../components/AdminPageLayout';
 
 const DiscountRates = () => {
   const { toast, showToast } = useToast();
+  const {
+    discountRates,
+    loading,
+    error,
+    page,
+    totalCount,
+    fetchDiscountRates,
+    createDiscountRate,
+    updateDiscountRate,
+    deleteDiscountRate,
+    setPage
+  } = useDiscountRates(1, 10);
   
   // Component state
-  const [discountRates, setDiscountRates] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingDiscountRate, setEditingDiscountRate] = useState(null);
@@ -29,45 +39,12 @@ const DiscountRates = () => {
     isActive: true
   });
   const [submitting, setSubmitting] = useState(false);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pageSize: 10,
-    totalCount: 0
-  });
-
-  // Fetch discount rates
-  const fetchDiscountRates = useCallback(async (page = 1, pageSize = 10, search = '') => {
-    setLoading(true);
-    try {
-      const params = {
-        page,
-        pageSize,
-        ...(search && { search })
-      };
-      const response = await adminApiService.getAllDiscountRates(params);
-      const ratesArray = response?.items || response?.data || response || [];
-      setDiscountRates(ratesArray);
-      
-      // Update pagination info
-      setPagination(prev => ({
-        ...prev,
-        page: response?.page || page,
-        totalCount: response?.totalCount || response?.totalCount || ratesArray.length,
-        pageSize: response?.pageSize || pageSize
-      }));
-    } catch (error) {
-      console.error('Error fetching discount rates:', error);
-      showToast('Failed to fetch discount rates', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
 
   // Handle search
   const handleSearch = useCallback(async (term) => {
     setSearchTerm(term);
-    await fetchDiscountRates(1, pagination.pageSize, term);
-  }, [fetchDiscountRates, pagination.pageSize]);
+    await fetchDiscountRates(1, 10, term);
+  }, [fetchDiscountRates]);
 
   // Debounced search
   useEffect(() => {
@@ -106,15 +83,14 @@ const DiscountRates = () => {
   const handleDelete = useCallback(async (rate) => {
     if (window.confirm(`Are you sure you want to delete "${rate.title}"?`)) {
       try {
-        await adminApiService.deleteDiscountRate(rate.id);
+        await deleteDiscountRate(rate.id);
         showToast('Discount rate deleted successfully', 'success');
-        await fetchDiscountRates(pagination.page, pagination.pageSize, searchTerm);
       } catch (error) {
         console.error('Error deleting discount rate:', error);
         showToast('Failed to delete discount rate', 'error');
       }
     }
-  }, [fetchDiscountRates, pagination.page, pagination.pageSize, searchTerm, showToast]);
+  }, [deleteDiscountRate, showToast]);
 
   // Handle form submit
   const handleSubmit = useCallback(async (e) => {
@@ -128,16 +104,15 @@ const DiscountRates = () => {
     try {
       if (editingDiscountRate) {
         // Update existing discount rate
-        await adminApiService.updateDiscountRate(editingDiscountRate.id, formData);
+        await updateDiscountRate(editingDiscountRate.id, formData);
         showToast('Discount rate updated successfully', 'success');
       } else {
         // Create new discount rate
-        await adminApiService.createDiscountRate(formData);
+        await createDiscountRate(formData);
         showToast('Discount rate created successfully', 'success');
       }
       
-      // Refresh list
-      await fetchDiscountRates(pagination.page, pagination.pageSize, searchTerm);
+      // Reset form
       setShowModal(false);
       setEditingDiscountRate(null);
       setFormData({
@@ -151,14 +126,13 @@ const DiscountRates = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [formData, editingDiscountRate, fetchDiscountRates, pagination.page, pagination.pageSize, searchTerm, showToast]);
+  }, [formData, editingDiscountRate, updateDiscountRate, createDiscountRate, showToast]);
 
   // Handle page change
   const handlePageChange = useCallback(async (newPage) => {
-    if (newPage < 1 || newPage > Math.ceil(pagination.totalCount / pagination.pageSize)) return;
-    setPagination(prev => ({ ...prev, page: newPage }));
-    await fetchDiscountRates(newPage, pagination.pageSize, searchTerm);
-  }, [fetchDiscountRates, pagination.pageSize, pagination.totalCount, searchTerm]);
+    setPage(newPage);
+    await fetchDiscountRates(newPage, 10, searchTerm);
+  }, [setPage, fetchDiscountRates, searchTerm]);
 
   // Initialize data
   useEffect(() => {
@@ -281,51 +255,51 @@ const DiscountRates = () => {
             </div>
 
             {/* Pagination */}
-            {pagination.totalCount > pagination.pageSize && (
+            {totalCount > 10 && (
               <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between bg-gray-50">
                 <div className="text-sm text-gray-700">
-                  Showing {((pagination.page - 1) * pagination.pageSize) + 1} to{' '}
-                  {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of{' '}
-                  {pagination.totalCount} results
+                  Showing {((page - 1) * 10) + 1} to{' '}
+                  {Math.min(page * 10, totalCount)} of{' '}
+                  {totalCount} results
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
                     className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
                   
                   <div className="flex items-center space-x-1">
-                    {Array.from({ length: Math.ceil(pagination.totalCount / pagination.pageSize) }, (_, i) => i + 1)
-                      .filter(page => 
-                        page === 1 || 
-                        page === Math.ceil(pagination.totalCount / pagination.pageSize) ||
-                        (page >= pagination.page - 1 && page <= pagination.page + 1)
+                    {Array.from({ length: Math.ceil(totalCount / 10) }, (_, i) => i + 1)
+                      .filter(pageNum => 
+                        pageNum === 1 || 
+                        pageNum === Math.ceil(totalCount / 10) ||
+                        (pageNum >= page - 1 && pageNum <= page + 1)
                       )
-                      .map((page, index, array) => (
-                        <React.Fragment key={page}>
-                          {index > 0 && array[index - 1] !== page - 1 && (
+                      .map((pageNum, index, array) => (
+                        <React.Fragment key={pageNum}>
+                          {index > 0 && array[index - 1] !== pageNum - 1 && (
                             <span className="px-2 text-gray-500">...</span>
                           )}
                           <button
-                            onClick={() => handlePageChange(page)}
+                            onClick={() => handlePageChange(pageNum)}
                             className={`px-3 py-1 text-sm border rounded-md ${
-                              page === pagination.page
+                              pageNum === page
                                 ? 'bg-blue-600 text-white border-blue-600'
                                 : 'border-gray-300 hover:bg-gray-50'
                             }`}
                           >
-                            {page}
+                            {pageNum}
                           </button>
                         </React.Fragment>
                       ))}
                   </div>
                   
                   <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page === Math.ceil(pagination.totalCount / pagination.pageSize)}
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === Math.ceil(totalCount / 10)}
                     className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next

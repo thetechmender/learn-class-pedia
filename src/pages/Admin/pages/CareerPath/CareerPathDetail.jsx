@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAdmin } from '../../../../hooks/useAdmin';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import { useCareerPath } from '../../../../hooks/api/useCareerPath';
 import {
   ArrowLeft,
   Clock,

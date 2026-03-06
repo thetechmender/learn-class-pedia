@@ -1,10 +1,6 @@
 import { useState, useCallback } from 'react';
-import { adminApiService } from '../services/AdminApi';
-import { API_CONFIG } from '../config/api';
-import { isProduction } from '../config/appSettings';
-import apiHelper from '../services/apiHelper';
-
-const getApiUrl = () => isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
+import ApiService from '../../services/ApiService';
+import apiHelper from '../../services/apiHelper';
 
 export const useCareerPath = () => {
 
@@ -36,7 +32,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.getCareerPathLevels();
+      const response = await ApiService.getCareerPathLevels();
      
       const levelsData = Array.isArray(response) ? response.map(level => ({
         ...level,
@@ -66,7 +62,7 @@ export const useCareerPath = () => {
       
       try {
         // First try the career skills endpoint
-        response = await adminApiService.getAllCareerSkills();
+        response = await ApiService.getAllCareerSkills();
         
         // Handle the API response structure where skills are in items array
         skillsData = response.items || response || [];
@@ -110,7 +106,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.getCareerRoles();
+      const response = await ApiService.getCareerRoles();
       // Handle the API response structure where roles are in items array
       const rolesData = response.items || response || [];
       const transformedRoles = Array.isArray(rolesData) ? rolesData.map(role => ({
@@ -133,7 +129,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.getCourseTypes();
+      const response = await ApiService.getCourseTypes();
       const typesData = Array.isArray(response) ? response : [];
       setCourseTypes(typesData);
       return typesData;
@@ -150,7 +146,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminApiService.getAllCourseBadgesNew();
+      const response = await ApiService.getAllCourseBadgesNew();
       // Handle the API response structure where badges are in items array
       const badgesData = response.items || response || [];
       // Transform badge data to match MultiSelectDropdown expectations
@@ -174,7 +170,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCoursesAdminNoPagination({ CourseTypeId: typeId });
+      const data = await ApiService.getAllCoursesAdminNoPagination({ CourseTypeId: typeId });
       // Handle the response structure where courses are in an 'items' array
       const courses = data.items || data || [];
       return Array.isArray(courses) ? courses : [];
@@ -193,7 +189,7 @@ export const useCareerPath = () => {
       setError(null);
   
       
-      const data = await adminApiService.getAllCoursesAdminNoPagination({ 
+      const data = await ApiService.getAllCoursesAdminNoPagination({ 
         Title: title,
         CourseTypeId: courseTypeId
       });
@@ -217,7 +213,7 @@ export const useCareerPath = () => {
       
       try {
         // Use the pagination endpoint with search parameter
-        const response = await adminApiService.getAllSkillsWithPagination(`search=${encodeURIComponent(searchTerm)}`);
+        const response = await ApiService.getAllSkillsWithPagination(`search=${encodeURIComponent(searchTerm)}`);
         skillsData = response.items || response || [];
         
       } catch (skillsError) {
@@ -225,7 +221,7 @@ export const useCareerPath = () => {
         
         // Fallback: try career skills endpoint
         try {
-          const careerResponse = await adminApiService.getAllCareerSkills();
+          const careerResponse = await ApiService.getAllCareerSkills();
           const allCareerSkills = careerResponse.items || careerResponse || [];
           
           // Filter client-side as fallback
@@ -259,7 +255,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.createCareerPath(careerPathData);
+      const data = await ApiService.createCareerPath(careerPathData);
       return data;
     } catch (err) {
       handleError('Failed to create career path', err);
@@ -274,7 +270,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.updateCareerPath(careerPathId, careerPathData);
+      const data = await ApiService.updateCareerPath(careerPathId, careerPathData);
       return data;
     } catch (err) {
       handleError('Failed to update career path', err);
@@ -289,7 +285,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.deleteCareerPath(careerPathId);
+      const data = await ApiService.deleteCareerPath(careerPathId);
       return data;
     } catch (err) {
       handleError('Failed to delete career path', err);
@@ -304,7 +300,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getCareerPathById(careerPathId);
+      const data = await ApiService.getCareerPathById(careerPathId);
       return data;
     } catch (err) {
       handleError('Failed to fetch career path', err);
@@ -319,7 +315,7 @@ export const useCareerPath = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApiService.getAllCareerPaths(filters);
+      const data = await ApiService.getAllCareerPaths(filters);
       return data;
     } catch (err) {
       handleError('Failed to fetch career paths', err);

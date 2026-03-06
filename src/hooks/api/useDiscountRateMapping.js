@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { adminApiService } from '../services/AdminApi';
+import ApiService from '../../services/ApiService';
 
 export const useDiscountRateMapping = () => {
   const [discountRates, setDiscountRates] = useState([]);
@@ -45,7 +45,7 @@ export const useDiscountRateMapping = () => {
       apiParams.search = params.search;
     }
 
-    const data = await adminApiService.getAllDiscountRates(apiParams);
+    const data = await ApiService.getAllDiscountRates(apiParams);
 
     if (data?.items && Array.isArray(data.items)) {
       setDiscountRates(data.items);
@@ -92,7 +92,7 @@ export const useDiscountRateMapping = () => {
       });
       
       // Try to get all courses first, then apply filters client-side if needed
-      const data = await adminApiService.getAllCoursesAdmin(queryParams.toString());
+      const data = await ApiService.getAllCoursesAdmin(queryParams.toString());
       
       if (data && typeof data === 'object') {
         if (data.items && Array.isArray(data.items)) {
@@ -131,7 +131,7 @@ export const useDiscountRateMapping = () => {
   const fetchDiscountRateMappingsByCourse = useCallback(async (courseId) => {
     try {
       setLoading(true);
-      const data = await adminApiService.getDiscountRateMappingsByCourse(courseId);
+      const data = await ApiService.getDiscountRateMappingsByCourse(courseId);
       setCourseDiscountMappings(prev => ({
         ...prev,
         [courseId]: data || []
@@ -151,7 +151,7 @@ export const useDiscountRateMapping = () => {
       setLoading(true);
       
       // Assign to single course
-      await adminApiService.assignDiscountRate(courseIds[0], discountRateId);
+      await ApiService.assignDiscountRate(courseIds[0], discountRateId);
       
       // Refresh course data to show updated discount assignments
       await fetchCoursesWithFilters({});
@@ -170,7 +170,7 @@ export const useDiscountRateMapping = () => {
     try {
       setLoading(true);
       
-      await adminApiService.assignDiscountRateToCourseType(courseTypeId, discountRateId, courseId);
+      await ApiService.assignDiscountRateToCourseType(courseTypeId, discountRateId, courseId);
       
       // Refresh course types data
       await fetchCourseTypes();
@@ -188,7 +188,7 @@ export const useDiscountRateMapping = () => {
   const updateDiscountRateMapping = useCallback(async (mappingId, mappingData) => {
     try {
       setLoading(true);
-      await adminApiService.updateDiscountRateMapping(mappingId, mappingData);
+      await ApiService.updateDiscountRateMapping(mappingId, mappingData);
       
       // Refresh all mappings (we don't know which course this belongs to)
       Object.keys(courseDiscountMappings).forEach(courseId => {
@@ -208,7 +208,7 @@ export const useDiscountRateMapping = () => {
   const deleteDiscountRateMapping = useCallback(async (mappingId) => {
     try {
       setLoading(true);
-      await adminApiService.deleteDiscountRateMapping(mappingId);
+      await ApiService.deleteDiscountRateMapping(mappingId);
       
       // Refresh all mappings
       Object.keys(courseDiscountMappings).forEach(courseId => {
@@ -227,7 +227,7 @@ export const useDiscountRateMapping = () => {
   // Fetch course types
   const fetchCourseTypes = useCallback(async () => {
     try {
-      const data = await adminApiService.getCourseTypes();
+      const data = await ApiService.getCourseTypes();
       setCourseTypes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch course types:', err);
@@ -239,7 +239,7 @@ export const useDiscountRateMapping = () => {
   const fetchCourseLevels = useCallback(async () => {
     try {
       
-      const data = await adminApiService.getCourseLevels();
+      const data = await ApiService.getCourseLevels();
      
       setCourseLevels(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -252,7 +252,7 @@ export const useDiscountRateMapping = () => {
   const fetchAllCategories = useCallback(async () => {
     try {
     
-      const data = await adminApiService.getAllCategories();
+      const data = await ApiService.getAllCategories();
       
       setCategories(Array.isArray(data) ? data : []);
     } catch (err) {

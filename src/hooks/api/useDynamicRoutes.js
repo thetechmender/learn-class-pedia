@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { adminApiService } from '../services/AdminApi';
-import { useAuth } from '../context/AuthContext';
+import ApiService from '../../services/ApiService';
+import { useAuth } from '../../context/AuthContext';
 import * as Icons from 'lucide-react';
 
 export const useDynamicRoutes = () => {
@@ -22,7 +22,7 @@ export const useDynamicRoutes = () => {
       setError(null);
 
       try {
-        const userRoutes = await adminApiService.getRoutesByRole();
+        const userRoutes = await ApiService.getRoutesByRole();
         
         if (!userRoutes || !Array.isArray(userRoutes)) {
           throw new Error('Invalid routes data received');

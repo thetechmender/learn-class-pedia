@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useEmailTemplates, useEmailTemplateMutations } from '../../../../hooks/useEmailTemplates';
-import { useToast } from '../../../../hooks/useToast';
+import { useEmailTemplates, useEmailTemplateMutations } from '../../../../hooks/api/useEmailTemplates';
+import { useToast } from '../../../../hooks/utils/useToast';
 import { Mail, Plus, Edit, Trash2, Eye, Search, ChevronLeft, ChevronRight, X, Save, FileText, Code, Calendar, Hash, CheckCircle, XCircle } from 'lucide-react';
 
 const EmailTemplateManagement = () => {

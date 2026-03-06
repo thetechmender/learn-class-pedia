@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { adminApiService } from '../services/AdminApi';
+import ApiService from '../../services/ApiService';
 
 export const useEmailTemplates = (page = 1, pageSize = 100) => {
   const [templates, setTemplates] = useState([]);
@@ -15,7 +15,7 @@ export const useEmailTemplates = (page = 1, pageSize = 100) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await adminApiService.getEmailTemplates(pageNum, pageSizeNum);
+      const response = await ApiService.getEmailTemplates(pageNum, pageSizeNum);
       setTemplates(response.items || []);
       setPagination({
         page: response.page || pageNum,
@@ -59,7 +59,7 @@ export const useEmailTemplate = (id) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await adminApiService.getEmailTemplateById(id);
+      const response = await ApiService.getEmailTemplateById(id);
       setTemplate(response);
     } catch (err) {
       setError(err.message);
@@ -89,7 +89,7 @@ export const useEmailTemplateMutations = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await adminApiService.createEmailTemplate(templateData);
+      const response = await ApiService.createEmailTemplate(templateData);
       return response;
     } catch (err) {
       setError(err.message);
@@ -104,7 +104,7 @@ export const useEmailTemplateMutations = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await adminApiService.updateEmailTemplate(id, templateData);
+      const response = await ApiService.updateEmailTemplate(id, templateData);
       return response;
     } catch (err) {
       setError(err.message);
@@ -119,7 +119,7 @@ export const useEmailTemplateMutations = () => {
     setLoading(true);
     setError(null);
     try {
-      await adminApiService.deleteEmailTemplate(id);
+      await ApiService.deleteEmailTemplate(id);
       return true;
     } catch (err) {
       setError(err.message);

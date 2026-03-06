@@ -3,7 +3,7 @@ import { isProduction } from '../config/appSettings';
 import { checkTokenBeforeRequest } from '../utils/authDebug';
 import routesData from '../data/routes.json';
 
-class AdminApiService {
+class ApiService {
   constructor() {
     this.baseURL = isProduction() ? API_CONFIG.BASE_URL : API_CONFIG.BASE_URL_Local;
     this.timeout = API_CONFIG.TIMEOUT;
@@ -474,13 +474,17 @@ class AdminApiService {
   
   // GET all reviews with optional filtering
   async getAllReviews(filters = {}) {
-    const queryParams = new URLSearchParams(filters);
-    return this.request(`${ENDPOINTS.REVIEWS}?${queryParams}`);
-  }
-
-  // GET reviews by course ID
-  async getReviewsByCourse(courseId) {
-    return this.request(ENDPOINTS.REVIEWS_BY_COURSE(courseId));
+    const queryParams = new URLSearchParams();
+    if (filters.search) queryParams.append('search', filters.search);
+    if (filters.rating) queryParams.append('rating', filters.rating);
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.page) queryParams.append('page', filters.page);
+    if (filters.pageSize) queryParams.append('pageSize', filters.pageSize);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `${ENDPOINTS.REVIEWS_ALL}?${queryString}` : ENDPOINTS.REVIEWS_ALL;
+    
+    return this.request(endpoint);
   }
 
   // GET review by ID
@@ -488,44 +492,34 @@ class AdminApiService {
     return this.request(ENDPOINTS.REVIEW_BY_ID(reviewId));
   }
 
-  // GET courses list for dropdown
-  async getReviewCourses() {
-    return this.request(`${ENDPOINTS.REVIEWS}/courses`);
-  }
-
-  // GET reviews statistics
-  async getReviewsStatistics() {
-    return this.request(ENDPOINTS.REVIEWS_STATS);
-  }
-
   // UPDATE review status (approve/reject)
   async updateReviewStatus(reviewId, status) {
-    return this.request(`${ENDPOINTS.REVIEW_BY_ID(reviewId)}/status`, {
-      method: 'PUT',
+    return this.request(ENDPOINTS.REVIEW_UPDATE_STATUS(reviewId), {
+      method: 'PATCH',
       body: JSON.stringify({ status }),
     });
   }
 
-  // UPDATE review content
-  async updateReview(reviewId, reviewData) {
-    return this.request(ENDPOINTS.REVIEW_BY_ID(reviewId), {
-      method: 'PUT',
-      body: JSON.stringify(reviewData),
+  // RESPOND to review
+  async respondToReview(reviewId, response) {
+    return this.request(ENDPOINTS.REVIEW_RESPOND(reviewId), {
+      method: 'POST',
+      body: JSON.stringify({ response }),
     });
   }
 
   // DELETE review
   async deleteReview(reviewId) {
-    return this.request(ENDPOINTS.REVIEW_BY_ID(reviewId), {
+    return this.request(ENDPOINTS.REVIEW_DELETE(reviewId), {
       method: 'DELETE',
     });
   }
 
-  // CREATE new review (for testing)
-  async createReview(reviewData) {
-    return this.request(ENDPOINTS.REVIEWS, {
-      method: 'POST',
-      body: JSON.stringify(reviewData),
+  // MARK review as helpful/not helpful
+  async markReviewHelpful(reviewId, helpful) {
+    return this.request(ENDPOINTS.REVIEW_MARK_HELPFUL(reviewId), {
+      method: 'PATCH',
+      body: JSON.stringify({ helpful }),
     });
   }
 
@@ -683,8 +677,92 @@ class AdminApiService {
   }
 
   // GET career roles
-  async getCareerRoles() {
-    return this.request(ENDPOINTS.CAREER_ROLES);
+  async getCareerRoles(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize);
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `${ENDPOINTS.CAREER_ROLES}?${queryString}` : ENDPOINTS.CAREER_ROLES;
+    
+    return this.request(endpoint);
+  }
+
+  // GET career role by ID
+  async getCareerRoleById(id) {
+    return this.request(ENDPOINTS.CAREER_ROLE_BY_ID(id));
+  }
+
+  // POST create new career role
+  async createCareerRole(roleData) {
+    return this.request(ENDPOINTS.CAREER_ROLE_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(roleData),
+    });
+  }
+
+  // PUT update career role
+  async updateCareerRole(id, roleData) {
+    return this.request(ENDPOINTS.CAREER_ROLE_UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(roleData),
+    });
+  }
+
+  // DELETE career role
+  async deleteCareerRole(id) {
+    return this.request(ENDPOINTS.CAREER_ROLE_DELETE(id), {
+      method: 'DELETE',
+    });
+  }
+
+  // Create career role with file upload (FormData)
+  async createCareerRoleWithFile(formData) {
+    const url = `${this.baseURL}${ENDPOINTS.CAREER_ROLE_CREATE}`;
+    
+    const config = {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+    };
+
+    const response = await fetch(url, config);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+    
+    return response.json();
+  }
+
+  // Update career role with file upload (FormData)
+  async updateCareerRoleWithFile(id, formData) {
+    const url = `${this.baseURL}${ENDPOINTS.CAREER_ROLE_UPDATE(id)}`;
+    
+    const config = {
+      method: 'PUT',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+    };
+
+    const response = await fetch(url, config);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+    
+    return response.json();
   }
 
   // GET career path by ID
@@ -1071,8 +1149,94 @@ class AdminApiService {
   }
 
   // GET all career skills
-  async getAllCareerSkills() {
-    return this.request(ENDPOINTS.CAREER_SKILLS);
+  async getAllCareerSkills(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize);
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `${ENDPOINTS.CAREER_SKILLS}?${queryString}` : ENDPOINTS.CAREER_SKILLS;
+    
+    return this.request(endpoint);
+  }
+
+  // GET career skill by ID
+  async getCareerSkillById(id) {
+    return this.request(ENDPOINTS.CAREER_SKILL_BY_ID(id));
+  }
+
+  // POST create new career skill
+  async createCareerSkill(skillData) {
+    return this.request(ENDPOINTS.CAREER_SKILL_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(skillData),
+    });
+  }
+
+  // PUT update career skill
+  async updateCareerSkill(id, skillData) {
+    return this.request(ENDPOINTS.CAREER_SKILL_UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(skillData),
+    });
+  }
+
+  // DELETE career skill
+  async deleteCareerSkill(id) {
+    return this.request(ENDPOINTS.CAREER_SKILL_DELETE(id), {
+      method: 'DELETE',
+    });
+  }
+
+  // Topic CRUD methods
+  
+  // GET all topics
+  async getAllTopics() {
+    return this.request(ENDPOINTS.TOPICS_ALL);
+  }
+
+  // GET topic by ID
+  async getTopicById(id) {
+    return this.request(ENDPOINTS.TOPIC_BY_ID(id));
+  }
+
+  // POST create new topic
+  async createTopic(topicData) {
+    return this.request(ENDPOINTS.TOPIC_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(topicData),
+    });
+  }
+
+  // PUT update topic
+  async updateTopic(id, topicData) {
+    return this.request(ENDPOINTS.TOPIC_UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(topicData),
+    });
+  }
+
+  // DELETE topic
+  async deleteTopic(id) {
+    return this.request(ENDPOINTS.TOPIC_DELETE(id), {
+      method: 'DELETE',
+    });
+  }
+
+  // Topic Mapping methods
+  
+  // GET topic mapping
+  async getTopicMapping(topicId, type) {
+    return this.request(ENDPOINTS.TOPIC_MAPPING_GET(topicId, type));
+  }
+
+  // POST create topic mapping assignment
+  async createTopicMapping(mappingData) {
+    return this.request(ENDPOINTS.TOPIC_MAPPING_ASSIGN, {
+      method: 'POST',
+      body: JSON.stringify(mappingData),
+    });
   }
 
   // GET skill by ID with course mappings
@@ -1362,4 +1526,4 @@ class AdminApiService {
   }
 }
 
-export const adminApiService = new AdminApiService();
+export default new ApiService();

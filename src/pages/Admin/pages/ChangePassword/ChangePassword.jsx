@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdmin } from '../../../../hooks/useAdmin';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
 import { Key, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 

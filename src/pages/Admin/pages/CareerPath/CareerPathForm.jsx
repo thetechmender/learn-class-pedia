@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import MultiSelectDropdown from '../../../../components/MultiSelectDropdown';
-import { useCareerPath } from '../../../../hooks/useCareerPath';
+import { useCareerPath } from '../../../../hooks/api/useCareerPath';
 
 const CareerPathForm = ({ 
   careerPath = null, 
