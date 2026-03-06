@@ -187,7 +187,7 @@ export const useCareerPath = () => {
   }, [handleError]);
 
   // Search courses by title
-  const searchCoursesByTitle = useCallback(async (title) => {
+  const searchCoursesByTitle = useCallback(async (title,courseTypeId=null) => {
     try {
       setLoading(true);
       setError(null);
@@ -195,7 +195,7 @@ export const useCareerPath = () => {
       
       const data = await adminApiService.getAllCoursesAdminNoPagination({ 
         Title: title,
-        CourseTypeId: 2
+        CourseTypeId: courseTypeId
       });
       const courses = data.items || data || [];
       return Array.isArray(courses) ? courses : [];

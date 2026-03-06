@@ -178,7 +178,7 @@ const CareerPathForm = ({
   };
 
   // Course search autocomplete handler
-  const handleCourseSearch = async (searchTerm, levelIndex = null) => {
+  const handleCourseSearch = async (searchTerm) => {
     if (!searchTerm || searchTerm.length < 2) {
       setCourseSearchResults([]);
       return;
@@ -186,7 +186,7 @@ const CareerPathForm = ({
 
     try {
       setCourseSearchLoading(true);  
-      const results = await searchCoursesByTitle(searchTerm);
+      const results = await searchCoursesByTitle(searchTerm,2);
       setCourseSearchResults(results);
     } catch (error) {
       console.error('Failed to search courses:', error);
