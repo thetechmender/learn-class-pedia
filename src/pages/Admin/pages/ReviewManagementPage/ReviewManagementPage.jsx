@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, X, Search, BookOpen, Trash2 } from 'lucide-react';
 import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
 import { isProduction } from '../../../../config/appSettings';

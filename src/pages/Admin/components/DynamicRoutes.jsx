@@ -13,6 +13,7 @@ import CareerRoles from '../pages/CareerPath/CareerRoles';
 import CareerSkills from '../pages/CareerPath/CareerSkills';
 import CourseSkillMapping from '../pages/CourseSkillMapping/CourseSkillMapping';
 import EmailTemplateManagement from '../pages/EmailTemplateManagement/EmailTemplateManagement';
+import CertificateTemplateManagement from '../pages/CertificateTemplateManagement/CertificateTemplateManagement';
 import ReviewManagementPage from '../pages/ReviewManagementPage/ReviewManagementPage';
 import AssignDiscountRate from '../pages/AssignDiscountRate/AssignDiscountRate';
 import DiscountRates from '../pages/DiscountRates/DiscountRates';
@@ -32,6 +33,7 @@ const componentMap = {
   CareerSkills,
   CourseSkillMapping,
   EmailTemplateManagement,
+  CertificateTemplateManagement,
   ReviewManagementPage,
   AssignDiscountRate,
   DiscountRates,

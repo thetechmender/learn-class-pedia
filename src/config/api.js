@@ -81,6 +81,13 @@ export const ENDPOINTS = {
   EMAIL_TEMPLATE_CREATE: '/EmailTemplate',
   EMAIL_TEMPLATE_UPDATE: (id) => `/EmailTemplate/${id}`,
   EMAIL_TEMPLATE_DELETE: (id) => `/EmailTemplate/${id}`,
+  // Certificate Template endpoints
+  CERTIFICATE_TEMPLATE_ALL: '/CertificatesTemplate',
+  CERTIFICATE_TEMPLATE_BY_ID: (id) => `/CertificatesTemplate/${id}`,
+  CERTIFICATE_TEMPLATE_BY_KEY: (templateKey) => `/CertificatesTemplate/by-key/${templateKey}`,
+  CERTIFICATE_TEMPLATE_CREATE: '/CertificatesTemplate',
+  CERTIFICATE_TEMPLATE_UPDATE: (id) => `/CertificatesTemplate/${id}`,
+  CERTIFICATE_TEMPLATE_DELETE: (id) => `/CertificatesTemplate/${id}`,
   // LMS Lectures endpoints
   LMS_LECTURES_SEARCH: '/courses/lms-lectures/search',
   // Reviews endpoints

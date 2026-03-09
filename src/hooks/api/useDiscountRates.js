@@ -12,6 +12,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
 
   // Fetch all discount rates with pagination and search
   const fetchDiscountRates = useCallback(async (pageNum = page, pageSizeVal = pageSize, searchQuery = '') => {
+    console.log('🔵 fetchDiscountRates called with pageNum:', pageNum, 'pageSizeVal:', pageSizeVal, 'searchQuery:', searchQuery);
     setLoading(true);
     setError(null);
 
@@ -61,7 +62,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
     } finally {
       setLoading(false);
     }
-  }, []); // Remove dependencies to prevent stale closures
+  }, []); // No dependencies since page and pageSize are passed as parameters
 
   // Get discount rate by ID
   const getDiscountRateById = useCallback(async (id) => {
@@ -148,11 +149,6 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
   const clearError = useCallback(() => {
     setError(null);
   }, []);
-
-  // Initialize data on mount
-  useEffect(() => {
-    fetchDiscountRates();
-  }, []); // Empty dependency array to run only once on mount
 
   return {
     // State

@@ -32,42 +32,6 @@ const [careerPathsUpdating, setCareerPathsUpdating] = useState(false);
   const [filteredCareerPaths, setFilteredCareerPaths] = useState([]);
   const [selectedCareerPath, setSelectedCareerPath] = useState(null);
   const [editingCareerPathSlug, setEditingCareerPathSlug] = useState('');
-
-  // Fetch categories
-  const fetchCategories = useCallback(async () => {
-    try {
-      setCoursesLoading(true);
-      const response = await getAllCategories();
-      const categoriesData = response.items || response || [];
-      setCategories(categoriesData);
-      setFilteredCategories(categoriesData);
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-      setCategories([]);
-      setFilteredCategories([]);
-    } finally {
-      setCoursesLoading(false);
-    }
-  }, [getAllCategories]);
-
-  // Fetch career paths
-  const fetchCareerPaths = useCallback(async () => {
-    try {
-      setCoursesLoading(true);
-      const response = await getAllCareerPaths();
-      const careerPathsData = response.items || response || [];
-      setCareerPaths(careerPathsData);
-      setFilteredCareerPaths(careerPathsData);
-    } catch (error) {
-      console.error('Failed to fetch career paths:', error);
-      setCareerPaths([]);
-      setFilteredCareerPaths([]);
-    } finally {
-      setCoursesLoading(false);
-    }
-  }, [getAllCareerPaths]);
-
-  // Filter categories based on search term (only for empty search)
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setFilteredCategories([]);

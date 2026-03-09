@@ -31,6 +31,7 @@ const DiscountRates = () => {
   
   // Component state
   const [searchTerm, setSearchTerm] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingDiscountRate, setEditingDiscountRate] = useState(null);
   const [formData, setFormData] = useState({
@@ -40,24 +41,40 @@ const DiscountRates = () => {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Handle search
-  const handleSearch = useCallback(async (term) => {
-    setSearchTerm(term);
-    await fetchDiscountRates(1, 10, term);
-  }, [fetchDiscountRates]);
-
-  // Debounced search
+  // Debounced search - only triggers when user stops typing (CareerSkills pattern)
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchTerm) {
-        handleSearch(searchTerm);
+    // Only set up timeout if there's a search term
+    if (searchTerm.trim() === '') {
+      // If search is empty, reset to first page and fetch all
+      setIsTyping(false);
+      if (page !== 1) {
+        setPage(1);
       } else {
-        fetchDiscountRates();
+        fetchDiscountRates(1, 10, '');
       }
-    }, 500);
+      return;
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm, fetchDiscountRates, handleSearch]);
+    // User is typing
+    setIsTyping(true);
+
+    const timeoutId = setTimeout(() => {
+      // User stopped typing, set isTyping to false and fetch
+      setIsTyping(false);
+      // Only fetch if search term hasn't changed in the last 800ms
+      if (page !== 1) {
+        setPage(1); // Reset to first page when searching
+      } else {
+        fetchDiscountRates(1, 10, searchTerm);
+      }
+    }, 800); // 800ms delay - only triggers when user stops typing
+
+    return () => {
+      clearTimeout(timeoutId);
+      // Clear typing indicator when component unmounts or search changes
+      setIsTyping(false);
+    };
+  }, [searchTerm, fetchDiscountRates, page, setPage]);
 
   // Handle create/edit
   const handleCreate = useCallback(() => {
@@ -134,9 +151,9 @@ const DiscountRates = () => {
     await fetchDiscountRates(newPage, 10, searchTerm);
   }, [setPage, fetchDiscountRates, searchTerm]);
 
-  // Initialize data
+  // Initial fetch
   useEffect(() => {
-    fetchDiscountRates();
+    fetchDiscountRates(1, 10, '');
   }, [fetchDiscountRates]);
 
   return (
@@ -177,11 +194,18 @@ const DiscountRates = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search discount rates..."
+            placeholder={isTyping ? "Searching..." : "Search discount rates..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              isTyping ? 'bg-blue-50 border-blue-300' : ''
+            }`}
           />
+          {isTyping && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+            </div>
+          )}
         </div>
       </div>
 

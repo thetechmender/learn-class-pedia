@@ -1347,6 +1347,39 @@ class ApiService {
     });
   }
 
+  // Certificate Template CRUD Operations
+  async getCertificateTemplates(page = 1, pageSize = 100) {
+    return this.request(`${ENDPOINTS.CERTIFICATE_TEMPLATE_ALL}?page=${page}&pageSize=${pageSize}`);
+  }
+
+  async getCertificateTemplateById(id) {
+    return this.request(ENDPOINTS.CERTIFICATE_TEMPLATE_BY_ID(id));
+  }
+
+  async getCertificateTemplateByKey(templateKey) {
+    return this.request(ENDPOINTS.CERTIFICATE_TEMPLATE_BY_KEY(templateKey));
+  }
+
+  async createCertificateTemplate(templateData) {
+    return this.request(ENDPOINTS.CERTIFICATE_TEMPLATE_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async updateCertificateTemplate(id, templateData) {
+    return this.request(ENDPOINTS.CERTIFICATE_TEMPLATE_UPDATE(id), {
+      method: 'PUT',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async deleteCertificateTemplate(id) {
+    return this.request(ENDPOINTS.CERTIFICATE_TEMPLATE_DELETE(id), {
+      method: 'DELETE',
+    });
+  }
+
   // ==================== DISCOUNT RATES ====================
 
   // GET all discount rates with pagination and search

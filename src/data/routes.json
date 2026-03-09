@@ -82,6 +82,15 @@
       "order": 10
     },
     {
+      "id": "certificate-templates",
+      "path": "/admin/certificate-templates",
+      "component": "CertificateTemplateManagement",
+      "label": "Certificate Templates",
+      "icon": "Award",
+      "category": "management",
+      "order": 11
+    },
+    {
       "id": "career-path",
       "path": "/admin/career-path",
       "component": "CareerPath",
@@ -97,7 +106,7 @@
       "label": "Topic Management",
       "icon": "BookOpen",
       "category": "management",
-      "order": 11
+      "order": 12
     },
     {
       "id": "slug-management",
@@ -106,7 +115,7 @@
       "label": "URL & Slug Management",
       "icon": "Link",
       "category": "management",
-      "order": 12
+      "order": 13
     },
     {
       "id": "change-password",

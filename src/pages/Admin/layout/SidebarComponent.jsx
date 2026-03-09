@@ -1,4 +1,4 @@
-import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent, Award, Mail } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/api/useDynamicRoutes';
@@ -146,6 +146,36 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   ].map(item => {
     // Filter out separate Course Skill Mapping item
     if (item.id === 'skill-mapping' || item.label === 'Skill Mapping') {
+      return null;
+    }
+    
+    // Create Templates section with Email Template and Certificate Template as children
+    if (item.id === 'email-templates' || item.label === 'Email Templates') {
+      return {
+        ...item,
+        id: 'templates',
+        label: 'Templates',
+        icon: Award,
+        path: 'email-templates', // Make parent clickable
+        children: [
+          {
+            id: 'email-templates',
+            label: 'Email Templates',
+            icon: Mail,
+            path: 'email-templates'
+          },
+          {
+            id: 'certificate-templates',
+            label: 'Certificate Templates',
+            icon: Award,
+            path: 'certificate-templates'
+          }
+        ]
+      };
+    }
+    
+    // Filter out separate Certificate Template item
+    if (item.id === 'certificate-templates' || item.label === 'Certificate Templates') {
       return null;
     }
     
