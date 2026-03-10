@@ -626,7 +626,7 @@ const [careerPathsUpdating, setCareerPathsUpdating] = useState(false);
                     <input
                       type="text"
                       value={editingSlug}
-                      onChange={(e) => setEditingSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'))}
+                      onChange={(e) => setEditingSlug(e.target.value)}
                       placeholder="course-url-slug"
                       className="block w-full pl-10 pr-3 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg"
                       autoFocus
