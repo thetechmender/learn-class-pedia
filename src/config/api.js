@@ -144,6 +144,15 @@ export const ENDPOINTS = {
     UPDATE_CAREER_PATH_SLUG: '/SlugManagment/Update-CareerPath-Slug',
     GET_SLUG_BY_CAREER_PATH_ID: (careerPathId) => `/SlugManagment/getSlugByCareerPathId/${careerPathId}`,
   },
+  
+  // Student Management endpoints
+  STUDENT_MANAGEMENT_ALL: '/StudentManagement',
+  STUDENT_MANAGEMENT_BY_ID: (id) => `/StudentManagement/${id}`,
+  STUDENT_MANAGEMENT_DROPDOWN_GENDERS: '/StudentManagement/dropdown/genders',
+  STUDENT_MANAGEMENT_DROPDOWN_SIGNUP_TYPES: '/StudentManagement/dropdown/signup-types',
+  STUDENT_MANAGEMENT_DROPDOWN_QUALIFICATIONS: '/StudentManagement/dropdown/qualifications',
+  STUDENT_ORDER_ALL: '/StudentOrder',
+  STUDENT_ORDER_BY_ID: (id) => `/StudentOrder/${id}`,
 };
 
 // HTTP Status Codes

@@ -19,6 +19,8 @@ import AssignDiscountRate from '../pages/AssignDiscountRate/AssignDiscountRate';
 import DiscountRates from '../pages/DiscountRates/DiscountRates';
 import TopicManagement from '../pages/TopicManagement/TopicManagement';
 import SlugManagement from '../pages/SlugManagement/SlugManagement';
+import StudentManagement from '../pages/StudentManagement/StudentManagement';
+import StudentOrderManagement from '../pages/StudentOrderManagement/StudentOrderManagement';
 
 // Component mapping
 const componentMap = {
@@ -39,6 +41,8 @@ const componentMap = {
   DiscountRates,
   TopicManagement,
   SlugManagement,
+  StudentManagement,
+  StudentOrderManagement,
 };
 
 // Protected Route Component
@@ -168,6 +172,8 @@ const DynamicRoutes = () => {
           <AssignDiscountRate />
         </ProtectedRoute>
       } />
+      <Route path="student-management" element={<StudentManagement />} />
+      <Route path="student-order-management" element={<StudentOrderManagement />} />
       
       {/* Dynamic routes based on user role */}
       {routes.map((route) => {

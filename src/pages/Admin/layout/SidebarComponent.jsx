@@ -1,4 +1,4 @@
-import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent, Award, Mail } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent, Award, Mail, Users, ShoppingCart } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/api/useDynamicRoutes';
@@ -129,6 +129,18 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const allManagementItems = [
     ...managementItems,
     // Fallback items to ensure they always appear
+    {
+      id: 'student-management',
+      label: 'Student Management',
+      icon: Users,
+      path: 'student-management'
+    },
+    {
+      id: 'student-order-management',
+      label: 'Student Orders',
+      icon: ShoppingCart,
+      path: 'student-order-management'
+    },
     {
       id: 'skills-management',
       label: 'Skills',
