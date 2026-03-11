@@ -305,7 +305,7 @@ const UniversalVirtualizedTable = React.forwardRef(({
     <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${className} ${theme === 'dark' ? 'dark' : ''}`}>
       {/* Fixed Header */}
       <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full" style={{ tableLayout: 'fixed' }}>
           <colgroup>
             {columns.map((column, index) => (
               <col 
@@ -344,7 +344,7 @@ const UniversalVirtualizedTable = React.forwardRef(({
         ref={containerRef}
         onScroll={handleScroll}
         style={{ height: containerHeight - 44, overflow: 'auto' }}
-        className="relative overflow-x-auto"
+        className="relative"
       >
         {/* Spacer for virtual scrolling */}
         <div style={{ height: data.length * itemHeight, position: 'relative' }}>
@@ -357,7 +357,7 @@ const UniversalVirtualizedTable = React.forwardRef(({
               right: 0 
             }}
           >
-            <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <table className="w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
               <colgroup>
                 {columns.map((column, index) => (
                   <col 

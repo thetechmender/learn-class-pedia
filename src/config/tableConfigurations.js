@@ -36,9 +36,11 @@ export const courseTableColumns = [
               {item.title?.charAt(0)?.toUpperCase() || 'C'}
             </span>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">{item.subtitle}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400" title={item.subtitle}>
+              {item.subtitle ? item.subtitle.slice(0, 50) + (item.subtitle.length > 50 ? '...' : '') : ''}
+            </div>
           </div>
         </div>
       );
@@ -51,7 +53,7 @@ export const courseTableColumns = [
     width: '20%',
     minWidth: '120px',
     type: 'badge',
-    align: 'left',
+    align: 'center',
     badgeClass: () => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700'
   },
   {
@@ -60,7 +62,7 @@ export const courseTableColumns = [
     width: '15%',
     minWidth: '80px',
     type: 'badge',
-    align: 'left',
+    align: 'center',
     badgeClass: () => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 border-indigo-300 dark:border-indigo-700'
   },
   {
