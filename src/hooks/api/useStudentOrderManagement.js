@@ -7,9 +7,10 @@ const useStudentOrderManagement = () => {
   const [error, setError] = useState(null);
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
-    pageSize: 5,
+    pageSize: 100,
     totalCount: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -22,7 +23,7 @@ const useStudentOrderManagement = () => {
   }, []);
 
   // Get all orders with pagination and filters
-  const getAllOrders = useCallback(async (pageNumber = 1, pageSize = 5, filters = {}) => {
+  const getAllOrders = useCallback(async (pageNumber = 1, pageSize = 100, filters = {}) => {
     setLoading(true);
     setError(null);
     
@@ -84,7 +85,7 @@ const useStudentOrderManagement = () => {
   }, []);
 
   // Search orders
-  const searchOrders = useCallback(async (searchTerm, pageNumber = 1, pageSize = 5) => {
+  const searchOrders = useCallback(async (searchTerm, pageNumber = 1, pageSize = 100) => {
     const filters = {};
     
     if (searchTerm) {
@@ -94,8 +95,32 @@ const useStudentOrderManagement = () => {
     return getAllOrders(pageNumber, pageSize, filters);
   }, [getAllOrders]);
 
+  // Get payment methods
+  const getPaymentMethods = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await ApiService.get(ENDPOINTS.PAYMENT_METHOD);
+      
+      if (response && Array.isArray(response)) {
+        setPaymentMethods(response);
+      } else {
+        setPaymentMethods(response.data || []);
+      }
+      
+      return response;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch payment methods';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Filter orders
-  const filterOrders = useCallback(async (filters, pageNumber = 1, pageSize = 5) => {
+  const filterOrders = useCallback(async (filters, pageNumber = 1, pageSize = 100) => {
     const activeFilters = {};
     
     Object.keys(filters).forEach(key => {
@@ -113,10 +138,12 @@ const useStudentOrderManagement = () => {
     orders,
     selectedOrder,
     pagination,
+    paymentMethods,
     getAllOrders,
     getOrderById,
     searchOrders,
     filterOrders,
+    getPaymentMethods,
     clearError,
     setSelectedOrder,
   };

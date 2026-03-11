@@ -153,6 +153,7 @@ export const ENDPOINTS = {
   STUDENT_MANAGEMENT_DROPDOWN_QUALIFICATIONS: '/StudentManagement/dropdown/qualifications',
   STUDENT_ORDER_ALL: '/StudentOrder',
   STUDENT_ORDER_BY_ID: (id) => `/StudentOrder/${id}`,
+  PAYMENT_METHOD: '/PaymentMethod',
 };
 
 // HTTP Status Codes

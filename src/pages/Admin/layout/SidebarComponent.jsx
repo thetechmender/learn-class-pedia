@@ -1,4 +1,4 @@
-import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent, Award, Mail, Users, ShoppingCart } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, LogOut, Star, ChevronDown, Brain, Percent, Award, Mail, Users, ShoppingCart, CreditCard } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useDynamicRoutes } from '../../../hooks/api/useDynamicRoutes';
@@ -184,6 +184,12 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
               label: 'Student Orders',
               icon: ShoppingCart,
               path: 'student-order-management'
+            },
+            {
+              id: 'payment-method-management',
+              label: 'Payment Methods',
+              icon: CreditCard,
+              path: 'payment-method-management'
             }
           ]
         }

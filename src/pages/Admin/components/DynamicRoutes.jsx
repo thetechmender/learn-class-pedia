@@ -21,6 +21,7 @@ import TopicManagement from '../pages/TopicManagement/TopicManagement';
 import SlugManagement from '../pages/SlugManagement/SlugManagement';
 import StudentManagement from '../pages/StudentManagement/StudentManagement';
 import StudentOrderManagement from '../pages/StudentOrderManagement/StudentOrderManagement';
+import PaymentMethodManagement from '../pages/PaymentMethodManagement/PaymentMethodManagement';
 
 // Component mapping
 const componentMap = {
@@ -43,6 +44,7 @@ const componentMap = {
   SlugManagement,
   StudentManagement,
   StudentOrderManagement,
+  PaymentMethodManagement,
 };
 
 // Protected Route Component
@@ -174,6 +176,7 @@ const DynamicRoutes = () => {
       } />
       <Route path="student-management" element={<StudentManagement />} />
       <Route path="student-order-management" element={<StudentOrderManagement />} />
+      <Route path="payment-method-management" element={<PaymentMethodManagement />} />
       
       {/* Dynamic routes based on user role */}
       {routes.map((route) => {

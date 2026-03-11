@@ -125,6 +125,15 @@
       "icon": "Key",
       "category": "main",
       "order": 2
+    },
+    {
+      "id": "payment-method-management",
+      "path": "/admin/payment-method-management",
+      "component": "PaymentMethodManagement",
+      "label": "Payment Methods",
+      "icon": "CreditCard",
+      "category": "management",
+      "order": 14
     }
   ],
   "roles": [

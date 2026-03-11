@@ -36,8 +36,7 @@ const StudentOrderManagement = () => {
     getOrderById,
     searchOrders,
     filterOrders,
-    clearError,
-    setSelectedOrder
+    clearError
   } = useStudentOrderManagement();
 
   // Component state
@@ -570,7 +569,6 @@ const StudentOrderManagement = () => {
                 <button
                   onClick={() => {
                     setShowOrderDetails(false);
-                    setSelectedOrder(null);
                   }}
                   className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-all duration-200 group"
                 >
