@@ -127,25 +127,74 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   
   // Modify existing items to create Skill as main navbar with Course Skill Mapping as child
   const allManagementItems = [
-    ...managementItems,
-    // Fallback items to ensure they always appear
-    {
-      id: 'student-management',
-      label: 'Student Management',
-      icon: Users,
-      path: 'student-management'
-    },
-    {
-      id: 'student-order-management',
-      label: 'Student Orders',
-      icon: ShoppingCart,
-      path: 'student-order-management'
-    },
+    // Find Course Management index to insert Student Management after it
+    ...(function() {
+      const courseMgmtIndex = managementItems.findIndex(item => 
+        item.label?.toLowerCase().includes('course') || 
+        item.path?.includes('course') ||
+        item.id?.includes('course')
+      );
+      
+      if (courseMgmtIndex !== -1) {
+        // Insert Student Management parent menu after Course Management
+        const beforeItems = managementItems.slice(0, courseMgmtIndex + 1);
+        const afterItems = managementItems.slice(courseMgmtIndex + 1);
+        
+        return [
+          ...beforeItems,
+          {
+            id: 'student-management-parent',
+            label: 'Student Management',
+            icon: Users,
+            children: [
+              {
+                id: 'student-management',
+                label: 'Student Management',
+                icon: Users,
+                path: 'student-management'
+              },
+              {
+                id: 'student-order-management',
+                label: 'Student Orders',
+                icon: ShoppingCart,
+                path: 'student-order-management'
+              }
+            ]
+          },
+          ...afterItems
+        ];
+      }
+      
+      // If no Course Management found, add at the end
+      return [
+        ...managementItems,
+        {
+          id: 'student-management-parent',
+          label: 'Student Management',
+          icon: Users,
+          children: [
+            {
+              id: 'student-management',
+              label: 'Student Management',
+              icon: Users,
+              path: 'student-management'
+            },
+            {
+              id: 'student-order-management',
+              label: 'Student Orders',
+              icon: ShoppingCart,
+              path: 'student-order-management'
+            }
+          ]
+        }
+      ];
+    })(),
+    // Ensure Skills management is included
     {
       id: 'skills-management',
       label: 'Skills',
       icon: Brain,
-      path: 'career-skills', // Add path for navigation
+      path: 'career-skills',
       children: [
         {
           id: 'skill-mapping',
@@ -354,7 +403,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-2 lg:p-4 space-y-4 lg:space-y-6 overflow-hidden">
+          <nav className="flex-1 p-2 lg:p-4 space-y-4 lg:space-y-6 overflow-y-auto scrollbar-hide scroll-smooth">
             {/* Main Navigation */}
             <div>
               {!isCollapsed && (

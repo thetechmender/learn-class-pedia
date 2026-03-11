@@ -17,7 +17,8 @@ import {
   User,
   GraduationCap,
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  Globe
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import GenericDropdown from '../../../../components/GenericDropdown/GenericDropdown';
@@ -419,7 +420,7 @@ const StudentManagement = () => {
                   Enrollments
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Payment Status
+                  Signup Type
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                   Joined Date
@@ -469,9 +470,24 @@ const StudentManagement = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {student.fullName}
+                            {student.firstName && student.lastName 
+                              ? `${student.firstName} ${student.lastName}`
+                              : student.fullName || 'N/A'
+                            }
                           </div>
-                         
+                          {student.landingPageUrl && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Globe className="w-3 h-3 text-blue-500" />
+                              <a 
+                                href={student.landingPageUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 truncate max-w-xs inline-block"
+                              >
+                                {student.landingPageUrl}
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -521,20 +537,25 @@ const StudentManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${
-                        student.paymentStatus === 'Captured' 
-                          ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
-                          : student.paymentStatus === 'Pending'
-                          ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-400'
-                          : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 dark:from-gray-700 dark:to-gray-600 dark:text-gray-300'
+                        student.signupTypeName === 'Email' 
+                          ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900/30 dark:to-blue-800/30 dark:text-blue-400'
+                          : student.signupTypeName === 'Facebook'
+                          ? 'bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-800 dark:from-indigo-900/30 dark:to-indigo-800/30 dark:text-indigo-400'
+                          : student.signupTypeName === 'Google'
+                          ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 dark:from-red-900/30 dark:to-red-800/30 dark:text-red-400'
+                          : student.signupTypeName === 'LinkedIn'
+                          ? 'bg-gradient-to-r from-blue-100 to-cyan-200 text-blue-800 dark:from-blue-900/30 dark:to-cyan-800/30 dark:text-blue-400'
+                          : student.signupTypeName === 'Apple'
+                          ? 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 dark:from-gray-700 dark:to-gray-600 dark:text-gray-300'
+                          : 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 dark:from-purple-900/30 dark:to-purple-800/30 dark:text-purple-400'
                       }`}>
-                        <CreditCard className="w-3 h-3" />
-                        {student.paymentStatus || 'N/A'}
+                        {student.signupTypeName || 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(student.createdAt)}</span>
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        {formatDate(student.createdAt)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -782,7 +803,17 @@ const StudentManagement = () => {
                               }`}>
                                 {enrollment.resourceType}
                               </span>
+                              {enrollment.levelName && (
+                                <span className="px-3 py-1 text-xs font-bold rounded-full shadow-md bg-gradient-to-r from-yellow-500 to-orange-600 text-white">
+                                  {enrollment.levelName}
+                                </span>
+                              )}
                             </div>
+                            {enrollment.careerPathName && (
+                              <p className="text-gray-600 dark:text-gray-400 mb-2 font-medium">
+                                Career Path: {enrollment.careerPathName}
+                              </p>
+                            )}
                             <div className="flex flex-wrap items-center gap-3">
                               <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
                                 <BookOpen className="w-4 h-4 text-blue-500" />
@@ -791,7 +822,7 @@ const StudentManagement = () => {
                               {enrollment.levelId && (
                                 <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
                                   <Users className="w-4 h-4 text-purple-500" />
-                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{getLevelName(enrollment.levelId)}</span>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Level {enrollment.levelId}</span>
                                 </div>
                               )}
                               <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">

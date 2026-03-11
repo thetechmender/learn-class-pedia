@@ -20,7 +20,8 @@ import {
   ShoppingCart,
   TrendingUp,
   AlertCircle,
-  Check
+  Check,
+  BookOpen
 } from 'lucide-react';
 import useStudentOrderManagement from '../../../../hooks/api/useStudentOrderManagement';
 
@@ -698,6 +699,66 @@ const StudentOrderManagement = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Order Items */}
+              {selectedOrder.orderItems && selectedOrder.orderItems.length > 0 && (
+                <div className="bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 p-6 rounded-2xl border border-indigo-200/50 dark:border-indigo-800/30">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-indigo-500 rounded-xl">
+                      <ShoppingCart className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Order Items ({selectedOrder.orderItems.length})</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {selectedOrder.orderItems.map((item, index) => (
+                      <div key={item.id || index} className="bg-white dark:bg-gray-700 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="p-1 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                                <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                              </div>
+                              <span className="text-xs font-medium px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full">
+                                {item.resourceType || 'Course'}
+                              </span>
+                              {item.levelName && (
+                                <span className="text-xs font-medium px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">
+                                  {item.levelName}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              {item.resourceTitle || item.titleSnapshot}
+                            </h4>
+                            {item.careerPathName && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                Career Path: {item.careerPathName}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                              <span>Resource ID: {item.resourceId}</span>
+                              {item.levelId && <span>Level ID: {item.levelId}</span>}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                              {formatCurrency(item.unitPrice, selectedOrder.currencyCode)}
+                            </div>
+                            <div className="text-lg font-bold text-gray-900 dark:text-white">
+                              {formatCurrency(item.finalPrice, selectedOrder.currencyCode)}
+                            </div>
+                            {item.discount > 0 && (
+                              <div className="text-sm text-green-600 dark:text-green-400">
+                                Save {formatCurrency(item.discount, selectedOrder.currencyCode)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Additional Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
