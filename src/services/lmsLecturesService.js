@@ -4,7 +4,7 @@ import apiHelper from './apiHelper';
 class LmsLecturesService {
   async searchLmsLectures(params = {}) {
     try {
-      const { page = 1, pageSize = 50, search = '', courseTypeId } = params;
+      const { page = 1, pageSize = 50, search = '', courseTypeId, courseLevelId } = params;
       
       // Build query string
       const queryParams = new URLSearchParams();
@@ -13,6 +13,9 @@ class LmsLecturesService {
       if (search) queryParams.append('search', search);
       if (courseTypeId !== undefined && courseTypeId !== null && courseTypeId !== '') {
         queryParams.append('courseTypeId', courseTypeId);
+      }
+      if (courseLevelId !== undefined && courseLevelId !== null && courseLevelId !== '') {
+        queryParams.append('courseLevelId', courseLevelId);
       }
       
       const queryString = queryParams.toString();

@@ -16,7 +16,7 @@ import { courseTableColumns } from '../../../../config/tableConfigurations';
 const CourseManagement = () => {
   const { 
     error, getCourseById, clearError,
-    getCourseTypes, getCourseLevels, getAllCategories, deleteCourse, getAllCoursesAdmin,
+    getCourseTypes, getCourseLevels, getCourseTopics, getAllCategories, deleteCourse, getAllCoursesAdmin,
     createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew
   } = useAdmin();
   
@@ -55,12 +55,14 @@ const CourseManagement = () => {
   const [categories, setCategories] = useState([]);
   const [courseLevels, setCourseLevels] = useState([]);
   const [courseTypes, setCourseTypes] = useState([]);
+  const [courseTopics, setCourseTopics] = useState([]);
   const [badges, setBadges] = useState([]);
   
   const [dropdownLoading, setDropdownLoading] = useState({
     categories: false,
     courseLevels: false,
     courseTypes: false,
+    courseTopics: false,
     badges: false
   });
   
@@ -68,6 +70,7 @@ const CourseManagement = () => {
     categories: '',
     courseLevels: '',
     courseTypes: '',
+    courseTopics: '',
     badges: ''
   });
 
@@ -235,6 +238,20 @@ const CourseManagement = () => {
         setDropdownLoading(prev => ({ ...prev, courseLevels: false }));
       }
 
+      // Fetch Course Topics
+      setDropdownLoading(prev => ({ ...prev, courseTopics: true }));
+      try {
+        const data = await getCourseTopics();
+        const topicsData = data.items || data || [];
+        setCourseTopics(Array.isArray(topicsData) ? topicsData : []);
+        setDropdownError(prev => ({ ...prev, courseTopics: '' }));
+      } catch (error) {
+        setDropdownError(prev => ({ ...prev, courseTopics: 'Failed to load course topics' }));
+        setCourseTopics([]);
+      } finally {
+        setDropdownLoading(prev => ({ ...prev, courseTopics: false }));
+      }
+
       // Fetch Badges
       setDropdownLoading(prev => ({ ...prev, badges: true }));
       try {
@@ -256,7 +273,7 @@ const CourseManagement = () => {
     };
 
     fetchDropdownData();
-  }, [getAllCategories, getCourseTypes, getCourseLevels, getAllCourseBadgesNew]);
+  }, [getAllCategories, getCourseTypes, getCourseLevels, getCourseTopics, getAllCourseBadgesNew]);
 
   // Handle view details
  const handleViewDetails = useCallback(async (course) => {
@@ -1165,6 +1182,7 @@ const CourseManagement = () => {
         categories={categories}
         courseLevels={courseLevels}
         courseTypes={courseTypes}
+        courseTopics={courseTopics}
         badges={badges}
         loading={modalState.loading}
         error={modalState.error}

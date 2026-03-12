@@ -6,6 +6,7 @@ const LmsLecturesDropdown = ({
   onLectureSelect, 
   selectedLectures = [], 
   courseTypeId,
+  courseLevelId,
   disabled = false,
   placeholder = "Search and select LMS lectures..."
 }) => {
@@ -38,12 +39,16 @@ const LmsLecturesDropdown = ({
       setError('');
 
       try {
-        const response = await lmsLecturesService.searchLmsLectures({
+        const searchParams = {
           search: searchTerm,
           page: 1,
           pageSize: 50,
-          courseTypeId
-        });
+          courseTypeId,
+          courseLevelId
+        };
+        console.log('LmsLecturesDropdown search params:', searchParams);
+        
+        const response = await lmsLecturesService.searchLmsLectures(searchParams);
         
         // Filter out already selected lectures by lmscourseMappingId
         const availableLectures = response.filter(lecture => {
@@ -65,7 +70,7 @@ const LmsLecturesDropdown = ({
 
     const timeoutId = setTimeout(searchLectures, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, selectedLectures]);
+  }, [searchTerm, selectedLectures, courseTypeId, courseLevelId]);
 
   const handleLectureClick = (lecture) => {
     onLectureSelect(lecture);

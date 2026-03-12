@@ -24,6 +24,8 @@ const CourseModal = ({
   course, 
   categories,
   courseTypes,
+  courseLevels,
+  courseTopics,
   badges,
   loading,
   error,
@@ -39,6 +41,8 @@ const CourseModal = ({
     overview: '',
     languageCode: 'EN',
     courseTypeId: 0,
+    courseLevelId: 0,
+    courseTopicIds: [],
     categoryId: 0,
     isPaid: true,
     price: '',
@@ -251,6 +255,8 @@ const CourseModal = ({
         overview: course.overview || '',
         languageCode: course.languageCode || 'EN',
         courseTypeId: course.courseTypeId || 0,
+        courseLevelId: course.courseLevelId || 0,
+        courseTopicIds: course.courseTopics?.map(topic => topic.id) || [],
         categoryId: course.categoryId || 0,
         isPaid: course.isPaid || false,
         price: course.price || '',
@@ -273,6 +279,8 @@ const CourseModal = ({
         overview: '',
         languageCode: 'EN',
         courseTypeId: 0,
+        courseLevelId: 0,
+        courseTopicIds: [],
         categoryId: 0,
         isPaid: false,
         price: '',
@@ -590,6 +598,7 @@ const CourseModal = ({
     submitData.append('overview', formData.overview || '');
     submitData.append('languageCode', formData.languageCode);
     submitData.append('courseTypeId', String(parseInt(formData.courseTypeId)));
+    submitData.append('courseLevelId', String(parseInt(formData.courseLevelId)));
     submitData.append('categoryId', String(parseInt(formData.categoryId)));
     submitData.append('isNew', String(formData.mapExistingLectures !== true));
     submitData.append('isPaid', String(!!formData.isPaid));
@@ -603,6 +612,12 @@ const CourseModal = ({
     if (formData.badgeIds && formData.badgeIds.length > 0) {
       formData.badgeIds.forEach((badgeId, index) => {
         submitData.append(`badgeIds[${index}]`, String(parseInt(badgeId)));
+      });
+    }
+
+    if (formData.courseTopicIds && formData.courseTopicIds.length > 0) {
+      formData.courseTopicIds.forEach((topicId, index) => {
+        submitData.append(`courseTopicIds[${index}]`, String(parseInt(topicId)));
       });
     }
 
@@ -910,6 +925,21 @@ const CourseModal = ({
                 )}
               </div>
 
+              {/* Course Level */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Course Level</label>
+                <GenericDropdown
+                  items={courseLevels}
+                  value={formData.courseLevelId}
+                  onChange={value => handleInputChange({ target: { name: 'courseLevelId', value } })}
+                  placeholder="Select course level"
+                  loading={dropdownLoading.courseLevels}
+                  error={dropdownError.courseLevels}
+                  disabled={loading}
+                />
+                {formErrors.courseLevelId && <p className="mt-1 text-sm text-red-600">{formErrors.courseLevelId}</p>}
+              </div>
+
               
          
 
@@ -993,6 +1023,7 @@ const CourseModal = ({
                                 onLectureSelect={(lecture) => handleSectionLectureSelect(sectionIndex, lecture)}
                                 selectedLectures={section.lectures || []}
                                 courseTypeId={formData.courseTypeId}
+                                courseLevelId={formData.courseLevelId}
                                 disabled={loading}
                                 placeholder="Search and add LMS lectures..."
                               />
@@ -1021,6 +1052,7 @@ const CourseModal = ({
                           onLectureSelect={handleLectureSelect}
                           selectedLectures={formData.mappedLectures}
                           courseTypeId={formData.courseTypeId}
+                          courseLevelId={formData.courseLevelId}
                           disabled={loading}
                           placeholder="Search and add LMS lectures..."
                         />
@@ -1284,6 +1316,21 @@ const CourseModal = ({
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Course Topics */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Course Topics</label>
+                <MultiSelectDropdown
+                  items={courseTopics || []}
+                  values={formData.courseTopicIds}
+                  onChange={courseTopicIds => handleInputChange({ target: { name: 'courseTopicIds', value: courseTopicIds } })}
+                  placeholder="Select course topics"
+                  loading={dropdownLoading.courseTopics}
+                  error={dropdownError.courseTopics}
+                  disabled={loading}
+                  displayField="title"
+                />
               </div>
 
               {/* Badges */}

@@ -96,17 +96,46 @@ const useStudentOrderManagement = () => {
   }, [getAllOrders]);
 
   // Get payment methods
-  const getPaymentMethods = useCallback(async () => {
+  const getPaymentMethods = useCallback(async (pageNumber = 1, pageSize = 10) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await ApiService.get(ENDPOINTS.PAYMENT_METHOD);
+      const queryParams = new URLSearchParams({
+        PageNumber: pageNumber.toString(),
+        PageSize: pageSize.toString()
+      });
       
-      if (response && Array.isArray(response)) {
-        setPaymentMethods(response);
+      const response = await ApiService.get(`${ENDPOINTS.PAYMENT_METHOD}?${queryParams}`);
+      
+      if (response && response.items) {
+        const paymentMethodsData = response.items;
+        
+        setPaymentMethods(paymentMethodsData);
+        
+        // Update pagination state
+        setPagination(prev => ({
+          ...prev,
+          currentPage: response.page || pageNumber,
+          pageSize: response.pageSize || pageSize,
+          totalCount: response.totalCount || paymentMethodsData.length,
+          totalPages: Math.ceil((response.totalCount || paymentMethodsData.length) / (response.pageSize || pageSize)),
+          hasNextPage: (response.page || pageNumber) < Math.ceil((response.totalCount || paymentMethodsData.length) / (response.pageSize || pageSize)),
+          hasPreviousPage: (response.page || pageNumber) > 1,
+        }));
+        
+        return response;
       } else {
-        setPaymentMethods(response.data || []);
+        setPaymentMethods([]);
+        setPagination(prev => ({
+          ...prev,
+          currentPage: pageNumber,
+          pageSize: pageSize,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }));
       }
       
       return response;

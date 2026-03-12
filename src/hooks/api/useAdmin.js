@@ -614,6 +614,20 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     }
   }, []);
 
+  const getCourseTopics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.getAllTopics();
+      return data;
+    } catch (err) {
+      setError('Failed to fetch course topics');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const getCourseBadges = useCallback(async () => {
     try {
       setLoading(true);
@@ -744,6 +758,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     // Dropdown data
     getCourseTypes,
     getCourseLevels,
+    getCourseTopics,
     getCourseBadges,
     getAllCourseBadgesNew,
   };
