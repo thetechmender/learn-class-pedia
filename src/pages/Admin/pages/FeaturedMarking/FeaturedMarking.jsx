@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useBadgeManagement } from '../../../../hooks/api/useBadgeManagement';
 import { useToast } from '../../../../hooks/utils/useToast';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import GenericDropdown from '../../../../components/GenericDropdown';
 import {
   Award,
   Search,
@@ -43,6 +45,8 @@ const FeaturedMarking = () => {
     getAvailableItems
   } = useBadgeManagement();
 
+  const { getCourseTypes } = useAdmin();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [formErrors, setFormErrors] = useState({});
 
@@ -55,10 +59,32 @@ const FeaturedMarking = () => {
   const [searchTermAssign, setSearchTermAssign] = useState('');
   const [availableItems, setAvailableItems] = useState([]);
   const [loadingAvailable, setLoadingAvailable] = useState(false);
+  const [courseTypes, setCourseTypes] = useState([]);
+  const [selectedCourseType, setSelectedCourseType] = useState(0);
 
   // Show success/error messages
   const showSuccess = useCallback((message) => showToast(message, 'success'), [showToast]);
   const showError = useCallback((message) => showToast(message, 'error'), [showToast]);
+
+  // Fetch course types on component mount
+  useEffect(() => {
+    const fetchCourseTypes = async () => {
+      try {
+        const data = await getCourseTypes();
+        console.log('Course types fetched:', data);
+        setCourseTypes(data);
+      } catch (err) {
+        console.error('Failed to fetch course types:', err);
+      }
+    };
+    fetchCourseTypes();
+  }, [getCourseTypes]);
+
+  // Prepare course types for dropdown (add "All Course Types" option)
+  const courseTypesForDropdown = [
+    { id: 0, name: 'All Course Types' },
+    ...courseTypes
+  ];
 
   // Handle form submission
   const handleSubmit = useCallback(async (e) => {
@@ -155,7 +181,7 @@ const FeaturedMarking = () => {
   }, []);
 
   // Search available items
-  const fetchAvailableItems = useCallback(async (type, searchTerm = '') => {
+  const fetchAvailableItems = useCallback(async (type, searchTerm = '', courseTypeId = 0) => {
    
     
     if (!type || type === 'type') {
@@ -174,7 +200,7 @@ const FeaturedMarking = () => {
       // Get assigned IDs to filter by
       const assignedIds = assignedItems.map(item => item.id);
       
-      const result = await getAvailableItems(type, searchTerm, assignedIds);
+      const result = await getAvailableItems(type, searchTerm, assignedIds, courseTypeId);
       
       setAvailableItems(result || []);
     } catch (err) {
@@ -191,6 +217,7 @@ const FeaturedMarking = () => {
     setAssignedItems([]);
     setAvailableItems([]); // Clear available items when switching types
     setSearchTermAssign(''); // Clear search when switching types
+    setSelectedCourseType(0); // Reset course type when switching types
 
     if (selectedBadge && type !== 'type') {
       fetchAssignedItems(selectedBadge.id, type);
@@ -795,7 +822,7 @@ const FeaturedMarking = () => {
 
             <div className="p-6">
               {/* Type Selection */}
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Type of Marking
                 </label>
@@ -811,6 +838,27 @@ const FeaturedMarking = () => {
                 </select>
               </div>
 
+              {/* Course Type Filter - Only show when markingType is 'course' */}
+              {console.log('Conditional check:', markingType === 'course', markingType) || (markingType === 'course' && (
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Course Type
+                  </label>
+                  <GenericDropdown
+                    items={courseTypesForDropdown}
+                    value={selectedCourseType}
+                    onChange={(value) => {
+                      setSelectedCourseType(value);
+                      // Trigger search with new course type filter
+                      if (searchTermAssign) {
+                        fetchAvailableItems('course', searchTermAssign, value);
+                      }
+                    }}
+                    placeholder="Select course type"
+                  />
+                </div>
+              ))}
+
               {/* Search */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -825,8 +873,8 @@ const FeaturedMarking = () => {
                     onChange={(e) => {
                       const value = e.target.value;
                       setSearchTermAssign(value);
-                      // Trigger search immediately
-                      fetchAvailableItems(markingType, value);
+                      // Trigger search immediately with course type filter
+                      fetchAvailableItems(markingType, value, selectedCourseType);
                     }}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   />

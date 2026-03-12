@@ -49,6 +49,7 @@ const AssignDiscountRate = () => {
   const [careerPaths, setCareerPaths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedDiscountRate, setSelectedDiscountRate] = useState('');
   const [assigning, setAssigning] = useState(false);
@@ -172,6 +173,42 @@ const AssignDiscountRate = () => {
   useEffect(() => {
     paginationRef.current = pagination.pageSize;
   }, [pagination.pageSize]);
+
+  // Debounced search - only triggers when user stops typing
+  useEffect(() => {
+    // Only set up timeout if there's a search term
+    if (searchTerm.trim() === '') {
+      // If search is empty, reset to first page and fetch all
+      setIsTyping(false);
+      if (activeTab === 'courses') {
+        fetchCourses(1, paginationRef.current, '');
+      } else if (activeTab === 'careerPaths') {
+        fetchCareerPaths(1, paginationRef.current, '');
+      }
+      return;
+    }
+
+    // Set typing indicator to true immediately
+    setIsTyping(true);
+
+    // Set up timeout to fetch after user stops typing
+    const timeoutId = setTimeout(() => {
+      // User stopped typing, set isTyping to false and fetch
+      setIsTyping(false);
+      // Only fetch if the search term hasn't changed in the last 800ms
+      if (activeTab === 'courses') {
+        fetchCourses(1, paginationRef.current, searchTerm);
+      } else if (activeTab === 'careerPaths') {
+        fetchCareerPaths(1, paginationRef.current, searchTerm);
+      }
+    }, 800); // 800ms delay - only triggers when user stops typing
+
+    return () => {
+      clearTimeout(timeoutId);
+      // Clear typing indicator when component unmounts or search changes
+      setIsTyping(false);
+    };
+  }, [searchTerm, activeTab, fetchCourses, fetchCareerPaths]);
   
 
   // Handle page change
@@ -186,7 +223,7 @@ const AssignDiscountRate = () => {
     } else if (activeTab === 'careerPaths') {
       await fetchCareerPaths(newPage, pageSize, searchTerm);
     }
-  }, [activeTab, fetchCourses, fetchCareerPaths, searchTerm, pagination.totalCount]);
+  }, [activeTab, fetchCourses, fetchCareerPaths, pagination.totalCount]);
 
   // When switching tabs, reset pagination to page 1 and fetch that tab's data
   useEffect(() => {
@@ -197,7 +234,7 @@ const AssignDiscountRate = () => {
     } else if (activeTab === 'careerPaths') {
       fetchCareerPaths(1, paginationRef.current, searchTerm);
     }
-  }, [activeTab, fetchCourses, fetchCareerPaths, searchTerm]);
+  }, [activeTab]);
 
   // Handle career path selection for bulk operations
   const handleCareerPathSelection = useCallback((careerPathId) => {
@@ -651,11 +688,28 @@ const AssignDiscountRate = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                       type="text"
-                      placeholder="Search courses..."
+                      placeholder={isTyping ? "Type to search..." : "Search courses..."}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                        isTyping 
+                          ? 'border-blue-400 bg-blue-50' 
+                          : 'border-gray-200'
+                      }`}
                     />
+                    {isTyping && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      </div>
+                    )}
+                    {!isTyping && searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 
@@ -780,11 +834,28 @@ const AssignDiscountRate = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                       type="text"
-                      placeholder="Search career paths..."
+                      placeholder={isTyping ? "Type to search..." : "Search career paths..."}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
+                        isTyping 
+                          ? 'border-green-400 bg-green-50' 
+                          : 'border-gray-200'
+                      }`}
                     />
+                    {isTyping && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                      </div>
+                    )}
+                    {!isTyping && searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 

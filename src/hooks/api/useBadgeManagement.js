@@ -268,15 +268,19 @@ export const useBadgeManagement = () => {
     }
   }, []);
 
-  const getAvailableItems = useCallback(async (type, searchTerm = '', selectedIds = []) => {
+  const getAvailableItems = useCallback(async (type, searchTerm = '', selectedIds = [], courseTypeId = 0) => {
     try {
       let allItems;
       
       // Get all items with search if provided
       switch(type) {
         case 'course':
-          // Use getAllCoursesAdminNoPagination with Title parameter
-          allItems = await ApiService.getAllCoursesAdminNoPagination({ Title: searchTerm });
+          // Use getAllCoursesAdminNoPagination with Title and CourseTypeId parameters
+          const filters = { Title: searchTerm };
+          if (courseTypeId && courseTypeId !== 0) {
+            filters.CourseTypeId = courseTypeId;
+          }
+          allItems = await ApiService.getAllCoursesAdminNoPagination(filters);
           break;
         case 'category':
           // Use getAllCategories with search parameter

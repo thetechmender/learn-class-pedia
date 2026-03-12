@@ -366,14 +366,18 @@ export const useCourseSkillMapping = () => {
   }, []);
 
   // Get available items for skill mapping (similar to badge assignment)
-  const getSkillMappingAvailableItems = useCallback(async (type, searchTerm = '', selectedIds = []) => {
+  const getSkillMappingAvailableItems = useCallback(async (type, searchTerm = '', selectedIds = [], courseTypeId = 0) => {
     try {
       let allItems;
       
       // Get all items with search if provided
       switch(type) {
         case 'course':
-          allItems = await ApiService.getAllCoursesAdminNoPagination({ Title: searchTerm });
+          const filters = { Title: searchTerm };
+          if (courseTypeId && courseTypeId !== 0) {
+            filters.CourseTypeId = courseTypeId;
+          }
+          allItems = await ApiService.getAllCoursesAdminNoPagination(filters);
           break;
         case 'career':
           allItems = await ApiService.getAllCareerPaths({ Title: searchTerm });

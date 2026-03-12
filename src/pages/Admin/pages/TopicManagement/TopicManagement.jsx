@@ -26,6 +26,8 @@ const TopicManagement = () => {
     createTopicMapping,
     getAllCoursesForMapping,
     getAllCareerPathsForMapping,
+    getAllSubcategoriesForMapping,
+    searchSubcategoriesForMapping,
     coursesCache,
     clearError
   } = useTopic();
@@ -55,13 +57,20 @@ const TopicManagement = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [coursesPreloaded, setCoursesPreloaded] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false); // Loading state for search API calls
 
   // Career path mapping state
   const [mappedCareerPaths, setMappedCareerPaths] = useState([]);
+  const [loadingMappedCareerPaths, setLoadingMappedCareerPaths] = useState(false);
   const [allCareerPaths, setAllCareerPaths] = useState([]); // Cache all career paths locally
   const [careerPathsPreloaded, setCareerPathsPreloaded] = useState(false);
 
-  // Type parameter: 1 = course, 2 = career path
+  // Subcategories mapping state
+  const [mappedSubcategories, setMappedSubcategories] = useState([]);
+  const [allSubcategories, setAllSubcategories] = useState([]); // Cache all subcategories locally
+  const [subcategoriesPreloaded, setSubcategoriesPreloaded] = useState(false);
+
+  // Type parameter: 1 = course, 2 = career path, 3 = subcategories
   const [mappingType, setMappingType] = useState(1);
 
   // Load topics on component mount
@@ -91,6 +100,16 @@ const TopicManagement = () => {
     }
   }, [careerPathsPreloaded, getAllCareerPathsForMapping]);
 
+  // Preload subcategories for instant access
+  useEffect(() => {
+    if (!subcategoriesPreloaded) {
+      getAllSubcategoriesForMapping().then(subcategories => {
+        setAllSubcategories(subcategories);
+        setSubcategoriesPreloaded(true);
+      });
+    }
+  }, [subcategoriesPreloaded, getAllSubcategoriesForMapping]);
+
   // Debounce search term to avoid excessive filtering
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,7 +119,36 @@ const TopicManagement = () => {
     return () => clearTimeout(timer);
   }, [searchTermMapping]);
 
-  // Memoized filtered results for instant search results
+  // Handle search API calls for subcategories
+  useEffect(() => {
+    if (mappingType === 3 && debouncedSearchTerm.trim()) {
+      // Use API search for subcategories
+      setSearchLoading(true);
+      searchSubcategoriesForMapping(debouncedSearchTerm)
+        .then(results => {
+          const mappedIds = Array.isArray(mappedSubcategories) ? mappedSubcategories.map(subcategory => subcategory.subcategoryId || subcategory.id) : [];
+          const itemsWithSelection = results.map(subcategory => ({
+            ...subcategory,
+            // Use name field for display, but keep title for compatibility
+            title: subcategory.name || subcategory.title,
+            isSelected: mappedIds.includes(subcategory.id)
+          }));
+          setAvailableCourses(itemsWithSelection);
+        })
+        .catch(err => {
+          console.error('Failed to search subcategories:', err);
+          setAvailableCourses([]);
+        })
+        .finally(() => {
+          setSearchLoading(false);
+        });
+    } else if (mappingType === 3 && !debouncedSearchTerm.trim()) {
+      // Clear results when search is empty for subcategories
+      setAvailableCourses([]);
+    }
+  }, [debouncedSearchTerm, mappingType, mappedSubcategories, searchSubcategoriesForMapping]);
+
+  // Memoized filtered results for instant search results (courses and career paths only)
   const filteredAvailableItems = useMemo(() => {
     if (!debouncedSearchTerm.trim()) return [];
     
@@ -114,7 +162,7 @@ const TopicManagement = () => {
         ...course,
         isSelected: mappedIds.includes(course.id)
       }));
-    } else {
+    } else if (mappingType === 2) {
       // Career path mapping
       const mappedIds = Array.isArray(mappedCareerPaths) ? mappedCareerPaths.map(careerPath => careerPath.careerPathId || careerPath.id) : [];
       
@@ -125,17 +173,20 @@ const TopicManagement = () => {
         isSelected: mappedIds.includes(careerPath.id)
       }));
     }
+    // Subcategories are handled by API search, return empty array
+    return [];
   }, [allCourses, allCareerPaths, debouncedSearchTerm, mappedCourses, mappedCareerPaths, mappingType]);
 
-  // Update available items when filtered results change
+  // Update available items when filtered results change (only for courses and career paths)
   useEffect(() => {
     if (mappingType === 1) {
       setAvailableCourses(filteredAvailableItems);
-    } else {
+    } else if (mappingType === 2) {
       // For career paths, we'll use the same availableCourses state for now
       // This will be updated when UI is implemented for career path mapping
       setAvailableCourses(filteredAvailableItems);
     }
+    // For mappingType === 3 (subcategories), do nothing - results are handled by API search useEffect
   }, [filteredAvailableItems, mappingType]);
 
   // Filter topics based on search term
@@ -321,6 +372,7 @@ const TopicManagement = () => {
 
   // Fetch mapped career paths for a topic
   const fetchMappedCareerPaths = useCallback(async (topicId) => {
+    setLoadingMappedCareerPaths(true);
     try {
       const result = await getTopicMapping(topicId, 2); 
       // Handle new API response format: {success: true, topicId: X, type: 2, ids: [id1, id2]}
@@ -354,8 +406,46 @@ const TopicManagement = () => {
     } catch (err) {
       console.error('Failed to fetch mapped career paths:', err);
       setMappedCareerPaths([]);
+    } finally {
+      setLoadingMappedCareerPaths(false);
     }
   }, [allCareerPaths, getAllCareerPathsForMapping, getTopicMapping]);
+
+  // Fetch mapped subcategories for a topic
+  const fetchMappedSubcategories = useCallback(async (topicId) => {
+    try {
+      const result = await getTopicMapping(topicId, 3); // type 3 for subcategories
+      // Handle new API response format: {success: true, topicId: X, type: 3, ids: [id1, id2]}
+      let subcategories = [];
+      if (result && result.success === true && Array.isArray(result.ids)) {
+        // Use local cache instead of API call for better performance
+        const allSubcategoriesData = allSubcategories.length > 0 ? allSubcategories : await getAllSubcategoriesForMapping();
+        const mappedIds = result.ids;
+        
+        // Filter all subcategories to get only the mapped ones
+        subcategories = allSubcategoriesData.filter(subcategory => mappedIds.includes(subcategory.id));
+        mappedIds.forEach(subcategoryId => {
+          if (!subcategories.some(subcategory => subcategory.id === subcategoryId)) {
+            subcategories.push({ 
+              id: subcategoryId, 
+              name: `Subcategory ${subcategoryId}`, 
+              description: 'Subcategory details not found' 
+            });
+          }
+        });
+      } else if (result?.items) {
+        // API returns {items: [...]} with full subcategory details
+        subcategories = result.items;
+      } else if (Array.isArray(result)) {
+        // API returns direct array
+        subcategories = result;
+      }
+      setMappedSubcategories(Array.isArray(subcategories) ? subcategories : []);
+    } catch (err) {
+      console.error('Failed to fetch mapped subcategories:', err);
+      setMappedSubcategories([]);
+    }
+  }, [allSubcategories, getAllSubcategoriesForMapping, getTopicMapping]);
 
   // Open mapping modal
   const openMappingModal = useCallback((topic, type = 1) => {
@@ -364,16 +454,19 @@ const TopicManagement = () => {
     setMappingType(type);
     setMappedCourses([]);
     setMappedCareerPaths([]);
+    setMappedSubcategories([]);
     setSearchTermMapping('');
     setAvailableCourses([]);
     
     // Fetch mapped items based on type
     if (type === 1) {
       fetchMappedCourses(topic.id);
-    } else {
+    } else if (type === 2) {
       fetchMappedCareerPaths(topic.id);
+    } else {
+      fetchMappedSubcategories(topic.id);
     }
-  }, [fetchMappedCourses, fetchMappedCareerPaths]);
+  }, [fetchMappedCourses, fetchMappedCareerPaths, fetchMappedSubcategories]);
 
   // Close mapping modal
   const closeMappingModal = useCallback(() => {
@@ -381,6 +474,7 @@ const TopicManagement = () => {
     setSelectedTopicForMapping(null);
     setMappedCourses([]);
     setMappedCareerPaths([]);
+    setMappedSubcategories([]);
     setSearchTermMapping('');
     setAvailableCourses([]);
     setMappingType(1);
@@ -426,6 +520,36 @@ const TopicManagement = () => {
     }
   }, [mappedCareerPaths]);
 
+  // Toggle subcategory assignment
+  const toggleSubcategoryAssignment = useCallback((subcategory) => {
+    // Ensure mappedSubcategories is an array
+    const currentMapped = Array.isArray(mappedSubcategories) ? mappedSubcategories : [];
+    
+    const isAssigned = currentMapped.some(mapped => 
+      (mapped.subcategoryId || mapped.id) === subcategory.id
+    );
+    
+    if (isAssigned) {
+      // Remove from mapped subcategories
+      setMappedSubcategories(prev => Array.isArray(prev) ? prev.filter(mapped => 
+        (mapped.subcategoryId || mapped.id) !== subcategory.id
+      ) : []);
+    } else {
+      // Add to mapped subcategories
+      setMappedSubcategories(prev => Array.isArray(prev) ? [...prev, { 
+        id: subcategory.id, 
+        name: subcategory.name || subcategory.title, 
+        title: subcategory.name || subcategory.title, // Keep title for compatibility
+        description: subcategory.description 
+      }] : [{ 
+        id: subcategory.id, 
+        name: subcategory.name || subcategory.title,
+        title: subcategory.name || subcategory.title, // Keep title for compatibility
+        description: subcategory.description 
+      }]);
+    }
+  }, [mappedSubcategories]);
+
   // Save mappings (handles both courses and career paths using only assign API)
   const saveMappings = useCallback(async () => {
     if (!selectedTopicForMapping) return;
@@ -445,7 +569,9 @@ const TopicManagement = () => {
       
       const newIds = mappingType === 1 
         ? Array.isArray(mappedCourses) ? mappedCourses.map(course => course.courseId || course.id) : []
-        : Array.isArray(mappedCareerPaths) ? mappedCareerPaths.map(careerPath => careerPath.careerPathId || careerPath.id) : [];
+        : mappingType === 2 
+          ? Array.isArray(mappedCareerPaths) ? mappedCareerPaths.map(careerPath => careerPath.careerPathId || careerPath.id) : []
+          : Array.isArray(mappedSubcategories) ? mappedSubcategories.map(subcategory => subcategory.subcategoryId || subcategory.id) : [];
       
       // Find items to add (in new but not in current)
       const toAdd = newIds.filter(id => !currentIds.includes(id));
@@ -465,7 +591,7 @@ const TopicManagement = () => {
       }
       
       // Show success message
-      const itemType = mappingType === 1 ? 'course' : 'career path';
+      const itemType = mappingType === 1 ? 'course' : mappingType === 2 ? 'career path' : 'subcategory';
       const action = toAdd.length > 0 && toRemove.length > 0 
         ? 'updated' 
         : toAdd.length > 0 
@@ -483,7 +609,7 @@ const TopicManagement = () => {
     } catch (err) {
       console.error('Failed to save mappings:', err);
     }
-  }, [selectedTopicForMapping, mappedCourses, mappedCareerPaths, mappingType, getTopicMapping, createTopicMapping, closeMappingModal]);
+  }, [selectedTopicForMapping, mappedCourses, mappedCareerPaths, mappedSubcategories, mappingType, getTopicMapping, createTopicMapping, closeMappingModal]);
 
   // Handle search in mapping modal
   const handleMappingSearch = useCallback((value) => {
@@ -854,17 +980,23 @@ const TopicManagement = () => {
                       setSearchTermMapping('');
                       setAvailableCourses([]);
                       fetchMappedCourses(selectedTopicForMapping.id);
-                    } else {
+                    } else if (newType === 2) {
                       setMappedCareerPaths([]);
                       setSearchTermMapping('');
                       setAvailableCourses([]);
                       fetchMappedCareerPaths(selectedTopicForMapping.id);
+                    } else {
+                      setMappedSubcategories([]);
+                      setSearchTermMapping('');
+                      setAvailableCourses([]);
+                      fetchMappedSubcategories(selectedTopicForMapping.id);
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value={1}>Courses</option>
                   <option value={2}>Career Paths</option>
+                  <option value={3}>Subcategories</option>
                 </select>
               </div>
 
@@ -874,44 +1006,51 @@ const TopicManagement = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    placeholder={mappingType === 1 ? "Search courses by title..." : "Search career paths by title..."}
+                    placeholder={mappingType === 1 ? "Search courses by title..." : mappingType === 2 ? "Search career paths by title..." : "Search subcategories by name..."}
                     value={searchTermMapping}
                     onChange={(e) => handleMappingSearch(e.target.value)}
-                    className="pl-9 pr-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                    className={`pl-9 pr-${searchLoading && mappingType === 3 ? '10' : '3'} py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full`}
                   />
+                  {searchLoading && mappingType === 3 && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Mapped Items */}
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  Mapped {mappingType === 1 ? 'Courses' : 'Career Paths'} ({mappingType === 1 ? mappedCourses.length : mappedCareerPaths.length})
+                  Mapped {mappingType === 1 ? 'Courses' : mappingType === 2 ? 'Career Paths' : 'Subcategories'} ({mappingType === 1 ? mappedCourses.length : mappingType === 2 ? mappedCareerPaths.length : mappedSubcategories.length})
                 </h3>
-                {loadingMappedCourses ? (
+                {(mappingType === 1 && loadingMappedCourses) || (mappingType === 2 && loadingMappedCareerPaths) ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                    <span className="ml-2 text-gray-600">Loading mapped {mappingType === 1 ? 'courses' : 'career paths'}...</span>
+                    <span className="ml-2 text-gray-600">Loading mapped {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'}...</span>
                   </div>
-                ) : (mappingType === 1 ? mappedCourses.length : mappedCareerPaths.length) === 0 ? (
+                ) : (mappingType === 1 ? mappedCourses.length : mappingType === 2 ? mappedCareerPaths.length : mappedSubcategories.length) === 0 ? (
                   <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600 dark:text-gray-300">No {mappingType === 1 ? 'courses' : 'career paths'} mapped yet</p>
+                    <p className="text-gray-600 dark:text-gray-300">No {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'} mapped yet</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
-                    {(mappingType === 1 ? mappedCourses : mappedCareerPaths).map((item) => (
+                    {(mappingType === 1 ? mappedCourses : mappingType === 2 ? mappedCareerPaths : mappedSubcategories).map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
                       >
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white">{item.title}</h4>
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {mappingType === 3 ? (item.name || item.title) : item.title}
+                          </h4>
                           {item.description && (
                             <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
                           )}
                         </div>
                         <button
-                          onClick={() => mappingType === 1 ? toggleCourseAssignment(item) : toggleCareerPathAssignment(item)}
+                          onClick={() => mappingType === 1 ? toggleCourseAssignment(item) : mappingType === 2 ? toggleCareerPathAssignment(item) : toggleSubcategoryAssignment(item)}
                           className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Remove mapping"
                         >
@@ -927,17 +1066,21 @@ const TopicManagement = () => {
               {searchTermMapping && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                    Available {mappingType === 1 ? 'Courses' : 'Career Paths'} ({availableCourses.length})
+                    Available {mappingType === 1 ? 'Courses' : mappingType === 2 ? 'Career Paths' : 'Subcategories'} ({availableCourses.length})
                   </h3>
-                  {loadingAvailableCourses ? (
+                  {loadingAvailableCourses || (mappingType === 3 && searchLoading) ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                      <span className="ml-2 text-gray-600">Searching courses...</span>
+                      <span className="ml-2 text-gray-600">
+                        Searching {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'}...
+                      </span>
                     </div>
                   ) : availableCourses.length === 0 ? (
                     <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <Search className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600 dark:text-gray-300">No courses found</p>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        No {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'} found
+                      </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-2">
@@ -957,14 +1100,13 @@ const TopicManagement = () => {
                             )}
                           </div>
                           <button
-                            onClick={() => mappingType === 1 ? toggleCourseAssignment(course) : toggleCareerPathAssignment(course)}
+                            onClick={() => mappingType === 1 ? toggleCourseAssignment(course) : mappingType === 2 ? toggleCareerPathAssignment(course) : toggleSubcategoryAssignment(course)}
                             className={`p-2 rounded-lg transition-colors ${
                               course.isSelected
                                 ? 'text-gray-400 bg-gray-100 dark:bg-gray-600 cursor-not-allowed'
-                                : 'text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20'
+                                : 'text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20'
                             }`}
                             title={course.isSelected ? "Already mapped" : "Add mapping"}
-                            disabled={course.isSelected}
                           >
                             {course.isSelected ? (
                               <div className="flex items-center">
@@ -1005,4 +1147,6 @@ const TopicManagement = () => {
   );
 };
 
-export default TopicManagement;
+const TopicManagementComponent = TopicManagement;
+
+export default TopicManagementComponent;

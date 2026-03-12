@@ -33,8 +33,9 @@ export const ENDPOINTS = {
   COURSE_FEATURED: '/admin/courses/featured',
   COURSE_STATUS: '/admin/courses/status',
   CATEGORIES_Admin: '/admin/categories',
-  COURSE_TYPES: '/admin/course-types',
+  COURSE_TYPES: '/courses/types',
   COURSE_LEVELS: '/admin/course-levels',
+  SUBCATEGORIES: '/admin/Subcategories',
   COURSE_BADGES_DROPDOWN: '/admin/course-badges',
   CAREER_PATHS: '/career-paths',
   // Course Badge Management endpoints

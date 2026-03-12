@@ -191,6 +191,39 @@ export const useTopic = () => {
     }
   }, [coursesCache]);
 
+  // Get all subcategories for mapping
+  const getAllSubcategoriesForMapping = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.getAllSubcategories();
+      const subcategoriesData = data.items || data || [];
+      return Array.isArray(subcategoriesData) ? subcategoriesData : [];
+    } catch (err) {
+      handleError('Failed to fetch subcategories', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
+  // Search subcategories for mapping
+  const searchSubcategoriesForMapping = useCallback(async (searchTerm = '') => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.getAllSubcategoriesNoPagination(searchTerm);
+      const subcategoriesData = data.items || data || [];
+      
+      return Array.isArray(subcategoriesData) ? subcategoriesData : [];
+    } catch (err) {
+      handleError('Failed to search subcategories', err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
   // Preload courses immediately when hook initializes
   useEffect(() => {
     if (!coursesCache) {
@@ -219,6 +252,8 @@ export const useTopic = () => {
     createTopicMapping,
     getAllCoursesForMapping,
     getAllCareerPathsForMapping,
+    getAllSubcategoriesForMapping,
+    searchSubcategoriesForMapping,
     coursesCache,
 
     // Setters for direct state management if needed

@@ -63,6 +63,7 @@ const SkillMapping = () => {
   const [searchTermMapping, setSearchTermMapping] = useState('');
   const [availableMappingItems, setAvailableMappingItems] = useState([]);
   const [loadingMappingAvailable, setLoadingMappingAvailable] = useState(false);
+  const [selectedCourseTypeForMapping, setSelectedCourseTypeForMapping] = useState(0);
   
   // Course assignment filters
   const [courseFilters, setCourseFilters] = useState({
@@ -977,7 +978,7 @@ const SkillMapping = () => {
 
               <div className="p-6">
                 {/* Type Selection */}
-                <div className="mb-6">
+                <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Type of Mapping
                   </label>
@@ -991,6 +992,30 @@ const SkillMapping = () => {
                     <option value="career">Career Path</option>
                   </select>
                 </div>
+
+                {/* Course Type Filter - Only show when mappingType is 'course' */}
+                {mappingType === 'course' && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Course Type
+                    </label>
+                    <GenericDropdown
+                      items={[
+                        { id: 0, name: 'All Course Types' },
+                        ...courseTypes
+                      ]}
+                      value={selectedCourseTypeForMapping}
+                      onChange={(value) => {
+                        setSelectedCourseTypeForMapping(value);
+                        // Trigger search with new course type filter
+                        if (searchTermMapping) {
+                          fetchAvailableMappingItems('course', searchTermMapping, value);
+                        }
+                      }}
+                      placeholder="Select course type"
+                    />
+                  </div>
+                )}
 
                 {/* Search */}
                 <div className="mb-6">
@@ -1006,8 +1031,8 @@ const SkillMapping = () => {
                       onChange={(e) => {
                         const value = e.target.value;
                         setSearchTermMapping(value);
-                        // Trigger search immediately
-                        fetchAvailableMappingItems(mappingType, value);
+                        // Trigger search immediately with course type filter
+                        fetchAvailableMappingItems('course', value, selectedCourseTypeForMapping);
                       }}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                     />

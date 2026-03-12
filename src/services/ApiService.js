@@ -1239,6 +1239,23 @@ class ApiService {
     });
   }
 
+  // GET all subcategories
+  async getAllSubcategories() {
+    return this.request(ENDPOINTS.SUBCATEGORIES);
+  }
+
+  // GET search subcategories
+  async searchSubcategories(searchTerm = '') {
+    const queryParams = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
+    return this.request(`${ENDPOINTS.SUBCATEGORIES}${queryParams}`);
+  }
+
+  // GET all subcategories without pagination
+  async getAllSubcategoriesNoPagination(searchTerm = '') {
+    const queryParams = searchTerm ? `?name=${encodeURIComponent(searchTerm)}` : '';
+    return this.request(`${ENDPOINTS.SUBCATEGORIES}${queryParams}`);
+  }
+
   // GET skill by ID with course mappings
   async getSkillById(skillId) {
     return this.request(ENDPOINTS.COURSE_SKILL_MAP_BY_ID(skillId));
