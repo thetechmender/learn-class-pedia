@@ -49,7 +49,11 @@ export const markLectureComplete = async (studentId, lectureId) => {
         headers: getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to mark lecture complete');
-    return response.json();
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+        return response.json();
+    }
+    return response.text();
 };
 
 /**

@@ -108,6 +108,7 @@ const LinkedInStyleDemo = ({
     const [bookmarkedLectures, setBookmarkedLectures] = useState(new Set());
     const [showChatBox, setShowChatBox] = useState(false);
     const [isCourseComplete, setIsCourseComplete] = useState(false);
+    const [courseCompleteLoading, setCourseCompleteLoading] = useState(false);
     const [showAssessment, setShowAssessment] = useState(false);
     const assessmentRef = useRef(null);
 
@@ -358,8 +359,18 @@ const LinkedInStyleDemo = ({
         return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
     };
 
-    const handleCourseComplete = () => {
-        setIsCourseComplete(true);
+    const handleCourseComplete = async () => {
+        if (courseCompleteLoading || isCourseComplete) return;
+        try {
+            setCourseCompleteLoading(true);
+            if (!selectedLecture?.id) return;
+            await markLectureComplete(STUDENT_ID, selectedLecture.id);
+            setIsCourseComplete(true);
+        } catch (err) {
+            console.error('Error completing course:', err);
+        } finally {
+            setCourseCompleteLoading(false);
+        }
     };
 
     const handleStartAssessment = () => {
@@ -652,129 +663,132 @@ const LinkedInStyleDemo = ({
                                 </div>
                             </div>
 
-                            {/* Chapter List */}
-                            <div className="flex-1 overflow-y-auto">
-                                {courseData.chapters.map((chapter, chapterIndex) => {
-                                    const chapterCompleted = chapter.lectures.every(l => completedLectures.has(l.id));
-                                    const chapterProgress = chapter.lectures.filter(l => completedLectures.has(l.id)).length;
-                                    
-                                    return (
-                                        <div key={chapter.id} className="border-b border-gray-100">
-                                            {/* Chapter Header */}
-                                            <button
-                                                onClick={() => toggleChapter(chapter.id)}
-                                                className="w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors text-left"
-                                            >
-                                                <div className="mt-0.5">
-                                                    {expandedChapters.has(chapter.id) ? (
-                                                        <ChevronDown className="w-4 h-4 text-gray-400" />
-                                                    ) : (
-                                                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                                                    )}
+                        {/* Chapter List */}
+                        <div className="flex-1 overflow-y-auto">
+                            {courseData.chapters.map((chapter, chapterIndex) => {
+                                const chapterCompleted = chapter.lectures.every(l => completedLectures.has(l.id));
+                                const chapterProgress = chapter.lectures.filter(l => completedLectures.has(l.id)).length;
+                                
+                                return (
+                                    <div key={chapter.id} className="border-b border-gray-100">
+                                        {/* Chapter Header */}
+                                        <button
+                                            onClick={() => toggleChapter(chapter.id)}
+                                            className="w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors text-left"
+                                        >
+                                            <div className="mt-0.5">
+                                                {expandedChapters.has(chapter.id) ? (
+                                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                                ) : (
+                                                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-xs text-gray-500">Chapter {chapterIndex + 1}</span>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-xs text-gray-500">Chapter {chapterIndex + 1}</span>
+                                                <h4 className="text-gray-900 font-medium text-sm mb-2">{chapter.title}</h4>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden mr-3">
+                                                        <div 
+                                                            className="h-full bg-blue-500 transition-all"
+                                                            style={{ width: `${(chapterProgress / chapter.lectures.length) * 100}%` }}
+                                                        />
                                                     </div>
-                                                    <h4 className="text-gray-900 font-medium text-sm mb-2">{chapter.title}</h4>
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden mr-3">
-                                                            <div 
-                                                                className="h-full bg-blue-500 transition-all"
-                                                                style={{ width: `${(chapterProgress / chapter.lectures.length) * 100}%` }}
-                                                            />
+                                                    <span className="text-xs text-gray-500">{chapterProgress}/{chapter.lectures.length}</span>
+                                                </div>
+                                            </div>
+                                        </button>
+
+                                        {/* Lectures List */}
+                                        {expandedChapters.has(chapter.id) && (
+                                            <div className="pb-2">
+                                                {chapter.lectures.map((lecture) => {
+                                                    const isSelected = selectedLecture.id === lecture.id;
+                                                    const isCompleted = completedLectures.has(lecture.id);
+                                                    const isBookmarked = bookmarkedLectures.has(lecture.id);
+                                                    const Icon = lecture.icon;
+                                                    
+                                                    return (
+                                                        <div key={lecture.id} className="relative">
+                                                            <button
+                                                                onClick={() => handleLectureSelect(lecture)}
+                                                                className={`w-full px-4 py-2.5 pl-10 flex items-center gap-3 transition-colors text-left ${
+                                                                    isSelected 
+                                                                        ? 'bg-blue-50 border-l-4 border-blue-500' 
+                                                                        : 'hover:bg-gray-50 border-l-4 border-transparent'
+                                                                }`}
+                                                            >
+                                                                <div className="absolute left-3">
+                                                                    {isCompleted ? (
+                                                                        <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                                                                    ) : (
+                                                                        <Circle className="w-4 h-4 text-gray-300" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className={`text-sm ${isSelected ? 'text-gray-900 font-medium' : 'text-gray-700'}`}>
+                                                                        {lecture.title}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                        <span className="text-xs text-gray-400">{lecture.duration}</span>
+                                                                        <span className="text-xs text-gray-300">•</span>
+                                                                        <span className="text-xs text-gray-400">{lecture.studentCount.toLocaleString()} views</span>
+                                                                    </div>
+                                                                </div>
+                                                            </button>
                                                         </div>
-                                                        <span className="text-xs text-gray-500">{chapterProgress}/{chapter.lectures.length}</span>
-                                                    </div>
-                                                </div>
-                                            </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
 
-                                            {/* Lectures List */}
-                                            {expandedChapters.has(chapter.id) && (
-                                                <div className="pb-2">
-                                                    {chapter.lectures.map((lecture) => {
-                                                        const isSelected = selectedLecture.id === lecture.id;
-                                                        const isCompleted = completedLectures.has(lecture.id);
-                                                        const isBookmarked = bookmarkedLectures.has(lecture.id);
-                                                        const Icon = lecture.icon;
-                                                        
-                                                        return (
-                                                            <div key={lecture.id} className="relative">
-                                                                <button
-                                                                    onClick={() => handleLectureSelect(lecture)}
-                                                                    className={`w-full px-4 py-2.5 pl-10 flex items-center gap-3 transition-colors text-left ${
-                                                                        isSelected 
-                                                                            ? 'bg-blue-50 border-l-4 border-blue-500' 
-                                                                            : 'hover:bg-gray-50 border-l-4 border-transparent'
-                                                                    }`}
-                                                                >
-                                                                    <div className="absolute left-3">
-                                                                        {isCompleted ? (
-                                                                            <CheckCircle2 className="w-4 h-4 text-blue-500" />
-                                                                        ) : (
-                                                                            <Circle className="w-4 h-4 text-gray-300" />
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className={`text-sm ${isSelected ? 'text-gray-900 font-medium' : 'text-gray-700'}`}>
-                                                                            {lecture.title}
-                                                                        </p>
-                                                                        <div className="flex items-center gap-2 mt-1">
-                                                                            <span className="text-xs text-gray-400">{lecture.duration}</span>
-                                                                            <span className="text-xs text-gray-300">•</span>
-                                                                            <span className="text-xs text-gray-400">{lecture.studentCount.toLocaleString()} views</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </button>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Course Complete Button */}
-                            <div className="p-4 border-t border-gray-200 space-y-2">
-                                <button 
-                                    onClick={handleCourseComplete}
-                                    disabled={isCourseComplete}
-                                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                        isCourseComplete 
-                                            ? 'bg-green-500 text-white cursor-default' 
+                        {/* Course Complete Button */}
+                        <div className="p-4 border-t border-gray-200 space-y-2">
+                            <button 
+                                onClick={handleCourseComplete}
+                                disabled={isCourseComplete || courseCompleteLoading}
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                    isCourseComplete 
+                                        ? 'bg-green-500 text-white cursor-default' 
+                                        : courseCompleteLoading
+                                            ? 'bg-blue-400 text-white cursor-not-allowed'
                                             : 'bg-blue-500 hover:bg-blue-600 text-white'
-                                    }`}
-                                >
-                                    {isCourseComplete ? (
-                                        <>
-                                            <CheckCircle2 className="w-4 h-4" />
-                                            Course Completed!
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Play className="w-4 h-4" />
-                                            Course Complete!
-                                        </>
-                                    )}
-                                </button>
-                                <button 
-                                    onClick={handleStartAssessment}
-                                    disabled={!isCourseComplete}
-                                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                        isCourseComplete 
-                                            ? 'bg-purple-500 hover:bg-purple-600 text-white' 
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
-                                >
-                                    <Award className="w-4 h-4" />
-                                    Start Assessment
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
+                                }`}
+                            >
+                                {isCourseComplete ? (
+                                    <>
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Course Completed!
+                                    </>
+                                ) : (
+                                    <>
+                                        <Play className="w-4 h-4" />
+                                        Course Complete!
+                                    </>
+                                )}
+                            </button>
+                            <button 
+                                onClick={handleStartAssessment}
+                                disabled={!isCourseComplete}
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                                    isCourseComplete 
+                                        ? 'bg-purple-500 hover:bg-purple-600 text-white' 
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                            >
+                                <Award className="w-4 h-4" />
+                                Start Assessment
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+
             </div>
 
             {/* Assessment Section */}
