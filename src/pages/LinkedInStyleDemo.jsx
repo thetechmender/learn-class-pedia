@@ -287,7 +287,7 @@ const LinkedInStyleDemo = ({
 
     const markAsComplete = async (lectureId) => {
         try {
-            await markLectureComplete(STUDENT_ID, lectureId);
+            await markLectureComplete(STUDENT_ID, COURSE_ID, lectureId);
             setCompletedLectures(prev => new Set([...prev, String(lectureId)]));
             window.location.reload();
         } catch (err) {
@@ -367,7 +367,7 @@ const LinkedInStyleDemo = ({
         try {
             setCourseCompleteLoading(true);
             if (!selectedLecture?.id) return;
-            await markLectureComplete(STUDENT_ID, selectedLecture.id);
+            await markLectureComplete(STUDENT_ID, COURSE_ID, selectedLecture.id);
             setIsCourseComplete(true);
             window.location.reload();
         } catch (err) {

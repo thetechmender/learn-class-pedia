@@ -41,10 +41,10 @@ export const getStudentProgress = async (studentId, courseId) => {
 
 /**
  * Mark lecture as complete
- * POST /api/Learning/lecture/{lectureId}/complete
+ * POST /api/Learning/course/{courseId}/lecture/{lectureId}/complete
  */
-export const markLectureComplete = async (studentId, lectureId) => {
-    const response = await fetch(`${BASE_URL}/lecture/${lectureId}/complete`, {
+export const markLectureComplete = async (studentId, courseId, lectureId) => {
+    const response = await fetch(`${BASE_URL}/course/${courseId}/lecture/${lectureId}/complete`, {
         method: 'POST',
         headers: getAuthHeaders()
     });
