@@ -41,6 +41,7 @@ import {
     getLecturePdfPathForClasspedia,
     getStudentProgress,
     markLectureComplete,
+    markFullCourseComplete,
     toggleLectureBookmark,
     saveLectureNotes,
     updateLectureWatch
@@ -109,6 +110,7 @@ const LinkedInStyleDemo = ({
     const [showChatBox, setShowChatBox] = useState(false);
     const [isCourseComplete, setIsCourseComplete] = useState(false);
     const [courseCompleteLoading, setCourseCompleteLoading] = useState(false);
+    const [fullCourseCompleteLoading, setFullCourseCompleteLoading] = useState(false);
     const [showAssessment, setShowAssessment] = useState(false);
     const assessmentRef = useRef(null);
 
@@ -287,6 +289,7 @@ const LinkedInStyleDemo = ({
         try {
             await markLectureComplete(STUDENT_ID, lectureId);
             setCompletedLectures(prev => new Set([...prev, String(lectureId)]));
+            window.location.reload();
         } catch (err) {
             console.error('Error marking lecture complete:', err);
         }
@@ -366,10 +369,24 @@ const LinkedInStyleDemo = ({
             if (!selectedLecture?.id) return;
             await markLectureComplete(STUDENT_ID, selectedLecture.id);
             setIsCourseComplete(true);
+            window.location.reload();
         } catch (err) {
             console.error('Error completing course:', err);
         } finally {
             setCourseCompleteLoading(false);
+        }
+    };
+
+    const handleFullCourseComplete = async () => {
+        if (fullCourseCompleteLoading || isCourseComplete) return;
+        try {
+            setFullCourseCompleteLoading(true);
+            await markFullCourseComplete(COURSE_ID);
+            window.location.reload();
+        } catch (err) {
+            console.error('Error completing full course:', err);
+        } finally {
+            setFullCourseCompleteLoading(false);
         }
     };
 
@@ -492,6 +509,21 @@ const LinkedInStyleDemo = ({
                         <span className="text-sm font-semibold text-gray-800">{getProgress()}% Complete</span>
                         <span className="text-xs text-gray-500">{completedLectures.size} of {getTotalLectures()} lectures</span>
                     </div>
+                    <button
+                        onClick={handleFullCourseComplete}
+                        disabled={isCourseComplete || fullCourseCompleteLoading}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            isCourseComplete
+                                ? 'bg-green-500 text-white cursor-default'
+                                : fullCourseCompleteLoading
+                                    ? 'bg-purple-400 text-white cursor-not-allowed'
+                                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                        }`}
+                        title="Mark Full Course Complete"
+                    >
+                        <Award className="w-4 h-4" />
+                        <span>Complete All</span>
+                    </button>
                     <button 
                         onClick={() => setShowChatBox(!showChatBox)}
                         className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"

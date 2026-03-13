@@ -57,6 +57,19 @@ export const markLectureComplete = async (studentId, lectureId) => {
 };
 
 /**
+ * Mark full course complete (complete all lectures)
+ * POST /api/Learning/course/{courseId}/complete-all
+ */
+export const markFullCourseComplete = async (courseId) => {
+    const response = await fetch(`${BASE_URL}/course/${courseId}/complete-all`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to mark full course complete');
+    return response.json();
+};
+
+/**
  * Toggle lecture bookmark
  * POST /api/Learning/lecture/{lectureId}/bookmark
  */
