@@ -47,7 +47,7 @@
     },
     {
       "id": "categories",
-      "path": "/admin/categories",
+      "path": "/categories",
       "component": "CategoryManagement",
       "label": "Category Management",
       "icon": "FolderTree",

@@ -48,6 +48,7 @@ const CategoryManagement = () => {
     totalCount: 0
   });
 
+  const [allCategories, setAllCategories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [nestedCategories, setNestedCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,6 +89,14 @@ const CategoryManagement = () => {
       const nestedCats = data.nestedItems || [];
       setCategories(categories);
       setNestedCategories(nestedCats);
+      
+      // Also fetch all categories without filters for dropdown
+      const allData = await getAllCategories({
+        page: 1,
+        pageSize: 1000 // Get all categories
+      });
+      setAllCategories(allData.items || allData || []);
+      
       setPagination(prev => ({
         ...prev,
         totalCount: data.totalCount || categories.length,
@@ -113,6 +122,14 @@ const CategoryManagement = () => {
       const nestedCats = data.nestedItems || [];
       setCategories(categories);
       setNestedCategories(nestedCats);
+      
+      // Also fetch all categories without filters for dropdown
+      const allData = await getAllCategories({
+        page: 1,
+        pageSize: 1000 // Get all categories
+      });
+      setAllCategories(allData.items || allData || []);
+      
       setPagination(prev => ({
         ...prev,
         totalCount: data.totalCount || categories.length,
@@ -328,7 +345,7 @@ const CategoryManagement = () => {
     setPagination(prev => ({ ...prev, page }));
   }, []);
 
-  const allCategoriesForDropdown = categories;
+  const allCategoriesForDropdown = allCategories;
 
   const renderCategoryRow = (category, level = 0) => {
     const children = category.children || [];

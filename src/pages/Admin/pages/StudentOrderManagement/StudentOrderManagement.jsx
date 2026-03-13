@@ -45,7 +45,8 @@ const StudentOrderManagement = () => {
     orderNo: '',
     customerFullName: '',
     statusId: '',
-    currencyCode: ''
+    startDate: '',
+    endDate: ''
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
@@ -99,7 +100,8 @@ const StudentOrderManagement = () => {
       orderNo: '',
       customerFullName: '',
       statusId: '',
-      currencyCode: ''
+      startDate: '',
+      endDate: ''
     });
     setSearchTerm('');
     loadOrders(1);
@@ -259,7 +261,7 @@ const StudentOrderManagement = () => {
         {/* Advanced Filters */}
         {showFilters && (
           <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Order Number
@@ -301,18 +303,25 @@ const StudentOrderManagement = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Currency
+                  Start Date
                 </label>
-                <select
-                  value={filters.currencyCode}
-                  onChange={(e) => setFilters({ ...filters, currencyCode: e.target.value })}
+                <input
+                  type="datetime-local"
+                  value={filters.startDate}
+                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                   className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="">All Currencies</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                </select>
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  End Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={filters.endDate}
+                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
               </div>
             </div>
             <div className="flex items-center gap-3 mt-6">

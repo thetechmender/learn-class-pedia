@@ -136,7 +136,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
       );
       
       if (courseMgmtIndex !== -1) {
-        // Insert Student Management parent menu after Course Management
+        // Insert Student Management as parent menu after Course Management
         const beforeItems = managementItems.slice(0, courseMgmtIndex + 1);
         const afterItems = managementItems.slice(courseMgmtIndex + 1);
         
@@ -146,22 +146,23 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             id: 'student-management-parent',
             label: 'Student Management',
             icon: Users,
+            path: 'student-management',
             children: [
-              {
-                id: 'student-management',
-                label: 'Student Management',
-                icon: Users,
-                path: 'student-management'
-              },
               {
                 id: 'student-order-management',
                 label: 'Student Orders',
                 icon: ShoppingCart,
                 path: 'student-order-management'
+              },
+              {
+                id: 'payment-method-management',
+                label: 'Payment Methods',
+                icon: CreditCard,
+                path: 'payment-method-management'
               }
             ]
           },
-          ...afterItems
+          ...afterItems.filter(item => item.id !== 'payment-method-management')
         ];
       }
       
@@ -172,13 +173,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
           id: 'student-management-parent',
           label: 'Student Management',
           icon: Users,
+          path: 'student-management',
           children: [
-            {
-              id: 'student-management',
-              label: 'Student Management',
-              icon: Users,
-              path: 'student-management'
-            },
             {
               id: 'student-order-management',
               label: 'Student Orders',
