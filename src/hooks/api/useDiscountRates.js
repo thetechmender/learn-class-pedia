@@ -12,7 +12,6 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
 
   // Fetch all discount rates with pagination and search
   const fetchDiscountRates = useCallback(async (pageNum = page, pageSizeVal = pageSize, searchQuery = '') => {
-    console.log('🔵 fetchDiscountRates called with pageNum:', pageNum, 'pageSizeVal:', pageSizeVal, 'searchQuery:', searchQuery);
     setLoading(true);
     setError(null);
 

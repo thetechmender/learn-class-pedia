@@ -46,7 +46,6 @@ const LmsLecturesDropdown = ({
           courseTypeId,
           courseLevelId
         };
-        console.log('LmsLecturesDropdown search params:', searchParams);
         
         const response = await lmsLecturesService.searchLmsLectures(searchParams);
         

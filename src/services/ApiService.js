@@ -230,6 +230,11 @@ class ApiService {
     return this.request(url);
   }
 
+  // GET course lecture content by lecture ID
+  async getCourseLectureContent(lectureId) {
+    return this.request(ENDPOINTS.COURSE_LECTURE_CONTENT(lectureId));
+  }
+
   // GET all career paths for admin (without pagination)
   async getAllCareerPathsAdminNoPagination(filters = {}) {
     const queryParams = new URLSearchParams();

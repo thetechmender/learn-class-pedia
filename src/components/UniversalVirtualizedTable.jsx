@@ -56,7 +56,6 @@ const UniversalVirtualizedTable = React.forwardRef(({
   useEffect(() => {
     preserveScrollPosition();
   }, [data, preserveScrollPosition]);
-  
   // Calculate visible range with stable dependencies
   const visibleRange = useMemo(() => {
     const currentScrollTop = scrollPositionRef.current;
@@ -170,16 +169,23 @@ const UniversalVirtualizedTable = React.forwardRef(({
               {column.deleteIcon || <Trash2 className="w-4 h-4" />}
             </button>
           )}
-          {onCustomAction && column.customActions?.map((action, idx) => (
-            <button
-              key={idx}
-              onClick={() => onCustomAction(action.key, item)}
-              className={`${action.className} p-2 rounded-lg transition-all duration-200`}
-              title={action.title}
-            >
-              {action.icon}
-            </button>
-          ))}
+          {onCustomAction && column.customActions?.map((action, idx) => {
+            // Check if this action should be shown based on its condition
+            const shouldShow = action.condition ? action.condition(item) : true;
+            
+            if (!shouldShow) return null;
+            
+            return (
+              <button
+                key={idx}
+                onClick={() => onCustomAction(action.key, item)}
+                className={`${action.className} p-2 rounded-lg transition-all duration-200`}
+                title={action.title}
+              >
+                {action.icon}
+              </button>
+            );
+          })}
         </div>
       );
     }

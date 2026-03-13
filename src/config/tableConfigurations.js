@@ -1,4 +1,4 @@
-import { Eye, Edit2, Trash2, Award, Folder, FolderOpen, Users, Star } from 'lucide-react';
+import { Eye, Edit2, Trash2, Award, Folder, FolderOpen, Users, Star, BookOpen, RefreshCw } from 'lucide-react';
 
 // Course table configuration
 export const courseTableColumns = [
@@ -33,11 +33,11 @@ export const courseTableColumns = [
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-3 border border-gray-200 dark:border-gray-600" 
                style={{ display: hasImage ? 'none' : 'flex' }}>
             <span className="text-white text-xs font-bold">
-              {item.title?.charAt(0)?.toUpperCase() || 'C'}
+              {item.title?.charAt(0)?.toUpperCase().slice(0,50) || 'C'}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title}</div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.title ? item.title.slice(0, 50) + (item.title.length > 50 ? '...' : '') : ''}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400" title={item.subtitle}>
               {item.subtitle ? item.subtitle.slice(0, 50) + (item.subtitle.length > 50 ? '...' : '') : ''}
             </div>
@@ -71,7 +71,22 @@ export const courseTableColumns = [
     width: '30%',
     minWidth: '140px',
     type: 'actions',
-    align: 'center'
+    align: 'center',
+    customActions: [
+      {
+        key: 'content',
+        icon: <BookOpen className="w-4 h-4" />,
+        title: 'View Course Content',
+        className: 'text-green-600 hover:text-green-800 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900',
+        condition: (item) => item.courseDetailLectureId != null
+      },
+      {
+        key: 'regenerate',
+        icon: <RefreshCw className="w-4 h-4" />,
+        title: 'Regenerate Course',
+        className: 'text-purple-600 hover:text-purple-800 hover:bg-purple-100 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900'
+      }
+    ]
   }
 ];
 

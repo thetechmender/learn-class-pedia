@@ -155,6 +155,8 @@ export const ENDPOINTS = {
   STUDENT_ORDER_ALL: '/StudentOrder',
   STUDENT_ORDER_BY_ID: (id) => `/StudentOrder/${id}`,
   PAYMENT_METHOD: '/PaymentMethod',
+  // Course Lecture Content endpoints
+  COURSE_LECTURE_CONTENT: (lectureId) => `/courses/lecture-content/${lectureId}`,
 };
 
 // HTTP Status Codes

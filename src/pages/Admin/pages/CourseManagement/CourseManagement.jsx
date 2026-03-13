@@ -1,4 +1,5 @@
 import  { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
 import { useDebounce } from '../../../../hooks/utils/useDebounce';
 import { useCourseFilters } from '../../../../hooks/utils/useCourseFilters';
@@ -20,6 +21,7 @@ const CourseManagement = () => {
     createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew
   } = useAdmin();
   
+  const navigate = useNavigate();
   const { toast, showToast } = useToast();
   const { modalState, openModal, closeModal, setModalLoading, setModalError } = useModalState();
   const { 
@@ -519,6 +521,15 @@ const CourseManagement = () => {
     openModal('delete', course);
   };
 
+  // Handle custom actions
+  const handleCustomAction = (actionKey, item) => {
+    if (actionKey === 'content' && item.courseDetailLectureId) {
+      navigate(`/admin/course-content/${item.courseDetailLectureId}`);
+    } else if (actionKey === 'regenerate') {
+      openModal('regenerate', item);
+    }
+  };
+
   // Apply filters with optimized loading state
   const applyFilters = useCallback(async (overrideFilters) => {
   if (filtersLoading) {
@@ -743,6 +754,7 @@ const CourseManagement = () => {
             onDelete={handleDeleteCourse}
             onViewDetails={handleViewDetails}
             onToggleExpand={handleToggleExpand}
+            onCustomAction={handleCustomAction}
             expandedItems={expandedCourses}
             itemDetails={courseDetails}
             detailsLoading={detailsLoading}
@@ -1175,7 +1187,7 @@ const CourseManagement = () => {
 
       {/* Unified Course Modal */}
       <CourseModal
-        isOpen={modalState.isOpen}
+        isOpen={modalState.isOpen && modalState.mode !== 'regenerate'}
         onClose={handleCloseModal}
         mode={modalState.mode}
         course={modalState.course}
@@ -1191,6 +1203,61 @@ const CourseManagement = () => {
         dropdownError={dropdownError}
         onClearError={() => setModalError('')}
       />
+
+      {/* Regenerate Course Modal */}
+      {modalState.mode === 'regenerate' && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div 
+              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+              onClick={handleCloseModal}
+            />
+
+            <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg dark:bg-gray-800">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Regenerate Course Content
+                </h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Enter a prompt to regenerate the content for course: <strong>{modalState.course?.title}</strong>
+                </p>
+                
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Regeneration Prompt
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  rows={4}
+                  placeholder="Enter your prompt to regenerate course content..."
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+                >
+                  Regenerate Content
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </AdminPageLayout>
   );

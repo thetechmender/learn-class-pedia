@@ -71,7 +71,6 @@ const FeaturedMarking = () => {
     const fetchCourseTypes = async () => {
       try {
         const data = await getCourseTypes();
-        console.log('Course types fetched:', data);
         setCourseTypes(data);
       } catch (err) {
         console.error('Failed to fetch course types:', err);
