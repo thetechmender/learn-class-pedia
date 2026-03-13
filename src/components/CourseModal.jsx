@@ -822,7 +822,7 @@ const CourseModal = ({
                 {formErrors.overview && <p className="mt-1 text-sm text-red-600">{formErrors.overview}</p>}
               </div>
 
-              <div className="md:col-span-2">
+             
                 <div className="flex flex-col md:flex-row md:items-end gap-4">
                   <div className="flex-1 min-w-0">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
@@ -838,36 +838,9 @@ const CourseModal = ({
                     {formErrors.categoryId && <p className="mt-1 text-sm text-red-600">{formErrors.categoryId}</p>}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 pb-1">
-                    {shouldShowExistingCreationCheckbox && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          name="mapExistingLectures"
-                          checked={!!formData.mapExistingLectures}
-                          onChange={handleInputChange}
-                          className="mr-2"
-                          disabled={loading}
-                        />
-                        <label className="text-sm font-medium text-gray-700">Existing creation</label>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="isPaid"
-                        checked={formData.isPaid}
-                        onChange={handleInputChange}
-                        className="mr-2"
-                        disabled={loading}
-                      />
-                      <label className="text-sm font-medium text-gray-700">This is a paid course</label>
-                    </div>
-                  </div>
+                
                 </div>
-              </div>
-
+          
               {/* Language */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
@@ -940,137 +913,46 @@ const CourseModal = ({
                 {formErrors.courseLevelId && <p className="mt-1 text-sm text-red-600">{formErrors.courseLevelId}</p>}
               </div>
 
-              
-         
+                {/* Course Topics */}
+              <div className="">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Course Topics</label>
+                <MultiSelectDropdown
+                  items={courseTopics || []}
+                  values={formData.courseTopicIds}
+                  onChange={courseTopicIds => handleInputChange({ target: { name: 'courseTopicIds', value: courseTopicIds } })}
+                  placeholder="Select course topics"
+                  loading={dropdownLoading.courseTopics}
+                  error={dropdownError.courseTopics}
+                  disabled={loading}
+                  displayField="title"
+                />
+              </div>
 
-              {shouldShowLectureMapping && (
-                <div className="md:col-span-2">
-                  {courseTypeIdNumber === 1 ? (
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Sections
-                        </label>
+              {/* Badges */}
+              <div className="">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Course Badges</label>
+                <MultiSelectDropdown
+                  items={badges}
+                  values={formData.badgeIds}
+                  onChange={badgeIds => handleInputChange({ target: { name: 'badgeIds', value: badgeIds } })}
+                  placeholder="Select badges"
+                  loading={dropdownLoading.badges}
+                  error={dropdownError.badges}
+                  disabled={loading}
+                />
+              </div>
 
-                        <button
-                          type="button"
-                          onClick={handleAddSection}
-                          disabled={loading}
-                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-60"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Section
-                        </button>
-                      </div>
-
-                      <div className="max-h-96 overflow-y-auto">
-                      {(formData.sections && formData.sections.length > 0 ? formData.sections : [createEmptySection(0)]).map((section, sectionIndex) => (
-                        <div key={sectionIndex} className="mb-6 p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
-                                <input
-                                  type="text"
-                                  value={section.title || ''}
-                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'title', e.target.value)}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  disabled={loading}
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Module Name</label>
-                                <input
-                                  type="text"
-                                  value={section.moduleName || ''}
-                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'moduleName', e.target.value)}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  disabled={loading}
-                                />
-                              </div>
-
-                              <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Description</label>
-                                <textarea
-                                  value={section.description || ''}
-                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'description', e.target.value)}
-                                  rows={2}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  disabled={loading}
-                                />
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSection(sectionIndex)}
-                              disabled={loading}
-                              className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-60"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove
-                            </button>
-                          </div>
-
-                          <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Select lectures to map
-                            </label>
-
-                            <div className="mb-4">
-                              <LmsLecturesDropdown
-                                onLectureSelect={(lecture) => handleSectionLectureSelect(sectionIndex, lecture)}
-                                selectedLectures={section.lectures || []}
-                                courseTypeId={formData.courseTypeId}
-                                courseLevelId={formData.courseLevelId}
-                                disabled={loading}
-                                placeholder="Search and add LMS lectures..."
-                              />
-                            </div>
-
-                            <SelectedLecturesTable
-                              selectedLectures={section.lectures || []}
-                              onLectureRemove={(lectureId) => handleSectionLectureRemove(sectionIndex, lectureId)}
-                              onLectureReorder={(dragIndex, dropIndex) => handleSectionLectureReorder(sectionIndex, dragIndex, dropIndex)}
-                              courseType={formData.courseTypeId}
-                              disabled={loading}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select lectures to map
-                      </label>
-
-                      <div className="mb-4">
-                        <LmsLecturesDropdown
-                          onLectureSelect={handleLectureSelect}
-                          selectedLectures={formData.mappedLectures}
-                          courseTypeId={formData.courseTypeId}
-                          courseLevelId={formData.courseLevelId}
-                          disabled={loading}
-                          placeholder="Search and add LMS lectures..."
-                        />
-                      </div>
-
-                      <SelectedLecturesTable
-                        selectedLectures={formData.mappedLectures}
-                        onLectureRemove={handleLectureRemove}
-                        onLectureReorder={handleLectureReorder}
-                        courseType={formData.courseTypeId}
+           <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="isPaid"
+                        checked={formData.isPaid}
+                        onChange={handleInputChange}
+                        className="mr-2"
                         disabled={loading}
                       />
+                      <label className="text-sm font-medium text-gray-700">This is a paid course</label>
                     </div>
-                  )}
-                </div>
-              )}
-
-
               {/* Pricing */}
               <div className="md:col-span-2">
                 {formData.isPaid && (
@@ -1317,36 +1199,153 @@ const CourseModal = ({
                   </div>
                 </div>
               </div>
+  <div className="flex flex-col sm:flex-row gap-4 pb-1">
+                    {shouldShowExistingCreationCheckbox && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="mapExistingLectures"
+                          checked={!!formData.mapExistingLectures}
+                          onChange={handleInputChange}
+                          className="mr-2"
+                          disabled={loading}
+                        />
+                        <label className="text-sm font-medium text-gray-700">Existing creation</label>
+                      </div>
+                    )}
 
-              {/* Course Topics */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Course Topics</label>
-                <MultiSelectDropdown
-                  items={courseTopics || []}
-                  values={formData.courseTopicIds}
-                  onChange={courseTopicIds => handleInputChange({ target: { name: 'courseTopicIds', value: courseTopicIds } })}
-                  placeholder="Select course topics"
-                  loading={dropdownLoading.courseTopics}
-                  error={dropdownError.courseTopics}
-                  disabled={loading}
-                  displayField="title"
-                />
-              </div>
+                  
+                  </div>
+              {shouldShowLectureMapping && (
+                <div className="md:col-span-2">
+                  {courseTypeIdNumber === 1 ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Sections
+                        </label>
 
-              {/* Badges */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Course Badges</label>
-                <MultiSelectDropdown
-                  items={badges}
-                  values={formData.badgeIds}
-                  onChange={badgeIds => handleInputChange({ target: { name: 'badgeIds', value: badgeIds } })}
-                  placeholder="Select badges"
-                  loading={dropdownLoading.badges}
-                  error={dropdownError.badges}
-                  disabled={loading}
-                />
-              </div>
+                        <button
+                          type="button"
+                          onClick={handleAddSection}
+                          disabled={loading}
+                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-60"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Section
+                        </button>
+                      </div>
 
+                      <div className="max-h-96 overflow-y-auto">
+                      {(formData.sections && formData.sections.length > 0 ? formData.sections : [createEmptySection(0)]).map((section, sectionIndex) => (
+                        <div key={sectionIndex} className="mb-6 p-4 border border-gray-200 rounded-lg">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                                <input
+                                  type="text"
+                                  value={section.title || ''}
+                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'title', e.target.value)}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  disabled={loading}
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Module Name</label>
+                                <input
+                                  type="text"
+                                  value={section.moduleName || ''}
+                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'moduleName', e.target.value)}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  disabled={loading}
+                                />
+                              </div>
+
+                              <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Description</label>
+                                <textarea
+                                  value={section.description || ''}
+                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'description', e.target.value)}
+                                  rows={2}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  disabled={loading}
+                                />
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSection(sectionIndex)}
+                              disabled={loading}
+                              className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-60"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove
+                            </button>
+                          </div>
+
+                          <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Select lectures to map
+                            </label>
+
+                            <div className="mb-4">
+                              <LmsLecturesDropdown
+                                onLectureSelect={(lecture) => handleSectionLectureSelect(sectionIndex, lecture)}
+                                selectedLectures={section.lectures || []}
+                                courseTypeId={formData.courseTypeId}
+                                courseLevelId={formData.courseLevelId}
+                                disabled={loading}
+                                placeholder="Search and add LMS lectures..."
+                              />
+                            </div>
+
+                            <SelectedLecturesTable
+                              selectedLectures={section.lectures || []}
+                              onLectureRemove={(lectureId) => handleSectionLectureRemove(sectionIndex, lectureId)}
+                              onLectureReorder={(dragIndex, dropIndex) => handleSectionLectureReorder(sectionIndex, dragIndex, dropIndex)}
+                              courseType={formData.courseTypeId}
+                              disabled={loading}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select lectures to map
+                      </label>
+
+                      <div className="mb-4">
+                        <LmsLecturesDropdown
+                          onLectureSelect={handleLectureSelect}
+                          selectedLectures={formData.mappedLectures}
+                          courseTypeId={formData.courseTypeId}
+                          courseLevelId={formData.courseLevelId}
+                          disabled={loading}
+                          placeholder="Search and add LMS lectures..."
+                        />
+                      </div>
+
+                      <SelectedLecturesTable
+                        selectedLectures={formData.mappedLectures}
+                        onLectureRemove={handleLectureRemove}
+                        onLectureReorder={handleLectureReorder}
+                        courseType={formData.courseTypeId}
+                        disabled={loading}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+
+            
             </div>
           )}
 
