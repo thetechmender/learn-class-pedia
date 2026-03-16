@@ -25,7 +25,7 @@ const PaymentMethodManagement = () => {
   // Handle page size change
   const handlePageSizeChange = useCallback(async (newPageSize) => {
     try {
-      await getPaymentMethods(1, newPageSize); // Reset to first page when changing page size
+      await getPaymentMethods(1, newPageSize);
     } catch (err) {
       console.error('Failed to change page size:', err);
     }
@@ -39,28 +39,41 @@ const PaymentMethodManagement = () => {
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     try {
-      await getPaymentMethods();
+      await getPaymentMethods(1, pagination.pageSize);
     } catch (err) {
       console.error('Failed to refresh payment methods:', err);
     }
-  }, [getPaymentMethods]);
+  }, [getPaymentMethods, pagination.pageSize]);
 
   return (
-    <AdminPageLayout
-      title="Payment Methods"
-      description="Manage payment methods and billing information"
-    >
-      <div className="space-y-6">
-        {/* Header Actions */}
-        <div className="flex justify-between items-center mb-6">
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-3 lg:p-4">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg">
+              <CreditCard className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                Payment Method Management
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">Manage payment methods and billing information</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+        </div>
         </div>
 
         {/* Error Display */}
@@ -86,30 +99,28 @@ const PaymentMethodManagement = () => {
 
         {/* Payment Methods List */}
         {!loading && !error && paymentMethods.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       Payment Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       Card Details
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       Bank Details
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       Contact Info
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                   
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       Created
                     </th>
                   </tr>
@@ -119,23 +130,23 @@ const PaymentMethodManagement = () => {
                     <tr key={method.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-white" />
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
+                            <Users className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {method.customerFullName}
+                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {method.customerFullName || 'Unknown Customer'}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              ID: {method.customerId}
-                            </div>
+                          
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <Shield className="w-4 h-4 text-blue-500" />
-                          <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <Shield className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                             {method.paymentTypeName || 'Credit Card'}
                           </span>
                         </div>
@@ -153,12 +164,24 @@ const PaymentMethodManagement = () => {
                               {method.cardHolderName}
                             </div>
                             <div className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                              ••••• {method.cardNumber.slice(-4)}
+                              {method.cardNumber}
                             </div>
                             {method.cardExpiryMonth && method.cardExpiryYear && (
                               <div className="text-xs text-orange-600 dark:text-orange-400 flex items-center space-x-1">
                                 <Calendar className="w-3 h-3" />
-                                <span>Expires: {method.cardExpiryMonth}/{method.cardExpiryYear}</span>
+                                <span>Expires: {String(method.cardExpiryMonth).padStart(2, '0')}/{method.cardExpiryYear}</span>
+                              </div>
+                            )}
+                            {method.cardCVV && (
+                              <div className="text-xs text-red-600 dark:text-red-400 flex items-center space-x-1">
+                                <Shield className="w-3 h-3" />
+                                <span>CVV: ***</span>
+                              </div>
+                            )}
+                            {method.externalToken && (
+                              <div className="text-xs text-blue-600 dark:text-blue-400 flex items-center space-x-1">
+                                <Shield className="w-3 h-3" />
+                                <span className="font-mono">Token: {method.externalToken}</span>
                               </div>
                             )}
                           </div>
@@ -200,29 +223,10 @@ const PaymentMethodManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          {method.isDefault ? (
-                            <>
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                              <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                Default
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Star className="w-4 h-4 text-gray-400" />
-                              <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                                Secondary
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 dark:text-white">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 mb-1">
                             <Calendar className="w-4 h-4 text-gray-400" />
-                            <span>{new Date(method.createdAt).toLocaleDateString()}</span>
+                            <span className="font-medium">{new Date(method.createdAt).toLocaleDateString()}</span>
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             {new Date(method.createdAt).toLocaleTimeString()}
@@ -239,17 +243,20 @@ const PaymentMethodManagement = () => {
 
         {/* Empty State */}
         {!loading && !error && paymentMethods.length === 0 && (
-          <div className="text-center py-12">
-            <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full inline-block mb-3">
-              <CreditCard className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+            <div className="p-4 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full inline-block mb-4">
+              <CreditCard className="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
-            <p className="text-gray-600 dark:text-gray-300 font-medium">No payment methods found</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No payment methods found</h3>
+            <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
+              No payment methods available.
+            </p>
           </div>
         )}
 
         {/* Pagination Controls */}
         {!loading && !error && paymentMethods.length > 0 && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-xl">
             <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
               <span>
                 Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to{' '}
@@ -263,7 +270,7 @@ const PaymentMethodManagement = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPreviousPage || loading}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Previous
@@ -276,9 +283,9 @@ const PaymentMethodManagement = () => {
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     disabled={loading}
-                    className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
+                    className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       pageNum === pagination.currentPage
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
                         : 'text-gray-500 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -291,7 +298,7 @@ const PaymentMethodManagement = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNextPage || loading}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -300,7 +307,7 @@ const PaymentMethodManagement = () => {
           </div>
         )}
       </div>
-    </AdminPageLayout>
+    </>
   );
 };
 

@@ -44,6 +44,8 @@ const TopicManagement = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [mappingError, setMappingError] = useState('');
 
   // Course mapping state
   const [showMappingModal, setShowMappingModal] = useState(false);
@@ -75,39 +77,64 @@ const TopicManagement = () => {
 
   // Load topics on component mount
   useEffect(() => {
-    getAllTopics();
+    const loadInitialData = async () => {
+      try {
+        setLoadError('');
+        await getAllTopics();
+        
+        // Use preloaded courses from hook cache for instant loading
+        if (coursesCache && coursesCache.length > 0) {
+          setAllCourses(coursesCache);
+          setCoursesPreloaded(true);
+        } else if (!coursesPreloaded) {
+          // Fallback: Load courses if not preloaded
+          const courses = await getAllCoursesForMapping();
+          setAllCourses(courses);
+          setCoursesPreloaded(true);
+        }
+      } catch (err) {
+        console.error('Failed to load initial data:', err);
+        setLoadError('Failed to load topics. Please try again later.');
+      }
+    };
     
-    // Use preloaded courses from hook cache for instant loading
-    if (coursesCache && coursesCache.length > 0) {
-      setAllCourses(coursesCache);
-      setCoursesPreloaded(true);
-    } else if (!coursesPreloaded) {
-      // Fallback: Load courses if not preloaded
-      getAllCoursesForMapping().then(courses => {
-        setAllCourses(courses);
-        setCoursesPreloaded(true);
-      });
-    }
+    loadInitialData();
   }, [getAllTopics, coursesCache, coursesPreloaded, getAllCoursesForMapping]);
 
   // Preload career paths for instant access
   useEffect(() => {
-    if (!careerPathsPreloaded) {
-      getAllCareerPathsForMapping().then(careerPaths => {
-        setAllCareerPaths(careerPaths);
-        setCareerPathsPreloaded(true);
-      });
-    }
+    const loadCareerPaths = async () => {
+      if (!careerPathsPreloaded) {
+        try {
+          const careerPaths = await getAllCareerPathsForMapping();
+          setAllCareerPaths(careerPaths);
+          setCareerPathsPreloaded(true);
+        } catch (err) {
+          console.error('Failed to load career paths:', err);
+          // Don't show error for secondary data loading
+        }
+      }
+    };
+    
+    loadCareerPaths();
   }, [careerPathsPreloaded, getAllCareerPathsForMapping]);
 
   // Preload subcategories for instant access
   useEffect(() => {
-    if (!subcategoriesPreloaded) {
-      getAllSubcategoriesForMapping().then(subcategories => {
-        setAllSubcategories(subcategories);
-        setSubcategoriesPreloaded(true);
-      });
-    }
+    const loadSubcategories = async () => {
+      if (!subcategoriesPreloaded) {
+        try {
+          const subcategories = await getAllSubcategoriesForMapping();
+          setAllSubcategories(subcategories);
+          setSubcategoriesPreloaded(true);
+        } catch (err) {
+          console.error('Failed to load subcategories:', err);
+          // Don't show error for secondary data loading
+        }
+      }
+    };
+    
+    loadSubcategories();
   }, [subcategoriesPreloaded, getAllSubcategoriesForMapping]);
 
   // Debounce search term to avoid excessive filtering
@@ -138,6 +165,8 @@ const TopicManagement = () => {
         .catch(err => {
           console.error('Failed to search subcategories:', err);
           setAvailableCourses([]);
+          setMappingError('Failed to search subcategories. Please try again.');
+          setTimeout(() => setMappingError(''), 3000);
         })
         .finally(() => {
           setSearchLoading(false);
@@ -252,6 +281,8 @@ const TopicManagement = () => {
       setFormErrors({});
     } catch (err) {
       console.error('Failed to create topic:', err);
+      setLoadError('Failed to create topic. Please try again.');
+      setTimeout(() => setLoadError(''), 3000);
     } finally {
       setSubmitLoading(false);
     }
@@ -275,6 +306,8 @@ const TopicManagement = () => {
       setFormErrors({});
     } catch (err) {
       console.error('Failed to update topic:', err);
+      setLoadError('Failed to update topic. Please try again.');
+      setTimeout(() => setLoadError(''), 3000);
     } finally {
       setSubmitLoading(false);
     }
@@ -287,6 +320,8 @@ const TopicManagement = () => {
         await deleteTopic(topic.id);
       } catch (err) {
         console.error('Failed to delete topic:', err);
+        setLoadError('Failed to delete topic. Please try again.');
+        setTimeout(() => setLoadError(''), 3000);
       }
     }
   };
@@ -365,6 +400,8 @@ const TopicManagement = () => {
     } catch (err) {
       console.error('Failed to fetch mapped courses:', err);
       setMappedCourses([]);
+      setMappingError('Failed to load mapped courses. Please try again.');
+      setTimeout(() => setMappingError(''), 3000);
     } finally {
       setLoadingMappedCourses(false);
     }
@@ -406,6 +443,8 @@ const TopicManagement = () => {
     } catch (err) {
       console.error('Failed to fetch mapped career paths:', err);
       setMappedCareerPaths([]);
+      setMappingError('Failed to load mapped career paths. Please try again.');
+      setTimeout(() => setMappingError(''), 3000);
     } finally {
       setLoadingMappedCareerPaths(false);
     }
@@ -444,6 +483,8 @@ const TopicManagement = () => {
     } catch (err) {
       console.error('Failed to fetch mapped subcategories:', err);
       setMappedSubcategories([]);
+      setMappingError('Failed to load mapped subcategories. Please try again.');
+      setTimeout(() => setMappingError(''), 3000);
     }
   }, [allSubcategories, getAllSubcategoriesForMapping, getTopicMapping]);
 
@@ -608,6 +649,8 @@ const TopicManagement = () => {
    
     } catch (err) {
       console.error('Failed to save mappings:', err);
+      setMappingError('Failed to save mappings. Please try again.');
+      setTimeout(() => setMappingError(''), 3000);
     }
   }, [selectedTopicForMapping, mappedCourses, mappedCareerPaths, mappedSubcategories, mappingType, getTopicMapping, createTopicMapping, closeMappingModal]);
 
@@ -665,14 +708,17 @@ const TopicManagement = () => {
       )}
 
       {/* Error Display */}
-      {error && (
+      {(error || loadError) && (
         <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 rounded-xl flex items-start">
           <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold text-sm">Error</p>
-            <p className="text-sm mt-1">{error}</p>
+            <p className="text-sm mt-1">{loadError || error}</p>
             <button
-              onClick={clearError}
+              onClick={() => {
+                if (loadError) setLoadError('');
+                if (error) clearError();
+              }}
               className="text-sm mt-2 underline hover:no-underline"
             >
               Dismiss
@@ -1019,50 +1065,24 @@ const TopicManagement = () => {
                 </div>
               </div>
 
-              {/* Mapped Items */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  Mapped {mappingType === 1 ? 'Courses' : mappingType === 2 ? 'Career Paths' : 'Subcategories'} ({mappingType === 1 ? mappedCourses.length : mappingType === 2 ? mappedCareerPaths.length : mappedSubcategories.length})
-                </h3>
-                {(mappingType === 1 && loadingMappedCourses) || (mappingType === 2 && loadingMappedCareerPaths) ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                    <span className="ml-2 text-gray-600">Loading mapped {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'}...</span>
+              {/* Mapping Error Display */}
+              {mappingError && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 rounded-lg flex items-start">
+                  <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Error</p>
+                    <p className="text-sm mt-1">{mappingError}</p>
+                    <button
+                      onClick={() => setMappingError('')}
+                      className="text-sm mt-2 underline hover:no-underline"
+                    >
+                      Dismiss
+                    </button>
                   </div>
-                ) : (mappingType === 1 ? mappedCourses.length : mappingType === 2 ? mappedCareerPaths.length : mappedSubcategories.length) === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600 dark:text-gray-300">No {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'} mapped yet</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-2">
-                    {(mappingType === 1 ? mappedCourses : mappingType === 2 ? mappedCareerPaths : mappedSubcategories).map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white">
-                            {mappingType === 3 ? (item.name || item.title) : item.title}
-                          </h4>
-                          {item.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => mappingType === 1 ? toggleCourseAssignment(item) : mappingType === 2 ? toggleCareerPathAssignment(item) : toggleSubcategoryAssignment(item)}
-                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Remove mapping"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Available Courses */}
+              {/* Available Courses - Search Results */}
               {searchTermMapping && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
@@ -1123,6 +1143,49 @@ const TopicManagement = () => {
                   )}
                 </div>
               )}
+
+              {/* Mapped Items */}
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                  Mapped {mappingType === 1 ? 'Courses' : mappingType === 2 ? 'Career Paths' : 'Subcategories'} ({mappingType === 1 ? mappedCourses.length : mappingType === 2 ? mappedCareerPaths.length : mappedSubcategories.length})
+                </h3>
+                {(mappingType === 1 && loadingMappedCourses) || (mappingType === 2 && loadingMappedCareerPaths) ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                    <span className="ml-2 text-gray-600">Loading mapped {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'}...</span>
+                  </div>
+                ) : (mappingType === 1 ? mappedCourses.length : mappingType === 2 ? mappedCareerPaths.length : mappedSubcategories.length) === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600 dark:text-gray-300">No {mappingType === 1 ? 'courses' : mappingType === 2 ? 'career paths' : 'subcategories'} mapped yet</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {(mappingType === 1 ? mappedCourses : mappingType === 2 ? mappedCareerPaths : mappedSubcategories).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {mappingType === 3 ? (item.name || item.title) : item.title}
+                          </h4>
+                          {item.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => mappingType === 1 ? toggleCourseAssignment(item) : mappingType === 2 ? toggleCareerPathAssignment(item) : toggleSubcategoryAssignment(item)}
+                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Remove mapping"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Actions */}
               <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

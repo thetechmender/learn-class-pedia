@@ -370,7 +370,7 @@ const StudentOrderManagement = () => {
                 <th className="px-6 py-4 text-left">
                   <div className="flex items-center gap-2">
                     <Tag className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Order</span>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Order No</span>
                   </div>
                 </th>
                 <th className="px-6 py-4 text-left">
@@ -437,9 +437,7 @@ const StudentOrderManagement = () => {
                           <div className="text-sm font-semibold text-gray-900 dark:text-white">
                             {order.orderNo}
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            ID: {order.id}
-                          </div>
+                         
                         </div>
                       </div>
                     </td>
@@ -447,9 +445,7 @@ const StudentOrderManagement = () => {
                       <div className="text-sm text-gray-900 dark:text-white font-medium">
                         {order.customerFullName || 'N/A'}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Customer ID: {order.customerId}
-                      </div>
+                     
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-white font-medium">
@@ -610,7 +606,7 @@ const StudentOrderManagement = () => {
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Customer</p>
                           <p className="font-semibold text-gray-900 dark:text-white">
-                            {selectedOrder.customerFullName || 'N/A'} (ID: {selectedOrder.customerId})
+                            {selectedOrder.customerFullName || 'N/A'} 
                           </p>
                         </div>
                       </div>
@@ -794,7 +790,7 @@ const StudentOrderManagement = () => {
               </div>
 
               {/* Payment Method Information */}
-              {(selectedOrder.paymentMethodName || selectedOrder.paymentMethodType) && (
+              {(selectedOrder.cardHolderName || selectedOrder.paymentMethodType) && (
                 <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 p-6 rounded-2xl border border-green-200/50 dark:border-green-800/30">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-3">
                     <div className="p-2 bg-green-500 rounded-xl">
@@ -803,10 +799,10 @@ const StudentOrderManagement = () => {
                     Payment Method
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedOrder.paymentMethodName && (
+                    {selectedOrder.cardHolderName && (
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Method Name</p>
-                        <p className="font-semibold text-gray-900 dark:text-white">{selectedOrder.paymentMethodName}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Card Holder Name</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{selectedOrder.cardHolderName}</p>
                       </div>
                     )}
                     {selectedOrder.paymentMethodType && (
