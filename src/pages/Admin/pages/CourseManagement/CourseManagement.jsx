@@ -77,6 +77,7 @@ const CourseManagement = () => {
   });
   
   const [regeneratePrompt, setRegeneratePrompt] = useState('');
+  const [promptError, setPromptError] = useState('');
 
   // Debounced search
   const debouncedSearchTerm = useDebounce(searchTerm, COURSE_MANAGEMENT_CONSTANTS.SEARCH_DEBOUNCE_DELAY);
@@ -526,19 +527,21 @@ const CourseManagement = () => {
   // Handle regenerate course content
   const handleRegenerateContent = async () => {
     if (!modalState.course?.id || !regeneratePrompt.trim()) {
-      setModalError('Please provide a prompt to regenerate content');
+      setPromptError('Please provide a prompt to regenerate content');
       return;
     }
 
     try {
       setModalLoading(true);
       setModalError('');
+      setPromptError('');
       
       await generateCourseContent(modalState.course.id, regeneratePrompt.trim());
       
       showToast('Course content regenerated successfully!', 'success');
       closeModal();
       setRegeneratePrompt('');
+      setPromptError('');
       
       // Refresh course data
       await applyFilters();
@@ -1265,12 +1268,25 @@ const CourseManagement = () => {
                   Regeneration Prompt
                 </label>
                 <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                    promptError 
+                      ? 'border-red-500 dark:border-red-400 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   rows={4}
                   placeholder="Enter your prompt to regenerate course content..."
                   value={regeneratePrompt}
-                  onChange={(e) => setRegeneratePrompt(e.target.value)}
+                  onChange={(e) => {
+                    setRegeneratePrompt(e.target.value);
+                    if (promptError) setPromptError('');
+                  }}
+                  required
                 />
+                {promptError && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {promptError}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end space-x-3">
