@@ -685,7 +685,8 @@ const CourseManagement = () => {
 
       {/* Filters Section */}
       {filtersExpanded && (
-        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
+        <div className="relative z-10">
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
           <div className="py-4 sm:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
@@ -744,8 +745,9 @@ const CourseManagement = () => {
             </div>
           </div>
         </div>
+        </div>
       )}
-      <div className="mt-6 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+      <div className="mt-6 bg-white/80 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="p-2 sm:p-4">
           <UniversalVirtualizedTable
             data={searchFilteredCourses}

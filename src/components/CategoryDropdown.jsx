@@ -262,7 +262,7 @@ const CategoryDropdown = ({
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className={`absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-80 overflow-hidden ${
+        <div className={`absolute z-[100] w-full mt-1 border rounded-lg shadow-lg max-h-80 overflow-hidden ${
           theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-300'
         }`}>
           {/* Search Input */}
