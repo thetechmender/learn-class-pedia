@@ -157,6 +157,7 @@ export const ENDPOINTS = {
   PAYMENT_METHOD: '/PaymentMethod',
   // Course Lecture Content endpoints
   COURSE_LECTURE_CONTENT: (lectureId) => `/courses/lecture-content/${lectureId}`,
+  COURSE_GENERATE_CONTENT: '/courses/generate-content',
 };
 
 // HTTP Status Codes

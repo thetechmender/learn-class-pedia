@@ -1028,6 +1028,17 @@ class ApiService {
     }
   }
 
+  // Generate course content
+  async generateCourseContent(courseId, prompt) {
+    return await this.request(ENDPOINTS.COURSE_GENERATE_CONTENT, {
+      method: 'POST',
+      body: JSON.stringify({
+        courseId,
+        prompt
+      })
+    });
+  }
+
   // Create category with file upload (FormData)
   async createCategoryWithFile(formData) {
     const url = `${this.baseURL}${ENDPOINTS.CATEGORIES_Admin}`;

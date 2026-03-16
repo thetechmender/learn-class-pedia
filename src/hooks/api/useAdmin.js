@@ -538,6 +538,20 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     }
   }, []);
 
+  const generateCourseContent = useCallback(async (courseId, prompt) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.generateCourseContent(courseId, prompt);
+      return data;
+    } catch (err) {
+      setError(err.response?.data || err.message || 'Failed to generate course content');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // ==================== AUTHENTICATION OPERATIONS ====================
 
   const login = useCallback(async (username, password) => {
@@ -747,6 +761,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     // Course file upload operations
     createCourseWithFile,
     updateCourseWithFile,
+    generateCourseContent,
 
     // Authentication operations
     login,

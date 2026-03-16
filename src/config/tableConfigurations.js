@@ -84,7 +84,8 @@ export const courseTableColumns = [
         key: 'regenerate',
         icon: <RefreshCw className="w-4 h-4" />,
         title: 'Regenerate Course',
-        className: 'text-purple-600 hover:text-purple-800 hover:bg-purple-100 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900'
+        className: 'text-purple-600 hover:text-purple-800 hover:bg-purple-100 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900',
+        condition: (item) => item.courseDetailLectureId != null && item.courseTypeId === 3
       }
     ]
   }

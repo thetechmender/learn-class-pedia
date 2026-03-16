@@ -18,7 +18,7 @@ const CourseManagement = () => {
   const { 
     error, getCourseById, clearError,
     getCourseTypes, getCourseLevels, getCourseTopics, getAllCategories, deleteCourse, getAllCoursesAdmin,
-    createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew
+    createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew, generateCourseContent
   } = useAdmin();
   
   const navigate = useNavigate();
@@ -75,6 +75,8 @@ const CourseManagement = () => {
     courseTopics: '',
     badges: ''
   });
+  
+  const [regeneratePrompt, setRegeneratePrompt] = useState('');
 
   // Debounced search
   const debouncedSearchTerm = useDebounce(searchTerm, COURSE_MANAGEMENT_CONSTANTS.SEARCH_DEBOUNCE_DELAY);
@@ -521,9 +523,35 @@ const CourseManagement = () => {
     openModal('delete', course);
   };
 
+  // Handle regenerate course content
+  const handleRegenerateContent = async () => {
+    if (!modalState.course?.id || !regeneratePrompt.trim()) {
+      setModalError('Please provide a prompt to regenerate content');
+      return;
+    }
+
+    try {
+      setModalLoading(true);
+      setModalError('');
+      
+      await generateCourseContent(modalState.course.id, regeneratePrompt.trim());
+      
+      showToast('Course content regenerated successfully!', 'success');
+      closeModal();
+      setRegeneratePrompt('');
+      
+      // Refresh course data
+      await applyFilters();
+    } catch (error) {
+      setModalError(error.response?.data || error.message || 'Failed to regenerate course content');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   // Handle custom actions
   const handleCustomAction = (actionKey, item) => {
-    if (actionKey === 'content' && item.courseDetailLectureId) {
+    if (actionKey === 'content' && item.courseDetailLectureId && item.courseTypeId === 3) {
       navigate(`/admin/course-content/${item.courseDetailLectureId}`);
     } else if (actionKey === 'regenerate') {
       openModal('regenerate', item);
@@ -1240,6 +1268,8 @@ const CourseManagement = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   rows={4}
                   placeholder="Enter your prompt to regenerate course content..."
+                  value={regeneratePrompt}
+                  onChange={(e) => setRegeneratePrompt(e.target.value)}
                 />
               </div>
 
@@ -1251,9 +1281,11 @@ const CourseManagement = () => {
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+                  onClick={handleRegenerateContent}
+                  disabled={modalState.loading}
+                  className="px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
                 >
-                  Regenerate Content
+                  {modalState.loading ? 'Regenerating...' : 'Regenerate Content'}
                 </button>
               </div>
             </div>
