@@ -393,7 +393,7 @@ const [careerPathsUpdating, setCareerPathsUpdating] = useState(false);
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log('Update All clicked for:', card.id);
+                    
                       if (card.id === 'courses') {
                         handleUpdateAllSlugs();
                       } else if (card.id === 'career-paths') {

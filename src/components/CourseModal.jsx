@@ -26,6 +26,7 @@ const CourseModal = ({
   courseTypes,
   courseLevels,
   courseTopics,
+  courseSkills,
   badges,
   loading,
   error,
@@ -43,6 +44,7 @@ const CourseModal = ({
     courseTypeId: 0,
     courseLevelId: 0,
     courseTopicIds: [],
+    courseSkillIds: [],
     categoryId: 0,
     isPaid: true,
     price: '',
@@ -61,7 +63,7 @@ const CourseModal = ({
   const courseTypeIdNumber = Number(formData.courseTypeId);
   const shouldShowExistingCreationCheckbox = courseTypeIdNumber !== 1 && courseTypeIdNumber !== 2 && (mode === 'create' || course?.isNew === false);
   const shouldShowLectureMapping =
-    (courseTypeIdNumber === 1 || courseTypeIdNumber === 2)
+    (courseTypeIdNumber === 1 || courseTypeIdNumber === 2 || courseTypeIdNumber === 3)
       ? courseTypeIdNumber > 0
       : formData.mapExistingLectures === true && courseTypeIdNumber > 0;
 
@@ -257,6 +259,7 @@ const CourseModal = ({
         courseTypeId: course.courseTypeId || 0,
         courseLevelId: course.courseLevelId || 0,
         courseTopicIds: course.courseTopics?.map(topic => topic.id) || [],
+        courseSkillIds: course.courseSkills?.map(skill => skill.id) || [],
         categoryId: course.categoryId || 0,
         isPaid: course.isPaid || false,
         price: course.price || '',
@@ -281,8 +284,9 @@ const CourseModal = ({
         courseTypeId: 0,
         courseLevelId: 0,
         courseTopicIds: [],
+        courseSkillIds: [],
         categoryId: 0,
-        isPaid: false,
+        isPaid: true,
         price: '',
         discountedPrice: '',
         currencyCode: 'USD',
@@ -424,9 +428,7 @@ const CourseModal = ({
       if (name === 'courseTypeId') {
         const nextTypeId = Number(value);
 
-        if (nextTypeId === 1 || nextTypeId === 2 || nextTypeId === 3) {
-          newData.mapExistingLectures = true;
-        }
+        // Removed auto-checking for all course types - let user decide manually
 
         if (nextTypeId === 1) {
           newData.sections = prev.sections && prev.sections.length > 0 ? prev.sections : [createEmptySection(0)];
@@ -437,11 +439,7 @@ const CourseModal = ({
           newData.sections = [];
         }
 
-        if (!(nextTypeId === 1 || nextTypeId === 2 || nextTypeId === 3)) {
-          newData.mapExistingLectures = false;
-          newData.mappedLectures = [];
-          newData.sections = [];
-        }
+        // Don't automatically change mapExistingLectures when course type changes
       }
 
       if (name === 'mapExistingLectures') {
@@ -544,6 +542,11 @@ const CourseModal = ({
       errors.price = 'Price must be greater than 0';
     }
 
+    // Validate lectures mapping if existing creation is checked
+    if (formData.mapExistingLectures && (!formData.mappedLectures || formData.mappedLectures.length === 0)) {
+      errors.mappedLectures = 'At least one lecture must be selected when existing creation is checked';
+    }
+
     // Validate promo video file if present
     if (formData.promoVideoFile) {
       // Check file size (max 50MB for promo video)
@@ -615,6 +618,12 @@ const CourseModal = ({
       });
     }
 
+    if (formData.courseSkillIds && formData.courseSkillIds.length > 0) {
+      formData.courseSkillIds.forEach((skillId, index) => {
+        submitData.append(`courseSkillIds[${index}]`, String(parseInt(skillId)));
+      });
+    }
+
     if (formData.courseTopicIds && formData.courseTopicIds.length > 0) {
       formData.courseTopicIds.forEach((topicId, index) => {
         submitData.append(`courseTopicIds[${index}]`, String(parseInt(topicId)));
@@ -622,23 +631,41 @@ const CourseModal = ({
     }
 
     if (parseInt(formData.courseTypeId) === 1) {
-      const sections = formData.sections && formData.sections.length > 0 ? formData.sections : [createEmptySection(0)];
+      // For course type 1, add hardcoded section with mapped lectures
+      submitData.append('sections[0].moduleName', 'Default Module');
+      submitData.append('sections[0].title', 'Default Section');
+      submitData.append('sections[0].description', 'Default section description');
+      submitData.append('sections[0].sortOrder', '0');
 
-      sections.forEach((section, sectionIndex) => {
-        submitData.append(`sections[${sectionIndex}].moduleName`, section.moduleName || '');
-        submitData.append(`sections[${sectionIndex}].title`, section.title || `Section ${sectionIndex + 1}`);
-        submitData.append(`sections[${sectionIndex}].description`, section.description || '');
-        submitData.append(`sections[${sectionIndex}].sortOrder`, String(section.sortOrder ?? sectionIndex));
-
-        (section.lectures || []).forEach((lecture, lectureIndex) => {
-          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].title`, lecture.title || '');
-          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lectureType`, String(lecture.lectureType || 1));
-          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].isFreePreview`, String(!!lecture.isFreePreview));
-          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].sortOrder`, String(lecture.sortOrder ?? lectureIndex));
-          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].lmscourseMappingId`, String(lecture.lmscourseMappingId || lecture.id || 0));
-          submitData.append(`sections[${sectionIndex}].lectures[${lectureIndex}].source`, String(lecture.source || ''));
+      // Add mapped lectures to the hardcoded section
+      if (formData.mappedLectures && formData.mappedLectures.length > 0) {
+        formData.mappedLectures.forEach((lecture, index) => {
+          submitData.append(`sections[0].lectures[${index}].title`, lecture.title || '');
+          submitData.append(`sections[0].lectures[${index}].lectureType`, String(lecture.lectureType || 1));
+          submitData.append(`sections[0].lectures[${index}].isFreePreview`, String(!!lecture.isFreePreview));
+          submitData.append(`sections[0].lectures[${index}].sortOrder`, String(lecture.sortOrder ?? index));
+          submitData.append(`sections[0].lectures[${index}].lmscourseMappingId`, String(lecture.lmscourseMappingId || lecture.id || 0));
+          submitData.append(`sections[0].lectures[${index}].source`, String(lecture.source || ''));
         });
-      });
+      }
+    } else if (parseInt(formData.courseTypeId) === 2) {
+      // For course type 2, add hardcoded section with mapped lectures
+      submitData.append('sections[0].moduleName', 'Default Module');
+      submitData.append('sections[0].title', 'Default Section');
+      submitData.append('sections[0].description', 'Default section description');
+      submitData.append('sections[0].sortOrder', '0');
+
+      // Add mapped lectures to the hardcoded section
+      if (formData.mappedLectures && formData.mappedLectures.length > 0) {
+        formData.mappedLectures.forEach((lecture, index) => {
+          submitData.append(`sections[0].lectures[${index}].title`, lecture.title || '');
+          submitData.append(`sections[0].lectures[${index}].lectureType`, String(lecture.lectureType || 1));
+          submitData.append(`sections[0].lectures[${index}].isFreePreview`, String(!!lecture.isFreePreview));
+          submitData.append(`sections[0].lectures[${index}].sortOrder`, String(lecture.sortOrder ?? index));
+          submitData.append(`sections[0].lectures[${index}].lmscourseMappingId`, String(lecture.lmscourseMappingId || lecture.id || 0));
+          submitData.append(`sections[0].lectures[${index}].source`, String(lecture.source || ''));
+        });
+      }
     } else if (formData.mapExistingLectures && formData.mappedLectures && formData.mappedLectures.length > 0) {
       if (parseInt(formData.courseTypeId) === 3) {
         formData.mappedLectures.forEach((lecture, index) => {
@@ -650,11 +677,13 @@ const CourseModal = ({
           submitData.append(`directLectures[${index}].source`, String(lecture.source || ''));
         });
       } else {
-        submitData.append('sections[0].moduleName', '');
-        submitData.append('sections[0].title', 'Section 1');
-        submitData.append('sections[0].description', '');
+        // For course type 2, add hardcoded section with mapped lectures
+        submitData.append('sections[0].moduleName', 'Default Module');
+        submitData.append('sections[0].title', 'Default Section');
+        submitData.append('sections[0].description', 'Default section description');
         submitData.append('sections[0].sortOrder', '0');
 
+        // Add mapped lectures to the hardcoded section
         formData.mappedLectures.forEach((lecture, index) => {
           submitData.append(`sections[0].lectures[${index}].title`, lecture.title || '');
           submitData.append(`sections[0].lectures[${index}].lectureType`, String(lecture.lectureType || 1));
@@ -942,6 +971,21 @@ const CourseModal = ({
                 />
               </div>
 
+              {/* Course Skills */}
+              <div className="">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Course Skills</label>
+                <MultiSelectDropdown
+                  items={courseSkills || []}
+                  values={formData.courseSkillIds}
+                  onChange={courseSkillIds => handleInputChange({ target: { name: 'courseSkillIds', value: courseSkillIds } })}
+                  placeholder="Select course skills"
+                  loading={dropdownLoading.courseSkills}
+                  error={dropdownError.courseSkills}
+                  disabled={loading}
+                  displayField="title"
+                />
+              </div>
+
            <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -1218,7 +1262,7 @@ const CourseModal = ({
                   </div>
               {shouldShowLectureMapping && (
                 <div className="md:col-span-2">
-                  {courseTypeIdNumber === 1 ? (
+                  {courseTypeIdNumber === 3 ? (
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <label className="block text-sm font-medium text-gray-700">

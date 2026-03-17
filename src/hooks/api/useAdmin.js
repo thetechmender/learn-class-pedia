@@ -370,7 +370,14 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await ApiService.createCategory(categoryData);
+      
+      // Add CreatedBy from user
+      const dataWithUser = {
+        ...categoryData,
+        CreatedBy: user?.id || user?.userId || user?.roleId
+      };
+      
+      const data = await ApiService.createCategory(dataWithUser);
       return data;
     } catch (err) {
       setError('Failed to create category');
@@ -378,13 +385,18 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const updateCategory = useCallback(async (id, categoryData) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await ApiService.updateCategory(id, categoryData);
+      // Add UpdatedBy from user
+      const dataWithUser = {
+        ...categoryData,
+        UpdatedBy: user?.id || user?.userId || user?.roleId
+      };
+      const data = await ApiService.updateCategory(id, dataWithUser);
       return data;
     } catch (err) {
       setError('Failed to update category');
@@ -392,7 +404,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const deleteCategory = useCallback(async (id) => {
     try {
@@ -412,6 +424,10 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
+      // Add CreatedBy from user to FormData
+      if (formData instanceof FormData) {
+        formData.append('CreatedBy', user?.id || user?.userId || user?.roleId);
+      }
       const data = await ApiService.createCategoryWithFile(formData);
       return data;
     } catch (err) {
@@ -420,12 +436,16 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const updateCategoryWithFile = useCallback(async (id, formData) => {
     try {
       setLoading(true);
       setError(null);
+      // Add UpdatedBy from user to FormData
+      if (formData instanceof FormData) {
+        formData.append('UpdatedBy', user?.id || user?.userId || user?.roleId);
+      }
       const data = await ApiService.updateCategoryWithFile(id, formData);
       return data;
     } catch (err) {
@@ -434,7 +454,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // ==================== CAREER PATH OPERATIONS ====================
 
@@ -707,6 +727,20 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     setError(null);
   }, []);
 
+  const getAllSkills = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.getAllSkills();
+      return data;
+    } catch (err) {
+      setError('Failed to fetch skills');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Initialize courses on mount
   useEffect(() => {
     fetchCourses();
@@ -776,5 +810,6 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     getCourseTopics,
     getCourseBadges,
     getAllCourseBadgesNew,
+    getAllSkills,
   };
 };

@@ -18,7 +18,7 @@ const CourseManagement = () => {
   const { 
     error, getCourseById, clearError,
     getCourseTypes, getCourseLevels, getCourseTopics, getAllCategories, deleteCourse, getAllCoursesAdmin,
-    createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew, generateCourseContent
+    createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent
   } = useAdmin();
   
   const navigate = useNavigate();
@@ -59,13 +59,15 @@ const CourseManagement = () => {
   const [courseTypes, setCourseTypes] = useState([]);
   const [courseTopics, setCourseTopics] = useState([]);
   const [badges, setBadges] = useState([]);
+  const [courseSkills, setCourseSkills] = useState([]);
   
   const [dropdownLoading, setDropdownLoading] = useState({
     categories: false,
     courseLevels: false,
     courseTypes: false,
     courseTopics: false,
-    badges: false
+    badges: false,
+    courseSkills: false
   });
   
   const [dropdownError, setDropdownError] = useState({
@@ -73,7 +75,8 @@ const CourseManagement = () => {
     courseLevels: '',
     courseTypes: '',
     courseTopics: '',
-    badges: ''
+    badges: '',
+    courseSkills: ''
   });
   
   const [regeneratePrompt, setRegeneratePrompt] = useState('');
@@ -275,10 +278,24 @@ const CourseManagement = () => {
       } finally {
         setDropdownLoading(prev => ({ ...prev, badges: false }));
       }
+
+      // Fetch Course Skills
+      setDropdownLoading(prev => ({ ...prev, courseSkills: true }));
+      try {
+        const data = await getAllSkills();
+        const skillsData = data.items || data || [];
+        setCourseSkills(Array.isArray(skillsData) ? skillsData : []);
+        setDropdownError(prev => ({ ...prev, courseSkills: '' }));
+      } catch (error) {
+        setDropdownError(prev => ({ ...prev, courseSkills: 'Failed to load course skills' }));
+        setCourseSkills([]);
+      } finally {
+        setDropdownLoading(prev => ({ ...prev, courseSkills: false }));
+      }
     };
 
     fetchDropdownData();
-  }, [getAllCategories, getCourseTypes, getCourseLevels, getCourseTopics, getAllCourseBadgesNew]);
+  }, [getAllCategories, getCourseTypes, getCourseLevels, getCourseTopics, getAllCourseBadgesNew, getAllSkills]);
 
   // Handle view details
  const handleViewDetails = useCallback(async (course) => {
@@ -401,6 +418,16 @@ const CourseManagement = () => {
             // convertedFormData.append('badgeIds', JSON.stringify([]));
           }
           
+          // Add courseSkills array (always include, even if empty)
+          if (formData.courseSkillIds && formData.courseSkillIds.length > 0) {
+            formData.courseSkillIds.forEach((skillId, index) => {
+              convertedFormData.append(`courseSkillIds[${index}]`, parseInt(skillId));
+            });
+          } else {
+            // Don't send courseSkillIds at all if empty to avoid validation error
+            // convertedFormData.append('courseSkillIds', JSON.stringify([]));
+          }
+          
           // Add sections array (always include, even if empty)
           if (formData.sections && formData.sections.length > 0) {
             formData.sections.forEach((section, index) => {
@@ -467,6 +494,16 @@ const CourseManagement = () => {
           } else {
             // Don't send badgeIds at all if empty to avoid validation error
             // convertedFormData.append('badgeIds', JSON.stringify([]));
+          }
+          
+          // Add courseSkills array (always include, even if empty)
+          if (formData.courseSkillIds && formData.courseSkillIds.length > 0) {
+            formData.courseSkillIds.forEach((skillId, index) => {
+              convertedFormData.append(`courseSkillIds[${index}]`, parseInt(skillId));
+            });
+          } else {
+            // Don't send courseSkillIds at all if empty to avoid validation error
+            // convertedFormData.append('courseSkillIds', JSON.stringify([]));
           }
           
           // Add sections array (always include, even if empty)
@@ -554,11 +591,14 @@ const CourseManagement = () => {
 
   // Handle custom actions
   const handleCustomAction = (actionKey, item) => {
-    if (actionKey === 'content' && item.courseDetailLectureId && item.courseTypeId === 3) {
+    if(item.courseDetailLectureId && item.courseTypeId === 3)
+    {
+    if (actionKey === 'content'  ) {
       navigate(`/admin/course-content/${item.courseDetailLectureId}`);
     } else if (actionKey === 'regenerate') {
       openModal('regenerate', item);
     }
+  }
   };
 
   // Apply filters with optimized loading state
@@ -1228,6 +1268,7 @@ const CourseManagement = () => {
         courseLevels={courseLevels}
         courseTypes={courseTypes}
         courseTopics={courseTopics}
+        courseSkills={courseSkills}
         badges={badges}
         loading={modalState.loading}
         error={modalState.error}

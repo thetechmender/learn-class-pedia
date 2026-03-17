@@ -149,6 +149,11 @@ class ApiService {
     formData.append('description', categoryData.description || '');
     formData.append('parentCategoryId', categoryData.parentCategoryId || 0);
     
+    // Add CreatedBy if present
+    if (categoryData.CreatedBy) {
+      formData.append('CreatedBy', categoryData.CreatedBy);
+    }
+    
     return this.request(ENDPOINTS.CATEGORIES_Admin, {
       method: 'POST',
       body: formData,

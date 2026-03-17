@@ -363,7 +363,7 @@ const UniversalVirtualizedTable = React.forwardRef(({
               right: 0 
             }}
           >
-            <table className="w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
+            <table className="w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'relative' }}>
               <colgroup>
                 {columns.map((column, index) => (
                   <col 

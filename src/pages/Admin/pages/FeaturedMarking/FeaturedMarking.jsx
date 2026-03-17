@@ -838,7 +838,7 @@ const FeaturedMarking = () => {
               </div>
 
               {/* Course Type Filter - Only show when markingType is 'course' */}
-              {console.log('Conditional check:', markingType === 'course', markingType) || (markingType === 'course' && (
+              {('Conditional check:', markingType === 'course', markingType) || (markingType === 'course' && (
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Course Type
