@@ -1,6 +1,6 @@
 <div class="flex h-screen bg-gray-50 font-sans">
   <!-- Left Sidebar -->
-  <aside class="w-80 bg-white flex-shrink-0 flex flex-col hidden lg:flex border-r border-gray-100"
+  <aside class="w-80 bg-white flex-shrink-0 flex flex-col hidden lg:flex border-r border-gray-100 overscroll-contain"
     style="height: calc(100vh - 56px);">
     <!-- Sidebar Header -->
     <div class="p-4 border-b border-gray-100">
@@ -50,63 +50,69 @@
     </div>
 
     <!-- Lecture List -->
-<div class="flex-1 overflow-y-auto px-4">
+    <div class="flex-1 overflow-y-auto px-4 overscroll-contain">
 
-  <!-- LECTURE TITLES (e.g., Project Scoping, Campaign Execution) -->
-  @for (lectureTitle of lectureTitles(); track lectureTitle) {
+      <!-- LECTURE TITLES (e.g., Project Scoping, Campaign Execution) -->
+      @for (lectureTitle of lectureTitles(); track lectureTitle;let i = $index) {
 
-    <!-- Lecture Title Heading -->
-    <h3 class="mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase pb-2">
-      {{ lectureTitle }}
-    </h3>
+      <!-- Accordion Lecture Header -->
+      <button type="button" (click)="toggleChapter(lectureTitle)"
+        class="w-full mt-3 mb-1 flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer">
+        <h3 class="text-xs text-primary uppercase font-medium text-left">
+          {{i + 1}}. Lecture - {{' ' + lectureTitle }}
+        </h3>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 transition-transform duration-200"
+          [class.rotate-180]="isChapterExpanded(lectureTitle)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-    <!-- Section Types under this Lecture -->
-    @for (sectionType of getSectionTypesForTitle(lectureTitle); track sectionType) {
-      @let lecture = groupedByTitle()[lectureTitle][sectionType][0];
-      @let isActive = activeSection()?.id === lecture.id && activeSection()?.sectionTitle === lecture.sectionTitle && activeSection()?.sectionType === lecture.sectionType;
+      <!-- Section Types under this Lecture (Accordion Content) -->
+      @if (isChapterExpanded(lectureTitle)) {
+      <div class="pl-2">
+        @for (sectionType of getSectionTypesForTitle(lectureTitle); track sectionType) {
+        @let lecture = groupedByTitle()[lectureTitle][sectionType][0];
+        @let isActive = activeSection()?.id === lecture.id && activeSection()?.sectionTitle === lecture.sectionTitle &&
+        activeSection()?.sectionType === lecture.sectionType;
 
-      <div class="mb-2">
-        <button
-          type="button"
-          (click)="onSectionSelect(lecture)"
-          class="group w-full px-3 py-2.5 flex items-center gap-3 rounded-lg text-left transition-all hover:bg-gradient-to-r from-primary to-primary-400 hover:text-white hover:shadow-md"
-          [class.bg-primary/10]="isActive"
-          [class.border]="isActive"
-          [class.border-primary/20]="isActive">
+        <div class="mb-2">
+          <button type="button" (click)="onSectionSelect(lecture)"
+            class="section-btn group w-full px-3 py-2 flex items-center gap-3 rounded-lg text-left transition-all hover:shadow-md"
+            [class.active]="isActive">
 
-          <!-- PLAY / PAUSE ICON -->
-          <div class="flex-shrink-0">
-            @if (isActive) {
-              <svg class="h-4 w-4 text-primary group-hover:text-white" viewBox="0 0 24 24" fill="currentColor">
+            <!-- PLAY / PAUSE ICON -->
+            <div class="flex-shrink-0">
+              @if (isActive) {
+              <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
               </svg>
-            } @else {
+              } @else {
               <svg class="h-4 w-4 text-gray-400 group-hover:text-white" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z" />
               </svg>
-            }
-          </div>
+              }
+            </div>
 
-          <!-- SECTION TYPE NAME -->
-          <p class="text-xs font-medium truncate group-hover:text-white"
-             [class.text-primary]="isActive"
-             [class.text-gray-700]="!isActive">
-            {{ getSectionHeading(sectionType) }}
-          </p>
+            <!-- SECTION TYPE NAME -->
+            <p class="text-xs font-medium truncate group-hover:text-white" [class.text-white]="isActive"
+              [class.text-gray-700]="!isActive">
+              {{ getSectionHeading(sectionType) }}
+            </p>
 
-        </button>
+          </button>
+        </div>
+
+        }
       </div>
+      }
 
-    }
+      }
 
-  }
-
-</div>
+    </div>
 
     <!-- Bottom Buttons -->
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
-      <button
-        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all bg-gradient-to-r from-primary to-primary-400 hover:opacity-90 text-white shadow-sm">
+      <button class="w-full flex item-center justify-center btn-gradient-primary text-white px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:opacity-90 flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
           stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -114,7 +120,7 @@
         Course Complete!
       </button>
       <button
-        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all bg-gradient-to-r from-secondary to-secondary-400 hover:opacity-90 text-white shadow-sm">
+        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all btn-gradient-secondary hover:opacity-90 text-white shadow-sm">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
           stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -126,7 +132,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto">
+  <main class="flex-1 overflow-y-auto overscroll-contain">
     @if (lectureSection() && lectureSection().length > 0) {
     <!-- Top Bar -->
     <div class="bg-white border-b border-gray-200 px-6 py-3">
@@ -155,7 +161,7 @@
           <!-- Video/PDF Tabs -->
           <div class="flex items-center gap-2">
             <button
-              class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-primary to-primary-400 rounded-md hover:opacity-90 transition-all shadow-sm">
+              class="btn-gradient-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md hover:opacity-90 transition-all shadow-sm">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -167,7 +173,7 @@
             </button>
             @if (lectureSection()[0].pdfPath) {
             <a [href]="lectureSection()[0].pdfPath" target="_blank"
-              class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-primary to-primary-400 rounded-md hover:opacity-90 transition-all shadow-sm">
+              class="btn-gradient-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md hover:opacity-90 transition-all shadow-sm">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -185,24 +191,15 @@
     <!-- Video/Content Area -->
     <div class="bg-slate-800 relative">
       <!-- Title Bar -->
-      <div class="bg-primary/90 text-white text-center py-2 px-4">
-        <p class="text-sm font-medium truncate">{{ courseTitle() }}</p>
+      <div class="bg-gradient-to-r from-primary to-primary-400 text-white text-center py-2 px-4">
+        <p class="text-sm font-medium truncate">Lecture: {{ courseTitle() }}</p>
       </div>
 
       <!-- Content Display -->
-      <div class="p-6 min-h-[280px] max-h-[350px] overflow-y-auto flex items-start justify-center">
-        <div class="max-w-3xl text-white text-lg leading-relaxed" [innerHTML]="lectureContent()"></div>
+      <div id="content-container" class="p-6 min-h-[380px] max-h-[350px] overflow-y-auto flex items-start justify-center overscroll-contain">
+        <div class="max-w-3xl text-white text-lg leading-relaxed"
+          [innerHTML]="isPlaying() ? highlightedContent() : lectureContent()"></div>
       </div>
-
-      <!-- Dots Indicator -->
-      <div class="flex justify-center gap-1 pb-4">
-        <span class="w-2 h-2 rounded-full bg-white/50"></span>
-        <span class="w-2 h-2 rounded-full bg-white/50"></span>
-        <span class="w-2 h-2 rounded-full bg-white"></span>
-        <span class="w-2 h-2 rounded-full bg-white/50"></span>
-        <span class="w-2 h-2 rounded-full bg-white/50"></span>
-      </div>
-
       <!-- Instructor Avatar -->
     </div>
 
@@ -210,42 +207,62 @@
     <div class="bg-white border-t border-gray-200 px-6 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <!-- Play Button -->
-          <button
-            class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-600 transition-colors">
+          <!-- Play/Pause Button -->
+          <button (click)="toggleSpeech()"
+            class="w-10 h-10 rounded-full btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all">
+            @if (isPlaying()) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+            </svg>
+            } @else {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
+            }
           </button>
-          <!-- Navigation Arrows -->
-          <div class="flex items-center gap-1">
-            <button
-              class="w-8 h-8 rounded bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              class="w-8 h-8 rounded bg-primary text-white flex items-center justify-center hover:bg-primary-600 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-          <!-- Progress -->
-          <span class="text-xs text-gray-500">0:10 / 17:00</span>
+          <!-- Previous Section -->
+          <button (click)="goToPreviousSection()"
+            class="w-8 h-8 rounded bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50"
+            [disabled]="currentSectionIndex() <= 0"
+            title="Previous Section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <!-- Next Section -->
+          <button (click)="goToNextSection()"
+            class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+            [disabled]="currentSectionIndex() >= allSections().length - 1"
+            title="Next Section">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <!-- Progress Slider (draggable) -->
+          <input type="range" min="0" [max]="totalDuration()" [value]="currentTime()" 
+            (input)="onSliderChange($event)" (mousedown)="onSliderStart()" (mouseup)="onSliderEnd()"
+            class="w-32 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+            style="background: linear-gradient(to right, #2655FF 0%, #2655FF calc(var(--progress, 0) * 100%), #e5e7eb calc(var(--progress, 0) * 100%), #e5e7eb 100%);"
+            [style.--progress]="totalDuration() > 0 ? currentTime() / totalDuration() : 0" />
+          <!-- Progress Time -->
+          <span class="text-xs text-gray-500">{{ formatTime(currentTime()) }} / {{ formatTime(totalDuration()) }}</span>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
           <!-- Remaining -->
           <span class="text-xs text-red-500">-16:50 remaining (1/7)</span>
           <!-- Speed -->
-          <button
-            class="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors">0.90x</button>
+          <button class="px-2 py-1 text-xs text-white btn-gradient-primary rounded hover:opacity-90 transition-all">0.90x</button>
           <!-- Instructor Name -->
           <span class="text-xs text-gray-600 font-medium">David</span>
+          <!-- Chat Button -->
+          <button class="cursor-pointer hover:opacity-80 transition-opacity" title="Open Chat">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 fill-primary" viewBox="0 0 322.88 119.35">
+              <path d="M57.49,29.2V23.53a14.41,14.41,0,0,1-2-.93A12.18,12.18,0,0,1,50.44,7.5a12.39,12.39,0,0,1,2.64-3.95A12.21,12.21,0,0,1,57,.92,12,12,0,0,1,61.66,0,12.14,12.14,0,0,1,72.88,7.5a12.14,12.14,0,0,1,0,9.27,12.08,12.08,0,0,1-2.64,3.94l-.06.06a12.74,12.74,0,0,1-2.36,1.83,11.26,11.26,0,0,1-2-.93V29.2H94.3a15.47,15.47,0,0,1,15.42,15.43v2.29H115a7.93,7.93,0,0,1,7.9,7.91V73.2A7.93,7.93,0,0,1,115,81.11h-5.25v2.07A15.48,15.48,0,0,1,94.3,98.61H55.23L31.81,118.72a2.58,2.58,0,0,1-3.65-.29,2.63,2.63,0,0,1-.63-1.85l1.25-18h-.21A15.45,15.45,0,0,1,13.16,83.18V81.11H7.91A7.93,7.93,0,0,1,0,73.2V54.83a7.93,7.93,0,0,1,7.9-7.91h5.26v-2.3A15.45,15.45,0,0,1,28.57,29.2H57.49ZM82.74,47.32a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm-42.58,0a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm6.38,31.36a2.28,2.28,0,0,1-.38-.38,2.18,2.18,0,0,1-.52-1.36,2.21,2.21,0,0,1,.46-1.39,2.4,2.4,0,0,1,.39-.39,3.22,3.22,0,0,1,3.88-.08A22.36,22.36,0,0,0,56,78.32a14.86,14.86,0,0,0,5.47,1A16.18,16.18,0,0,0,67,78.22,25.39,25.39,0,0,0,72.75,75a3.24,3.24,0,0,1,3.89.18,3,3,0,0,1,.37.41,2.22,2.22,0,0,1,.42,1.4,2.33,2.33,0,0,1-.58,1.35,2.29,2.29,0,0,1-.43.38,30.59,30.59,0,0,1-7.33,4,22.28,22.28,0,0,1-7.53,1.43A21.22,21.22,0,0,1,54,82.87a27.78,27.78,0,0,1-7.41-4.16l0,0ZM94.29,34.4H28.57A10.26,10.26,0,0,0,18.35,44.63V83.18A10.26,10.26,0,0,0,28.57,93.41h3.17a2.61,2.61,0,0,1,2.41,2.77l-1,14.58L52.45,94.15a2.56,2.56,0,0,1,1.83-.75h40a10.26,10.26,0,0,0,10.22-10.23V44.62A10.24,10.24,0,0,0,94.29,34.4Z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -281,7 +298,7 @@
           <button
             class="px-4 py-2 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Previous</button>
           <button
-            class="px-4 py-2 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-600 transition-colors">Next
+            class="btn-gradient-primary px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all">Next
             Lesson</button>
         </div>
       </div>
@@ -290,11 +307,67 @@
     <!-- Loading State -->
     <div class="flex items-center justify-center h-full">
       <div class="text-center">
-        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4">
+        <div class="w-12 h-12 border-4 border-primary-400 border-t-primary rounded-full animate-spin mx-auto mb-4">
         </div>
         <p class="text-gray-500">Loading course content...</p>
       </div>
     </div>
     }
   </main>
+
+  <!-- Chat Sidebar -->
+  <div class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300 z-50"
+    [class.translate-x-full]="!courseService.isChatOpen()"
+    [class.translate-x-0]="courseService.isChatOpen()">
+    
+    <!-- Chat Header -->
+    <div class="bg-gradient-to-r from-primary to-primary-400 text-white p-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        <span class="font-medium">AI Assistant</span>
+      </div>
+      <button (click)="courseService.toggleChat()" class="hover:bg-white/20 p-1 rounded transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="flex-1 overflow-y-auto p-4 h-[calc(100%-140px)] overscroll-contain">
+      <div class="space-y-4">
+        <!-- Bot Message -->
+        <div class="flex gap-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary/10 to-primary-400/10 flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <div class="bg-gray-100 rounded-lg p-3 max-w-[85%]">
+            <p class="text-sm text-gray-700">Hi! I'm your AI learning assistant. Ask me anything about this course content!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Input -->
+    <div class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+      <div class="flex gap-2">
+        <input type="text" placeholder="Type your message..."
+          class="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+        <button class="btn-gradient-primary px-4 py-2 text-white rounded-lg hover:opacity-90 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  @if (courseService.isChatOpen()) {
+  <div (click)="courseService.toggleChat()" class="fixed inset-0 bg-black/30 z-40"></div>
+  }
 </div>

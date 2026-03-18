@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CourseService } from '../../services/course.service';
 
 @Component({
   selector: 'app-header',
@@ -11,6 +12,7 @@ import { CommonModule } from '@angular/common';
 export class HeaderComponent {
   isProfileDropdownOpen = signal(false);
   isMobileMenuOpen = signal(false);
+  private courseService = inject(CourseService)
 
   user = {
     name: 'Danish Ahmed',
@@ -28,5 +30,9 @@ export class HeaderComponent {
 
   logout() {
     console.log('Logout clicked');
+  }
+
+  toggleChat() {
+    this.courseService.toggleChat();
   }
 }

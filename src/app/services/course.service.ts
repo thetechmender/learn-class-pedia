@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
@@ -10,7 +10,7 @@ import { HttpResponse } from '../model';
 export class CourseService {
   private apiUrl = environment.API_URL;
   private http = inject(HttpClient);
-
+  isChatOpen = signal(false);
   private getHeaders(token: string | null): HttpHeaders {
     let headers = new HttpHeaders();
     if (token) {
@@ -35,5 +35,10 @@ export class CourseService {
     return this.http.get<any>(`${this.apiUrl}/Learning/course/${courseId}/progress`, {
       headers: this.getHeaders(token)
     });
+  };
+
+  toggleChat() {
+    this.isChatOpen.set(!this.isChatOpen());
   }
+
 }
