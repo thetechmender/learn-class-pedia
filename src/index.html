@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LearnClassPedia</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+        },
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#684199',
+              50: '#f5f2f8',
+              100: '#ebe5f1',
+              200: '#d7cbe3',
+              300: '#c3b1d5',
+              400: '#9f7dba',
+              500: '#684199',
+              600: '#5e3b8a',
+              700: '#4e3173',
+              800: '#3e275c',
+              900: '#2e1d45',
+              950: '#1f132e',
+            },
+            secondary: {
+              DEFAULT: '#00D9A5',
+              50: '#e6fff8',
+              100: '#ccfff1',
+              200: '#99ffe3',
+              300: '#66ffd5',
+              400: '#33ffc7',
+              500: '#00D9A5',
+              600: '#00c294',
+              700: '#00a37c',
+              800: '#008564',
+              900: '#00664c',
+              950: '#004734',
+            },
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
