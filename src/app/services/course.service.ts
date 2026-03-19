@@ -11,6 +11,7 @@ export class CourseService {
   private apiUrl = environment.API_URL;
   private http = inject(HttpClient);
   isChatOpen = signal(false);
+  activeSection = signal<any>(null);
   private getHeaders(token: string | null): HttpHeaders {
     let headers = new HttpHeaders();
     if (token) {
