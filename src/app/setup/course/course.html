@@ -5,7 +5,7 @@
     <!-- Sidebar Header -->
     <div class="p-4 border-b border-gray-100">
       <!-- Course Content Header -->
-      <div class="flex items-center justify-between mb-3">
+      <!-- <div class="flex items-center justify-between mb-3">
         <h3 class="text-gray-800 font-semibold text-sm">Course Content</h3>
         <div class="flex items-center gap-1 text-xs text-gray-500">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -14,10 +14,10 @@
           </svg>
           <span>{{ formatSectionTime(getTotalCourseDuration()) }} total</span>
         </div>
-      </div>
+      </div> -->
 
       <!-- Rating -->
-      @if (course()) {
+      <!-- @if (course()) {
       <div class="flex items-center gap-1.5 mb-3">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"
           viewBox="0 0 24 24">
@@ -26,10 +26,10 @@
         <span class="text-xs font-semibold text-gray-700">{{ course().rating }}</span>
         <span class="text-xs text-gray-400">({{ course().reviewCount }} reviews)</span>
       </div>
-      }
+      } -->
 
       <!-- Progress Overview -->
-      @if (progress()) {
+      <!-- @if (progress()) {
       <div>
         <div class="flex items-center justify-between mb-2">
           <span class="text-gray-600 text-xs font-medium">Your Progress</span>
@@ -44,83 +44,70 @@
           <span class="text-gray-400">{{ progress().totalLectures - progress().completedLectures }} remaining</span>
         </div>
       </div>
-      }
+      } -->
     </div>
 
     <!-- Lecture List -->
-    <div class="flex-1 overflow-y-auto px-4 overscroll-contain">
+    <div class="flex-1 overflow-y-auto overscroll-contain">
 
-      <!-- LECTURE TITLES (e.g., Project Scoping, Campaign Execution) -->
-      @for (lectureTitle of lectureTitles(); track lectureTitle;let i = $index) {
+      <!-- LECTURE TITLES -->
+      @for (lectureTitle of lectureTitles(); track lectureTitle; let i = $index) {
+      @let isExpanded = isChapterExpanded(lectureTitle);
+      @let isActive = activeLectureTitle() === lectureTitle;
 
-      <!-- Accordion Lecture Header -->
-      <button type="button" (click)="toggleChapter(lectureTitle)"
-        class="w-full mt-3 mb-1 flex flex-col px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer">
-        <div class="w-full flex items-center justify-between">
-          <h3 class="text-xs text-primary font-medium text-left">
-            {{i + 1}}. Lecture - {{' ' + lectureTitle }}
-          </h3>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 transition-transform duration-200"
-            [class.rotate-180]="isChapterExpanded(lectureTitle)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-        <!-- <div class="w-full flex justify-end mt-1">
-          <span class="text-[10px] text-gray-400 flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {{ formatSectionTime(getLectureTotalDuration(lectureTitle)) }}
-          </span>
-        </div> -->
-      </button>
-
-      <!-- Section Types under this Lecture (Accordion Content) -->
-      @if (isChapterExpanded(lectureTitle)) {
-      <div class="pl-2">
-        @for (sectionType of getSectionTypesForTitle(lectureTitle); track sectionType) {
-        @let lecture = groupedByTitle()[lectureTitle][sectionType][0];
-        @let isActive = activeSection()?.id === lecture.id && activeSection()?.sectionTitle === lecture.sectionTitle &&
-        activeSection()?.sectionType === lecture.sectionType;
-
-        <div class="mb-2">
-          <button type="button" (click)="onSectionSelect(lecture)"
-            class="section-btn group w-full px-3 py-2 flex items-center gap-3 rounded-lg text-left transition-all hover:shadow-md"
-            [class.active]="isActive">
-
-            <!-- PLAY / PAUSE ICON -->
-            <div class="flex-shrink-0">
-              @if (isActive) {
-              <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-              </svg>
-              } @else {
-              <svg class="h-4 w-4 text-gray-400 group-hover:text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              }
+      <!-- Lecture Item -->
+      <div class="border-b border-gray-100">
+        <div class="w-full px-4 py-4 text-left hover:bg-optional transition-all cursor-pointer"
+          [class.bg-optional]="isActive">
+          <!-- Lecture Label -->
+          <p class="text-xs font-medium mb-1">Lecture {{ i + 1 }}</p>
+          <!-- Lecture Title with Play Icon -->
+          <div class="flex items-start justify-between gap-2" (click)="onLecturePlay(lectureTitle)">
+            <div class="flex items-center gap-2 flex-1">
+              <h3 class="text-sm font-medium text-gray-800 leading-snug">{{ lectureTitle }}</h3>
             </div>
-
-            <!-- SECTION TYPE NAME & DURATION -->
-            <div class="flex-1 flex items-center justify-between">
-              <p class="text-xs font-medium truncate group-hover:text-white" [class.text-white]="isActive"
-                [class.text-gray-700]="!isActive">
-                {{ getSectionHeading(sectionType) }}
-              </p>
-              <span class="text-[10px] text-gray-400 group-hover:text-white/80 flex items-center gap-0.5" [class.text-white]="isActive">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {{ formatSectionTime(getSectionDuration(lecture)) }}
-              </span>
-            </div>
-
-          </button>
+            <!-- Chevron for expand/collapse -->
+            <button type="button" (click)="toggleChapter(lectureTitle); $event.stopPropagation()"
+              class="p-1 hover:bg-gray-200 rounded transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" 
+                class="h-5 w-5 text-primary flex-shrink-0 transition-transform duration-200"
+                [class.rotate-180]="isExpanded"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+          <!-- Badges - Only show when expanded -->
+          @if (isExpanded) {
+          <div class="flex items-center gap-3 mt-3 text-xs text-gray-500 pl-6">
+            <span class="flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ formatSectionTime(getLectureTotalDuration(lectureTitle)) }}
+            </span>
+            <span class="flex items-center gap-1 text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Video
+            </span>
+            <span class="flex items-center gap-1 text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              PDF
+            </span>
+            <span class="flex items-center gap-1 text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Lecture
+            </span>
+          </div>
+          }
         </div>
-
-        }
       </div>
-      }
 
       }
 
@@ -397,54 +384,67 @@
     }
   </main>
 
+  <!-- Ask Course Companion Button -->
+  <button (click)="courseService.toggleChat()" 
+    class="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-[#00D9A5] text-white rounded-full shadow-lg hover:bg-[#00c494] transition-all duration-300 font-medium text-sm"
+    [class.hidden]="courseService.isChatOpen()">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+    Ask Course Companion
+  </button>
+
   <!-- Chat Sidebar -->
-  <div class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300 z-50"
+  <div class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-96 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
     [class.translate-x-full]="!courseService.isChatOpen()"
     [class.translate-x-0]="courseService.isChatOpen()">
     
-    <!-- Chat Header -->
-    <div class="bg-gradient-to-r from-primary to-primary-400 text-white p-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-        <span class="font-medium">AI Assistant</span>
-      </div>
-      <button (click)="courseService.toggleChat()" class="hover:bg-white/20 p-1 rounded transition-colors">
+    <!-- Chat Header - Optional background with centered content -->
+    <div class="bg-optional text-center py-6 px-4 relative border-b border-gray-300">
+      <button (click)="courseService.toggleChat()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
+      <!-- Robot Icon - Blue rounded square -->
+      <div class="w-16 h-16 mx-auto mb-4 bg-primary rounded-2xl flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.753 14a2.25 2.25 0 012.25 2.25v.904A3.75 3.75 0 0118.696 20c-1.565 1.344-3.806 2-6.696 2s-5.128-.656-6.69-2a3.75 3.75 0 01-1.306-2.843v-.907A2.25 2.25 0 016.254 14h11.5zM12 2.004a4 4 0 110 8 4 4 0 010-8z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-primary">Classpedia Course Companion</h2>
+      <p class="text-gray-500 text-sm mt-1">Utility Bot for You!</p>
     </div>
 
     <!-- Chat Messages -->
-    <div class="flex-1 overflow-y-auto p-4 h-[calc(100%-140px)] overscroll-contain">
+    <div class="flex-1 overflow-y-auto p-4 bg-optional overscroll-contain">
       <div class="space-y-4">
         <!-- Bot Message -->
-        <div class="flex gap-2">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary/10 to-primary-400/10 flex items-center justify-center flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <div class="flex gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.753 14a2.25 2.25 0 012.25 2.25v.904A3.75 3.75 0 0118.696 20c-1.565 1.344-3.806 2-6.696 2s-5.128-.656-6.69-2a3.75 3.75 0 01-1.306-2.843v-.907A2.25 2.25 0 016.254 14h11.5zM12 2.004a4 4 0 110 8 4 4 0 010-8z"/>
             </svg>
           </div>
-          <div class="bg-gray-100 rounded-lg p-3 max-w-[85%]">
-            <p class="text-sm text-gray-700">Hi! I'm your AI learning assistant. Ask me anything about this course content!</p>
+          <div class="bg-primary text-white rounded-2xl rounded-tl-none p-4 max-w-[85%]">
+            <p class="text-sm leading-relaxed">Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics.</p>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Chat Input -->
-    <div class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
-      <div class="flex gap-2">
-        <input type="text" placeholder="Type your message..."
-          class="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
-        <button class="btn-gradient-primary px-4 py-2 text-white rounded-lg hover:opacity-90 transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+    <div class="p-4 bg-optional">
+      <div class="flex gap-3 items-center">
+        <input type="text" placeholder="Ask a question"
+          class="flex-1 px-4 py-3 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+        <button class="w-12 h-12 bg-[#00D9A5] rounded-full flex items-center justify-center hover:bg-[#00c494] transition-all shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
           </svg>
         </button>
       </div>
+      <p class="text-xs text-gray-400 text-center mt-3">This is powered by AI and may make mistakes.<br/>Use more robust chat for your conversations on web.</p>
     </div>
   </div>
 
