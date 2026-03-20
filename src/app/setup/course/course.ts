@@ -39,6 +39,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   isPlaying = signal(false);
   expandedChapters = signal<Set<string>>(new Set());
   activeTab = signal<'overview' | 'notebook' | 'transcript' | 'download'>('overview');
+  activeLectureTitle = signal<string | null>(null);
 
   allSections = computed(() => {
     const sections: any[] = [];
@@ -289,6 +290,61 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     this.lectureContent.set(
       this.sanitizer.bypassSecurityTrustHtml(section.content)
     );
+  }
+
+  onLectureSelect(lectureTitle: string) {
+    this.toggleChapter(lectureTitle);
+    this.activeLectureTitle.set(lectureTitle);
+    
+    // Get all sections for this lecture and combine their content
+    const grouped = this.groupedByTitle();
+    const sectionTypes = Object.keys(grouped[lectureTitle] || {});
+    
+    if (sectionTypes.length > 0) {
+      // Get the first section to set as active
+      const firstSection = grouped[lectureTitle][sectionTypes[0]][0];
+      
+      // Combine all section contents for this lecture
+      let combinedContent = '';
+      sectionTypes.forEach(type => {
+        grouped[lectureTitle][type].forEach((section: any) => {
+          combinedContent += section.content + '<br/><br/>';
+        });
+      });
+      
+      this.stopSpeech();
+      this.courseTitle.set(lectureTitle);
+      this.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
+      this.courseService.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
+      this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
+    }
+  }
+
+  onLecturePlay(lectureTitle: string) {
+    this.activeLectureTitle.set(lectureTitle);
+    
+    // Get all sections for this lecture and combine their content
+    const grouped = this.groupedByTitle();
+    const sectionTypes = Object.keys(grouped[lectureTitle] || {});
+    
+    if (sectionTypes.length > 0) {
+      // Get the first section to set as active
+      const firstSection = grouped[lectureTitle][sectionTypes[0]][0];
+      
+      // Combine all section contents for this lecture
+      let combinedContent = '';
+      sectionTypes.forEach(type => {
+        grouped[lectureTitle][type].forEach((section: any) => {
+          combinedContent += section.content + '<br/><br/>';
+        });
+      });
+      
+      this.stopSpeech();
+      this.courseTitle.set(lectureTitle);
+      this.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
+      this.courseService.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
+      this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
+    }
   }
 
   logout() {
