@@ -1,4 +1,4 @@
-<div class="flex h-screen bg-gray-50 font-sans">
+<div class="flex h-screen bg-gray-50 font-sans overflow-hidden">
   <!-- Left Sidebar -->
   <aside class="w-80 bg-white flex-shrink-0 flex flex-col hidden lg:flex border-r border-gray-100 overscroll-contain"
     style="height: calc(100vh - 56px);">
@@ -12,9 +12,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          @if (progress()) {
-          <span>{{ formatDuration(progress().totalSecondsWatched) }} total</span>
-          }
+          <span>{{ formatSectionTime(getTotalCourseDuration()) }} total</span>
         </div>
       </div>
 
@@ -57,14 +55,24 @@
 
       <!-- Accordion Lecture Header -->
       <button type="button" (click)="toggleChapter(lectureTitle)"
-        class="w-full mt-3 mb-1 flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer">
-        <h3 class="text-xs text-primary uppercase font-medium text-left">
-          {{i + 1}}. Lecture - {{' ' + lectureTitle }}
-        </h3>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 transition-transform duration-200"
-          [class.rotate-180]="isChapterExpanded(lectureTitle)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+        class="w-full mt-3 mb-1 flex flex-col px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer">
+        <div class="w-full flex items-center justify-between">
+          <h3 class="text-xs text-primary font-medium text-left">
+            {{i + 1}}. Lecture - {{' ' + lectureTitle }}
+          </h3>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 transition-transform duration-200"
+            [class.rotate-180]="isChapterExpanded(lectureTitle)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        <!-- <div class="w-full flex justify-end mt-1">
+          <span class="text-[10px] text-gray-400 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ formatSectionTime(getLectureTotalDuration(lectureTitle)) }}
+          </span>
+        </div> -->
       </button>
 
       <!-- Section Types under this Lecture (Accordion Content) -->
@@ -93,11 +101,19 @@
               }
             </div>
 
-            <!-- SECTION TYPE NAME -->
-            <p class="text-xs font-medium truncate group-hover:text-white" [class.text-white]="isActive"
-              [class.text-gray-700]="!isActive">
-              {{ getSectionHeading(sectionType) }}
-            </p>
+            <!-- SECTION TYPE NAME & DURATION -->
+            <div class="flex-1 flex items-center justify-between">
+              <p class="text-xs font-medium truncate group-hover:text-white" [class.text-white]="isActive"
+                [class.text-gray-700]="!isActive">
+                {{ getSectionHeading(sectionType) }}
+              </p>
+              <span class="text-[10px] text-gray-400 group-hover:text-white/80 flex items-center gap-0.5" [class.text-white]="isActive">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {{ formatSectionTime(getSectionDuration(lecture)) }}
+              </span>
+            </div>
 
           </button>
         </div>
@@ -132,7 +148,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto overscroll-contain">
+  <main class="flex-1 overflow-y-auto">
     @if (lectureSection() && lectureSection().length > 0) {
     <!-- Top Bar -->
     <div class="bg-white border-b border-gray-200 px-6 py-3">
@@ -222,7 +238,7 @@
           </button>
           <!-- Previous Section -->
           <button (click)="goToPreviousSection()"
-            class="w-8 h-8 rounded bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50"
+            class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
             [disabled]="currentSectionIndex() <= 0"
             title="Previous Section">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -267,7 +283,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <!-- <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
         <div class="flex items-center gap-4">
           <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -301,6 +317,72 @@
             class="btn-gradient-primary px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all">Next
             Lesson</button>
         </div>
+      </div> -->
+    </div>
+
+    <!-- Tabs Section -->
+    <div class="bg-white border-t border-gray-200">
+      <!-- Tab Headers -->
+      <div class="flex justify-center border-b border-gray-200">
+        <button (click)="activeTab.set('overview')" 
+          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
+          [class.text-primary]="activeTab() === 'overview'"
+          [class.border-primary]="activeTab() === 'overview'"
+          [class.text-gray-500]="activeTab() !== 'overview'"
+          [class.border-transparent]="activeTab() !== 'overview'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Overview
+        </button>
+        <button (click)="activeTab.set('notebook')"
+          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
+          [class.text-primary]="activeTab() === 'notebook'"
+          [class.border-primary]="activeTab() === 'notebook'"
+          [class.text-gray-500]="activeTab() !== 'notebook'"
+          [class.border-transparent]="activeTab() !== 'notebook'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Notebook
+        </button>
+        <button (click)="activeTab.set('transcript')"
+          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
+          [class.text-primary]="activeTab() === 'transcript'"
+          [class.border-primary]="activeTab() === 'transcript'"
+          [class.text-gray-500]="activeTab() !== 'transcript'"
+          [class.border-transparent]="activeTab() !== 'transcript'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Transcript
+        </button>
+        <button (click)="activeTab.set('download')"
+          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
+          [class.text-primary]="activeTab() === 'download'"
+          [class.border-primary]="activeTab() === 'download'"
+          [class.text-gray-500]="activeTab() !== 'download'"
+          [class.border-transparent]="activeTab() !== 'download'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download
+        </button>
+      </div>
+      <!-- Tab Content -->
+      <div>
+        @if (activeTab() === 'overview') {
+          <app-overview></app-overview>
+        }
+        @if (activeTab() === 'notebook') {
+          <app-notebook></app-notebook>
+        }
+        @if (activeTab() === 'transcript') {
+          <app-transcript></app-transcript>
+        }
+        @if (activeTab() === 'download') {
+          <app-download></app-download>
+        }
       </div>
     </div>
     } @else {

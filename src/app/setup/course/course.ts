@@ -1,17 +1,22 @@
-import { Component, OnInit, inject, signal, computed, PLATFORM_ID, effect, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, PLATFORM_ID, effect, AfterViewChecked, ViewEncapsulation } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 import { AuthService } from '../../services/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SpeechService } from '../../services/speech.service';
+import { Overview } from './overview/overview';
+import { Notebook } from './notebook/notebook';
+import { Transcript } from './transcript/transcript';
+import { Download } from './download/download';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Overview, Notebook, Transcript, Download],
   templateUrl: './course.html',
-  styleUrl: './course.sass'
+  styleUrl: './course.sass',
+  encapsulation: ViewEncapsulation.None
 })
 export class CourseComponent implements OnInit, AfterViewChecked {
   private route = inject(ActivatedRoute);
@@ -33,6 +38,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   error = signal<string | null>(null);
   isPlaying = signal(false);
   expandedChapters = signal<Set<string>>(new Set());
+  activeTab = signal<'overview' | 'notebook' | 'transcript' | 'download'>('overview');
 
   allSections = computed(() => {
     const sections: any[] = [];
@@ -100,10 +106,8 @@ export class CourseComponent implements OnInit, AfterViewChecked {
 
   toggleChapter(title: string) {
     const current = this.expandedChapters();
-    const newSet = new Set(current);
-    if (newSet.has(title)) {
-      newSet.delete(title);
-    } else {
+    const newSet = new Set<string>();
+    if (!current.has(title)) {
       newSet.add(title);
     }
     this.expandedChapters.set(newSet);
@@ -232,11 +236,55 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     return titleData ? Object.keys(titleData) : [];
   }
 
+  getSectionDuration(section: any): number {
+    if (!section?.content) return 0;
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = section.content;
+    const text = tempDiv.textContent || tempDiv.innerText || '';
+    const wordCount = text.split(/\s+/).filter((w: string) => w.length > 0).length;
+    const wordsPerMinute = 150;
+    return Math.ceil((wordCount / wordsPerMinute) * 60);
+  }
+
+  formatSectionTime(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+    return `${mins}m`;
+  }
+
+  getLectureTotalDuration(lectureTitle: string): number {
+    const grouped = this.groupedByTitle();
+    const titleData = grouped[lectureTitle];
+    if (!titleData) return 0;
+    
+    let totalSeconds = 0;
+    Object.keys(titleData).forEach(sectionType => {
+      const sections = titleData[sectionType];
+      sections.forEach((section: any) => {
+        totalSeconds += this.getSectionDuration(section);
+      });
+    });
+    return totalSeconds;
+  }
+
+  getTotalCourseDuration(): number {
+    const titles = this.lectureTitles();
+    let totalSeconds = 0;
+    titles.forEach(title => {
+      totalSeconds += this.getLectureTotalDuration(title);
+    });
+    return totalSeconds;
+  }
+
   onSectionSelect(section: any) {
     this.stopSpeech();
     
     this.courseTitle.set(section.sectionTitle);
     this.activeSection.set(section);
+    this.courseService.activeSection.set(section);
 
     this.lectureContent.set(
       this.sanitizer.bypassSecurityTrustHtml(section.content)
