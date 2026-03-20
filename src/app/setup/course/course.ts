@@ -9,6 +9,7 @@ import { Overview } from './overview/overview';
 import { Notebook } from './notebook/notebook';
 import { Transcript } from './transcript/transcript';
 import { Download } from './download/download';
+import { map, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-course',
@@ -27,6 +28,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   private platformId = inject(PLATFORM_ID);
 
   course = signal<any>(null);
+  courseTree = signal<any>(null);
   lectureSection = signal<any>(null);
   courseTitle = signal<string>('');
   progress = signal<any>(null);
@@ -38,6 +40,8 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   error = signal<string | null>(null);
   isPlaying = signal(false);
   expandedChapters = signal<Set<string>>(new Set());
+  expandedCertificates = signal<Set<number>>(new Set());
+  expandedShortCourses = signal<Set<number>>(new Set());
   activeTab = signal<'overview' | 'notebook' | 'transcript' | 'download'>('overview');
   activeLectureTitle = signal<string | null>(null);
 
@@ -114,6 +118,40 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     this.expandedChapters.set(newSet);
   }
 
+  toggleCertificate(certificateId: number) {
+    const current = new Set(this.expandedCertificates());
+    if (current.has(certificateId)) {
+      current.delete(certificateId);
+    } else {
+      current.add(certificateId);
+    }
+    this.expandedCertificates.set(current);
+  }
+
+  isCertificateExpanded(certificateId: number): boolean {
+    return this.expandedCertificates().has(certificateId);
+  }
+
+  toggleShortCourse(shortCourseId: number) {
+    const current = new Set(this.expandedShortCourses());
+    if (current.has(shortCourseId)) {
+      current.delete(shortCourseId);
+    } else {
+      current.add(shortCourseId);
+    }
+    this.expandedShortCourses.set(current);
+  }
+
+  isShortCourseExpanded(shortCourseId: number): boolean {
+    return this.expandedShortCourses().has(shortCourseId);
+  }
+
+  onTreeLectureSelect(lecture: any) {
+    if (!lecture) return;
+    this.activeLectureTitle.set(lecture.title ?? lecture.sectionTitle ?? null);
+    this.onSectionSelect(lecture);
+  }
+
   isChapterExpanded(title: string): boolean {
     return this.expandedChapters().has(title);
   }
@@ -154,10 +192,24 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   private loadCourseDataWithToken(courseId: number, token: string | null) {
     this.isLoading.set(true);
 
-    this.courseService.getLectureSectionsWithToken(courseId, token).subscribe({
-      next: (res: any) => {
-
-        const data = res?.isSuccess !== undefined ? res.data : res;
+    this.courseService.getCourseDetailsV2WithToken(courseId, token).pipe(
+      map((res: any) => res?.isSuccess !== undefined ? res.data : res),
+      switchMap((courseDetails: any) => {
+        this.course.set(courseDetails);
+        return this.courseService.getCourseTreeV2WithToken(courseId, token).pipe(
+          map((treeRes: any) => treeRes?.isSuccess !== undefined ? treeRes.data : treeRes),
+          map((tree: any) => {
+            this.courseTree.set(tree);
+            return this.courseService.extractLectureSectionsFromTree(tree);
+          })
+        );
+      })
+    ).subscribe({
+      next: (data: any) => {
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          this.isLoading.set(false);
+          return;
+        }
 
         // 1️⃣ Raw lecture sections
         this.lectureSection.set(data);
@@ -195,7 +247,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
       },
 
       error: (err: any) => {
-        console.error('Lecture Sections Error:', err);
+        console.error('Course Load Error:', err);
         this.isLoading.set(false);
       }
     });

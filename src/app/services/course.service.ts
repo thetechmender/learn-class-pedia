@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 import { HttpResponse } from '../model';
 
@@ -26,10 +26,146 @@ export class CourseService {
     });
   }
 
+  getCourseDetailsV2WithToken(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
   getLectureSectionsWithToken(courseId: number, token: string | null): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/Learning/course/${courseId}/lecture-sections`, {
       headers: this.getHeaders(token)
     });
+  }
+
+  getLectureSectionsV2WithToken(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/lecture-sections`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  getCourseHierarchyV2WithToken(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/hierarchy`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  getCertificateHierarchyV2WithToken(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/certificate-hierarchy`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  getCourseTreeV2WithToken(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/tree`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  getUnifiedLectureSectionsByTypeV2WithToken(courseId: number, token: string | null, courseTypeId: number): Observable<any[]> {
+    if (courseTypeId === 1) {
+      return this.getCourseHierarchyV2WithToken(courseId, token).pipe(
+        map((res: any) => res?.isSuccess !== undefined ? res.data : res),
+        map((hierarchy: any) => this.flattenProfessionalHierarchyToLectureSections(hierarchy))
+      );
+    }
+
+    if (courseTypeId === 2) {
+      return this.getCertificateHierarchyV2WithToken(courseId, token).pipe(
+        map((res: any) => res?.isSuccess !== undefined ? res.data : res),
+        map((hierarchy: any) => this.flattenCertificateHierarchyToLectureSections(hierarchy))
+      );
+    }
+
+    if (courseTypeId === 3) {
+      return this.getLectureSectionsV2WithToken(courseId, token).pipe(
+        map((res: any) => res?.isSuccess !== undefined ? res.data : res)
+      );
+    }
+
+    return new Observable<any[]>((subscriber) => {
+      subscriber.next([]);
+      subscriber.complete();
+    });
+  }
+
+  getUnifiedLectureSectionsV2WithToken(courseId: number, token: string | null): Observable<any[]> {
+    return this.getCourseTreeV2WithToken(courseId, token).pipe(
+      map((res: any) => res?.isSuccess !== undefined ? res.data : res),
+      map((tree: any) => this.flattenTreeToLectureSections(tree))
+    );
+  }
+
+  extractLectureSectionsFromTree(tree: any): any[] {
+    return this.flattenTreeToLectureSections(tree);
+  }
+
+  private flattenProfessionalHierarchyToLectureSections(hierarchy: any): any[] {
+    if (!hierarchy) return [];
+    const out: any[] = [];
+
+    const certificates = hierarchy?.courseCertificates;
+    if (!Array.isArray(certificates)) return out;
+
+    certificates.forEach((cert: any) => {
+      const shortCourses = cert?.shortCourses;
+      if (!Array.isArray(shortCourses)) return;
+
+      shortCourses.forEach((sc: any) => {
+        const lectures = sc?.lectures;
+        if (Array.isArray(lectures)) out.push(...lectures);
+      });
+    });
+
+    return out;
+  }
+
+  private flattenCertificateHierarchyToLectureSections(hierarchy: any): any[] {
+    if (!hierarchy) return [];
+    const out: any[] = [];
+
+    const shortCourses = hierarchy?.shortCourses;
+    if (!Array.isArray(shortCourses)) return out;
+
+    shortCourses.forEach((sc: any) => {
+      const lectures = sc?.lectures;
+      if (Array.isArray(lectures)) out.push(...lectures);
+    });
+
+    return out;
+  }
+
+  private flattenTreeToLectureSections(tree: any): any[] {
+    if (!tree) return [];
+
+    if (Array.isArray(tree?.shortCourseLectures)) {
+      return tree.shortCourseLectures;
+    }
+
+    const out: any[] = [];
+
+    const professionalCertificates = tree?.professionalCourse?.courseCertificates;
+    if (Array.isArray(professionalCertificates)) {
+      professionalCertificates.forEach((cert: any) => {
+        const shortCourses = cert?.shortCourses;
+        if (!Array.isArray(shortCourses)) return;
+
+        shortCourses.forEach((sc: any) => {
+          const lectures = sc?.lectures;
+          if (Array.isArray(lectures)) out.push(...lectures);
+        });
+      });
+    }
+
+    const certificateShortCourses = tree?.certificateCourse?.shortCourses;
+    if (Array.isArray(certificateShortCourses)) {
+      certificateShortCourses.forEach((sc: any) => {
+        const lectures = sc?.lectures;
+        if (Array.isArray(lectures)) out.push(...lectures);
+      });
+    }
+
+    return out;
   }
 
   getCourseProgressWithToken(courseId: number, token: string | null): Observable<any> {
