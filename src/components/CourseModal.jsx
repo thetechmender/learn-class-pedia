@@ -63,9 +63,11 @@ const CourseModal = ({
   const courseTypeIdNumber = Number(formData.courseTypeId);
   const shouldShowExistingCreationCheckbox = courseTypeIdNumber !== 1 && courseTypeIdNumber !== 2 && (mode === 'create' || course?.isNew === false);
   const shouldShowLectureMapping =
-    (courseTypeIdNumber === 1 || courseTypeIdNumber === 2 || courseTypeIdNumber === 3)
+    (courseTypeIdNumber === 1 || courseTypeIdNumber === 2)
       ? courseTypeIdNumber > 0
-      : formData.mapExistingLectures === true && courseTypeIdNumber > 0;
+      : courseTypeIdNumber === 3 
+        ? formData.mapExistingLectures === true && courseTypeIdNumber > 0
+        : formData.mapExistingLectures === true && courseTypeIdNumber > 0;
 
   const [formErrors, setFormErrors] = useState({});
 
@@ -133,7 +135,45 @@ const CourseModal = ({
         });
 
       const mappedLecturesResolved = (() => {
-        if (Number(course.courseTypeId) === 2 && existingShortCourses.length > 0) {
+        if (Number(course.courseTypeId) === 1) {
+          // For course type 1, extract lectures from professionalHierarchy
+          const hierarchyLectures = [];
+          (course.professionalHierarchy?.sections || []).forEach((section) => {
+            // Add certificate if exists
+            if (section.courseCertificateId) {
+              hierarchyLectures.push({
+                id: section.courseCertificateId,
+                title: section.courseCertificateTitle || '',
+                source: 'COURSE',
+                itemType: 'CERTIFICATE',
+                lectureType: 1,
+                isFreePreview: false,
+                sortOrder: 0,
+                lmscourseMappingId: section.courseCertificateId,
+                displayName: section.courseCertificateTitle || ''
+              });
+            }
+            
+            // Add short courses
+            (section.shortCourses || []).forEach((shortCourse) => {
+              hierarchyLectures.push({
+                id: shortCourse.shortCourseId,
+                title: shortCourse.shortCourseTitle || '',
+                source: 'COURSE',
+                itemType: 'SHORT_COURSE',
+                lectureType: 1,
+                isFreePreview: false,
+                sortOrder: hierarchyLectures.length,
+                lmscourseMappingId: shortCourse.shortCourseId,
+                displayName: shortCourse.shortCourseTitle || ''
+              });
+            });
+          });
+          
+          return [...existingLectures, ...hierarchyLectures].sort(
+            (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+          );
+        } else if (Number(course.courseTypeId) === 2 && existingShortCourses.length > 0) {
           const maxSortOrder = existingLectures.reduce(
             (max, l) => Math.max(max, Number(l.sortOrder ?? 0)),
             0
@@ -1243,7 +1283,7 @@ const CourseModal = ({
                   </div>
                 </div>
               </div>
-  <div className="flex flex-col sm:flex-row gap-4 pb-1">
+  <div className="md:col-span-2">
                     {shouldShowExistingCreationCheckbox && (
                       <div className="flex items-center gap-2">
                         <input
@@ -1260,106 +1300,9 @@ const CourseModal = ({
 
                   
                   </div>
-              {shouldShowLectureMapping && (
-                <div className="md:col-span-2">
-                  {courseTypeIdNumber === 3 ? (
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Sections
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={handleAddSection}
-                          disabled={loading}
-                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-60"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Section
-                        </button>
-                      </div>
-
-                      <div className="max-h-96 overflow-y-auto">
-                      {(formData.sections && formData.sections.length > 0 ? formData.sections : [createEmptySection(0)]).map((section, sectionIndex) => (
-                        <div key={sectionIndex} className="mb-6 p-4 border border-gray-200 rounded-lg">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
-                                <input
-                                  type="text"
-                                  value={section.title || ''}
-                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'title', e.target.value)}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  disabled={loading}
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Module Name</label>
-                                <input
-                                  type="text"
-                                  value={section.moduleName || ''}
-                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'moduleName', e.target.value)}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  disabled={loading}
-                                />
-                              </div>
-
-                              <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Section Description</label>
-                                <textarea
-                                  value={section.description || ''}
-                                  onChange={(e) => handleSectionFieldChange(sectionIndex, 'description', e.target.value)}
-                                  rows={2}
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  disabled={loading}
-                                />
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSection(sectionIndex)}
-                              disabled={loading}
-                              className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-60"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove
-                            </button>
-                          </div>
-
-                          <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Select lectures to map
-                            </label>
-
-                            <div className="mb-4">
-                              <LmsLecturesDropdown
-                                onLectureSelect={(lecture) => handleSectionLectureSelect(sectionIndex, lecture)}
-                                selectedLectures={section.lectures || []}
-                                courseTypeId={formData.courseTypeId}
-                                courseLevelId={formData.courseLevelId}
-                                disabled={loading}
-                                placeholder="Search and add LMS lectures..."
-                              />
-                            </div>
-
-                            <SelectedLecturesTable
-                              selectedLectures={section.lectures || []}
-                              onLectureRemove={(lectureId) => handleSectionLectureRemove(sectionIndex, lectureId)}
-                              onLectureReorder={(dragIndex, dropIndex) => handleSectionLectureReorder(sectionIndex, dragIndex, dropIndex)}
-                              courseType={formData.courseTypeId}
-                              disabled={loading}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
+              {shouldShowLectureMapping && (            
+                   
+                    <div className='md:col-span-2'>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select lectures to map
                       </label>
@@ -1388,10 +1331,6 @@ const CourseModal = ({
               )}
 
 
-
-            
-            </div>
-          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
