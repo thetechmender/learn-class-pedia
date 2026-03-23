@@ -1,157 +1,161 @@
-<div class="flex h-screen bg-gray-50 font-sans overflow-hidden">
+<div class="flex bg-gray-50 font-sans" style="height: calc(100vh - 56px);">
   <!-- Left Sidebar -->
-  <aside class="w-80 bg-white flex-shrink-0 flex flex-col hidden lg:flex border-r border-gray-100 overscroll-contain"
+  <aside class="w-80 bg-white flex-shrink-0 flex flex-col hidden lg:flex border-r border-gray-100"
     style="height: calc(100vh - 56px);">
-    <!-- Sidebar Header -->
+    <!-- Sidebar Header with Title and Close Button -->
     <div class="p-4 border-b border-gray-100">
-      <!-- Course Content Header -->
-      <!-- <div class="flex items-center justify-between mb-3">
-        <h3 class="text-gray-800 font-semibold text-sm">Course Content</h3>
-        <div class="flex items-center gap-1 text-xs text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <div class="flex items-center justify-between">
+        <h2 class="text-primary text-lg font-semibold">{{ courseTree().courseTitle || 'Course' }}</h2>
+        <button class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-          <span>{{ formatSectionTime(getTotalCourseDuration()) }} total</span>
-        </div>
-      </div> -->
-
-      <!-- Rating -->
-      <!-- @if (course()) {
-      <div class="flex items-center gap-1.5 mb-3">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-400" fill="currentColor"
-          viewBox="0 0 24 24">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-        <span class="text-xs font-semibold text-gray-700">{{ course().rating }}</span>
-        <span class="text-xs text-gray-400">({{ course().reviewCount }} reviews)</span>
+        </button>
       </div>
-      } -->
-
-      <!-- Progress Overview -->
-      <!-- @if (progress()) {
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-gray-600 text-xs font-medium">Your Progress</span>
-          <span class="text-primary text-xs font-bold">{{ progress().overallProgress }}%</span>
-        </div>
-        <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div class="h-full bg-gradient-to-r from-primary to-primary-400 rounded-full transition-all duration-500"
-            [style.width.%]="progress().overallProgress"></div>
-        </div>
-        <div class="flex items-center justify-between mt-2 text-xs">
-          <span class="text-primary font-medium">{{ progress().completedLectures }} completed</span>
-        </div>
-      </div>
-      } -->
     </div>
 
     <!-- Lecture List -->
     <div class="flex-1 overflow-y-auto overscroll-contain">
 
       @if (courseTree()) {
-        @if (courseTree().courseTypeId === 1 && courseTree().professionalCourse?.courseCertificates) {
-          @for (cert of courseTree().professionalCourse.courseCertificates; track cert.courseCertificateId) {
-            @let certExpanded = isCertificateExpanded(cert.courseCertificateId);
-            <div class="border-b border-gray-100">
-              <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
-                (click)="toggleCertificate(cert.courseCertificateId)">
-                <div class="flex items-center justify-between gap-2">
-                  <h3 class="text-sm font-semibold text-gray-800 leading-snug">{{ cert.title }}</h3>
-                  <svg xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-primary flex-shrink-0 transition-transform duration-200"
-                    [class.rotate-180]="certExpanded"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
+      @if (courseTree().courseTypeId === 1 && courseTree().professionalCourse?.courseCertificates) {
+      @for (cert of courseTree().professionalCourse.courseCertificates; track cert.courseCertificateId) {
+      @let certExpanded = isCertificateExpanded(cert.courseCertificateId);
+      <div class="border-b border-gray-100">
+        <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
+          (click)="toggleCertificate(cert.courseCertificateId)">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-sm font-semibold text-gray-800 leading-snug">{{ cert.title }}</h3>
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-primary flex-shrink-0 transition-transform duration-200"
+              [class.rotate-180]="certExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
 
-              @if (certExpanded && cert.shortCourses) {
-                @for (sc of cert.shortCourses; track sc.shortCourseId) {
-                  @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
-                  <div class="pl-4 border-t border-gray-50">
-                    <div class="w-full px-4 py-2 text-left hover:bg-optional transition-all cursor-pointer"
-                      (click)="toggleShortCourse(sc.shortCourseId)">
-                      <div class="flex items-center justify-between gap-2">
-                        <h4 class="text-xs font-semibold text-gray-700">{{ sc.title }}</h4>
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                          class="h-4 w-4 text-primary flex-shrink-0 transition-transform duration-200"
-                          [class.rotate-180]="scExpanded"
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    @if (scExpanded && sc.lectures) {
-                      @for (lec of sc.lectures; track lec.id) {
-                        <div class="pl-4">
-                          <button type="button"
-                            class="w-full px-4 py-2 text-left text-xs text-gray-600 hover:bg-optional transition-all"
-                            (click)="onTreeLectureSelect(lec); $event.stopPropagation()">
-                            {{ lec.title }}
-                          </button>
-                        </div>
-                      }
-                    }
-                  </div>
-                }
-              }
+        @if (certExpanded && cert.shortCourses) {
+        @for (sc of cert.shortCourses; track sc.shortCourseId) {
+        @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
+        <div class="pl-4 border-t border-gray-50">
+          <div class="w-full px-4 py-2 text-left hover:bg-optional transition-all cursor-pointer"
+            (click)="toggleShortCourse(sc.shortCourseId)">
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="text-xs font-semibold text-gray-700">{{ sc.title }}</h4>
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 text-primary flex-shrink-0 transition-transform duration-200"
+                [class.rotate-180]="scExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
-          }
-        }
+          </div>
 
-        @if (courseTree().courseTypeId === 2 && courseTree().certificateCourse?.shortCourses) {
-          @for (sc of courseTree().certificateCourse.shortCourses; track sc.shortCourseId) {
-            @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
-            <div class="border-b border-gray-100">
-              <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
-                (click)="toggleShortCourse(sc.shortCourseId)">
-                <div class="flex items-center justify-between gap-2">
-                  <h3 class="text-sm font-semibold text-gray-800 leading-snug">{{ sc.title }}</h3>
-                  <svg xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-primary flex-shrink-0 transition-transform duration-200"
-                    [class.rotate-180]="scExpanded"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              @if (scExpanded && sc.lectures) {
-                @for (lec of sc.lectures; track lec.id) {
-                  <div class="pl-4">
-                    <button type="button"
-                      class="w-full px-4 py-2 text-left text-xs text-gray-600 hover:bg-optional transition-all"
-                      (click)="onTreeLectureSelect(lec); $event.stopPropagation()">
-                      {{ lec.title }}
-                    </button>
-                  </div>
-                }
-              }
-            </div>
+          @if (scExpanded && sc.lectures) {
+          @for (lec of sc.lectures; track lec.id) {
+          <div class="pl-4">
+            <button type="button"
+              class="w-full px-4 py-2 text-left text-xs text-gray-600 hover:bg-optional transition-all"
+              (click)="onTreeLectureSelect(lec); $event.stopPropagation()">
+              {{ lec.title }}
+            </button>
+          </div>
           }
-        }
-
-        @if (courseTree().courseTypeId === 3 && courseTree().shortCourseLectures) {
-          @for (lec of courseTree().shortCourseLectures; track lec.id) {
-            <div class="border-b border-gray-100">
-              <button type="button"
-                class="w-full px-4 py-3 text-left hover:bg-optional transition-all"
-                (click)="onTreeLectureSelect(lec)">
-                <h3 class="text-sm font-medium text-gray-800 leading-snug">{{ lec.title }}</h3>
-              </button>
-            </div>
           }
+        </div>
         }
+        }
+      </div>
+      }
+      }
+
+      @if (courseTree().courseTypeId === 2 && courseTree().certificateCourse?.shortCourses) {
+      @for (sc of courseTree().certificateCourse.shortCourses; track sc.shortCourseId; let i = $index) {
+      @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
+      @let isActive = activeShortCourseId() === sc.shortCourseId;
+      <div class="border-b border-gray-100">
+        <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
+          [class.bg-optional]="isActive" (click)="onShortCourseSelect(sc)">
+          <!-- Lecture Label -->
+          <p class="text-xs text-gray-500 font-medium mb-1">Lecture {{ i + 1 }}</p>
+          <!-- Title with Icon -->
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-sm font-medium text-gray-800 leading-snug">{{ sc.title }}</h3>
+            @if (isActive) {
+            <!-- Right Arrow for Active -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            } @else {
+            <!-- Down Arrow for Expand -->
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 text-primary flex-shrink-0 transition-transform duration-200"
+              [class.rotate-180]="scExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              (click)="toggleShortCourse(sc.shortCourseId); $event.stopPropagation()">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+            }
+          </div>
+        </div>
+
+        @if (scExpanded) {
+        <div class="px-4 py-2 border-t border-gray-50 flex items-center gap-3 text-xs text-primary">
+          <span class="flex flex-col items-center gap-1 text-gray-400">
+            <!-- Time / Watch Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9z" />
+              <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
+            </svg>
+            {{ getShortCourseDuration(sc) }}
+          </span>
+          <span class="flex flex-col items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Video
+          </span>
+          <span class="flex flex-col items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            PDF
+          </span>
+          <span class="flex flex-col items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            Lecture
+          </span>
+        </div>
+        }
+      </div>
+      }
+      }
+
+      @if (courseTree().courseTypeId === 3 && courseTree().shortCourseLectures) {
+      @for (lec of courseTree().shortCourseLectures; track lec.id) {
+      <div class="border-b border-gray-100">
+        <button type="button" class="w-full px-4 py-3 text-left hover:bg-optional transition-all"
+          (click)="onTreeLectureSelect(lec)">
+          <h3 class="text-sm font-medium text-gray-800 leading-snug">{{ lec.title }}</h3>
+        </button>
+      </div>
+      }
+      }
       }
 
     </div>
 
     <!-- Bottom Buttons -->
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
-      <button class="w-full flex item-center justify-center btn-gradient-primary text-white px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:opacity-90 flex items-center gap-1">
+      <button
+        class="w-full flex item-center justify-center btn-gradient-primary text-white px-3 sm:px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:opacity-90 flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
           stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -171,10 +175,9 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto">
+  <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 56px);">
     @if (lectureSection() && lectureSection().length > 0) {
-    <!-- Top Bar -->
-    <div class="bg-white border-b border-gray-200 px-6 py-3">
+    <!-- <div class="bg-white border-b border-gray-200 px-6 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-1 text-xs text-gray-500">
@@ -197,7 +200,6 @@
             17m
           </span>
           <span class="text-gray-300">|</span>
-          <!-- Video/PDF Tabs -->
           <div class="flex items-center gap-2">
             <button
               class="btn-gradient-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md hover:opacity-90 transition-all shadow-sm">
@@ -225,19 +227,34 @@
         </div>
       </div>
       <p class="text-xs text-gray-500 mt-2">Lecture {{ lectureSection()[0].sectionSortOrder }} • 0 students viewed</p>
-    </div>
+    </div> -->
 
     <!-- Video/Content Area -->
-    <div class="bg-slate-800 relative">
+    <div class="bg-slate-800 relative flex-shrink-0">
       <!-- Title Bar -->
-      <div class="bg-gradient-to-r from-primary to-primary-400 text-white text-center py-2 px-4">
+      <!-- <div class="bg-gradient-to-r from-primary to-primary-400 text-white text-center py-2 px-4">
         <p class="text-sm font-medium truncate">Lecture: {{ courseTitle() }}</p>
-      </div>
+      </div> -->
 
       <!-- Content Display -->
-      <div id="content-container" class="p-6 min-h-[380px] max-h-[350px] overflow-y-auto flex items-start justify-center overscroll-contain">
+      <div id="content-container" class="p-6 h-[650px] overflow-y-auto flex items-center justify-center">
+        @if (isContentReady()) {
+        <!-- Show content when playing -->
         <div class="max-w-3xl text-white text-lg leading-relaxed"
           [innerHTML]="isPlaying() ? highlightedContent() : lectureContent()"></div>
+        } @else {
+        <!-- Ready To Learn - Play button centered -->
+        <div class="text-center">
+          <div (click)="playShortCourse()"
+            class="w-24 h-24 rounded-full bg-[#00D9A5] flex items-center justify-center mx-auto mb-6 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#0f172a]" viewBox="0 0 24 24"
+              fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+          <p class="text-white text-xl font-semibold">Ready To Learn</p>
+        </div>
+        }
       </div>
       <!-- Instructor Avatar -->
     </div>
@@ -262,8 +279,7 @@
           <!-- Previous Section -->
           <button (click)="goToPreviousSection()"
             class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-            [disabled]="currentSectionIndex() <= 0"
-            title="Previous Section">
+            [disabled]="currentSectionIndex() <= 0" title="Previous Section">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -272,16 +288,15 @@
           <!-- Next Section -->
           <button (click)="goToNextSection()"
             class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-            [disabled]="currentSectionIndex() >= allSections().length - 1"
-            title="Next Section">
+            [disabled]="currentSectionIndex() >= allSections().length - 1" title="Next Section">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
           <!-- Progress Slider (draggable) -->
-          <input type="range" min="0" [max]="totalDuration()" [value]="currentTime()" 
-            (input)="onSliderChange($event)" (mousedown)="onSliderStart()" (mouseup)="onSliderEnd()"
+          <input type="range" min="0" [max]="totalDuration()" [value]="currentTime()" (input)="onSliderChange($event)"
+            (mousedown)="onSliderStart()" (mouseup)="onSliderEnd()"
             class="w-32 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
             style="background: linear-gradient(to right, #2655FF 0%, #2655FF calc(var(--progress, 0) * 100%), #e5e7eb calc(var(--progress, 0) * 100%), #e5e7eb 100%);"
             [style.--progress]="totalDuration() > 0 ? currentTime() / totalDuration() : 0" />
@@ -293,13 +308,15 @@
           <!-- Remaining -->
           <span class="text-xs text-red-500">-16:50 remaining (1/7)</span>
           <!-- Speed -->
-          <button class="px-2 py-1 text-xs text-white btn-gradient-primary rounded hover:opacity-90 transition-all">0.90x</button>
+          <button
+            class="px-2 py-1 text-xs text-white btn-gradient-primary rounded hover:opacity-90 transition-all">0.90x</button>
           <!-- Instructor Name -->
           <span class="text-xs text-gray-600 font-medium">David</span>
           <!-- Chat Button -->
           <button class="cursor-pointer hover:opacity-80 transition-opacity" title="Open Chat">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 fill-primary" viewBox="0 0 322.88 119.35">
-              <path d="M57.49,29.2V23.53a14.41,14.41,0,0,1-2-.93A12.18,12.18,0,0,1,50.44,7.5a12.39,12.39,0,0,1,2.64-3.95A12.21,12.21,0,0,1,57,.92,12,12,0,0,1,61.66,0,12.14,12.14,0,0,1,72.88,7.5a12.14,12.14,0,0,1,0,9.27,12.08,12.08,0,0,1-2.64,3.94l-.06.06a12.74,12.74,0,0,1-2.36,1.83,11.26,11.26,0,0,1-2-.93V29.2H94.3a15.47,15.47,0,0,1,15.42,15.43v2.29H115a7.93,7.93,0,0,1,7.9,7.91V73.2A7.93,7.93,0,0,1,115,81.11h-5.25v2.07A15.48,15.48,0,0,1,94.3,98.61H55.23L31.81,118.72a2.58,2.58,0,0,1-3.65-.29,2.63,2.63,0,0,1-.63-1.85l1.25-18h-.21A15.45,15.45,0,0,1,13.16,83.18V81.11H7.91A7.93,7.93,0,0,1,0,73.2V54.83a7.93,7.93,0,0,1,7.9-7.91h5.26v-2.3A15.45,15.45,0,0,1,28.57,29.2H57.49ZM82.74,47.32a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm-42.58,0a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm6.38,31.36a2.28,2.28,0,0,1-.38-.38,2.18,2.18,0,0,1-.52-1.36,2.21,2.21,0,0,1,.46-1.39,2.4,2.4,0,0,1,.39-.39,3.22,3.22,0,0,1,3.88-.08A22.36,22.36,0,0,0,56,78.32a14.86,14.86,0,0,0,5.47,1A16.18,16.18,0,0,0,67,78.22,25.39,25.39,0,0,0,72.75,75a3.24,3.24,0,0,1,3.89.18,3,3,0,0,1,.37.41,2.22,2.22,0,0,1,.42,1.4,2.33,2.33,0,0,1-.58,1.35,2.29,2.29,0,0,1-.43.38,30.59,30.59,0,0,1-7.33,4,22.28,22.28,0,0,1-7.53,1.43A21.22,21.22,0,0,1,54,82.87a27.78,27.78,0,0,1-7.41-4.16l0,0ZM94.29,34.4H28.57A10.26,10.26,0,0,0,18.35,44.63V83.18A10.26,10.26,0,0,0,28.57,93.41h3.17a2.61,2.61,0,0,1,2.41,2.77l-1,14.58L52.45,94.15a2.56,2.56,0,0,1,1.83-.75h40a10.26,10.26,0,0,0,10.22-10.23V44.62A10.24,10.24,0,0,0,94.29,34.4Z" />
+              <path
+                d="M57.49,29.2V23.53a14.41,14.41,0,0,1-2-.93A12.18,12.18,0,0,1,50.44,7.5a12.39,12.39,0,0,1,2.64-3.95A12.21,12.21,0,0,1,57,.92,12,12,0,0,1,61.66,0,12.14,12.14,0,0,1,72.88,7.5a12.14,12.14,0,0,1,0,9.27,12.08,12.08,0,0,1-2.64,3.94l-.06.06a12.74,12.74,0,0,1-2.36,1.83,11.26,11.26,0,0,1-2-.93V29.2H94.3a15.47,15.47,0,0,1,15.42,15.43v2.29H115a7.93,7.93,0,0,1,7.9,7.91V73.2A7.93,7.93,0,0,1,115,81.11h-5.25v2.07A15.48,15.48,0,0,1,94.3,98.61H55.23L31.81,118.72a2.58,2.58,0,0,1-3.65-.29,2.63,2.63,0,0,1-.63-1.85l1.25-18h-.21A15.45,15.45,0,0,1,13.16,83.18V81.11H7.91A7.93,7.93,0,0,1,0,73.2V54.83a7.93,7.93,0,0,1,7.9-7.91h5.26v-2.3A15.45,15.45,0,0,1,28.57,29.2H57.49ZM82.74,47.32a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm-42.58,0a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm6.38,31.36a2.28,2.28,0,0,1-.38-.38,2.18,2.18,0,0,1-.52-1.36,2.21,2.21,0,0,1,.46-1.39,2.4,2.4,0,0,1,.39-.39,3.22,3.22,0,0,1,3.88-.08A22.36,22.36,0,0,0,56,78.32a14.86,14.86,0,0,0,5.47,1A16.18,16.18,0,0,0,67,78.22,25.39,25.39,0,0,0,72.75,75a3.24,3.24,0,0,1,3.89.18,3,3,0,0,1,.37.41,2.22,2.22,0,0,1,.42,1.4,2.33,2.33,0,0,1-.58,1.35,2.29,2.29,0,0,1-.43.38,30.59,30.59,0,0,1-7.33,4,22.28,22.28,0,0,1-7.53,1.43A21.22,21.22,0,0,1,54,82.87a27.78,27.78,0,0,1-7.41-4.16l0,0ZM94.29,34.4H28.57A10.26,10.26,0,0,0,18.35,44.63V83.18A10.26,10.26,0,0,0,28.57,93.41h3.17a2.61,2.61,0,0,1,2.41,2.77l-1,14.58L52.45,94.15a2.56,2.56,0,0,1,1.83-.75h40a10.26,10.26,0,0,0,10.22-10.23V44.62A10.24,10.24,0,0,0,94.29,34.4Z" />
             </svg>
           </button>
         </div>
@@ -347,47 +364,44 @@
     <div class="bg-white border-t border-gray-200">
       <!-- Tab Headers -->
       <div class="flex justify-center border-b border-gray-200">
-        <button (click)="activeTab.set('overview')" 
+        <button (click)="activeTab.set('overview')"
           class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'overview'"
-          [class.border-primary]="activeTab() === 'overview'"
-          [class.text-gray-500]="activeTab() !== 'overview'"
-          [class.border-transparent]="activeTab() !== 'overview'">
+          [class.text-primary]="activeTab() === 'overview'" [class.border-primary]="activeTab() === 'overview'"
+          [class.text-gray-500]="activeTab() !== 'overview'" [class.border-transparent]="activeTab() !== 'overview'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Overview
         </button>
         <button (click)="activeTab.set('notebook')"
           class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'notebook'"
-          [class.border-primary]="activeTab() === 'notebook'"
-          [class.text-gray-500]="activeTab() !== 'notebook'"
-          [class.border-transparent]="activeTab() !== 'notebook'">
+          [class.text-primary]="activeTab() === 'notebook'" [class.border-primary]="activeTab() === 'notebook'"
+          [class.text-gray-500]="activeTab() !== 'notebook'" [class.border-transparent]="activeTab() !== 'notebook'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
           Notebook
         </button>
         <button (click)="activeTab.set('transcript')"
           class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'transcript'"
-          [class.border-primary]="activeTab() === 'transcript'"
+          [class.text-primary]="activeTab() === 'transcript'" [class.border-primary]="activeTab() === 'transcript'"
           [class.text-gray-500]="activeTab() !== 'transcript'"
           [class.border-transparent]="activeTab() !== 'transcript'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Transcript
         </button>
         <button (click)="activeTab.set('download')"
           class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'download'"
-          [class.border-primary]="activeTab() === 'download'"
-          [class.text-gray-500]="activeTab() !== 'download'"
-          [class.border-transparent]="activeTab() !== 'download'">
+          [class.text-primary]="activeTab() === 'download'" [class.border-primary]="activeTab() === 'download'"
+          [class.text-gray-500]="activeTab() !== 'download'" [class.border-transparent]="activeTab() !== 'download'">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
           Download
         </button>
@@ -395,49 +409,66 @@
       <!-- Tab Content -->
       <div>
         @if (activeTab() === 'overview') {
-          <app-overview></app-overview>
+        <app-overview></app-overview>
         }
         @if (activeTab() === 'notebook') {
-          <app-notebook></app-notebook>
+        <app-notebook></app-notebook>
         }
         @if (activeTab() === 'transcript') {
-          <app-transcript></app-transcript>
+        <app-transcript></app-transcript>
         }
         @if (activeTab() === 'download') {
-          <app-download></app-download>
+        <app-download></app-download>
         }
       </div>
     </div>
     } @else {
-    <!-- Loading State -->
-    <div class="flex items-center justify-center h-full">
+    <!-- Ready To Learn State -->
+    <div class="flex items-center justify-center h-full bg-[#0f172a]">
+      @if (isLoading()) {
+      <!-- Loading State -->
       <div class="text-center">
-        <div class="w-12 h-12 border-4 border-primary-400 border-t-primary rounded-full animate-spin mx-auto mb-4">
+        <div class="w-12 h-12 border-4 border-[#00D9A5]/30 border-t-[#00D9A5] rounded-full animate-spin mx-auto mb-4">
         </div>
-        <p class="text-gray-500">Loading course content...</p>
+        <p class="text-white/70 text-sm">Loading course content...</p>
       </div>
+      } @else {
+      <!-- Ready To Learn -->
+      <div class="text-center">
+        <div
+          class="w-24 h-24 rounded-full bg-[#00D9A5] flex items-center justify-center mx-auto mb-6 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#0f172a]" viewBox="0 0 24 24"
+            fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+        <p class="text-white text-xl font-semibold">Ready To Learn</p>
+      </div>
+      }
     </div>
     }
   </main>
 
   <!-- Ask Course Companion Button -->
-  <button (click)="courseService.toggleChat()" 
+  <button (click)="courseService.toggleChat()"
     class="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-[#00D9A5] text-white rounded-full shadow-lg hover:bg-[#00c494] transition-all duration-300 font-medium text-sm"
     [class.hidden]="courseService.isChatOpen()">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
     </svg>
     Ask Course Companion
   </button>
 
   <!-- Chat Sidebar -->
-  <div class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-96 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
-    [class.translate-x-full]="!courseService.isChatOpen()"
-    [class.translate-x-0]="courseService.isChatOpen()">
-    
+  <div
+    class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-96 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
+    [class.translate-x-full]="!courseService.isChatOpen()" [class.translate-x-0]="courseService.isChatOpen()">
+
     <!-- Chat Header - Optional background with centered content -->
     <div class="bg-optional text-center py-6 px-4 relative border-b border-gray-300">
-      <button (click)="courseService.toggleChat()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+      <button (click)="courseService.toggleChat()"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -445,7 +476,8 @@
       <!-- Robot Icon - Blue rounded square -->
       <div class="w-16 h-16 mx-auto mb-4 bg-primary rounded-2xl flex items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-white" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M17.753 14a2.25 2.25 0 012.25 2.25v.904A3.75 3.75 0 0118.696 20c-1.565 1.344-3.806 2-6.696 2s-5.128-.656-6.69-2a3.75 3.75 0 01-1.306-2.843v-.907A2.25 2.25 0 016.254 14h11.5zM12 2.004a4 4 0 110 8 4 4 0 010-8z"/>
+          <path
+            d="M17.753 14a2.25 2.25 0 012.25 2.25v.904A3.75 3.75 0 0118.696 20c-1.565 1.344-3.806 2-6.696 2s-5.128-.656-6.69-2a3.75 3.75 0 01-1.306-2.843v-.907A2.25 2.25 0 016.254 14h11.5zM12 2.004a4 4 0 110 8 4 4 0 010-8z" />
         </svg>
       </div>
       <h2 class="text-xl font-bold text-primary">Classpedia Course Companion</h2>
@@ -459,11 +491,13 @@
         <div class="flex gap-3">
           <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.753 14a2.25 2.25 0 012.25 2.25v.904A3.75 3.75 0 0118.696 20c-1.565 1.344-3.806 2-6.696 2s-5.128-.656-6.69-2a3.75 3.75 0 01-1.306-2.843v-.907A2.25 2.25 0 016.254 14h11.5zM12 2.004a4 4 0 110 8 4 4 0 010-8z"/>
+              <path
+                d="M17.753 14a2.25 2.25 0 012.25 2.25v.904A3.75 3.75 0 0118.696 20c-1.565 1.344-3.806 2-6.696 2s-5.128-.656-6.69-2a3.75 3.75 0 01-1.306-2.843v-.907A2.25 2.25 0 016.254 14h11.5zM12 2.004a4 4 0 110 8 4 4 0 010-8z" />
             </svg>
           </div>
           <div class="bg-primary text-white rounded-2xl rounded-tl-none p-4 max-w-[85%]">
-            <p class="text-sm leading-relaxed">Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics.</p>
+            <p class="text-sm leading-relaxed">Hi, I'm your Course Companion. I can help you understand lessons, explain
+              concepts, or guide you through tricky topics.</p>
           </div>
         </div>
       </div>
@@ -474,13 +508,15 @@
       <div class="flex gap-3 items-center">
         <input type="text" placeholder="Ask a question"
           class="flex-1 px-4 py-3 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
-        <button class="w-12 h-12 bg-[#00D9A5] rounded-full flex items-center justify-center hover:bg-[#00c494] transition-all shadow-md">
+        <button
+          class="w-12 h-12 bg-[#00D9A5] rounded-full flex items-center justify-center hover:bg-[#00c494] transition-all shadow-md">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
           </svg>
         </button>
       </div>
-      <p class="text-xs text-gray-400 text-center mt-3">This is powered by AI and may make mistakes.<br/>Use more robust chat for your conversations on web.</p>
+      <p class="text-xs text-gray-400 text-center mt-3">This is powered by AI and may make mistakes.<br />Use more
+        robust chat for your conversations on web.</p>
     </div>
   </div>
 

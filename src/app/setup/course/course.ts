@@ -44,6 +44,9 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   expandedShortCourses = signal<Set<number>>(new Set());
   activeTab = signal<'overview' | 'notebook' | 'transcript' | 'download'>('overview');
   activeLectureTitle = signal<string | null>(null);
+  activeShortCourseId = signal<number | null>(null);
+  isContentReady = signal(false);
+  currentShortCourse = signal<any>(null);
 
   allSections = computed(() => {
     const sections: any[] = [];
@@ -156,6 +159,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     return this.expandedChapters().has(title);
   }
   ngOnInit() {
+    console.log(this.courseTree())
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
@@ -234,13 +238,11 @@ export class CourseComponent implements OnInit, AfterViewChecked {
           this.groupedByTitle.set(grouped);
         }
 
-        // 3️⃣ Load first section content by default
-        if (Array.isArray(data) && data.length > 0 && data[0]?.content) {
-          this.activeSection.set(data[0]);
-          this.courseTitle.set(data[0].sectionTitle);
-          this.lectureContent.set(
-            this.sanitizer.bypassSecurityTrustHtml(data[0].content)
-          );
+        // 3️⃣ Auto-select first short course on load
+        const tree = this.courseTree();
+        if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
+          const firstSc = tree.certificateCourse.shortCourses[0];
+          this.selectFirstShortCourse(firstSc);
         }
 
         this.isLoading.set(false);
@@ -270,19 +272,19 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     return `${minutes}m`;
   };
 
-  getSectionHeading(type: string): string {
-    const map: Record<string, string> = {
-      introduction: 'Introduction',
-      main_topic_early: 'Main Topic',
-      main_topic_mid: 'Inter: Main Topic',
-      main_topic_advanced: 'Adv: Main Topic',
-      facts: 'Facts / Case Studies',
-      summary: 'Summary',
-      conclusion: 'Conclusion'
-    };
+  // getSectionHeading(type: string): string {
+  //   const map: Record<string, string> = {
+  //     introduction: 'Introduction',
+  //     main_topic_early: 'Main Topic',
+  //     main_topic_mid: 'Inter: Main Topic',
+  //     main_topic_advanced: 'Adv: Main Topic',
+  //     facts: 'Facts / Case Studies',
+  //     summary: 'Summary',
+  //     conclusion: 'Conclusion'
+  //   };
 
-    return map[type] ?? type;
-  }
+  //   return map[type] ?? type;
+  // }
 
   getSectionTypesForTitle(title: string): string[] {
     const titleData = this.groupedByTitle()[title];
@@ -332,6 +334,28 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     return totalSeconds;
   }
 
+  getShortCourseDuration(sc: any): string {
+    if (!isPlatformBrowser(this.platformId)) return '0min';
+    
+    let totalSeconds = 0;
+    if (sc.lectures && sc.lectures.length > 0) {
+      sc.lectures.forEach((lec: any) => {
+        // Check lectureSections array
+        if (lec.lectureSections && lec.lectureSections.length > 0) {
+          lec.lectureSections.forEach((section: any) => {
+            totalSeconds += this.getSectionDuration(section);
+          });
+        }
+        // Also check if lecture itself has content
+        if (lec.content) {
+          totalSeconds += this.getSectionDuration(lec);
+        }
+      });
+    }
+    const mins = Math.max(1, Math.ceil(totalSeconds / 60));
+    return `${mins} min`;
+  }
+
   onSectionSelect(section: any) {
     this.stopSpeech();
     
@@ -369,6 +393,116 @@ export class CourseComponent implements OnInit, AfterViewChecked {
       this.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
       this.courseService.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
       this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
+    }
+  }
+
+  selectFirstShortCourse(sc: any) {
+    // Select first short course on load - expand it and set as active
+    this.activeShortCourseId.set(sc.shortCourseId);
+    this.expandedShortCourses.set(new Set([sc.shortCourseId]));
+    this.currentShortCourse.set(sc);
+    this.courseTitle.set(sc.title);
+    this.isContentReady.set(false);
+    
+    // Prepare lecture sections - collect all sections from all lectures
+    const allSections: any[] = [];
+    if (sc.lectures && sc.lectures.length > 0) {
+      sc.lectures.forEach((lec: any) => {
+        if (lec.lectureSections && lec.lectureSections.length > 0) {
+          allSections.push(...lec.lectureSections);
+        }
+      });
+    }
+    if (allSections.length > 0) {
+      this.lectureSection.set(allSections);
+    }
+  }
+
+  onShortCourseSelect(sc: any) {
+    this.stopSpeech();
+    this.activeShortCourseId.set(sc.shortCourseId);
+    this.currentShortCourse.set(sc);
+    this.courseTitle.set(sc.title);
+    this.isContentReady.set(false);
+    this.lectureContent.set('');
+    
+    // Toggle expand state
+    const current = new Set(this.expandedShortCourses());
+    if (current.has(sc.shortCourseId)) {
+      current.delete(sc.shortCourseId);
+    } else {
+      // Close all others, open this one
+      current.clear();
+      current.add(sc.shortCourseId);
+    }
+    this.expandedShortCourses.set(current);
+    
+    // Prepare lecture sections - collect all sections from all lectures
+    const allSections: any[] = [];
+    if (sc.lectures && sc.lectures.length > 0) {
+      sc.lectures.forEach((lec: any) => {
+        if (lec.lectureSections && lec.lectureSections.length > 0) {
+          allSections.push(...lec.lectureSections);
+        }
+      });
+    }
+    if (allSections.length > 0) {
+      this.lectureSection.set(allSections);
+    }
+  }
+
+  playShortCourse() {
+    const sc = this.currentShortCourse();
+    if (!sc) return;
+    
+    // Combine all lecture content - check multiple possible structures
+    let combinedContent = '';
+    
+    if (sc.lectures && sc.lectures.length > 0) {
+      sc.lectures.forEach((lec: any) => {
+        if (lec.lectureSections && lec.lectureSections.length > 0) {
+          lec.lectureSections.forEach((section: any) => {
+            if (section.content) {
+              combinedContent += section.content + '<br/><br/>';
+            }
+          });
+        }
+        // Also check if lecture itself has content
+        if (lec.content) {
+          combinedContent += lec.content + '<br/><br/>';
+        }
+      });
+    }
+    
+    // Fallback: use lectureSection signal if no content found
+    if (!combinedContent) {
+      const sections = this.lectureSection();
+      if (sections && sections.length > 0) {
+        sections.forEach((section: any) => {
+          if (section.content) {
+            combinedContent += section.content + '<br/><br/>';
+          }
+        });
+      }
+    }
+    
+    if (combinedContent) {
+      this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
+      this.isContentReady.set(true);
+      
+      // Set active section for speech
+      const firstSection = sc.lectures?.[0]?.lectureSections?.[0] || this.lectureSection()?.[0];
+      if (firstSection) {
+        this.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: sc.title });
+        this.courseService.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: sc.title });
+      }
+      
+      // Start speech
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = combinedContent;
+      const text = tempDiv.textContent || tempDiv.innerText || '';
+      this.speechService.speak(text);
+      this.isPlaying.set(true);
     }
   }
 
@@ -412,13 +546,18 @@ export class CourseComponent implements OnInit, AfterViewChecked {
         this.speechService.resume();
         this.isPlaying.set(true);
       } else {
-        const section = this.activeSection();
-        if (section?.content) {
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = section.content;
-          const text = tempDiv.textContent || tempDiv.innerText || '';
-          this.speechService.speak(text);
-          this.isPlaying.set(true);
+        // If content not ready, play the short course first
+        if (!this.isContentReady()) {
+          this.playShortCourse();
+        } else {
+          const section = this.activeSection();
+          if (section?.content) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = section.content;
+            const text = tempDiv.textContent || tempDiv.innerText || '';
+            this.speechService.speak(text);
+            this.isPlaying.set(true);
+          }
         }
       }
     }
