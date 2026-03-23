@@ -41,6 +41,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   isPlaying = signal(false);
   expandedChapters = signal<Set<string>>(new Set());
   expandedCertificates = signal<Set<number>>(new Set());
+  activeCertificateId = signal<number | null>(null);
   expandedShortCourses = signal<Set<number>>(new Set());
   activeTab = signal<'overview' | 'notebook' | 'transcript' | 'download'>('overview');
   activeLectureTitle = signal<string | null>(null);
@@ -238,11 +239,25 @@ export class CourseComponent implements OnInit, AfterViewChecked {
           this.groupedByTitle.set(grouped);
         }
 
-        // 3️⃣ Auto-select first short course on load
+        // 3️⃣ Auto-select first item based on courseTypeId
         const tree = this.courseTree();
-        if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
+        if (tree?.courseTypeId === 1 && tree?.professionalCourse?.courseCertificates?.length > 0) {
+          // For Professional Certificate - expand first certificate and select first short course
+          const firstCert = tree.professionalCourse.courseCertificates[0];
+          this.activeCertificateId.set(firstCert.courseCertificateId);
+          this.expandedCertificates.set(new Set([firstCert.courseCertificateId]));
+          
+          if (firstCert.shortCourses?.length > 0) {
+            const firstSc = firstCert.shortCourses[0];
+            this.selectFirstShortCourse(firstSc);
+          }
+        } else if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
           const firstSc = tree.certificateCourse.shortCourses[0];
           this.selectFirstShortCourse(firstSc);
+        } else if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
+          // For single lecture level - select first lecture directly
+          const firstLec = tree.shortCourseLectures[0];
+          this.selectFirstLecture(firstLec);
         }
 
         this.isLoading.set(false);
@@ -403,6 +418,73 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     this.currentShortCourse.set(sc);
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
+    
+    // Prepare lecture sections - collect all sections from all lectures
+    const allSections: any[] = [];
+    if (sc.lectures && sc.lectures.length > 0) {
+      sc.lectures.forEach((lec: any) => {
+        if (lec.lectureSections && lec.lectureSections.length > 0) {
+          allSections.push(...lec.lectureSections);
+        }
+      });
+    }
+    if (allSections.length > 0) {
+      this.lectureSection.set(allSections);
+    }
+  }
+
+  selectFirstLecture(lec: any) {
+    // For courseTypeId=3 - select first lecture directly (no accordion)
+    this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
+    this.isContentReady.set(false);
+    
+    // Set lecture section with this single lecture
+    this.lectureSection.set([lec]);
+    
+    // Create a pseudo short course object for playback compatibility
+    this.currentShortCourse.set({
+      shortCourseId: lec.id,
+      title: lec.title || lec.courseTitle,
+      lectures: [{ ...lec, lectureSections: [lec] }]
+    });
+  }
+
+  onLectureSelectType3(lec: any) {
+    // For courseTypeId=3 - handle lecture click in sidebar
+    this.stopSpeech();
+    this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
+    this.isContentReady.set(false);
+    this.lectureContent.set('');
+    
+    // Set lecture section with this single lecture
+    this.lectureSection.set([lec]);
+    
+    // Create a pseudo short course object for playback compatibility
+    this.currentShortCourse.set({
+      shortCourseId: lec.id,
+      title: lec.title || lec.courseTitle,
+      lectures: [{ ...lec, lectureSections: [lec] }]
+    });
+  }
+
+  onShortCourseSelectType1(sc: any) {
+    // For courseTypeId=1 - load short course content (like courseTypeId=2)
+    this.stopSpeech();
+    this.activeShortCourseId.set(sc.shortCourseId);
+    this.currentShortCourse.set(sc);
+    this.courseTitle.set(sc.title);
+    this.isContentReady.set(false);
+    this.lectureContent.set('');
+    
+    // Toggle expand state
+    const current = new Set(this.expandedShortCourses());
+    if (current.has(sc.shortCourseId)) {
+      current.delete(sc.shortCourseId);
+    } else {
+      current.clear();
+      current.add(sc.shortCourseId);
+    }
+    this.expandedShortCourses.set(current);
     
     // Prepare lecture sections - collect all sections from all lectures
     const allSections: any[] = [];

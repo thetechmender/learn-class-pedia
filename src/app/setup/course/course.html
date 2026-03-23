@@ -5,7 +5,7 @@
     <!-- Sidebar Header with Title and Close Button -->
     <div class="p-4 border-b border-gray-100">
       <div class="flex items-center justify-between">
-        <h2 class="text-primary text-lg font-semibold">{{ courseTree().courseTitle || 'Course' }}</h2>
+        <h2 class="text-primary text-lg font-semibold">{{ courseTree()?.courseTitle || 'Course' }}</h2>
         <button class="text-gray-400 hover:text-gray-600 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -35,31 +35,65 @@
         </div>
 
         @if (certExpanded && cert.shortCourses) {
-        @for (sc of cert.shortCourses; track sc.shortCourseId) {
+        @for (sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
         @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
+        @let isActive = activeShortCourseId() === sc.shortCourseId;
         <div class="pl-4 border-t border-gray-50">
           <div class="w-full px-4 py-2 text-left hover:bg-optional transition-all cursor-pointer"
-            (click)="toggleShortCourse(sc.shortCourseId)">
+            [class.bg-optional]="isActive" (click)="onShortCourseSelectType1(sc)">
+            <p class="text-xs text-gray-500 font-medium mb-1">Lecture {{ scIndex + 1 }}</p>
             <div class="flex items-center justify-between gap-2">
-              <h4 class="text-xs font-semibold text-gray-700">{{ sc.title }}</h4>
+              <h4 class="text-sm font-medium text-gray-800 leading-snug">{{ sc.title }}</h4>
+              @if (isActive) {
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              } @else {
               <svg xmlns="http://www.w3.org/2000/svg"
                 class="h-4 w-4 text-primary flex-shrink-0 transition-transform duration-200"
-                [class.rotate-180]="scExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                [class.rotate-180]="scExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                (click)="toggleShortCourse(sc.shortCourseId); $event.stopPropagation()">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
+              }
             </div>
           </div>
 
-          @if (scExpanded && sc.lectures) {
-          @for (lec of sc.lectures; track lec.id) {
-          <div class="pl-4">
-            <button type="button"
-              class="w-full px-4 py-2 text-left text-xs text-gray-600 hover:bg-optional transition-all"
-              (click)="onTreeLectureSelect(lec); $event.stopPropagation()">
-              {{ lec.title }}
-            </button>
+          @if (scExpanded) {
+          <div class="px-4 py-2 border-t border-gray-50 flex items-center gap-3 text-xs text-primary">
+            <span class="flex flex-col items-center gap-1 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9z" />
+                <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
+              </svg>
+              {{ getShortCourseDuration(sc) }}
+            </span>
+            <span class="flex flex-col items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Video
+            </span>
+            <span class="flex flex-col items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              PDF
+            </span>
+            <span class="flex flex-col items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Lecture
+            </span>
           </div>
-          }
           }
         </div>
         }
@@ -70,28 +104,23 @@
 
       @if (courseTree().courseTypeId === 2 && courseTree().certificateCourse?.shortCourses) {
       @for (sc of courseTree().certificateCourse.shortCourses; track sc.shortCourseId; let i = $index) {
-      @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
       @let isActive = activeShortCourseId() === sc.shortCourseId;
+      @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
       <div class="border-b border-gray-100">
         <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
           [class.bg-optional]="isActive" (click)="onShortCourseSelect(sc)">
-          <!-- Lecture Label -->
           <p class="text-xs text-gray-500 font-medium mb-1">Lecture {{ i + 1 }}</p>
-          <!-- Title with Icon -->
           <div class="flex items-center justify-between gap-2">
             <h3 class="text-sm font-medium text-gray-800 leading-snug">{{ sc.title }}</h3>
             @if (isActive) {
-            <!-- Right Arrow for Active -->
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
               viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
             } @else {
-            <!-- Down Arrow for Expand -->
             <svg xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 text-primary flex-shrink-0 transition-transform duration-200"
-              [class.rotate-180]="scExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-              (click)="toggleShortCourse(sc.shortCourseId); $event.stopPropagation()">
+              class="h-4 w-4 text-primary flex-shrink-0 transition-transform duration-200"
+              [class.rotate-180]="scExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
             }
@@ -101,7 +130,6 @@
         @if (scExpanded) {
         <div class="px-4 py-2 border-t border-gray-50 flex items-center gap-3 text-xs text-primary">
           <span class="flex flex-col items-center gap-1 text-gray-400">
-            <!-- Time / Watch Icon -->
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9z" />
               <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
@@ -138,18 +166,70 @@
       }
       }
 
-      @if (courseTree().courseTypeId === 3 && courseTree().shortCourseLectures) {
-      @for (lec of courseTree().shortCourseLectures; track lec.id) {
+      @if (courseTree().courseTypeId === 3 && courseTree().shortCourseLectures && courseTree().shortCourseLectures.length > 0) {
+      @let lec = courseTree().shortCourseLectures[0];
+      @let isActive = currentShortCourse()?.shortCourseId === lec.id;
+      @let lecExpanded = isShortCourseExpanded(lec.id);
       <div class="border-b border-gray-100">
-        <button type="button" class="w-full px-4 py-3 text-left hover:bg-optional transition-all"
-          (click)="onTreeLectureSelect(lec)">
-          <h3 class="text-sm font-medium text-gray-800 leading-snug">{{ lec.title }}</h3>
-        </button>
+        <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
+          [class.bg-optional]="isActive" (click)="onLectureSelectType3(lec)">
+          <p class="text-xs text-gray-500 font-medium mb-1">Lecture</p>
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-sm font-medium text-gray-800 leading-snug">{{ lec.title }}</h3>
+            @if (isActive) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            } @else {
+            <svg xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 text-primary flex-shrink-0 transition-transform duration-200"
+              [class.rotate-180]="lecExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              (click)="toggleShortCourse(lec.id); $event.stopPropagation()">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+            }
+          </div>
+        </div>
+
+        @if (lecExpanded) {
+        <div class="px-4 py-2 border-t border-gray-50 flex items-center gap-3 text-xs text-primary">
+          <span class="flex flex-col items-center gap-1 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9z" />
+              <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
+            </svg>
+            {{ lec.duration || '00:00' }}
+          </span>
+          <span class="flex flex-col items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Video
+          </span>
+          <span class="flex flex-col items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            PDF
+          </span>
+          <span class="flex flex-col items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            Lecture
+          </span>
+        </div>
+        }
       </div>
       }
       }
-      }
-
     </div>
 
     <!-- Bottom Buttons -->
@@ -177,73 +257,39 @@
   <!-- Main Content -->
   <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 56px);">
     @if (lectureSection() && lectureSection().length > 0) {
-    <!-- <div class="bg-white border-b border-gray-200 px-6 py-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-1 text-xs text-gray-500">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-yellow-400" fill="currentColor"
-              viewBox="0 0 24 24">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            @if (course()) {
-            <span class="font-medium">{{ course().rating }}</span>
-            <span class="text-gray-400">({{ course().reviewCount }} reviews)</span>
-            }
-          </div>
-          <span class="text-gray-300">|</span>
-          <span class="flex items-center gap-1 text-xs text-gray-500">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            17m
-          </span>
-          <span class="text-gray-300">|</span>
-          <div class="flex items-center gap-2">
-            <button
-              class="btn-gradient-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md hover:opacity-90 transition-all shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Video
-            </button>
-            @if (lectureSection()[0].pdfPath) {
-            <a [href]="lectureSection()[0].pdfPath" target="_blank"
-              class="btn-gradient-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md hover:opacity-90 transition-all shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              PDF
-            </a>
-            }
-          </div>
+    <!-- Progress Bar Above Content -->
+    <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-center">
+      <div class="flex items-center gap-4 px-6 py-2 border border-gray-200 rounded-full">
+        <span class="text-sm text-gray-600">0/3 learning items</span>
+        <div class="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div class="h-full bg-primary rounded-full" style="width: 0%"></div>
         </div>
+        <span class="text-sm text-gray-500">0%</span>
       </div>
-      <p class="text-xs text-gray-500 mt-2">Lecture {{ lectureSection()[0].sectionSortOrder }} • 0 students viewed</p>
-    </div> -->
+    </div>
 
     <!-- Video/Content Area -->
-    <div class="bg-slate-800 relative flex-shrink-0">
-      <!-- Title Bar -->
-      <!-- <div class="bg-gradient-to-r from-primary to-primary-400 text-white text-center py-2 px-4">
-        <p class="text-sm font-medium truncate">Lecture: {{ courseTitle() }}</p>
-      </div> -->
-
+    <div class="bg-slate-800 relative flex-shrink-0 group">
       <!-- Content Display -->
-      <div id="content-container" class="p-6 h-[650px] overflow-y-auto flex items-center justify-center">
+      <div id="content-container" class="p-6 h-[550px] overflow-y-auto flex items-center justify-center relative">
         @if (isContentReady()) {
-        <!-- Show content when playing -->
-        <div class="max-w-3xl text-white text-lg leading-relaxed"
-          [innerHTML]="isPlaying() ? highlightedContent() : lectureContent()"></div>
+          <!-- Always show content with highlight when content is ready -->
+          <div class="max-w-3xl text-white text-lg leading-relaxed" [innerHTML]="highlightedContent()"></div>
+          
+          <!-- Play button overlay when paused -->
+          @if (!isPlaying()) {
+          <div class="absolute inset-0 flex items-center justify-center bg-black/40">
+            <div (click)="toggleSpeech()"
+              class="w-24 h-24 rounded-full bg-[#00D9A5] flex items-center justify-center cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#0f172a]" viewBox="0 0 24 24"
+                fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+          }
         } @else {
-        <!-- Ready To Learn - Play button centered -->
+        <!-- Ready To Learn - Play button centered (initial state) -->
         <div class="text-center">
           <div (click)="playShortCourse()"
             class="w-24 h-24 rounded-full bg-[#00D9A5] flex items-center justify-center mx-auto mb-6 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
@@ -256,7 +302,6 @@
         </div>
         }
       </div>
-      <!-- Instructor Avatar -->
     </div>
 
     <!-- Bottom Controls -->

@@ -1,1 +1,176 @@
-<p>notebook works!</p>
+<div class="p-6 pb-20">
+  <div class="flex gap-8">
+    <!-- Left Column - Main Content -->
+    <div class="flex-1">
+      @if (!isAddingNote()) {
+      <!-- Info Box -->
+      <div class="border-l-4 border-primary bg-white p-4 mb-6">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Click the Save Note button below the lecture when you want to capture a screen. You can also highlight and save lines from the transcript. Add your own notes to anything you've captured.
+        </p>
+      </div>
+
+      <!-- Notes Header -->
+      <div class="flex items-center justify-between mb-6">
+        <span class="text-sm text-gray-500">{{ savedNotes().length }} Notes taken</span>
+        <button (click)="onSaveNote()" class="flex items-center gap-2 text-primary text-sm font-medium hover:opacity-80 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          Save note
+        </button>
+      </div>
+
+      @if (savedNotes().length === 0) {
+      <!-- Empty State -->
+      <div class="flex flex-col items-center justify-center py-12 border-l border-gray-200">
+        <!-- Illustration - Person at computer -->
+        <div class="mb-6">
+          <img src="https://cdn-icons-png.flaticon.com/512/4185/4185641.png" alt="No notes" class="h-32 w-32 opacity-80" />
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">No Notes Saved Yet</h3>
+        <p class="text-sm text-gray-500">Take notes to remember what you learned.</p>
+      </div>
+      } @else {
+      <!-- Saved Notes Section -->
+      <div class="border-l border-gray-200">
+        <div class="bg-primary/10 px-4 py-2 mb-4">
+          <span class="text-sm font-medium text-gray-700">Saved Notes</span>
+        </div>
+        
+        @for (note of savedNotes(); track note.id) {
+        <div class="flex gap-4 p-4 border-b border-gray-100">
+          <!-- Thumbnail -->
+          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+          
+          <!-- Note Content -->
+          <div class="flex-1">
+            <button class="flex items-center gap-1 text-primary text-sm mb-2 hover:underline">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Play video clip {{ note.timestamp }}
+            </button>
+            <p class="text-sm text-gray-600 mb-3 leading-relaxed">{{ note.transcript }}</p>
+            
+            <p class="text-sm font-medium text-gray-800 mb-1">Your note</p>
+            <p class="text-sm text-gray-600 mb-3">{{ note.userNote }}</p>
+            
+            <div class="flex items-center gap-4">
+              <button class="text-primary text-sm hover:underline">Add your thoughts</button>
+              <button (click)="onDeleteNote(note.id)" class="flex items-center gap-1 text-gray-500 text-sm hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+      }
+      } @else {
+      <!-- Add Note Form -->
+      <div class="mb-6">
+        <div class="flex gap-4 mb-4">
+          <!-- Thumbnail -->
+          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+          
+          <!-- Note Content -->
+          <div class="flex-1">
+            <button class="flex items-center gap-1 text-primary text-sm mb-2 hover:underline">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Play video clip 0:07-0:15
+            </button>
+            <p class="text-sm text-gray-600 leading-relaxed">Of the hundreds of millions of people who use Chat GPT each week, teachers are some of our earliest and most active adopters</p>
+          </div>
+        </div>
+        
+        <!-- Add your thoughts -->
+        <div class="mb-4">
+          <p class="text-sm font-medium text-gray-800 mb-2">Add your thoughts</p>
+          <input type="text" 
+            class="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            placeholder=""
+            [value]="noteText()"
+            (input)="noteText.set($any($event.target).value)" />
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-3">
+          <button (click)="onSaveNoteConfirm()" 
+            class="px-4 py-1.5 bg-primary text-white text-sm rounded hover:opacity-90 transition-opacity">
+            Save
+          </button>
+          <button (click)="onCancelNote()" 
+            class="px-4 py-1.5 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button class="flex items-center gap-1 text-gray-500 text-sm hover:text-red-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Saved Notes Section -->
+      @if (savedNotes().length > 0) {
+      <div class="border-l border-gray-200 mt-6">
+        <div class="bg-primary/10 px-4 py-2 mb-4">
+          <span class="text-sm font-medium text-gray-700">Saved Notes</span>
+        </div>
+        
+        @for (note of savedNotes(); track note.id) {
+        <div class="flex gap-4 p-4 border-b border-gray-100">
+          <!-- Thumbnail -->
+          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+          
+          <!-- Note Content -->
+          <div class="flex-1">
+            <button class="flex items-center gap-1 text-primary text-sm mb-2 hover:underline">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Play video clip {{ note.timestamp }}
+            </button>
+            <p class="text-sm text-gray-600 mb-3 leading-relaxed">{{ note.transcript }}</p>
+            
+            <p class="text-sm font-medium text-gray-800 mb-1">Your note</p>
+            <p class="text-sm text-gray-600 mb-3">{{ note.userNote }}</p>
+            
+            <div class="flex items-center gap-4">
+              <button class="text-primary text-sm hover:underline">Add your thoughts</button>
+              <button (click)="onDeleteNote(note.id)" class="flex items-center gap-1 text-gray-500 text-sm hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+      }
+      }
+    </div>
+
+    <!-- Right Column - Export Notes -->
+    <div class="w-72 flex-shrink-0 p-4 border-1 border-gray-100">
+      <div class="bg-white">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Export Your Notes</h3>
+        <p class="text-sm text-gray-500 mb-4 leading-relaxed">
+          Get your notes for this course which includes description, chapters, and timestamps
+        </p>
+        <button class="px-6 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          Download
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
