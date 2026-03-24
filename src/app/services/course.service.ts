@@ -62,6 +62,10 @@ export class CourseService {
     });
   }
 
+  completeCourse(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/learning/v2/course/complete`, payload);
+  }
+
   getUnifiedLectureSectionsByTypeV2WithToken(courseId: number, token: string | null, courseTypeId: number): Observable<any[]> {
     if (courseTypeId === 1) {
       return this.getCourseHierarchyV2WithToken(courseId, token).pipe(

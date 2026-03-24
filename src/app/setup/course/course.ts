@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, PLATFORM_ID, effect, AfterViewChecked, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, PLATFORM_ID, effect, AfterViewChecked, ViewEncapsulation } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../../services/course.service';
@@ -9,17 +9,19 @@ import { Overview } from './overview/overview';
 import { Notebook } from './notebook/notebook';
 import { Transcript } from './transcript/transcript';
 import { Download } from './download/download';
-import { map, switchMap } from 'rxjs';
+import { CompletionModal } from '../../shared/completion-modal/completion-modal';
+import { map, Subject, switchMap, takeUntil } from 'rxjs';
+import { timingSafeEqual } from 'node:crypto';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Transcript, Download],
+  imports: [CommonModule, Overview, Notebook, Transcript, Download, CompletionModal],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
 })
-export class CourseComponent implements OnInit, AfterViewChecked {
+export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private route = inject(ActivatedRoute);
   public courseService = inject(CourseService);
   private speechService = inject(SpeechService)
@@ -48,7 +50,16 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   activeShortCourseId = signal<number | null>(null);
   isContentReady = signal(false);
   currentShortCourse = signal<any>(null);
-
+  showPauseOverlay = signal(false);
+  private pauseOverlayTimeout: any = null;
+  showCompletionModal = signal(false);
+  completionData = signal<any>(null);
+  completeOrderPayload: any = {
+    shortCourseId: null,
+    courseCertificateId: null,
+    professionalCertificateId: null
+  };
+  private destroy$ = new Subject<void>();
   allSections = computed(() => {
     const sections: any[] = [];
     const grouped = this.groupedByTitle();
@@ -65,7 +76,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   currentSectionIndex = computed(() => {
     const active = this.activeSection();
     if (!active) return -1;
-    return this.allSections().findIndex(s => 
+    return this.allSections().findIndex(s =>
       s.id === active.id && s.sectionTitle === active.sectionTitle && s.sectionType === active.sectionType
     );
   });
@@ -78,29 +89,28 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   highlightedContent = computed(() => {
     const section = this.activeSection();
     if (!section?.content) return '';
-    
+
     const wordIndex = this.currentWordIndex();
-    if (wordIndex < 0 || !this.isPlaying()) {
-      return this.sanitizer.bypassSecurityTrustHtml(section.content);
-    }
 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = section.content;
     const text = tempDiv.textContent || tempDiv.innerText || '';
     const words = text.split(/\s+/).filter(w => w.length > 0);
-    
-    const visibleWords = words.slice(0, wordIndex + 1);
-    
+
+    if (wordIndex < 0 || wordIndex >= words.length) {
+      return this.sanitizer.bypassSecurityTrustHtml(section.content);
+    }
+
     let highlightedText = '';
-    visibleWords.forEach((word, idx) => {
+    words.forEach((word, idx) => {
       if (idx === wordIndex) {
-        highlightedText += `<span id="current-word" class="bg-yellow-400 text-black px-0.5 rounded">${word}</span> `;
+        highlightedText += `<span id="current-word" style="background-color: #facc15; color: black; padding: 0 2px; border-radius: 2px;">${word}</span> `;
       } else {
         highlightedText += word + ' ';
       }
     });
-    
-    return this.sanitizer.bypassSecurityTrustHtml(`<p>${highlightedText.trim()}</p>`);
+
+    return this.sanitizer.bypassSecurityTrustHtml(`<div style="line-height: 2;">${highlightedText.trim()}</div>`);
   });
 
   constructor() {
@@ -123,6 +133,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   }
 
   toggleCertificate(certificateId: number) {
+    console.log(this.completeOrderPayload)
     const current = new Set(this.expandedCertificates());
     if (current.has(certificateId)) {
       current.delete(certificateId);
@@ -160,7 +171,6 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     return this.expandedChapters().has(title);
   }
   ngOnInit() {
-    console.log(this.courseTree())
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
@@ -246,11 +256,23 @@ export class CourseComponent implements OnInit, AfterViewChecked {
           const firstCert = tree.professionalCourse.courseCertificates[0];
           this.activeCertificateId.set(firstCert.courseCertificateId);
           this.expandedCertificates.set(new Set([firstCert.courseCertificateId]));
-          
+          this.completeOrderPayload = {
+            certificateId: firstCert.courseCertificateId,
+            shortCourseId: firstCert.shortCourses[0].shortCourseId,
+            courseId: this.courseTree()?.professionalCourseId
+          }
           if (firstCert.shortCourses?.length > 0) {
             const firstSc = firstCert.shortCourses[0];
             this.selectFirstShortCourse(firstSc);
           }
+          tree.professionalCourse.courseCertificates =
+            tree.professionalCourse.courseCertificates.map((cert: any) => ({
+              ...cert,
+              shortCourses: (cert.shortCourses || []).map((sc: any) => ({
+                ...sc,
+                certificateId: cert.courseCertificateId
+              }))
+            }));
         } else if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
           const firstSc = tree.certificateCourse.shortCourses[0];
           this.selectFirstShortCourse(firstSc);
@@ -329,7 +351,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     const grouped = this.groupedByTitle();
     const titleData = grouped[lectureTitle];
     if (!titleData) return 0;
-    
+
     let totalSeconds = 0;
     Object.keys(titleData).forEach(sectionType => {
       const sections = titleData[sectionType];
@@ -351,7 +373,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
 
   getShortCourseDuration(sc: any): string {
     if (!isPlatformBrowser(this.platformId)) return '0min';
-    
+
     let totalSeconds = 0;
     if (sc.lectures && sc.lectures.length > 0) {
       sc.lectures.forEach((lec: any) => {
@@ -373,7 +395,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
 
   onSectionSelect(section: any) {
     this.stopSpeech();
-    
+
     this.courseTitle.set(section.sectionTitle);
     this.activeSection.set(section);
     this.courseService.activeSection.set(section);
@@ -386,15 +408,15 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   onLectureSelect(lectureTitle: string) {
     this.toggleChapter(lectureTitle);
     this.activeLectureTitle.set(lectureTitle);
-    
+
     // Get all sections for this lecture and combine their content
     const grouped = this.groupedByTitle();
     const sectionTypes = Object.keys(grouped[lectureTitle] || {});
-    
+
     if (sectionTypes.length > 0) {
       // Get the first section to set as active
       const firstSection = grouped[lectureTitle][sectionTypes[0]][0];
-      
+
       // Combine all section contents for this lecture
       let combinedContent = '';
       sectionTypes.forEach(type => {
@@ -402,7 +424,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
           combinedContent += section.content + '<br/><br/>';
         });
       });
-      
+
       this.stopSpeech();
       this.courseTitle.set(lectureTitle);
       this.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
@@ -418,7 +440,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     this.currentShortCourse.set(sc);
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
-    
+
     // Prepare lecture sections - collect all sections from all lectures
     const allSections: any[] = [];
     if (sc.lectures && sc.lectures.length > 0) {
@@ -437,10 +459,10 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     // For courseTypeId=3 - select first lecture directly (no accordion)
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
     this.isContentReady.set(false);
-    
+
     // Set lecture section with this single lecture
     this.lectureSection.set([lec]);
-    
+
     // Create a pseudo short course object for playback compatibility
     this.currentShortCourse.set({
       shortCourseId: lec.id,
@@ -455,10 +477,10 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
     this.isContentReady.set(false);
     this.lectureContent.set('');
-    
+
     // Set lecture section with this single lecture
     this.lectureSection.set([lec]);
-    
+
     // Create a pseudo short course object for playback compatibility
     this.currentShortCourse.set({
       shortCourseId: lec.id,
@@ -468,14 +490,17 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   }
 
   onShortCourseSelectType1(sc: any) {
-    // For courseTypeId=1 - load short course content (like courseTypeId=2)
+    this.completeOrderPayload.shortCourseId = sc.shortCourseId;
+    this.completeOrderPayload.certificateId = sc.certificateId;
+    this.completeOrderPayload.courseId = this.courseTree()?.professionalCourseId;
+    console.log(this.completeOrderPayload)
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
     this.currentShortCourse.set(sc);
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
     this.lectureContent.set('');
-    
+
     // Toggle expand state
     const current = new Set(this.expandedShortCourses());
     if (current.has(sc.shortCourseId)) {
@@ -485,7 +510,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
       current.add(sc.shortCourseId);
     }
     this.expandedShortCourses.set(current);
-    
+
     // Prepare lecture sections - collect all sections from all lectures
     const allSections: any[] = [];
     if (sc.lectures && sc.lectures.length > 0) {
@@ -507,7 +532,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
     this.lectureContent.set('');
-    
+
     // Toggle expand state
     const current = new Set(this.expandedShortCourses());
     if (current.has(sc.shortCourseId)) {
@@ -518,7 +543,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
       current.add(sc.shortCourseId);
     }
     this.expandedShortCourses.set(current);
-    
+
     // Prepare lecture sections - collect all sections from all lectures
     const allSections: any[] = [];
     if (sc.lectures && sc.lectures.length > 0) {
@@ -536,10 +561,10 @@ export class CourseComponent implements OnInit, AfterViewChecked {
   playShortCourse() {
     const sc = this.currentShortCourse();
     if (!sc) return;
-    
+
     // Combine all lecture content - check multiple possible structures
     let combinedContent = '';
-    
+
     if (sc.lectures && sc.lectures.length > 0) {
       sc.lectures.forEach((lec: any) => {
         if (lec.lectureSections && lec.lectureSections.length > 0) {
@@ -555,7 +580,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
         }
       });
     }
-    
+
     // Fallback: use lectureSection signal if no content found
     if (!combinedContent) {
       const sections = this.lectureSection();
@@ -567,18 +592,18 @@ export class CourseComponent implements OnInit, AfterViewChecked {
         });
       }
     }
-    
+
     if (combinedContent) {
       this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
       this.isContentReady.set(true);
-      
+
       // Set active section for speech
       const firstSection = sc.lectures?.[0]?.lectureSections?.[0] || this.lectureSection()?.[0];
       if (firstSection) {
         this.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: sc.title });
         this.courseService.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: sc.title });
       }
-      
+
       // Start speech
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = combinedContent;
@@ -590,15 +615,15 @@ export class CourseComponent implements OnInit, AfterViewChecked {
 
   onLecturePlay(lectureTitle: string) {
     this.activeLectureTitle.set(lectureTitle);
-    
+
     // Get all sections for this lecture and combine their content
     const grouped = this.groupedByTitle();
     const sectionTypes = Object.keys(grouped[lectureTitle] || {});
-    
+
     if (sectionTypes.length > 0) {
       // Get the first section to set as active
       const firstSection = grouped[lectureTitle][sectionTypes[0]][0];
-      
+
       // Combine all section contents for this lecture
       let combinedContent = '';
       sectionTypes.forEach(type => {
@@ -606,7 +631,7 @@ export class CourseComponent implements OnInit, AfterViewChecked {
           combinedContent += section.content + '<br/><br/>';
         });
       });
-      
+
       this.stopSpeech();
       this.courseTitle.set(lectureTitle);
       this.activeSection.set({ ...firstSection, content: combinedContent, sectionTitle: lectureTitle });
@@ -623,7 +648,9 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     if (this.isPlaying()) {
       this.speechService.pause();
       this.isPlaying.set(false);
+      this.showPauseOverlayWithTimer();
     } else {
+      this.hidePauseOverlay();
       if (this.speechService.isPaused()) {
         this.speechService.resume();
         this.isPlaying.set(true);
@@ -643,6 +670,23 @@ export class CourseComponent implements OnInit, AfterViewChecked {
         }
       }
     }
+  }
+
+  showPauseOverlayWithTimer() {
+    if (this.pauseOverlayTimeout) {
+      clearTimeout(this.pauseOverlayTimeout);
+    }
+    this.showPauseOverlay.set(true);
+    this.pauseOverlayTimeout = setTimeout(() => {
+      this.showPauseOverlay.set(false);
+    }, 5000);
+  }
+
+  hidePauseOverlay() {
+    if (this.pauseOverlayTimeout) {
+      clearTimeout(this.pauseOverlayTimeout);
+    }
+    this.showPauseOverlay.set(false);
   }
 
   stopSpeech() {
@@ -695,6 +739,88 @@ export class CourseComponent implements OnInit, AfterViewChecked {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
+  downloadLecturePdf(lecture: any, event: Event) {
+    event.stopPropagation();
+    if (!lecture) return;
+
+    const title = lecture.title || 'Lecture';
+    const content = lecture.content || lecture.description || '';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+          h1 { color: #2655FF; margin-bottom: 20px; }
+          .content { font-size: 14px; color: #333; }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        <div class="content">${content}</div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  downloadShortCoursePdf(sc: any, event: Event) {
+    event.stopPropagation();
+    if (!sc) return;
+
+    const title = sc.title || 'Short Course';
+    let content = '';
+
+    if (sc.lectures && sc.lectures.length > 0) {
+      sc.lectures.forEach((lec: any, idx: number) => {
+        content += `<h2>Section ${idx + 1}: ${lec.title || ''}</h2>`;
+        content += `<div>${lec.content || lec.description || ''}</div><br/>`;
+      });
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+          h1 { color: #2655FF; margin-bottom: 20px; }
+          h2 { color: #333; margin-top: 30px; }
+          .content { font-size: 14px; color: #333; }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        <div class="content">${content}</div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
   private lastScrolledWordIndex = -1;
 
   ngAfterViewChecked() {
@@ -707,10 +833,110 @@ export class CourseComponent implements OnInit, AfterViewChecked {
         if (currentWord && container) {
           const wordRect = currentWord.getBoundingClientRect();
           const containerRect = container.getBoundingClientRect();
-          const scrollTop = container.scrollTop + (wordRect.top - containerRect.top) - (containerRect.height / 2);
-          container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+
+          const wordBottom = wordRect.bottom;
+          const containerBottom = containerRect.bottom;
+
+          if (wordBottom > containerBottom - 50) {
+            const scrollTop = container.scrollTop + (wordRect.top - containerRect.top) - (containerRect.height / 2);
+            container.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+          }
         }
       }
     }
+  };
+
+  complete() {
+    this.courseService
+      .completeCourse(this.completeOrderPayload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          if (res?.isSuccess && res?.data) {
+            this.completionData.set(res.data);
+            this.showCompletionModal.set(true);
+            // Refresh tree in background
+            this.refreshCourseTree();
+          }
+        },
+        error: (err: any) => {
+          console.error('Complete Course Error:', err);
+        }
+      });
+  };
+
+  onCompletionModalClose() {
+    this.showCompletionModal.set(false);
+    this.completionData.set(null);
+    this.goToNextLecture();
+  }
+
+  refreshCourseTree() {
+    const courseId = this.route.snapshot.params['courseId'];
+    const token = this.authService.getToken();
+    const courseTypeId = this.courseTree()?.courseTypeId;
+    if (!courseId || !courseTypeId) return;
+
+    this.courseService.getUnifiedLectureSectionsByTypeV2WithToken(courseId, token, courseTypeId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (tree: any) => {
+          this.courseTree.set(tree);
+        },
+        error: (err: any) => {
+          console.error('Refresh Course Tree Error:', err);
+        }
+      });
+  }
+
+  goToNextLecture() {
+    const tree = this.courseTree();
+    if (!tree) return;
+
+    if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
+      const certs = tree.professionalCourse.courseCertificates;
+      const currentScId = this.activeShortCourseId();
+      const currentCertId = this.activeCertificateId();
+
+      // Find current certificate and short course indices
+      const certIndex = certs.findIndex((c: any) => c.courseCertificateId === currentCertId);
+      if (certIndex === -1) return;
+
+      const currentCert = certs[certIndex];
+      const scIndex = currentCert.shortCourses?.findIndex((sc: any) => sc.shortCourseId === currentScId) ?? -1;
+
+      // Try next short course in same certificate
+      if (scIndex !== -1 && scIndex < (currentCert.shortCourses?.length || 0) - 1) {
+        const nextSc = currentCert.shortCourses[scIndex + 1];
+        this.onShortCourseSelectType1(nextSc);
+        return;
+      }
+
+      // Try first short course in next certificate
+      if (certIndex < certs.length - 1) {
+        const nextCert = certs[certIndex + 1];
+        this.expandedCertificates.set(new Set([nextCert.courseCertificateId]));
+        this.activeCertificateId.set(nextCert.courseCertificateId);
+        if (nextCert.shortCourses?.length > 0) {
+          this.onShortCourseSelectType1(nextCert.shortCourses[0]);
+        }
+      }
+    } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
+      const shortCourses = tree.certificateCourse.shortCourses;
+      const currentScId = this.activeShortCourseId();
+      const scIndex = shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
+
+      if (scIndex !== -1 && scIndex < shortCourses.length - 1) {
+        const nextSc = shortCourses[scIndex + 1];
+        this.onShortCourseSelect(nextSc);
+      }
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.speechService.stop();
+    this.isPlaying.set(false);
   }
 }
