@@ -126,6 +126,7 @@ const CourseModal = ({
             id: courseId,
             title: shortCourse.shortCourseTitle || shortCourse.title || '',
             source: 'COURSE',
+            itemType: 'SHORT_COURSE',
             lectureType: 1,
             isFreePreview: false,
             sortOrder: index,
@@ -136,7 +137,7 @@ const CourseModal = ({
 
       const mappedLecturesResolved = (() => {
         if (Number(course.courseTypeId) === 1) {
-          // For course type 1, extract lectures from professionalHierarchy
+          // For course type 1, only extract certificates from professionalHierarchy
           const hierarchyLectures = [];
           (course.professionalHierarchy?.sections || []).forEach((section) => {
             // Add certificate if exists
@@ -154,20 +155,8 @@ const CourseModal = ({
               });
             }
             
-            // Add short courses
-            (section.shortCourses || []).forEach((shortCourse) => {
-              hierarchyLectures.push({
-                id: shortCourse.shortCourseId,
-                title: shortCourse.shortCourseTitle || '',
-                source: 'COURSE',
-                itemType: 'SHORT_COURSE',
-                lectureType: 1,
-                isFreePreview: false,
-                sortOrder: hierarchyLectures.length,
-                lmscourseMappingId: shortCourse.shortCourseId,
-                displayName: shortCourse.shortCourseTitle || ''
-              });
-            });
+            // Note: Short courses are intentionally excluded for course type 1
+            // Only certificates should be included in the payload
           });
           
           return [...existingLectures, ...hierarchyLectures].sort(
@@ -227,7 +216,7 @@ const CourseModal = ({
             lmsSubjectId: lmsContent?.lmsSubjectId,
             lmsSubjectName: lmsContent?.lmsSubjectName,
             lmsLectureId: lmsContent?.lmsLectureId,
-            lmsLectureName: lmsContent?.lmsLectureName || lecture.title,
+            lmsLectureName: lmsContent?.lmsLectureName || lecture.lmsLectureName || lecture.title,
             lectureOverview: lmsContent?.lectureOverview,
             lectureDescription: lmsContent?.lectureDescription,
             tags: lmsContent?.tags || []
@@ -254,7 +243,7 @@ const CourseModal = ({
           });
         }
 
-        (section.shortCourses || []).forEach((shortCourse, shortIndex) => {
+        (section.shortCourses || []).forEach((shortCourse) => {
           const shortId = shortCourse.shortCourseId;
           const shortTitle = shortCourse.shortCourseTitle;
           lectures.push({
@@ -277,7 +266,7 @@ const CourseModal = ({
           sortOrder: index,
           lectures
         };
-      });
+      }).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
       const resolvedSections =
         course.courseTypeId === 1
@@ -344,19 +333,43 @@ const CourseModal = ({
 
   const createLectureData = (lecture, sortOrder) => {
     const mappingId = lecture.lmscourseMappingId || lecture.id;
+    
+    // Handle different ID structures for different lecture types
+    let lectureId, lectureTitle, displayName;
+    
+    if (lecture.itemType === 'CERTIFICATE') {
+      lectureId = lecture.id || lecture.courseCertificateId;
+      lectureTitle = lecture.title || lecture.courseCertificateTitle;
+      displayName = lecture.title || lecture.courseCertificateTitle;
+    } else if (lecture.itemType === 'SHORT_COURSE') {
+      lectureId = lecture.id || lecture.shortCourseId;
+      lectureTitle = lecture.title || lecture.shortCourseTitle;
+      displayName = lecture.title || lecture.shortCourseTitle;
+    } else {
+      // Regular LMS lectures
+      lectureId = mappingId;
+      lectureTitle = lecture.lmsLectureName || lecture.title || '';
+      displayName = lecture.displayName || lecture.lmsLectureName || lecture.title;
+    }
+    
     return {
-      id: mappingId,
-      title: lecture.lmsLectureName || lecture.title || '',
+      id: lectureId,
+      title: lectureTitle,
       source: lecture.source,
       lectureType: 1,
       isFreePreview: false,
       sortOrder,
       lmscourseMappingId: mappingId,
-      displayName: lecture.displayName || lecture.lmsLectureName || lecture.title,
+      displayName: displayName,
       lmsCourseId: lecture.lmsCourseId,
       lmsCourseName: lecture.lmsCourseName || '',
       lmsModuleId: lecture.lmsModuleId,
       lmsModuleName: lecture.lmsModuleName || '',
+      itemType: lecture.itemType,
+      courseCertificateId: lecture.courseCertificateId,
+      shortCourseId: lecture.shortCourseId,
+      shortCourseTitle: lecture.shortCourseTitle,
+      courseCertificateTitle: lecture.courseCertificateTitle,
       lmsSubjectId: lecture.lmsSubjectId,
       lmsSubjectName: lecture.lmsSubjectName,
       lmsLectureId: lecture.lmsLectureId,
@@ -582,9 +595,22 @@ const CourseModal = ({
       errors.price = 'Price must be greater than 0';
     }
 
-    // Validate lectures mapping if existing creation is checked
-    if (formData.mapExistingLectures && (!formData.mappedLectures || formData.mappedLectures.length === 0)) {
-      errors.mappedLectures = 'At least one lecture must be selected when existing creation is checked';
+    // Validate lectures mapping based on course type
+    if (formData.courseTypeId === 1) {
+      // For course type 1 (Professional Certificate), must select at least one course certificate
+      if (!formData.mappedLectures || formData.mappedLectures.length === 0) {
+        errors.mappedLectures = 'Please select at least one course certificate';
+      }
+    } else if (formData.courseTypeId === 2) {
+      // For course type 2 (Course Certificate), must select at least one short course
+      if (!formData.mappedLectures || formData.mappedLectures.length === 0) {
+        errors.mappedLectures = 'Please select at least one short course';
+      }
+    } else if (formData.courseTypeId === 3 && formData.mapExistingLectures) {
+      // For course type 3, lectures are mandatory only when existing creation is checked
+      if (!formData.mappedLectures || formData.mappedLectures.length === 0) {
+        errors.mappedLectures = 'Please select at least one lecture';
+      }
     }
 
     // Validate promo video file if present
@@ -1324,7 +1350,11 @@ const CourseModal = ({
                         onLectureReorder={handleLectureReorder}
                         courseType={formData.courseTypeId}
                         disabled={loading}
+                        professionalHierarchy={course?.professionalHierarchy}
                       />
+                      {formErrors.mappedLectures && (
+                        <p className="mt-2 text-sm text-red-600">{formErrors.mappedLectures}</p>
+                      )}
                     </div>
                   )}
                 </div>

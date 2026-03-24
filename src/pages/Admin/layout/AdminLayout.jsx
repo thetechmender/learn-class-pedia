@@ -1,22 +1,14 @@
-import {  useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useTheme } from "../../../context/ThemeContext";
-import { useAuth } from "../../../context/AuthContext";
 
 import { Navbar } from "./navbar";
-import SidebarComponent, { Sidebar } from "./SidebarComponent";
+import  { Sidebar } from "./SidebarComponent";
 
 const AdminLayout = ({ children }) => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/admin/login');
-  };
 
   const handleMenuClick = () => {
     setMobileMenuOpen(!mobileMenuOpen);

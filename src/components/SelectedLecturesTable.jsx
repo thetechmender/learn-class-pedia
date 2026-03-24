@@ -175,14 +175,18 @@ const SelectedLecturesTable = ({
                   {/* Actions */}
                   <div className="flex items-center space-x-2 ml-4">
                     {!disabled && (
-                      <button
-                        type="button"
-                        onClick={() => onLectureRemove(lecture.id)}
-                        className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                        title="Remove lecture"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      (lecture?.itemType === 'CERTIFICATE' || 
+                       (lecture?.itemType === 'SHORT_COURSE' && (courseType === 2 || courseType === 3))
+                      ) && (
+                        <button
+                          type="button"
+                          onClick={() => onLectureRemove(lecture.id)}
+                          className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                          title={lecture?.itemType === 'CERTIFICATE' ? "Remove certificate and all courses" : "Remove short course"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )
                     )}
                   </div>
                 </div>
