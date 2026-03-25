@@ -548,7 +548,16 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await ApiService.uploadCsvFile(formData);
+      var data;
+     const UploadCsvWithName=false;
+     if(!UploadCsvWithName)
+     {
+        data = await ApiService.uploadCsvFile(formData);
+     }
+     else{
+        data = await ApiService.uploadCsvFileByName(formData);
+     }
+      
       return data;
     } catch (err) {
       setError(err.response?.data || err.message || 'Failed to upload CSV file');
@@ -557,7 +566,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
       setLoading(false);
     }
   }, []);
-
+ 
   const updateCourseWithFile = useCallback(async (id, formData) => {
     try {
       setLoading(true);
@@ -825,6 +834,6 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     getCourseTopics,
     getCourseBadges,
     getAllCourseBadgesNew,
-    getAllSkills,
+    getAllSkills
   };
 };
