@@ -7,9 +7,10 @@ import { useModalState } from '../../../../hooks/utils/useModalState';
 import { useToast } from '../../../../hooks/utils/useToast';
 import { COURSE_MANAGEMENT_CONSTANTS } from '../../../../constants/courseManagement';
 import { filterCoursesBySearch } from '../../../../utils/courseUtils';
-import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2, Star, MessageSquare, Clock, Tag, Layers, Video, FileText } from 'lucide-react';
+import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2, Star, MessageSquare, Clock, Tag, Layers, Video, FileText, Upload, ChevronRight } from 'lucide-react';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 import CourseModal from '../../../../components/CourseModal';
+import CsvUploadModal from '../../../../components/CsvUploadModal';
 import UniversalVirtualizedTable from '../../../../components/UniversalVirtualizedTable';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 import { courseTableColumns } from '../../../../config/tableConfigurations';
@@ -18,7 +19,7 @@ const CourseManagement = () => {
   const { 
     error, getCourseById, clearError,
     getCourseTypes, getCourseLevels, getCourseTopics, getAllCategories, deleteCourse, getAllCoursesAdmin,
-    createCourseWithFile, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent
+    createCourseWithFile, uploadCourseCsv, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent
   } = useAdmin();
   
   const navigate = useNavigate();
@@ -81,6 +82,14 @@ const CourseManagement = () => {
   
   const [regeneratePrompt, setRegeneratePrompt] = useState('');
   const [promptError, setPromptError] = useState('');
+  
+  // CSV Upload Modal State
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [csvModalLoading, setCsvModalLoading] = useState(false);
+  const [csvModalError, setCsvModalError] = useState('');
+  
+  // Accordion state for professional hierarchy
+  const [expandedSections, setExpandedSections] = useState({});
 
   // Debounced search
   const debouncedSearchTerm = useDebounce(searchTerm, COURSE_MANAGEMENT_CONSTANTS.SEARCH_DEBOUNCE_DELAY);
@@ -358,6 +367,14 @@ const CourseManagement = () => {
     }));
   };
 
+  // Handle accordion toggle for professional hierarchy
+  const handleAccordionToggle = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
   // Handle edit course
   const handleEditCourse = async (course) => {
     try {
@@ -561,6 +578,25 @@ const CourseManagement = () => {
     openModal('delete', course);
   };
 
+  // Handle CSV upload
+  const handleCsvUpload = async (formData, isFormData = false) => {
+    try {
+      setCsvModalLoading(true);
+      setCsvModalError('');
+      
+      await uploadCourseCsv(formData);
+      showToast('Short courses created successfully from CSV!', 'success');
+      setCsvModalOpen(false);
+      
+      // Refresh course data
+      await applyFilters();
+    } catch (error) {
+      setCsvModalError(error.response?.data || error.message || 'Failed to upload CSV file');
+    } finally {
+      setCsvModalLoading(false);
+    }
+  };
+
   // Handle regenerate course content
   const handleRegenerateContent = async () => {
     if (!modalState.course?.id || !regeneratePrompt.trim()) {
@@ -735,6 +771,16 @@ const CourseManagement = () => {
             <span className="hidden sm:inline">Create Course</span>
             <span className="sm:hidden">Create</span>
           </button>
+          {filters.courseTypeId === 3 && (
+            <button 
+              onClick={() => setCsvModalOpen(true)}
+              className="flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 dark:hover:from-green-600 dark:hover:to-emerald-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
+            >
+              <Upload className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">CSV Upload</span>
+              <span className="sm:hidden">CSV</span>
+            </button>
+          )}
         </>
       }
     >
@@ -1089,6 +1135,90 @@ const CourseManagement = () => {
               </div>
             )}
 
+            {/* Professional Certificate Hierarchy */}
+            {(details?.professionalHierarchy?.sections?.length > 0 || course?.professionalHierarchy?.sections?.length > 0) && (
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 border border-indigo-200 dark:border-indigo-800">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center mr-2">
+                      <Layers className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">Professional Certificate Structure</h5>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {(details?.professionalHierarchy?.sections || course?.professionalHierarchy?.sections || []).length} certificates
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {(details?.professionalHierarchy?.sections || course?.professionalHierarchy?.sections || []).map((section, sectionIndex) => (
+                    <div key={section.courseCertificateId || sectionIndex} className="bg-white dark:bg-gray-800 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                      {/* Certificate Header - Clickable to Expand/Collapse */}
+                      <div 
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        onClick={() => handleAccordionToggle(section.courseCertificateId)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center justify-center w-6 h-6">
+                            {expandedSections[section.courseCertificateId] ? (
+                              <ChevronDown className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            )}
+                          </div>
+                          <div>
+                            <h6 className="text-sm font-bold text-gray-900 dark:text-white">
+                              {section.courseCertificateTitle}
+                            </h6>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {section.shortCourses?.length || 0} short courses
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Delete Button - Only on parent certificate */}
+                        {/* <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCourse({ id: section.courseCertificateId, title: section.courseCertificateTitle });
+                          }}
+                          className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                          title="Delete Certificate"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button> */}
+                      </div>
+                      
+                      {/* Short Courses - Nested Accordion Content */}
+                      {expandedSections[section.courseCertificateId] && section.shortCourses?.length > 0 && (
+                        <div className="px-4 pb-4 space-y-2 border-t border-gray-200 dark:border-gray-700">
+                          {section.shortCourses.map((shortCourse, shortCourseIndex) => (
+                            <div key={shortCourse.shortCourseId || shortCourseIndex} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                              <div className="flex items-start space-x-2">
+                                <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <BookOpen className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {shortCourse.shortCourseTitle}
+                                  </p>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                    Short Course ID: {shortCourse.shortCourseId}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Direct Lectures (for courses without sections) */}
             {(details?.directLectures?.length > 0 || course?.directLectures?.length > 0) && (
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
@@ -1276,6 +1406,16 @@ const CourseManagement = () => {
         dropdownLoading={dropdownLoading}
         dropdownError={dropdownError}
         onClearError={() => setModalError('')}
+      />
+
+      {/* CSV Upload Modal */}
+      <CsvUploadModal
+        isOpen={csvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        onSubmit={handleCsvUpload}
+        loading={csvModalLoading}
+        error={csvModalError}
+        onClearError={() => setCsvModalError('')}
       />
 
       {/* Regenerate Course Modal */}

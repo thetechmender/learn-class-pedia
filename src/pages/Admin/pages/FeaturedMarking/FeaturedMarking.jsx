@@ -482,9 +482,14 @@ const FeaturedMarking = () => {
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="text-xs text-gray-500">
-                      ID: {badge.id}
-                    </div>
+                    
+                      <div className="inline-flex items-center   from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700 rounded-lg   shadow-sm">
+                        <div className="w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center mr-2">
+                          <span className="text-white text-xs font-bold">{badge.id}</span>
+                        </div>
+                       
+                      </div>
+                 
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => openEditModal(badge)}

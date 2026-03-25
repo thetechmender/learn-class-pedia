@@ -13,6 +13,7 @@ export const API_CONFIG = {
 export const ENDPOINTS = {
   COURSES: '/courses',
   COURSE_CREATE: '/courses/CreateCourse',
+  COURSE_UPLOAD_CSV: '/courses/upload-csv',
   COURSES_PAGINATED: '/coursedata/paginated',
   COURSE_HIERARCHY: '/CourseData/hierarchy',
   COURSE_BY_ID: (id) => `/courses/${id}`,

@@ -434,6 +434,7 @@ const CareerRoles = () => {
               <table className="w-full">
                 <thead className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b`}>
                   <tr>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>ID</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Name</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Slug</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Description</th>
@@ -444,6 +445,7 @@ const CareerRoles = () => {
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
                   {careerRoles.map((role) => (
                     <tr key={role.id} className={`border-b transition-colors duration-150 ${theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-50 border-gray-200'}`}>
+                      <td className={`px-6 py-4 text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{role.id}</td>
                       <td className="px-6 py-4">
                         <div className="font-semibold text-sm text-gray-900 dark:text-white">{role.name}</div>
                       </td>

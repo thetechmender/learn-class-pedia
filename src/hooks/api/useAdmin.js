@@ -544,6 +544,20 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     }
   }, []);
 
+  const uploadCourseCsv = useCallback(async (formData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.uploadCsvFile(formData);
+      return data;
+    } catch (err) {
+      setError(err.response?.data || err.message || 'Failed to upload CSV file');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const updateCourseWithFile = useCallback(async (id, formData) => {
     try {
       setLoading(true);
@@ -794,6 +808,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
 
     // Course file upload operations
     createCourseWithFile,
+    uploadCourseCsv,
     updateCourseWithFile,
     generateCourseContent,
 

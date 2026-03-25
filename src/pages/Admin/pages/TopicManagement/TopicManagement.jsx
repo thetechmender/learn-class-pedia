@@ -763,13 +763,16 @@ const TopicManagement = () => {
                 key={topic.id}
                 className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:shadow-lg transition-shadow"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
+                <div className="flex items-center  mb-3">
+                  <div className="flex items-center flex-1 min-w-0 mr-3">
+                    <div className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full shadow-sm flex-shrink-0 mr-3">
+                      <span className="font-mono">{topic.id}</span>
+                    </div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                       {topic.title}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-1 ml-2">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <button
                       onClick={() => openEditModal(topic)}
                       className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -793,6 +796,7 @@ const TopicManagement = () => {
                     </button>
                   </div>
                 </div>
+
                 <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3">
                   {topic.description}
                 </p>

@@ -359,6 +359,7 @@ const CategoryManagement = () => {
     return (
       <React.Fragment key={category.id}>
         <tr className={`border-b transition-colors duration-150 ${theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-50 border-gray-200'} ${isMatching ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''}`}>
+          <td className={`px-6 py-4 text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{category.id}</td>
           <td className="px-6 py-4">
             <div className="flex items-center" style={{ paddingLeft: `${level * 20}px` }}>
               {hasChildren && (
@@ -598,6 +599,7 @@ const CategoryManagement = () => {
               <table className="w-full">
                 <thead className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b`}>
                   <tr>
+                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Id</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Category</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Slug</th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Description</th>
