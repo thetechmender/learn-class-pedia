@@ -60,6 +60,26 @@ export class CourseService {
     return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/tree`, {
       headers: this.getHeaders(token)
     });
+  };
+
+  getRelatedCourse(courseIds: string | null = null, token: string | null) {
+    return this.http.post<any>(
+      `${this.apiUrl}/Courses/SimilarCourses`,
+      { courseIds },
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  };
+
+  getShortCourseDetails(courseSlug: string  = '', token: string | null){
+       return this.http.post<any>(
+      `${this.apiUrl}/Courses/ShortCourseDetail`,
+      { courseSlug },
+      {
+        headers: this.getHeaders(token)
+      }
+    );
   }
 
   completeCourse(payload: any): Observable<any> {

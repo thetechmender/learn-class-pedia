@@ -10,8 +10,8 @@ import { Notebook } from './notebook/notebook';
 import { Transcript } from './transcript/transcript';
 import { Download } from './download/download';
 import { CompletionModal } from '../../shared/completion-modal/completion-modal';
+import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
-import { timingSafeEqual } from 'node:crypto';
 
 @Component({
   selector: 'app-course',
@@ -28,6 +28,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private authService = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
   private platformId = inject(PLATFORM_ID);
+  private toastr = inject(ToastrService);
 
   course = signal<any>(null);
   courseTree = signal<any>(null);
@@ -54,6 +55,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private pauseOverlayTimeout: any = null;
   showCompletionModal = signal(false);
   completionData = signal<any>(null);
+  isCompleting = signal(false);
   completeOrderPayload: any = {
     shortCourseId: null,
     courseCertificateId: null,
@@ -133,7 +135,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   toggleCertificate(certificateId: number) {
-    console.log(this.completeOrderPayload)
     const current = new Set(this.expandedCertificates());
     if (current.has(certificateId)) {
       current.delete(certificateId);
@@ -225,11 +226,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.isLoading.set(false);
           return;
         }
-
-        // 1️⃣ Raw lecture sections
         this.lectureSection.set(data);
-
-        // 2️⃣ Group by sectionTitle first, then by sectionType
         if (Array.isArray(data)) {
           const grouped: Record<string, Record<string, any[]>> = {};
 
@@ -248,18 +245,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
           this.groupedByTitle.set(grouped);
         }
-
-        // 3️⃣ Auto-select first item based on courseTypeId
         const tree = this.courseTree();
         if (tree?.courseTypeId === 1 && tree?.professionalCourse?.courseCertificates?.length > 0) {
-          // For Professional Certificate - expand first certificate and select first short course
           const firstCert = tree.professionalCourse.courseCertificates[0];
           this.activeCertificateId.set(firstCert.courseCertificateId);
           this.expandedCertificates.set(new Set([firstCert.courseCertificateId]));
           this.completeOrderPayload = {
-            certificateId: firstCert.courseCertificateId,
+            courseCertificateId: firstCert.courseCertificateId,
             shortCourseId: firstCert.shortCourses[0].shortCourseId,
-            courseId: this.courseTree()?.professionalCourseId
+            professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
           }
           if (firstCert.shortCourses?.length > 0) {
             const firstSc = firstCert.shortCourses[0];
@@ -274,10 +268,19 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               }))
             }));
         } else if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
+          this.completeOrderPayload = {
+            courseCertificateId: tree.courseId,
+            shortCourseId: tree.certificateCourse.shortCourses[0].shortCourseId,
+            professionalCertificateId: null
+          }
           const firstSc = tree.certificateCourse.shortCourses[0];
           this.selectFirstShortCourse(firstSc);
         } else if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
-          // For single lecture level - select first lecture directly
+          this.completeOrderPayload = {
+            courseCertificateId: null,
+            shortCourseId: tree.courseId,
+            professionalCertificateId: null
+          }
           const firstLec = tree.shortCourseLectures[0];
           this.selectFirstLecture(firstLec);
         }
@@ -472,7 +475,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onLectureSelectType3(lec: any) {
-    // For courseTypeId=3 - handle lecture click in sidebar
+    this.completeOrderPayload = {
+      shortCourseId: lec?.id,
+      courseCertificateId: null,
+      professionalCertificateId: null
+    };
     this.stopSpeech();
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
     this.isContentReady.set(false);
@@ -491,9 +498,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   onShortCourseSelectType1(sc: any) {
     this.completeOrderPayload.shortCourseId = sc.shortCourseId;
-    this.completeOrderPayload.certificateId = sc.certificateId;
-    this.completeOrderPayload.courseId = this.courseTree()?.professionalCourseId;
-    console.log(this.completeOrderPayload)
+    this.completeOrderPayload.courseCertificateId = sc.certificateId;
+    this.completeOrderPayload.professionalCertificateId = this.courseTree()?.professionalCourse?.professionalCourseId;
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
     this.currentShortCourse.set(sc);
@@ -526,6 +532,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onShortCourseSelect(sc: any) {
+    this.completeOrderPayload = {
+      shortCourseId: sc.shortCourseId,
+      courseCertificateId: this.courseTree()?.courseId,
+      professionalCertificateId: null
+    };
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
     this.currentShortCourse.set(sc);
@@ -847,19 +858,30 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   };
 
   complete() {
+    this.isCompleting.set(true);
+    const payload = {
+      shortCourseId: this.completeOrderPayload.shortCourseId ?? null,
+      courseCertificateId: this.completeOrderPayload.courseCertificateId ?? null,
+      professionalCertificateId: this.completeOrderPayload.professionalCertificateId ?? null
+    };
+    console.log('Complete Payload:', payload);
     this.courseService
-      .completeCourse(this.completeOrderPayload)
+      .completeCourse(payload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res: any) => {
+          this.isCompleting.set(false);
           if (res?.isSuccess && res?.data) {
             this.completionData.set(res.data);
             this.showCompletionModal.set(true);
-            // Refresh tree in background
             this.refreshCourseTree();
+          } else {
+            this.toastr.error(res?.errorMessage || 'Failed to mark course complete', 'Error');
           }
         },
         error: (err: any) => {
+          this.isCompleting.set(false);
+          this.toastr.error('An error occurred while marking course complete', 'Error');
           console.error('Complete Course Error:', err);
         }
       });

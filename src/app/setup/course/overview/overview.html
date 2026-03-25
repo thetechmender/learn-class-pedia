@@ -259,49 +259,15 @@
         <h3 class="text-lg font-bold text-gray-900 mb-6">Related Courses</h3>
         
         <!-- Related Course 1 -->
+         @for(item of relatedCourses(); track item.id; let i = $index){
         <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
-          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+          <img [src]="item.thumbnail" [alt]="item.title" class="w-24 h-16 rounded-lg flex-shrink-0 object-cover bg-gray-200">
           <div class="flex-1">
-            <p class="text-xs text-gray-500 mb-1">Short course</p>
-            <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">Agentic AI for Developers: Concepts and Application f...</h4>
+            <p class="text-xs text-gray-500 mb-1">{{item.courseType}}</p>
+            <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">{{item.title}}</h4>
           </div>
         </div>
-
-        <!-- Related Course 2 -->
-        <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
-          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
-          <div class="flex-1">
-            <p class="text-xs text-gray-500 mb-1">Professional certificate</p>
-            <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">Agentic AI for Developers: Concepts and Application f...</h4>
-          </div>
-        </div>
-
-        <!-- Related Course 3 -->
-        <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
-          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
-          <div class="flex-1">
-            <p class="text-xs text-gray-500 mb-1">Advance course</p>
-            <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">Agentic AI for Developers: Concepts and Application f...</h4>
-          </div>
-        </div>
-
-        <!-- Related Course 4 -->
-        <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
-          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
-          <div class="flex-1">
-            <p class="text-xs text-gray-500 mb-1">Short course</p>
-            <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">Agentic AI for Developers: Concepts and Application f...</h4>
-          </div>
-        </div>
-
-        <!-- Related Course 5 -->
-        <div class="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity">
-          <div class="w-24 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
-          <div class="flex-1">
-            <p class="text-xs text-gray-500 mb-1">Professional certificate</p>
-            <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">Agentic AI for Developers: Concepts and Application f...</h4>
-          </div>
-        </div>
+         }
       </div>
     </div>
   </div>
