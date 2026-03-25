@@ -127,6 +127,13 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   
   // Modify existing items to create Skill as main navbar with Course Skill Mapping as child
   const allManagementItems = [
+    // Ensure Templates is always included
+    {
+      id: 'templates',
+      label: 'Templates',
+      icon: Award,
+      path: 'templates'
+    },
     // Find Course Management index to insert Student Management after it
     ...(function() {
       const courseMgmtIndex = managementItems.findIndex(item => 
@@ -212,29 +219,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
       return null;
     }
     
-    // Create Templates section with Email Template and Certificate Template as children
+    // Filter out old email templates item
     if (item.id === 'email-templates' || item.label === 'Email Templates') {
-      return {
-        ...item,
-        id: 'templates',
-        label: 'Templates',
-        icon: Award,
-        path: 'email-templates', // Make parent clickable
-        children: [
-          {
-            id: 'email-templates',
-            label: 'Email Templates',
-            icon: Mail,
-            path: 'email-templates'
-          },
-          {
-            id: 'certificate-templates',
-            label: 'Certificate Templates',
-            icon: Award,
-            path: 'certificate-templates'
-          }
-        ]
-      };
+      return null;
     }
     
     // Filter out separate Certificate Template item

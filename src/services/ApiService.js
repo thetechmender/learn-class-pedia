@@ -1032,6 +1032,215 @@ class ApiService {
       throw error;
     }
   }
+async uploadCsvFileByName(formData) {
+    const url = `${this.baseURL}${ENDPOINTS.COURSE_UPLOAD_CSV_By_Name}`;
+    
+    const config = {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            // Handle different error response formats - prioritize "message" field
+            errorDetails = errorData.message || errorData.error || errorData.title || 
+                          (errorData.errors && Object.values(errorData.errors)[0]?.[0]) ||
+                          JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('CSV upload failed:', error);
+      throw error;
+    }
+  }
+
+  // Unified Template Management Methods
+  async getTemplates(params = {}) {
+    const url = `${this.baseURL}${ENDPOINTS.TEMPLATES}`;
+    const queryString = new URLSearchParams(params).toString();
+    const fullUrl = queryString ? `${url}?${queryString}` : url;
+    
+    const config = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(fullUrl, config);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to fetch templates:', error);
+      throw error;
+    }
+  }
+
+  async getTemplateById(id) {
+    const url = `${this.baseURL}${ENDPOINTS.TEMPLATE_BY_ID(id)}`;
+    
+    const config = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to fetch template:', error);
+      throw error;
+    }
+  }
+
+  async getTemplateTypes() {
+    const url = `${this.baseURL}${ENDPOINTS.TEMPLATES_TYPES}`;
+    
+    const config = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to fetch template types:', error);
+      throw error;
+    }
+  }
+
+  async createTemplate(templateData) {
+    const url = `${this.baseURL}${ENDPOINTS.TEMPLATE_CREATE}`;
+    
+    const config = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      body: JSON.stringify(templateData),
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create template:', error);
+      throw error;
+    }
+  }
+
+  async updateTemplate(id, templateData) {
+    const url = `${this.baseURL}${ENDPOINTS.TEMPLATE_UPDATE(id)}`;
+    
+    const config = {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      body: JSON.stringify(templateData),
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to update template:', error);
+      throw error;
+    }
+  }
+
+  async deleteTemplate(id) {
+    const url = `${this.baseURL}${ENDPOINTS.TEMPLATE_DELETE(id)}`;
+    
+    const config = {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to delete template:', error);
+      throw error;
+    }
+  }
 
   // Update course with file upload (FormData)
   async updateCourseWithFile(id, formData) {

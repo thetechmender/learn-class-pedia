@@ -12,8 +12,7 @@ import CategoryManagement from '../pages/CategoryManagement/CategoryManagement';
 import CareerRoles from '../pages/CareerPath/CareerRoles';
 import CareerSkills from '../pages/CareerPath/CareerSkills';
 import CourseSkillMapping from '../pages/CourseSkillMapping/CourseSkillMapping';
-import EmailTemplateManagement from '../pages/EmailTemplateManagement/EmailTemplateManagement';
-import CertificateTemplateManagement from '../pages/CertificateTemplateManagement/CertificateTemplateManagement';
+import TemplateManagement from '../pages/TemplateManagement/TemplateManagement';
 import ReviewManagementPage from '../pages/ReviewManagementPage/ReviewManagementPage';
 import AssignDiscountRate from '../pages/AssignDiscountRate/AssignDiscountRate';
 import DiscountRates from '../pages/DiscountRates/DiscountRates';
@@ -36,8 +35,7 @@ const componentMap = {
   CareerRoles,
   CareerSkills,
   CourseSkillMapping,
-  EmailTemplateManagement,
-  CertificateTemplateManagement,
+  TemplateManagement,
   ReviewManagementPage,
   AssignDiscountRate,
   DiscountRates,
@@ -182,6 +180,11 @@ const DynamicRoutes = () => {
       <Route path="course-content/:lectureId" element={
         <ProtectedRoute>
           <CourseContent />
+        </ProtectedRoute>
+      } />
+      <Route path="templates" element={
+        <ProtectedRoute>
+          <TemplateManagement />
         </ProtectedRoute>
       } />
       
