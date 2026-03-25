@@ -51,6 +51,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   activeShortCourseId = signal<number | null>(null);
   isContentReady = signal(false);
   currentShortCourse = signal<any>(null);
+  courseSlug =  signal<string>('');
   showPauseOverlay = signal(false);
   private pauseOverlayTimeout: any = null;
   showCompletionModal = signal(false);
@@ -211,11 +212,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseService.getCourseDetailsV2WithToken(courseId, token).pipe(
       map((res: any) => res?.isSuccess !== undefined ? res.data : res),
       switchMap((courseDetails: any) => {
+        this.courseSlug.set(courseDetails?.slug || '');
         this.course.set(courseDetails);
         return this.courseService.getCourseTreeV2WithToken(courseId, token).pipe(
           map((treeRes: any) => treeRes?.isSuccess !== undefined ? treeRes.data : treeRes),
           map((tree: any) => {
             this.courseTree.set(tree);
+            if (tree?.slug || tree?.courseSlug) {
+              this.courseSlug.set(tree?.slug || tree?.courseSlug || '');
+            }
             return this.courseService.extractLectureSectionsFromTree(tree);
           })
         );

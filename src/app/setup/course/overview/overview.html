@@ -14,7 +14,8 @@
           <span class="text-base font-medium text-gray-800">4.8</span>
           <div class="flex items-center">
             @for (star of [1,2,3,4,5]; track star) {
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" fill="currentColor"
+              viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
             }
@@ -22,7 +23,7 @@
           <span class="text-sm text-primary">(244 reviews)</span>
         </div>
         <p class="text-sm text-gray-600 leading-relaxed">
-          This short course introduces learners to the fundamentals of Google Ads, covering campaign creation, keyword targeting, ad optimization, and performance tracking. Designed for beginners and career switchers, the course focuses on hands-on learning and practical insights that help you understand how paid search advertising works in real business environments
+          {{this.overView()?.overview || ''}}
         </p>
       </div>
 
@@ -33,21 +34,28 @@
           <h3 class="text-primary text-xl font-semibold">Course content</h3>
           <div class="flex items-center gap-6 text-sm text-primary">
             <span class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               {{ getTotalLectures() }} Lecture
             </span>
             <span class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {{ getTotalVideos() }} Video
             </span>
             <span class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
               {{ getTotalPDFs() }} PDF
             </span>
@@ -61,10 +69,10 @@
         @let certExpanded = isCertificateExpanded(cert.courseCertificateId);
         <div class="border-b border-dashed border-gray-200">
           <!-- Certificate Header -->
-          <div class="flex items-center justify-between py-4 cursor-pointer" (click)="toggleCertificate(cert.courseCertificateId)">
+          <div class="flex items-center justify-between py-4 cursor-pointer"
+            (click)="toggleCertificate(cert.courseCertificateId)">
             <h4 class="text-primary text-base font-medium">{{ cert.title }}</h4>
-            <svg xmlns="http://www.w3.org/2000/svg" 
-              class="h-5 w-5 text-primary transition-transform duration-200"
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary transition-transform duration-200"
               [class.rotate-90]="certExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
@@ -78,21 +86,28 @@
               <p class="text-sm text-gray-500 font-small mb-2">{{ scIndex + 1 }}. {{ sc.title }}</p>
               <div class="flex items-center gap-4 text-xs text-primary">
                 <span class="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   1 Lecture
                 </span>
                 <span class="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {{ sc.lectures?.length || 1 }} Videos
                 </span>
                 <span class="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                   {{ sc.lectures?.length || 1 }} PDFs
                 </span>
@@ -113,21 +128,28 @@
           <h3 class="text-primary text-xl font-semibold">Topic of the course</h3>
           <div class="flex items-center gap-6 text-sm text-gray-700">
             <span class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               01 Lecture
             </span>
             <span class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               01 Video
             </span>
             <span class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
               01 PDF
             </span>
@@ -135,121 +157,100 @@
         </div>
       </div>
 
-      <!-- Introduction to Sales - Clickable item -->
+      <!-- Introduction to Sales - Clickable item -->\
+      @if(this.overView()?.keyPoints?.length > 0) {
       <div class="mb-6 flex items-center justify-between py-3 border-b border-dashed border-gray-300">
         <div class="flex items-center gap-2">
           <span class="text-primary text-lg">◆</span>
           <span class="text-primary text-lg font-medium">{{ title }}</span>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </div>
 
       <!-- Learning Outcomes -->
+
       <div class="mb-8">
         <h3 class="text-lg font-bold text-gray-900 mb-4">Learning Outcomes</h3>
         <div class="space-y-4">
+          @for(point of this.overView()?.keyPoints || []; track point; let i = $index) {
           <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            <p class="text-sm text-gray-600 leading-relaxed">It guides salespeople through steps to identify prospects, understand needs, present solutions, and close deals effectively.</p>
+            <p class="text-sm text-gray-600 leading-relaxed">{{point}}</p>
           </div>
-          <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <p class="text-sm text-gray-600 leading-relaxed">It now emphasizes consultative, solution-based approaches, leveraging technology like CRM, AI, and virtual meetings to build personalized relationships.</p>
-          </div>
-          <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <p class="text-sm text-gray-600 leading-relaxed">High EQ helps salespeople read signals, build rapport, handle objections empathetically, and foster trust for long-term relationships.</p>
-          </div>
-          <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <p class="text-sm text-gray-600 leading-relaxed">It ensures customer satisfaction, encourages referrals, and opens opportunities for cross-selling and upselling, enhancing lifetime value.</p>
-          </div>
-          <div class="flex items-start gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <p class="text-sm text-gray-600 leading-relaxed">Unresponsive prospects, competition, complex decision-making, and internal misalignments—overcome with resilience, preparation, and technology.</p>
-          </div>
+          }
         </div>
       </div>
       }
+
+      }
       <!-- Knowledge & Skills - Green/Cyan background -->
+      @if(this.overView()?.courseTags?.length > 0) {
       <div class="mb-8 bg-[#00D9A5]/20 rounded-2xl p-6">
         <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-3 text-lg">
           <span class="text-2xl">💡</span>
           Knowledge & Skills You Will Learn
         </h3>
         <div class="flex flex-wrap gap-3">
-          <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">Google Ads</span>
-          <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">Keyword Research</span>
-          <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">Campaign Optimization</span>
-          <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">Reporting</span>
-          <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">Analytics</span>
+          @for(tag of this.overView()?.courseTags || []; track tag; let i = $index) {
+          <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">{{tag}}</span>
+          }
         </div>
       </div>
-
+      }
       <!-- Learner Reviews & Feedback -->
       <div class="bg-[#00D9A5]/10 rounded-2xl p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-bold text-gray-900">Learner Reviews & Feedback</h3>
+
           <div class="flex items-center gap-3">
             <div class="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
               <span class="text-lg font-bold text-gray-800">4.7</span>
             </div>
             <span class="text-primary text-sm">277 Total Reviews</span>
           </div>
-        </div>
-        
-        <!-- Review 1 -->
-        <div class="bg-white rounded-xl p-4 mb-4">
-          <div class="flex items-start gap-4">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Adeel Farooq" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="font-semibold text-gray-900">Adeel Farooq</h4>
-                <div class="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  <span class="text-sm font-medium text-gray-700">5</span>
-                </div>
-              </div>
-              <p class="text-sm text-gray-600 leading-relaxed">"The structured progression helped me understand exactly what to learn next. Everything felt purposeful and career-focused."</p>
-            </div>
-          </div>
+
         </div>
 
-        <!-- Review 2 -->
-        <div class="bg-white rounded-xl p-4">
+        <!-- Review 1 -->
+        @for (
+        review of (this.overView()?.reviews || []).slice(0, 2);
+        track review;
+        let i = $index
+        ) {
+        <div class="bg-white rounded-xl p-4 mb-4">
           <div class="flex items-start gap-4">
-            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Maria Siddiqui" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
+            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Adeel Farooq"
+              class="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
+
             <div class="flex-1">
               <div class="flex items-center justify-between mb-2">
-                <h4 class="font-semibold text-gray-900">Maria Siddiqui</h4>
+                <h4 class="font-semibold text-gray-900">{{review?.customerName || ''}}</h4>
                 <div class="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   <span class="text-sm font-medium text-gray-700">5</span>
                 </div>
               </div>
-              <p class="text-sm text-gray-600 leading-relaxed">"I liked how the learning path removed confusion. Each level builds logically on the previous one."</p>
+              <p class="text-sm text-gray-600 leading-relaxed">"{{review?.reviewText}}"</p>
             </div>
+
           </div>
         </div>
+        }
       </div>
     </div>
 
@@ -257,17 +258,18 @@
     <div class="w-90 flex-shrink-0">
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <h3 class="text-lg font-bold text-gray-900 mb-6">Related Courses</h3>
-        
+
         <!-- Related Course 1 -->
-         @for(item of relatedCourses(); track item.id; let i = $index){
+        @for(item of relatedCourses(); track item.id; let i = $index){
         <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
-          <img [src]="item.thumbnail" [alt]="item.title" class="w-24 h-16 rounded-lg flex-shrink-0 object-cover bg-gray-200">
+          <img [src]="item.thumbnail" [alt]="item.title"
+            class="w-24 h-16 rounded-lg flex-shrink-0 object-cover bg-gray-200">
           <div class="flex-1">
             <p class="text-xs text-gray-500 mb-1">{{item.courseType}}</p>
             <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">{{item.title}}</h4>
           </div>
         </div>
-         }
+        }
       </div>
     </div>
   </div>

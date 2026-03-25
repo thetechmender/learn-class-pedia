@@ -71,10 +71,29 @@ export class CourseService {
       }
     );
   };
-
   getShortCourseDetails(courseSlug: string  = '', token: string | null){
        return this.http.post<any>(
       `${this.apiUrl}/Courses/ShortCourseDetail`,
+      { courseSlug },
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  }
+
+  getCourseCertificateDetails(courseSlug: string  = '', token: string | null){
+       return this.http.post<any>(
+      `${this.apiUrl}/Courses/CourseCertificates1`,
+      { courseSlug },
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  }
+
+    getProfessionalCertificateDetails(courseSlug: string  = '', token: string | null){
+       return this.http.post<any>(
+      `${this.apiUrl}/Courses/ProfessionalCertificate1`,
       { courseSlug },
       {
         headers: this.getHeaders(token)
