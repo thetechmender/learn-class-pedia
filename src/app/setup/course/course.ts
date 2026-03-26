@@ -51,7 +51,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   activeShortCourseId = signal<number | null>(null);
   isContentReady = signal(false);
   currentShortCourse = signal<any>(null);
-  courseSlug =  signal<string>('');
+  courseSlug = signal<string>('');
   showPauseOverlay = signal(false);
   private pauseOverlayTimeout: any = null;
   showCompletionModal = signal(false);
@@ -863,13 +863,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   };
 
   complete() {
+    if (this.isLoading()) {
+      return;
+    }
     this.isCompleting.set(true);
     const payload = {
       shortCourseId: this.completeOrderPayload.shortCourseId ?? null,
       courseCertificateId: this.completeOrderPayload.courseCertificateId ?? null,
       professionalCertificateId: this.completeOrderPayload.professionalCertificateId ?? null
     };
-    console.log('Complete Payload:', payload);
     this.courseService
       .completeCourse(payload)
       .pipe(takeUntil(this.destroy$))

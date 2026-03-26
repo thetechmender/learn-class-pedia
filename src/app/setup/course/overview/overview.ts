@@ -25,6 +25,7 @@ export class Overview implements OnInit, OnChanges {
   expandedCertificates = signal<Set<number>>(new Set());
   relatedCourses = signal<any>(null);
   overView = signal<any>(null);
+  isLearningOutcomesExpanded = signal<boolean>(false);
 
 
   ngOnChanges(changes: SimpleChanges) {
@@ -137,6 +138,31 @@ export class Overview implements OnInit, OnChanges {
           console.error('Refresh Course Tree Error:', err);
         }
       });
+  };
+
+  formatDuration(minutes: number, onlyMinutes = false): string {
+    if (!minutes || minutes <= 0) return '0m';
+
+    // Sirf minutes dikhane hain
+    if (onlyMinutes) {
+      return `${minutes}m`;
+    }
+
+    // 60 se kam
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    return remainingMinutes > 0
+      ? `${hours}h ${remainingMinutes}m`
+      : `${hours}h`;
+  };
+
+  getRoundedRating(): number {
+    return Math.round(this.overView()?.averageRating || 0);
   }
 
 }
