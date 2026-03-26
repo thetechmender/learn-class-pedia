@@ -99,7 +99,9 @@ export class CourseService {
         headers: this.getHeaders(token)
       }
     );
-  }
+  };
+
+  
 
   completeCourse(payload: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/learning/v2/course/complete`, payload);
@@ -213,6 +215,12 @@ export class CourseService {
 
   getCourseProgressWithToken(courseId: number, token: string | null): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/progress`, {
+      headers: this.getHeaders(token)
+    });
+  };
+
+  updateCourseProgressWithToken(payload: any, token: string | null): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/learning/v2/course/progress`, payload, {
       headers: this.getHeaders(token)
     });
   };

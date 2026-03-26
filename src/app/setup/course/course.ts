@@ -64,6 +64,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     professionalCertificateId: null
   };
   private destroy$ = new Subject<void>();
+  private progressInterval: any = null;
+  private progressStartTime: number = 0;
+  private lastProgressUpdate: number = 0;
   allSections = computed(() => {
     const sections: any[] = [];
     const grouped = this.groupedByTitle();
@@ -75,6 +78,21 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       });
     });
     return sections;
+  });
+
+  totalLearningItems = computed(() => this.allSections().length);
+  
+  completedItems = computed(() => {
+    const progress = this.progress();
+    if (!progress) return 0;
+    const percentage = progress.completionPercentage || 0;
+    const total = this.totalLearningItems();
+    return Math.round((percentage / 100) * total);
+  });
+
+  completionPercentage = computed(() => {
+    const progress = this.progress();
+    return progress?.completionPercentage || 0;
   });
 
   currentSectionIndex = computed(() => {
@@ -302,8 +320,67 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (res: any) => {
         const data = res.isSuccess !== undefined ? res.data : res;
         this.progress.set(data);
+        this.startProgressTracking(token);
       },
       error: (err: any) => console.error('Progress Error:', err)
+    });
+  }
+
+  private startProgressTracking(token: string | null) {
+    this.progressStartTime = Date.now();
+    this.lastProgressUpdate = this.progress()?.secondsWatched || 0;
+    
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+
+    this.progressInterval = setInterval(() => {
+      this.updateProgress(token);
+    }, 20000);
+  }
+
+  private updateProgress(token: string | null) {
+    const tree = this.courseTree();
+    if (!tree) return;
+
+    const elapsedSeconds = Math.floor((Date.now() - this.progressStartTime) / 1000);
+    const totalSecondsWatched = this.lastProgressUpdate + elapsedSeconds;
+    
+    const currentIndex = this.currentSectionIndex();
+    const totalSections = this.totalLearningItems();
+    const completionPercentage = totalSections > 0 
+      ? Math.min(100, Math.round(((currentIndex + 1) / totalSections) * 100 * 10) / 10)
+      : 0;
+
+    let payload: any = {
+      shortCourseId: null,
+      courseCertificateId: null,
+      professionalCourseId: null,
+      completionPercentage: completionPercentage,
+      secondsWatched: totalSecondsWatched,
+      lastPositionSeconds: this.speechService.currentTime() || 0
+    };
+
+    if (tree.courseTypeId === 1) {
+      payload.shortCourseId = this.completeOrderPayload.shortCourseId;
+      payload.courseCertificateId = this.completeOrderPayload.courseCertificateId;
+      payload.professionalCourseId = this.completeOrderPayload.professionalCertificateId;
+    } else if (tree.courseTypeId === 2) {
+      payload.shortCourseId = this.completeOrderPayload.shortCourseId;
+      payload.courseCertificateId = this.completeOrderPayload.courseCertificateId;
+      payload.professionalCourseId = null;
+    } else if (tree.courseTypeId === 3) {
+      payload.shortCourseId = tree.courseId;
+      payload.courseCertificateId = null;
+      payload.professionalCourseId = null;
+    }
+
+    this.courseService.updateCourseProgressWithToken(payload, token).subscribe({
+      next: (res: any) => {
+        const data = res.isSuccess !== undefined ? res.data : res;
+        this.progress.set(data);
+      },
+      error: (err: any) => console.error('Progress Update Error:', err)
     });
   }
 
@@ -966,5 +1043,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.destroy$.complete();
     this.speechService.stop();
     this.isPlaying.set(false);
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
   }
 }
