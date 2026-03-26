@@ -168,4 +168,11 @@ export class Overview implements OnInit, OnChanges {
     return Math.round(this.overView()?.averageRating || 0);
   }
 
+  getAverageReviewRating(): number {
+    const reviews = this.overView()?.reviews || [];
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0);
+    return Math.round(total / reviews.length);
+  }
+
 }

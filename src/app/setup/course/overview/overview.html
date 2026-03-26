@@ -139,7 +139,7 @@
 
       <!-- Topic of the Course - Green/Cyan background (for courseTypeId 2 & 3) -->
       @if(courseTypeId == 3 || courseTypeId == 2) {
-      <div class="mb-6 bg-[#00FF9E] rounded-xl p-5">
+      <div class="mb-6 bg-thirdly rounded-xl p-5">
         <div class="flex items-center justify-between">
           <h3 class="text-primary text-xl font-semibold">Topic of the course</h3>
           <div class="flex items-center gap-6 text-sm text-gray-700">
@@ -226,16 +226,19 @@
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-bold text-gray-900">Learner Reviews & Feedback</h3>
 
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="currentColor"
+          <div class="flex items-center gap-2">
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor"
                 viewBox="0 0 24 24">
                 <path
                   d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
-              <!-- <span class="text-lg font-bold text-gray-800">4.7</span> -->
+              <span class="text-sm font-medium text-gray-700"> {{ getAverageReviewRating() }}</span>
             </div>
-            <span class="text-primary text-sm">({{this.overView()?.reviewCount}} Total Reviews)</span>
+            <!-- Review Count -->
+            <span class="text-sm text-primary">
+              ({{ this.overView()?.reviewCount }} Total Reviews)
+            </span>
           </div>
 
         </div>
@@ -246,8 +249,8 @@
         track review;
         let i = $index
         ) {
-        <div class="bg-white rounded-xl p-4 mb-4">
-          <div class="flex items-start gap-4">
+        <div class="bg-thirdly rounded-xl p-4 mb-4 border-b border-black/10">
+          <div class="flex items-start gap-4 ">
             <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Adeel Farooq"
               class="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
 
