@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import ApiService from '../../services/ApiService';
-import { ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
 
 // Simple cache implementation
@@ -168,6 +167,22 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
       return data;
     } catch (err) {
       setError('Failed to delete course');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchCourses]);
+
+  // Remove course thumbnail
+  const removeThumbnail = useCallback(async (courseId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.removeThumbnail(courseId);
+      await fetchCourses(); // Refresh the list to show updated thumbnail
+      return data;
+    } catch (err) {
+      setError('Failed to remove thumbnail');
       throw err;
     } finally {
       setLoading(false);
@@ -790,6 +805,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     deleteCourse,
     getAllCoursesAdmin,
     fetchCourses,
+    removeThumbnail,
 
     // Course tags and badges
     getAllCourseTags,

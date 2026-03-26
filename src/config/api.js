@@ -14,12 +14,7 @@ export const ENDPOINTS = {
   COURSES: '/courses',
   COURSE_CREATE: '/courses/CreateCourse',
   COURSE_UPLOAD_CSV: '/courses/upload-csv',
-  // Unified Template Management endpoints
-  TEMPLATES: '/templates',
-  TEMPLATES_TYPES: '/templates/types',
-  TEMPLATE_BY_ID: (id) => `/templates/${id}`,
-  TEMPLATE_CREATE: '/templates',
-  TEMPLATE_UPDATE: (id) => `/templates/${id}`,
+  COURSE_REMOVE_THUMBNAIL: (id) => `/remove-thumbnail?courseId=${id}`,
   TEMPLATE_DELETE: (id) => `/templates/${id}`,
   COURSE_UPLOAD_CSV_By_Name: '/courses/upload-csv-by-name',
   COURSES_PAGINATED: '/coursedata/paginated',

@@ -1090,6 +1090,62 @@ async uploadCsvFileByName(formData) {
     }
   }
 
+  // Remove course thumbnail
+  async removeThumbnail(courseId) {
+    const url = `${this.baseURL}${ENDPOINTS.COURSE_REMOVE_THUMBNAIL(courseId)}`;
+    
+    const config = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      timeout: this.timeout
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorDetails = errorData.message || errorData.error || errorData.title || 
+                          (errorData.errors && Object.values(errorData.errors)[0]?.[0]) ||
+                          JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Remove thumbnail failed:', error);
+      throw error;
+    }
+  }
+
   // Unified Template Management Methods
   async getTemplates(params = {}) {
     const url = `${this.baseURL}${ENDPOINTS.TEMPLATES}`;

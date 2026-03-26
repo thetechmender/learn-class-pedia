@@ -1,4 +1,4 @@
-import { Eye, Edit2, Trash2, Award, Folder, FolderOpen, Users, Star, BookOpen, RefreshCw } from 'lucide-react';
+import { Eye, Edit2, Trash2, Award, Folder, FolderOpen, Users, Star, BookOpen, RefreshCw, ImageOff } from 'lucide-react';
 
 // Course table configuration
 export const courseTableColumns = [
@@ -78,14 +78,21 @@ export const courseTableColumns = [
         icon: <BookOpen className="w-4 h-4" />,
         title: 'View Course Content',
         className: 'text-green-600 hover:text-green-800 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900',
-        condition: (item) => item.courseDetailLectureId != null
+        condition: (item) => item.courseDetailLectureId != null && (item.courseTypeId !== 3 || item.isNew === true)
       },
       {
         key: 'regenerate',
         icon: <RefreshCw className="w-4 h-4" />,
         title: 'Regenerate Course',
         className: 'text-purple-600 hover:text-purple-800 hover:bg-purple-100 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900',
-        condition: (item) => item.courseDetailLectureId != null && item.courseTypeId === 3
+        condition: (item) => item.courseDetailLectureId != null && item.courseTypeId === 3 && item.isNew === true
+      },
+      {
+        key: 'remove-thumbnail',
+        icon: <ImageOff className="w-4 h-4" />,
+        title: 'Remove & Regenerate Thumbnail',
+        className: 'text-orange-600 hover:text-orange-800 hover:bg-orange-100 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-900',
+        condition: (item) => item.thumbnailUrl || item.imageUrl || item.image || item.courseImage || item.thumbnail || item.courseThumbnail
       }
     ]
   }

@@ -127,13 +127,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   
   // Modify existing items to create Skill as main navbar with Course Skill Mapping as child
   const allManagementItems = [
-    // Ensure Templates is always included
-    {
-      id: 'templates',
-      label: 'Templates',
-      icon: Award,
-      path: 'templates'
-    },
     // Find Course Management index to insert Student Management after it
     ...(function() {
       const courseMgmtIndex = managementItems.findIndex(item => 
@@ -212,6 +205,13 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
           path: 'skill-mapping'
         }
       ]
+    },
+    // Add Templates after Skills
+    {
+      id: 'templates',
+      label: 'Templates',
+      icon: Award,
+      path: 'templates'
     }
   ].map(item => {
     // Filter out separate Course Skill Mapping item

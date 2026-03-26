@@ -57,7 +57,8 @@ const CourseModal = ({
     mappedLectures: [],
     sections: [],
     thumbnailFile: null,
-    promoVideoFile: null
+    promoVideoFile: null,
+    instructionForCourseCreation: ''
   });
 
   const courseTypeIdNumber = Number(formData.courseTypeId);
@@ -301,7 +302,8 @@ const CourseModal = ({
         mappedLectures: mappedLecturesResolved,
         sections: resolvedSections,
         thumbnailFile: null,
-        promoVideoFile: null
+        promoVideoFile: null,
+        instructionForCourseCreation: course.instructionForCourseCreation || ''
       });
     } else if (mode === 'create') {
       setFormData({
@@ -515,26 +517,36 @@ const CourseModal = ({
     }
   };
 
-  const handleLectureSelect = (lecture) => {
+  const handleLectureSelect = (lecture, action = 'add') => {
     const mappingId = lecture.lmscourseMappingId || lecture.id;
 
     setFormData((prev) => {
       const alreadySelected = (prev.mappedLectures || []).some((l) => (l.lmscourseMappingId || l.id) === mappingId);
-      if (alreadySelected) return prev;
-
-      const lectureData = createLectureData(lecture, (prev.mappedLectures || []).length);
-
+      
       if (Number(prev.courseTypeId) === 3) {
-        return {
-          ...prev,
-          mappedLectures: [{ ...lectureData, sortOrder: 0 }]
-        };
+        // For course type 3, only allow one lecture - always replace
+        if (action === 'add' && !alreadySelected) {
+          // Add new lecture (replace any existing)
+          const lectureData = createLectureData(lecture, 0);
+          return {
+            ...prev,
+            mappedLectures: [{ ...lectureData, sortOrder: 0 }]
+          };
+        }
+        // For course type 3, don't allow removal through dropdown - use table instead
+        return prev;
+      } else {
+        // For other course types, only add if not already selected
+        if (!alreadySelected) {
+          const lectureData = createLectureData(lecture, (prev.mappedLectures || []).length);
+          return {
+            ...prev,
+            mappedLectures: [...(prev.mappedLectures || []), lectureData]
+          };
+        }
       }
 
-      return {
-        ...prev,
-        mappedLectures: [...(prev.mappedLectures || []), lectureData]
-      };
+      return prev; // No change if already selected (for other types) or invalid action
     });
   };
 
@@ -675,6 +687,7 @@ const CourseModal = ({
     submitData.append('discountedPrice', String(parseFloat(formData.discountedPrice) || 0));
     submitData.append('currencyCode', formData.currencyCode || '');
     submitData.append('promoVideoUrl', formData.promoVideoUrl || '');
+    submitData.append('instructionForCourseCreation', formData.instructionForCourseCreation || '');
     submitData.append('IsThumbnailRemoved', String(!!formData.IsThumbnailRemoved));
     submitData.append('IsPromoVideoRemoved', String(!!formData.IsPromoVideoRemoved));
 
@@ -917,7 +930,22 @@ const CourseModal = ({
                 {formErrors.overview && <p className="mt-1 text-sm text-red-600">{formErrors.overview}</p>}
               </div>
 
-             
+              {/* Instruction for Course Creation - Only for Short Courses */}
+              {formData.courseTypeId === 3 && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Instruction for Course Creation</label>
+                  <textarea
+                    name="instructionForCourseCreation"
+                    value={formData.instructionForCourseCreation}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter specific instructions for creating this short course"
+                    disabled={loading}
+                  />
+                </div>
+              )}
+
                 <div className="flex flex-col md:flex-row md:items-end gap-4">
                   <div className="flex-1 min-w-0">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>

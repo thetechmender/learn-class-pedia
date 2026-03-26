@@ -49,14 +49,29 @@ const LmsLecturesDropdown = ({
         
         const response = await lmsLecturesService.searchLmsLectures(searchParams);
         
-        // Filter out already selected lectures by lmscourseMappingId
-        const availableLectures = response.filter(lecture => {
-          const lectureMapId = lecture.lmscourseMappingId || lecture.id;
-          return !selectedLectures.some(selected => {
-            const selectedMapId = selected.lmscourseMappingId || selected.id;
-            return selectedMapId === lectureMapId;
+        // For course type 3 (short courses), show all lectures including selected ones
+        // For other course types, filter out already selected lectures
+        let availableLectures;
+        if (courseTypeId === 3) {
+          // For short courses, include selected lectures but mark them as selected
+          availableLectures = response.map(lecture => {
+            const lectureMapId = lecture.lmscourseMappingId || lecture.id;
+            const isSelected = selectedLectures.some(selected => {
+              const selectedMapId = selected.lmscourseMappingId || selected.id;
+              return selectedMapId === lectureMapId;
+            });
+            return { ...lecture, isSelected };
           });
-        });
+        } else {
+          // For other course types, filter out already selected lectures
+          availableLectures = response.filter(lecture => {
+            const lectureMapId = lecture.lmscourseMappingId || lecture.id;
+            return !selectedLectures.some(selected => {
+              const selectedMapId = selected.lmscourseMappingId || selected.id;
+              return selectedMapId === lectureMapId;
+            });
+          });
+        }
         
         setLectures(availableLectures);
       } catch (err) {
@@ -72,7 +87,14 @@ const LmsLecturesDropdown = ({
   }, [searchTerm, selectedLectures, courseTypeId, courseLevelId]);
 
   const handleLectureClick = (lecture) => {
-    onLectureSelect(lecture);
+    if (courseTypeId === 3) {
+      // For course type 3, always replace the current selection
+      onLectureSelect(lecture, 'add');
+    } else {
+      // For other course types, just add lecture
+      onLectureSelect(lecture);
+    }
+    
     setSearchTerm('');
     setLectures([]);
     setIsOpen(false);
@@ -132,18 +154,36 @@ const LmsLecturesDropdown = ({
 
           {!loading && lectures.length > 0 && (
             <div className="py-1">
-              {lectures.map((lecture) => (
+              {lectures.map((lecture) => {
+                const isSelected = lecture.isSelected || selectedLectures.some(selected => {
+                  const selectedMapId = selected.lmscourseMappingId || selected.id;
+                  const lectureMapId = lecture.lmscourseMappingId || lecture.id;
+                  return selectedMapId === lectureMapId;
+                });
+                
+                return (
                 <div
                   key={lecture.lmscourseMappingId || lecture.id}
                   onClick={() => handleLectureClick(lecture)}
-                  className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  className={`px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                    isSelected && courseTypeId === 3 
+                      ? 'bg-blue-50 border-blue-200' 
+                      : 'hover:bg-gray-50'
+                  }`}
                 >
                   <div className="flex items-start space-x-3">
-                    <BookOpen className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <BookOpen className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
+                      isSelected && courseTypeId === 3 ? 'text-blue-700' : 'text-blue-600'
+                    }`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className={`text-sm font-medium truncate ${
+                        isSelected && courseTypeId === 3 ? 'text-blue-900' : 'text-gray-900'
+                      }`}>
                         {getLectureDisplayName(lecture)}
                       </p>
+                      {isSelected && courseTypeId === 3 && (
+                        <p className="text-xs text-blue-600 mt-1">✓ Already selected</p>
+                      )}
                       {lecture.source && (
                         <div className="mt-1 text-xs text-gray-500">
                           <p>{lecture.source}</p>
@@ -177,7 +217,8 @@ const LmsLecturesDropdown = ({
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -124,6 +124,29 @@ const CsvUploadModal = ({
               </div>
             </div>
 
+            {/* Download Sample Section */}
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <FileText className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm flex-1">
+                  <p className="text-green-800 dark:text-green-200 font-medium mb-2">
+                    Download Sample CSV Template
+                  </p>
+                  <p className="text-green-700 dark:text-green-300 mb-3">
+                    Use this template to ensure your CSV has the correct format and required columns.
+                  </p>
+                  
+                  <button
+                    onClick={() => window.open('/ShortCourseUploadSample.csv', '_blank')}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Download Sample CSV</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* File Upload Area */}
             <div
               className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${

@@ -25,11 +25,19 @@ const LectureSearchDropdown = ({
       const timeoutId = setTimeout(() => {
         onSearch(searchTerm)
           .then(results => {
-            setFilteredLectures(results || []);
+            // Combine search results with selected lectures that aren't in results
+            const searchResults = results || [];
+            const selectedIds = selectedLectures.map(s => s.id);
+            const selectedNotInResults = selectedLectures.filter(
+              selected => !searchResults.some(result => result.id === selected.id)
+            );
+            
+            setFilteredLectures([...selectedNotInResults, ...searchResults]);
           })
           .catch(err => {
             console.error('Search failed:', err);
-            setFilteredLectures([]);
+            // On search error, show selected lectures
+            setFilteredLectures(selectedLectures);
           })
           .finally(() => {
             setSearchLoading(false);
@@ -42,7 +50,7 @@ const LectureSearchDropdown = ({
       setFilteredLectures(lectures);
       setSearchLoading(false);
     }
-  }, [searchTerm, lectures, onSearch]);
+  }, [searchTerm, lectures, onSearch, selectedLectures]);
 
   // Get selected lecture(s)
   const selectedLectures = useMemo(() => {
@@ -85,6 +93,7 @@ const LectureSearchDropdown = ({
       const currentSelections = Array.isArray(value) ? value : [];
       const newSelections = currentSelections.filter(selected => selected.id !== lectureId);
       onChange(newSelections);
+      // Don't clear search term when removing individual selections
     }
   };
 

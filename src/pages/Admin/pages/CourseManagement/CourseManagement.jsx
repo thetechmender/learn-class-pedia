@@ -19,7 +19,7 @@ const CourseManagement = () => {
   const { 
     error, getCourseById, clearError,
     getCourseTypes, getCourseLevels, getCourseTopics, getAllCategories, deleteCourse, getAllCoursesAdmin,
-    createCourseWithFile, uploadCourseCsv, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent
+    createCourseWithFile, uploadCourseCsv, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent, removeThumbnail
   } = useAdmin();
   
   const navigate = useNavigate();
@@ -625,16 +625,33 @@ const CourseManagement = () => {
     }
   };
 
+  // Handle remove thumbnail
+  const handleRemoveThumbnail = async (course) => {
+    if (window.confirm(`Are you sure you want to remove the thumbnail for "${course.title}"? This will also regenerate the thumbnail.`)) {
+      try {
+        await removeThumbnail(course.id);
+        showToast('Thumbnail removed and will be regenerated successfully!', 'success');
+        // Refresh course data to show updated thumbnail
+        await applyFilters();
+      } catch (error) {
+        showToast(error.message || 'Failed to remove thumbnail', 'error');
+      }
+    }
+  };
+
   // Handle custom actions
   const handleCustomAction = (actionKey, item) => {
-    if(item.courseDetailLectureId && item.courseTypeId === 3)
-    {
-    if (actionKey === 'content'  ) {
-      navigate(`/admin/course-content/${item.courseDetailLectureId}`);
+    if (actionKey === 'content') {
+      if(item.courseDetailLectureId && item.courseTypeId === 3) {
+        navigate(`/admin/course-content/${item.courseDetailLectureId}`);
+      }
     } else if (actionKey === 'regenerate') {
-      openModal('regenerate', item);
+      if(item.courseDetailLectureId && item.courseTypeId === 3) {
+        openModal('regenerate', item);
+      }
+    } else if (actionKey === 'remove-thumbnail') {
+      handleRemoveThumbnail(item);
     }
-  }
   };
 
   // Apply filters with optimized loading state
