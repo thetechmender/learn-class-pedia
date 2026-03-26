@@ -502,7 +502,7 @@
       <div>
         @if (activeTab() === 'overview') {
         <app-overview [courseTypeId]="courseTree()?.courseTypeId" [title]="courseTree()?.courseTitle"
-          [courseTree]="courseTree()" [slug]="courseSlug()"></app-overview>
+          [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()"></app-overview>
         }
         @if (activeTab() === 'notebook') {
         <app-notebook></app-notebook>

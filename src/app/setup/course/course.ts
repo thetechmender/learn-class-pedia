@@ -57,6 +57,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   showCompletionModal = signal(false);
   completionData = signal<any>(null);
   isCompleting = signal(false);
+  courseLevel = signal<string>('');
   completeOrderPayload: any = {
     shortCourseId: null,
     courseCertificateId: null,
@@ -213,14 +214,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       map((res: any) => res?.isSuccess !== undefined ? res.data : res),
       switchMap((courseDetails: any) => {
         this.courseSlug.set(courseDetails?.slug || '');
+        this.courseLevel.set(courseDetails?.courseLevelName || '');
         this.course.set(courseDetails);
         return this.courseService.getCourseTreeV2WithToken(courseId, token).pipe(
           map((treeRes: any) => treeRes?.isSuccess !== undefined ? treeRes.data : treeRes),
           map((tree: any) => {
             this.courseTree.set(tree);
-            if (tree?.slug || tree?.courseSlug) {
-              this.courseSlug.set(tree?.slug || tree?.courseSlug || '');
-            }
             return this.courseService.extractLectureSectionsFromTree(tree);
           })
         );

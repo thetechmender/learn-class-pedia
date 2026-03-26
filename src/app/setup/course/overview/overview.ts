@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { CourseService } from '../../../services/course.service';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-overview',
@@ -16,6 +15,7 @@ export class Overview implements OnInit, OnChanges {
   @Input() courseTypeId: any = null;
   @Input() title: string = '';
   @Input() slug: string = '';
+  @Input() courseLevel: string = '';
   @Input() courseTree: any = null;
   @Input() courseId: any = null;
 
@@ -25,7 +25,7 @@ export class Overview implements OnInit, OnChanges {
   expandedCertificates = signal<Set<number>>(new Set());
   relatedCourses = signal<any>(null);
   overView = signal<any>(null);
-  isLearningOutcomesExpanded = signal<boolean>(false);
+  isLearningOutcomesExpanded = signal<boolean>(true);
 
 
   ngOnChanges(changes: SimpleChanges) {
@@ -107,6 +107,7 @@ export class Overview implements OnInit, OnChanges {
       .subscribe({
         next: (details: any) => {
           this.overView.set(details['data'] || null);
+          this.overView().releaseDate = new Date();
         },
         error: (err: any) => {
           console.error('Refresh Course Tree Error:', err);
@@ -120,6 +121,7 @@ export class Overview implements OnInit, OnChanges {
       .subscribe({
         next: (details: any) => {
           this.overView.set(details['data'] || null);
+          this.overView().releaseDate = new Date();
         },
         error: (err: any) => {
           console.error('Refresh Course Tree Error:', err);
@@ -133,6 +135,7 @@ export class Overview implements OnInit, OnChanges {
       .subscribe({
         next: (details: any) => {
           this.overView.set(details['data'] || null);
+          this.overView().releaseDate = new Date();
         },
         error: (err: any) => {
           console.error('Refresh Course Tree Error:', err);

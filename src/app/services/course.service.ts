@@ -212,7 +212,7 @@ export class CourseService {
   }
 
   getCourseProgressWithToken(courseId: number, token: string | null): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/Learning/course/${courseId}/progress`, {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/progress`, {
       headers: this.getHeaders(token)
     });
   };

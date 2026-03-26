@@ -7,12 +7,12 @@
         <h2 class="text-lg font-bold text-gray-900 mb-3">Course Details</h2>
         <div class="flex items-center gap-3 text-sm text-gray-500 mb-3">
           <span>{{this.formatDuration(this.overView()?.estimatedTimeMinutes,false)}}</span>
-          <span>{{this.overView()?.courseLevel || 'N/A'}}</span>
+          <span>{{this.courseLevel || 'N/A'}}</span>
           <span>Released: {{(this.overView()?.releaseDate | date:'dd/MM/yyyy') || 'N/A'}}</span>
         </div>
         <div class="flex items-center gap-2 mb-4">
           <!-- Rating Number -->
-          <span class="text-base font-medium text-gray-800">
+          <span class="text-base font-medium text-gray-500">
             {{
             this.overView()?.averageRating == 5
             ? this.overView()?.averageRating
@@ -273,7 +273,7 @@
     </div>
 
     <!-- Right Column - Related Courses -->
-    @if(relatedCourses().length > 0) {
+    @if(relatedCourses()?.length > 0) {
     <div class="w-90 flex-shrink-0">
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <h3 class="text-lg font-bold text-gray-900 mb-6">Related Courses</h3>
