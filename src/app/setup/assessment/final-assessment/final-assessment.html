@@ -1,59 +1,89 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6">
   <div class="rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full bg-white pb-4 p-6">
+    @if(!this.isQuestionLoading()) {
     <!-- Header -->
     <div class="flex items-start justify-between mb-6 pb-4">
       <div>
         <h1 class="text-xl font-bold text-gray-900 mb-1">Final Assessment. Multiple Answer Questions</h1>
-        <p class="text-sm text-gray-500">5 Questions • <span class="text-gray-900 font-medium">0</span> Completed</p>
+        <p class="text-sm text-gray-500">{{questions().length}} Questions • <span
+            class="text-gray-900 font-medium">{{currentQuestionIndex() + 1}}</span> Completed</p>
       </div>
       <div class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         15:00 mins
       </div>
     </div>
 
     <!-- Question Card -->
+    <!-- @for(question of questions(); track question.id) {
     <div class="bg-thirdly rounded-xl p-6 mb-6">
-      <h2 class="text-base font-bold text-gray-900 mb-6">4. What Is The Primary Purpose Of Online Learning Platforms?</h2>
-      
-      <!-- Options Grid -->
+      <h2 class="text-base font-bold text-gray-900 mb-6">{{question?.question}}</h2>
       <div class="grid grid-cols-2 gap-4">
-        <!-- Option A -->
-        <label class="flex items-center gap-3 cursor-pointer group">
-          <input type="radio" name="question4" class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-          <span class="text-sm text-gray-700 group-hover:text-gray-900">A. Entertainment Only</span>
+        @for(option of question?.options; track option.id) {
+        <label class="flex items-left gap-3 cursor-pointer group">
+          <input type="radio" name="question4" class="w-6 h-6 text-primary border-gray-300 focus:ring-primary">
+          <span class="text-sm text-gray-700 group-hover:text-gray-900">{{option?.optionLetter}}. {{option?.optionText
+            || ''}}</span>
         </label>
-        
-        <!-- Option B -->
-        <label class="flex items-center gap-3 cursor-pointer group">
-          <input type="radio" name="question4" class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-          <span class="text-sm text-gray-700 group-hover:text-gray-900">B. Structured Learning with Flexibility</span>
+
+        }
+      </div>
+    </div>
+    } -->
+    @if (currentQuestion()) {
+
+    <div class="bg-thirdly rounded-xl p-6 mb-6">
+      <h2 class="text-base font-bold text-gray-900 mb-6">
+        Q{{currentQuestionIndex() + 1}}. {{ currentQuestion().question }}
+      </h2>
+
+      <div class="grid grid-cols-2 gap-4">
+        @for (option of currentQuestion().options; track option.id; let index = $index) {
+        <label class="flex items-start gap-3 cursor-pointer group">
+          <input type="radio" [name]="'question-' + currentQuestion().id"
+            class="w-4 h-4 min-w-4 min-h-4 text-primary border-gray-300 focus:ring-primary mt-0.5" (change)="onOptionChange(option)" />
+          <span class="text-sm text-gray-700">
+            {{ option.optionLetter }}. {{ option.optionText }}
+          </span>
         </label>
-        
-        <!-- Option C -->
-        <label class="flex items-center gap-3 cursor-pointer group">
-          <input type="radio" name="question4" class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-          <span class="text-sm text-gray-700 group-hover:text-gray-900">C. Social Networking</span>
-        </label>
-        
-        <!-- Option D -->
-        <label class="flex items-center gap-3 cursor-pointer group">
-          <input type="radio" name="question4" class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
-          <span class="text-sm text-gray-700 group-hover:text-gray-900">D. File Storage</span>
-        </label>
+        }
       </div>
     </div>
 
+    }
+
     <!-- Navigation Buttons -->
     <div class="flex items-end justify-end gap-4">
-      <button (click)="onCheckResult()" class="px-8 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
+      @if (currentQuestionIndex() !== questions().length - 1) {
+      <button (click)="onNext()"
+        class="px-8 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
         Next
       </button>
-      <button (click)="onCheckResult()" class="px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
+      }
+      @if (currentQuestionIndex() === questions().length - 1) {
+      <button (click)="onCheckResult()" [disabled]="isCompleting()"
+        class="px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
+
+        @if (isCompleting()) {
+        <span class="flex items-center gap-2">
+          <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          Checking Result...
+        </span>
+        } @else {
         Check Result
+        }
       </button>
+      }
     </div>
+
+    }
+    @else {
+    <div class="flex items-center justify-between">
+      <p>Loading Questions...!</p>
+    </div>
+    }
   </div>
 </div>

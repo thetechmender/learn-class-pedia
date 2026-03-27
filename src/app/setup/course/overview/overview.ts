@@ -1,13 +1,14 @@
-import { Component, inject, Input, signal, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, signal, OnInit, OnChanges, SimpleChanges, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CourseService } from '../../../services/course.service';
+import { CourseReviews } from '../course-reviews/course-reviews';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CourseReviews],
   templateUrl: './overview.html',
   styleUrl: './overview.sass',
 })
@@ -26,6 +27,15 @@ export class Overview implements OnInit, OnChanges {
   relatedCourses = signal<any>(null);
   overView = signal<any>(null);
   isLearningOutcomesExpanded = signal<boolean>(true);
+  isReviewsModalOpen = signal<boolean>(false);
+
+  openReviewsModal() {
+    this.isReviewsModalOpen.set(true);
+  }
+
+  closeReviewsModal() {
+    this.isReviewsModalOpen.set(false);
+  }
 
 
   ngOnChanges(changes: SimpleChanges) {

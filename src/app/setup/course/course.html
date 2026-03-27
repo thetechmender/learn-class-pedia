@@ -305,7 +305,7 @@
     <!-- Progress Bar Above Content -->
     <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-center">
       <div class="flex items-center gap-4 px-6 py-2 border border-gray-200 rounded-full">
-        <span class="text-sm text-gray-600">{{ completedItems() }}/{{ totalLearningItems() }} learning items</span>
+        <span class="text-sm text-gray-600">{{ completedItems() }}/{{ totalLearningItems() }} {{courseTree()?.id}}learning items</span>
         <div class="w-48 h-2 bg-thirdly rounded-full overflow-hidden">
           <div class="h-full bg-primary rounded-full transition-all duration-300"
             [style.width.%]="completionPercentage()"></div>
@@ -318,7 +318,7 @@
     <app-start-assessment (next)="onAssessmentNext('start')"></app-start-assessment>
     }
     @if (assessmentStep() === 'final') {
-    <app-final-assessment (next)="onAssessmentNext('final')"></app-final-assessment>
+    <app-final-assessment (next)="onAssessmentResult($event)" [orderPayload]="completeOrderPayload()"></app-final-assessment>
     }
     @if (assessmentStep() === 'failed') {
     <app-failed-assessment (next)="onAssessmentNext('failed')"></app-failed-assessment>

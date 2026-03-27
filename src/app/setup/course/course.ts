@@ -73,11 +73,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   isCompleting = signal(false);
   courseLevel = signal<string>('');
   assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared'>('none');
-  completeOrderPayload: any = {
+  completeOrderPayload = signal<any>({
     shortCourseId: null,
     courseCertificateId: null,
     professionalCertificateId: null
-  };
+  });
   private destroy$ = new Subject<void>();
   private progressInterval: any = null;
   private progressStartTime: number = 0;
@@ -329,11 +329,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           const firstCert = tree.professionalCourse.courseCertificates[0];
           this.activeCertificateId.set(firstCert.courseCertificateId);
           this.expandedCertificates.set(new Set([firstCert.courseCertificateId]));
-          this.completeOrderPayload = {
+          this.completeOrderPayload.set({
             courseCertificateId: firstCert.courseCertificateId,
             shortCourseId: firstCert.shortCourses[0].shortCourseId,
             professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
-          }
+          })
           if (firstCert.shortCourses?.length > 0) {
             const firstSc = firstCert.shortCourses[0];
             this.selectFirstShortCourse(firstSc);
@@ -347,19 +347,19 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               }))
             }));
         } else if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
-          this.completeOrderPayload = {
+          this.completeOrderPayload.set({
             courseCertificateId: tree.courseId,
             shortCourseId: tree.certificateCourse.shortCourses[0].shortCourseId,
             professionalCertificateId: null
-          }
+          })
           const firstSc = tree.certificateCourse.shortCourses[0];
           this.selectFirstShortCourse(firstSc);
         } else if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
-          this.completeOrderPayload = {
+          this.completeOrderPayload.set({
             courseCertificateId: null,
             shortCourseId: tree.courseId,
             professionalCertificateId: null
-          }
+          })
           const firstLec = tree.shortCourseLectures[0];
           this.selectFirstLecture(firstLec);
         }
@@ -419,12 +419,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     };
 
     if (tree.courseTypeId === 1) {
-      payload.shortCourseId = this.completeOrderPayload.shortCourseId;
-      payload.courseCertificateId = this.completeOrderPayload.courseCertificateId;
-      payload.professionalCourseId = this.completeOrderPayload.professionalCertificateId;
+      payload.shortCourseId = this.completeOrderPayload().shortCourseId;
+      payload.courseCertificateId = this.completeOrderPayload().courseCertificateId;
+      payload.professionalCourseId = this.completeOrderPayload().professionalCertificateId;
     } else if (tree.courseTypeId === 2) {
-      payload.shortCourseId = this.completeOrderPayload.shortCourseId;
-      payload.courseCertificateId = this.completeOrderPayload.courseCertificateId;
+      payload.shortCourseId = this.completeOrderPayload().shortCourseId;
+      payload.courseCertificateId = this.completeOrderPayload().courseCertificateId;
       payload.professionalCourseId = null;
     } else if (tree.courseTypeId === 3) {
       payload.shortCourseId = tree.courseId;
@@ -613,11 +613,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onLectureSelectType3(lec: any) {
-    this.completeOrderPayload = {
+    this.completeOrderPayload.set({
       shortCourseId: lec?.id,
       courseCertificateId: null,
       professionalCertificateId: null
-    };
+    });
     this.stopSpeech();
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
     this.isContentReady.set(false);
@@ -635,9 +635,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onShortCourseSelectType1(sc: any) {
-    this.completeOrderPayload.shortCourseId = sc.shortCourseId;
-    this.completeOrderPayload.courseCertificateId = sc.certificateId;
-    this.completeOrderPayload.professionalCertificateId = this.courseTree()?.professionalCourse?.professionalCourseId;
+    this.completeOrderPayload.set({
+      shortCourseId: sc.shortCourseId,
+      courseCertificateId: sc.certificateId,
+      professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
+    });
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
     this.currentShortCourse.set(sc);
@@ -670,11 +672,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onShortCourseSelect(sc: any) {
-    this.completeOrderPayload = {
+    this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.courseTree()?.courseId,
       professionalCertificateId: null
-    };
+    });
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
     this.currentShortCourse.set(sc);
@@ -1001,9 +1003,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     this.isCompleting.set(true);
     const payload = {
-      shortCourseId: this.completeOrderPayload.shortCourseId ?? null,
-      courseCertificateId: this.completeOrderPayload.courseCertificateId ?? null,
-      professionalCertificateId: this.completeOrderPayload.professionalCertificateId ?? null
+      shortCourseId: this.completeOrderPayload().shortCourseId ?? null,
+      courseCertificateId: this.completeOrderPayload().courseCertificateId ?? null,
+      professionalCertificateId: this.completeOrderPayload().professionalCertificateId ?? null
     };
     this.courseService
       .completeCourse(payload)
@@ -1095,6 +1097,24 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  getAssessmentCourseId(): number | null {
+    if (this.completeOrderPayload().shortCourseId) {
+      return this.completeOrderPayload().shortCourseId;
+    }
+    const tree = this.courseTree();
+    if (tree?.courseTypeId === 3) {
+      return tree.courseId;
+    } else if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
+      return tree.certificateCourse.shortCourses[0].shortCourseId;
+    } else if (tree?.courseTypeId === 1 && tree?.professionalCourse?.courseCertificates?.length > 0) {
+      const firstCert = tree.professionalCourse.courseCertificates[0];
+      if (firstCert.shortCourses?.length > 0) {
+        return firstCert.shortCourses[0].shortCourseId;
+      }
+    }
+    return null;
+  }
+
   startAssessment() {
     this.assessmentStep.set('start');
   }
@@ -1102,10 +1122,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   onAssessmentNext(currentStep: string) {
     if (currentStep === 'start') {
       this.assessmentStep.set('final');
-    } else if (currentStep === 'final') {
-      this.assessmentStep.set('failed');
     } else if (currentStep === 'failed') {
-      this.assessmentStep.set('cleared');
+      this.assessmentStep.set('final');
+    }
+  }
+
+  onAssessmentResult(result: any) {
+    if (result === 'cleared' || result === 'failed') {
+      this.assessmentStep.set(result);
     }
   }
 
