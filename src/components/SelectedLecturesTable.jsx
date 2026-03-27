@@ -34,7 +34,10 @@ const SelectedLecturesTable = ({
   };
 
  
-
+ const getLectureDisplayName = (lecture) => {
+  debugger;
+    return lecture.lmsLectureName || `${lecture.lmsCourseName} - ${lecture.lmsLectureName}`;
+  };
   const getLectureTypeLabel = (lectureType) => {
     const types = {
       1: 'Video',
@@ -141,7 +144,7 @@ const SelectedLecturesTable = ({
                     </div>
                     
                     <h4 className="text-sm font-medium text-gray-900 mb-1">
-                      {lecture.lmsLectureName}
+                      {getLectureDisplayName(lecture)}
                     </h4>
                     
 
