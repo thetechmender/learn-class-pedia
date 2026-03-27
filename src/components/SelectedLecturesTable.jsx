@@ -36,7 +36,7 @@ const SelectedLecturesTable = ({
  
  const getLectureDisplayName = (lecture) => {
   debugger;
-    return lecture.lmsLectureName || `${lecture.lmsCourseName} - ${lecture.lmsLectureName}`;
+    return lecture.lmsLectureName?lecture.lmsLectureName:lecture.displayName || `${lecture.lmsCourseName} - ${lecture.lmsLectureName}`;
   };
   const getLectureTypeLabel = (lectureType) => {
     const types = {
