@@ -30,6 +30,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private platformId = inject(PLATFORM_ID);
   private toastr = inject(ToastrService);
 
+  chatInput = signal<string>('');
+  chatThreadId = signal<string>('');
+  isChatSending = signal<boolean>(false);
+  chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string }>>([
+    {
+      role: 'bot',
+      text: "Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics."
+    }
+  ]);
+
   course = signal<any>(null);
   courseTree = signal<any>(null);
   lectureSection = signal<any>(null);
@@ -141,6 +151,48 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.isPlaying.set(false);
         this.speechService.isCompleted.set(false);
         this.speechService.isPaused.set(false);
+      }
+    });
+  }
+
+  sendChatMessage() {
+    const question = (this.chatInput() || '').trim();
+    if (!question || this.isChatSending()) return;
+
+    const tree = this.courseTree();
+    const cpCourseDetailId = tree?.courseId;
+    if (!cpCourseDetailId) {
+      this.toastr.error('Course is not loaded yet. Please try again in a moment.', 'Error');
+      return;
+    }
+
+    const payload = {
+      customerId: 1,
+      cpCourseDetailId: Number(cpCourseDetailId),
+      question,
+      threadId: this.chatThreadId() || ''
+    };
+
+    this.chatMessages.set([...this.chatMessages(), { role: 'user', text: question }]);
+    this.chatInput.set('');
+    this.isChatSending.set(true);
+
+    this.courseService.askCourseQuestion(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => {
+        const threadId = res?.data?.threadId ?? res?.threadId;
+        if (typeof threadId === 'string' && threadId.length > 0) {
+          this.chatThreadId.set(threadId);
+        }
+
+        const answer = res?.data?.answer ?? res?.answer ?? res?.data?.response ?? res?.response ?? res?.message;
+        const text = typeof answer === 'string' && answer.trim().length > 0 ? answer : 'I could not find an answer for that.';
+        this.chatMessages.set([...this.chatMessages(), { role: 'bot', text }]);
+        this.isChatSending.set(false);
+      },
+      error: (err: any) => {
+        this.isChatSending.set(false);
+        this.toastr.error('Failed to send your question. Please try again.', 'Error');
+        console.error('Ask Course Question Error:', err);
       }
     });
   }

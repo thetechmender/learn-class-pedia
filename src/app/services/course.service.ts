@@ -4,14 +4,31 @@ import { map, Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 import { HttpResponse } from '../model';
 
+interface AskCourseQuestionPayload {
+  customerId: number;
+  cpCourseDetailId: number;
+  question: string;
+  threadId: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class CourseService {
   private apiUrl = environment.API_URL;
+  private chatbotApiUrl = 'https://chatbot.thetechmenders.com/api';
   private http = inject(HttpClient);
   isChatOpen = signal(false);
   activeSection = signal<any>(null);
+
+  askCourseQuestion(payload: AskCourseQuestionPayload): Observable<any> {
+    return this.http.post<any>(`${this.chatbotApiUrl}/CourseQuestion/ask`, payload, {
+      headers: new HttpHeaders({
+        accept: '*/*',
+        'Content-Type': 'application/json'
+      })
+    });
+  }
   private getHeaders(token: string | null): HttpHeaders {
     let headers = new HttpHeaders();
     if (token) {
