@@ -15,6 +15,11 @@ export const ENDPOINTS = {
   COURSE_CREATE: '/courses/CreateCourse',
   COURSE_UPLOAD_CSV: '/courses/upload-csv',
   COURSE_REMOVE_THUMBNAIL: (id) => `/remove-thumbnail?courseId=${id}`,
+  TEMPLATES: '/templates',
+  TEMPLATES_TYPES: '/templates/types',
+  TEMPLATE_BY_ID: (id) => `/templates/${id}`,
+  TEMPLATE_CREATE: '/templates',
+  TEMPLATE_UPDATE: (id) => `/templates/${id}`,
   TEMPLATE_DELETE: (id) => `/templates/${id}`,
   COURSE_UPLOAD_CSV_By_Name: '/courses/upload-csv-by-name',
   COURSES_PAGINATED: '/coursedata/paginated',
@@ -80,19 +85,7 @@ export const ENDPOINTS = {
   // Skill Mapping endpoints (similar to badge assignment)
   SKILL_MAPPING_ASSIGN: '/SkillMapping/assign',
   SKILL_MAPPING_GET: (skillId, type) => `/SkillMapping/${skillId}/${type ? `${type}` : ''}`,
-  // Email Template endpoints
-  EMAIL_TEMPLATE_ALL: '/EmailTemplate',
-  EMAIL_TEMPLATE_BY_ID: (id) => `/EmailTemplate/${id}`,
-  EMAIL_TEMPLATE_CREATE: '/EmailTemplate',
-  EMAIL_TEMPLATE_UPDATE: (id) => `/EmailTemplate/${id}`,
-  EMAIL_TEMPLATE_DELETE: (id) => `/EmailTemplate/${id}`,
-  // Certificate Template endpoints
-  CERTIFICATE_TEMPLATE_ALL: '/CertificatesTemplate',
-  CERTIFICATE_TEMPLATE_BY_ID: (id) => `/CertificatesTemplate/${id}`,
-  CERTIFICATE_TEMPLATE_BY_KEY: (templateKey) => `/CertificatesTemplate/by-key/${templateKey}`,
-  CERTIFICATE_TEMPLATE_CREATE: '/CertificatesTemplate',
-  CERTIFICATE_TEMPLATE_UPDATE: (id) => `/CertificatesTemplate/${id}`,
-  CERTIFICATE_TEMPLATE_DELETE: (id) => `/CertificatesTemplate/${id}`,
+
   // LMS Lectures endpoints
   LMS_LECTURES_SEARCH: '/courses/lms-lectures/search',
   // Reviews endpoints

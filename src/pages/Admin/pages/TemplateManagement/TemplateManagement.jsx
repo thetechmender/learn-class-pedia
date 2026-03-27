@@ -208,7 +208,10 @@ const TemplateManagement = () => {
   // Prepare template types for dropdown
   const templateTypesForDropdown = [
     { id: '', name: 'All Types' },
-    ...templateTypes.map(type => ({ id: type.id.toString(), name: type.title }))
+    ...templateTypes.map(type => ({ 
+      id: type.id.toString(), 
+      name: type.title || type.name || type.typeName || type.label || 'Unknown Type'
+    }))
   ];
 
   // Status options for dropdown
@@ -330,7 +333,7 @@ const TemplateManagement = () => {
             
             <div className="flex gap-3">
               <GenericDropdown
-                options={templateTypesForDropdown}
+                items={templateTypesForDropdown}
                 value={selectedTemplateType}
                 onChange={setSelectedTemplateType}
                 placeholder="Select Type"
@@ -338,7 +341,7 @@ const TemplateManagement = () => {
               />
               
               <GenericDropdown
-                options={statusOptions}
+                items={statusOptions}
                 value={selectedStatus}
                 onChange={setSelectedStatus}
                 placeholder="Select Status"
