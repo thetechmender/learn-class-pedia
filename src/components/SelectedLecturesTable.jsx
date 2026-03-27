@@ -33,9 +33,7 @@ const SelectedLecturesTable = ({
     }
   };
 
-  const getLectureDisplayName = (lecture) => {
-    return lecture.displayName || `${lecture.lmsCourseName} - ${lecture.lmsLectureName}`;
-  };
+ 
 
   const getLectureTypeLabel = (lectureType) => {
     const types = {
@@ -143,7 +141,7 @@ const SelectedLecturesTable = ({
                     </div>
                     
                     <h4 className="text-sm font-medium text-gray-900 mb-1">
-                      {getLectureDisplayName(lecture)}
+                      {lecture.lmsLectureName}
                     </h4>
                     
 
