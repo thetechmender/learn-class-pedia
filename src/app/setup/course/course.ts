@@ -10,13 +10,17 @@ import { Notebook } from './notebook/notebook';
 import { Transcript } from './transcript/transcript';
 import { Download } from './download/download';
 import { CompletionModal } from '../../shared/completion-modal/completion-modal';
+import { StartAssessment } from '../assessment/start-assessment/start-assessment';
+import { FinalAssessment } from '../assessment/final-assessment/final-assessment';
+import { FailedAssessment } from '../assessment/failed-assessment/failed-assessment';
+import { ClearedAssessment } from '../assessment/cleared-assessment/cleared-assessment';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Transcript, Download, CompletionModal],
+  imports: [CommonModule, Overview, Notebook, Transcript, Download, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -68,6 +72,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   completionData = signal<any>(null);
   isCompleting = signal(false);
   courseLevel = signal<string>('');
+  assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared'>('none');
   completeOrderPayload: any = {
     shortCourseId: null,
     courseCertificateId: null,
@@ -1088,6 +1093,24 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.onShortCourseSelect(nextSc);
       }
     }
+  }
+
+  startAssessment() {
+    this.assessmentStep.set('start');
+  }
+
+  onAssessmentNext(currentStep: string) {
+    if (currentStep === 'start') {
+      this.assessmentStep.set('final');
+    } else if (currentStep === 'final') {
+      this.assessmentStep.set('failed');
+    } else if (currentStep === 'failed') {
+      this.assessmentStep.set('cleared');
+    }
+  }
+
+  onAssessmentFinish() {
+    this.assessmentStep.set('none');
   }
 
   ngOnDestroy() {

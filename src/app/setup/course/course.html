@@ -212,7 +212,8 @@
             <p class="text-xs text-gray-500 font-medium">Lecture</p>
           </div>
           <div class="flex items-center justify-between gap-2 mt-1">
-            <h3 class="text-xs font-medium text-gray-800 leading-snug" [class.text-green-600]="courseTree().isCompleted">{{ lec.title }}</h3>
+            <h3 class="text-xs font-medium text-gray-800 leading-snug"
+              [class.text-green-600]="courseTree().isCompleted">{{ lec.title }}</h3>
             @if (isActive) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
               viewBox="0 0 24 24" stroke="currentColor">
@@ -273,6 +274,15 @@
 
     <!-- Bottom Buttons -->
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
+      <button (click)="startAssessment()"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[20px] text-xs font-semibold transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Final Assessment
+      </button>
       <button (click)="complete()" [disabled]="isCompleting()"
         class="w-full flex item-center justify-center bg-[#61697B] text-white px-3 sm:px-5 py-2 rounded-[20px] text-sm font-semibold transition-all duration-300 hover:opacity-90 flex items-center gap-1 disabled:opacity-70 disabled:cursor-not-allowed">
         @if (isCompleting()) {
@@ -286,31 +296,38 @@
         Mark Complete!
         }
       </button>
-      <button
-        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[20px] text-xs font-semibold transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Start Assessment
-      </button>
     </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 56px);">
-    @if (lectureSection() && lectureSection().length > 0) {
+  <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 46px);">
+    <!-- Assessment Flow -->
     <!-- Progress Bar Above Content -->
     <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-center">
       <div class="flex items-center gap-4 px-6 py-2 border border-gray-200 rounded-full">
         <span class="text-sm text-gray-600">{{ completedItems() }}/{{ totalLearningItems() }} learning items</span>
         <div class="w-48 h-2 bg-thirdly rounded-full overflow-hidden">
-          <div class="h-full bg-primary rounded-full transition-all duration-300" [style.width.%]="completionPercentage()"></div>
+          <div class="h-full bg-primary rounded-full transition-all duration-300"
+            [style.width.%]="completionPercentage()"></div>
         </div>
         <span class="text-sm text-gray-500">{{ completionPercentage() | number:'1.0-1' }}%</span>
       </div>
     </div>
+    @if (assessmentStep() !== 'none') {
+    @if (assessmentStep() === 'start') {
+    <app-start-assessment (next)="onAssessmentNext('start')"></app-start-assessment>
+    }
+    @if (assessmentStep() === 'final') {
+    <app-final-assessment (next)="onAssessmentNext('final')"></app-final-assessment>
+    }
+    @if (assessmentStep() === 'failed') {
+    <app-failed-assessment (next)="onAssessmentNext('failed')"></app-failed-assessment>
+    }
+    @if (assessmentStep() === 'cleared') {
+    <app-cleared-assessment (finish)="onAssessmentFinish()"></app-cleared-assessment>
+    }
+    } @else if (lectureSection() && lectureSection().length > 0) {
+
 
     <!-- Video/Content Area -->
     <div class="bg-slate-800 relative flex-shrink-0 group">
@@ -586,12 +603,9 @@
             </svg>
           </div>
           }
-          <div class="rounded-2xl p-4 max-w-[85%]"
-            [class.bg-primary]="msg.role === 'bot'"
-            [class.text-white]="msg.role === 'bot'"
-            [class.rounded-tl-none]="msg.role === 'bot'"
-            [class.bg-white]="msg.role === 'user'"
-            [class.text-gray-700]="msg.role === 'user'"
+          <div class="rounded-2xl p-4 max-w-[85%]" [class.bg-primary]="msg.role === 'bot'"
+            [class.text-white]="msg.role === 'bot'" [class.rounded-tl-none]="msg.role === 'bot'"
+            [class.bg-white]="msg.role === 'user'" [class.text-gray-700]="msg.role === 'user'"
             [class.rounded-tr-none]="msg.role === 'user'">
             <p class="text-sm leading-relaxed">{{ msg.text }}</p>
           </div>

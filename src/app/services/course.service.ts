@@ -2,7 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../environments/environment';
-import { HttpResponse } from '../model';
 
 interface AskCourseQuestionPayload {
   customerId: number;
