@@ -321,10 +321,13 @@
     <app-final-assessment (next)="onAssessmentResult($event)" [orderPayload]="completeOrderPayload()"></app-final-assessment>
     }
     @if (assessmentStep() === 'failed') {
-    <app-failed-assessment (next)="onAssessmentNext('failed')"></app-failed-assessment>
+    <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('failed')"></app-failed-assessment>
+    }
+    @if (assessmentStep() === 'maxattempts') {
+    <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('failed')"></app-failed-assessment>
     }
     @if (assessmentStep() === 'cleared') {
-    <app-cleared-assessment (finish)="onAssessmentFinish()"></app-cleared-assessment>
+    <app-cleared-assessment [resultData]="assessmentResult()" (finish)="onAssessmentFinish()"></app-cleared-assessment>
     }
     } @else if (lectureSection() && lectureSection().length > 0) {
 

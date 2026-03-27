@@ -72,7 +72,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   completionData = signal<any>(null);
   isCompleting = signal(false);
   courseLevel = signal<string>('');
-  assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared'>('none');
+  assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts'>('none');
+  assessmentResult = signal<any>(null);
   completeOrderPayload = signal<any>({
     shortCourseId: null,
     courseCertificateId: null,
@@ -1127,9 +1128,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  onAssessmentResult(result: any) {
-    if (result === 'cleared' || result === 'failed') {
-      this.assessmentStep.set(result);
+  onAssessmentResult(data: any) {
+    this.assessmentResult.set(data);
+    const status = data?.resultStatus;
+    if (status === 'Passed' || status === 'AlreadyPassed') {
+      this.assessmentStep.set('cleared');
+    } else if (status === 'MaxAttemptsExceeded') {
+      this.assessmentStep.set('maxattempts');
+    } else {
+      this.assessmentStep.set('failed');
     }
   }
 

@@ -96,11 +96,8 @@ export class FinalAssessment implements OnInit {
         next: (response: any) => {
           this.isCompleting.set(false);
           if (response?.statusCode == 200) {
-            if (response['data']['isPassed']) {
-              this.next.emit('cleared');
-            } else {
-              this.next.emit('failed');
-            }
+            const data = response['data'];
+            this.next.emit(data);
           }
         },
         error: (err: any) => {
