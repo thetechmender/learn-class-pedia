@@ -1,5 +1,8 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6">
   <div class="rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full bg-white pb-4 p-6">
+    <div class="pb-4">
+      <button (click)="back()" class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</button>
+    </div>
     @if(!this.isQuestionLoading()) {
     <!-- Header -->
     <div class="flex items-start justify-between mb-6 pb-4">

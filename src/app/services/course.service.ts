@@ -241,6 +241,35 @@ export class CourseService {
     });
   };
 
+  saveNotebook(payload: any, token: string | null): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/learning/v2/notebook`, payload, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  getNotebooks(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, token: string | null): Observable<any> {
+    let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}`;
+    const params: string[] = [];
+    if (courseCertificateId) {
+      params.push(`courseCertificateId=${courseCertificateId}`);
+    }
+    if (professionalCertificateId) {
+      params.push(`professionalCertificateId=${professionalCertificateId}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return this.http.get<any>(url, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  deleteNotebook(noteId: number, token: string | null): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/learning/v2/notebook/${noteId}`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
   toggleChat() {
     this.isChatOpen.set(!this.isChatOpen());
   }

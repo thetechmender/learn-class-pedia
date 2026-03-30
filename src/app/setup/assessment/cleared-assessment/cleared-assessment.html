@@ -1,5 +1,8 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6">
   <div class="rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full bg-white p-6 w-full text-center">
+    <div class="pb-4 text-left">
+      <button (click)="back()" class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</button>
+    </div>
     <!-- Header -->
     @if (isAlreadyPassed) {
     <h1 class="text-2xl font-bold text-gray-900 mb-2">Already Passed</h1>

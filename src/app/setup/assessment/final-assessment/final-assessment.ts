@@ -10,7 +10,8 @@ import { AssessmentService } from '../../../services/assessment.service';
   styleUrl: './final-assessment.sass',
 })
 export class FinalAssessment implements OnInit {
-  @Output() next = new EventEmitter<string>();
+  @Output() next = new EventEmitter<any>();
+  @Output() goBack = new EventEmitter<void>();
   @Input() orderPayload: any = null;
   isCompleting = signal(false);
   questions = signal<any[]>([]);
@@ -67,6 +68,10 @@ export class FinalAssessment implements OnInit {
       current.isSelect = true;
       current.selectedOption = option.optionLetter;
     };
+  }
+
+  back() {
+    this.goBack.emit();
   }
 
   ngOnDestroy() {

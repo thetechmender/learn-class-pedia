@@ -27,12 +27,18 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
               }
             ],
             "styles": [
               "src/custom-theme.scss",
               "src/styles.sass",
-              "node_modules/ngx-toastr/toastr.css"
+              "node_modules/ngx-toastr/toastr.css",
+              "src/icons.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",

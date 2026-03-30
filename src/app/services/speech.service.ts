@@ -14,6 +14,8 @@ export class SpeechService {
     private intervalId: any = null;
     private startWordOffset: number = 0;
     private charToWordMap: number[] = [];
+    private pausedTime: number = 0;
+    private isCancelling: boolean = false;
 
     currentWordIndex = signal<number>(-1);
     currentTime = signal<number>(0);
@@ -99,12 +101,14 @@ export class SpeechService {
         }, 100);
 
         this.utterance.onend = () => {
+            if (this.isCancelling) return;
             this.clearInterval();
             this.currentWordIndex.set(-1);
             this.currentTime.set(this.totalDuration());
             this.isCompleted.set(true);
         };
 
+        this.isCancelling = false;
         synth.speak(this.utterance);
     }
 
@@ -116,6 +120,7 @@ export class SpeechService {
     }
 
     stop() {
+        this.isCancelling = true;
         const synth = this.getSynth();
         if (synth) {
             synth.cancel();
@@ -127,25 +132,20 @@ export class SpeechService {
     }
 
     pause() {
+        this.pausedTime = this.currentTime();
+        this.isCancelling = true;
         const synth = this.getSynth();
         if (synth) {
-            synth.pause();
+            synth.cancel();
         }
         this.clearInterval();
+        this.utterance = null;
         this.isPaused.set(true);
     }
 
     resume() {
-        const synth = this.getSynth();
-        if (synth) {
-            synth.resume();
-        }
-        this.isPaused.set(false);
-        this.startTime = Date.now() - this.currentTime() * 1000;
-        this.intervalId = setInterval(() => {
-            const elapsed = (Date.now() - this.startTime) / 1000;
-            this.currentTime.set(Math.min(elapsed, this.totalDuration()));
-        }, 100);
+        if (!this.fullText || !this.isPaused()) return;
+        this.seekToTime(this.pausedTime);
     }
 
     seekToTime(seconds: number) {
@@ -199,12 +199,14 @@ export class SpeechService {
         }, 100);
         
         this.utterance.onend = () => {
+            if (this.isCancelling) return;
             this.clearInterval();
             this.currentWordIndex.set(-1);
             this.currentTime.set(this.totalDuration());
             this.isCompleted.set(true);
         };
         
+        this.isCancelling = false;
         this.isPaused.set(false);
         synth.speak(this.utterance);
     }

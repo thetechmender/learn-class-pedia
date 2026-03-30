@@ -62,6 +62,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   expandedShortCourses = signal<Set<number>>(new Set());
   activeTab = signal<'overview' | 'notebook' | 'transcript' | 'download'>('overview');
   activeLectureTitle = signal<string | null>(null);
+  activeLectureIndex = signal<number>(0);
+  lectureStartTimes: number[] = [];
   activeShortCourseId = signal<number | null>(null);
   isContentReady = signal(false);
   currentShortCourse = signal<any>(null);
@@ -96,8 +98,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return sections;
   });
 
-  totalLearningItems = computed(() => this.allSections().length);
-  
+  isSidebarOpen = signal<boolean>(true);
+
+  totalLearningItems = computed(() => {
+    const sc = this.currentShortCourse();
+    if (sc?.lectures) {
+      return sc.lectures.length;
+    }
+    return 0;
+  });
+
   completedItems = computed(() => {
     const progress = this.progress();
     if (!progress) return 0;
@@ -110,6 +120,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     const progress = this.progress();
     return progress?.completionPercentage || 0;
   });
+
+  toggleSidebar() {
+    this.isSidebarOpen.set(!this.isSidebarOpen());
+  }
 
   currentSectionIndex = computed(() => {
     const active = this.activeSection();
@@ -157,6 +171,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.isPlaying.set(false);
         this.speechService.isCompleted.set(false);
         this.speechService.isPaused.set(false);
+        // Auto-trigger: complete course then Start Assessment
+        if (this.courseTree()?.courseTypeId !== 3) {
+          this.completeAndTriggerAssessment();
+        }
       }
     });
   }
@@ -387,7 +405,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private startProgressTracking(token: string | null) {
     this.progressStartTime = Date.now();
     this.lastProgressUpdate = this.progress()?.secondsWatched || 0;
-    
+
     if (this.progressInterval) {
       clearInterval(this.progressInterval);
     }
@@ -403,11 +421,22 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     const elapsedSeconds = Math.floor((Date.now() - this.progressStartTime) / 1000);
     const totalSecondsWatched = this.lastProgressUpdate + elapsedSeconds;
-    
-    const currentIndex = this.currentSectionIndex();
-    const totalSections = this.totalLearningItems();
-    const completionPercentage = totalSections > 0 
-      ? Math.min(100, Math.round(((currentIndex + 1) / totalSections) * 100 * 10) / 10)
+
+    // Auto-detect current lecture based on audio position
+    const currentAudioTime = this.speechService.currentTime();
+    if (this.lectureStartTimes.length > 0) {
+      for (let i = this.lectureStartTimes.length - 1; i >= 0; i--) {
+        if (currentAudioTime >= this.lectureStartTimes[i]) {
+          this.activeLectureIndex.set(i);
+          break;
+        }
+      }
+    }
+
+    const currentLecIndex = this.activeLectureIndex();
+    const totalLectures = this.totalLearningItems();
+    const completionPercentage = totalLectures > 0
+      ? Math.min(100, Math.round(((currentLecIndex + 1) / totalLectures) * 100 * 10) / 10)
       : 0;
 
     let payload: any = {
@@ -437,6 +466,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (res: any) => {
         const data = res.isSuccess !== undefined ? res.data : res;
         this.progress.set(data);
+        if (completionPercentage >= 100 && this.courseTree()?.courseTypeId !== 3) {
+          this.completeAndTriggerAssessment();
+        }
       },
       error: (err: any) => console.error('Progress Update Error:', err)
     });
@@ -714,22 +746,25 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     const sc = this.currentShortCourse();
     if (!sc) return;
 
-    // Combine all lecture content - check multiple possible structures
+    // Combine all lecture content and calculate lecture start times
     let combinedContent = '';
+    const lectureContents: string[] = [];
 
     if (sc.lectures && sc.lectures.length > 0) {
       sc.lectures.forEach((lec: any) => {
+        let lecContent = '';
         if (lec.lectureSections && lec.lectureSections.length > 0) {
           lec.lectureSections.forEach((section: any) => {
             if (section.content) {
-              combinedContent += section.content + '<br/><br/>';
+              lecContent += section.content + '<br/><br/>';
             }
           });
         }
-        // Also check if lecture itself has content
-        if (lec.content) {
-          combinedContent += lec.content + '<br/><br/>';
+        if (!lecContent && lec.content) {
+          lecContent = lec.content + '<br/><br/>';
         }
+        lectureContents.push(lecContent);
+        combinedContent += lecContent;
       });
     }
 
@@ -746,8 +781,24 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     if (combinedContent) {
+      // Calculate lecture start times based on word counts
+      const tempDiv = document.createElement('div');
+      const wordsPerMinute = 150 * this.speechService.rate();
+      let cumulativeWords = 0;
+      this.lectureStartTimes = [];
+
+      lectureContents.forEach((lecHtml) => {
+        const startSeconds = (cumulativeWords / wordsPerMinute) * 60;
+        this.lectureStartTimes.push(startSeconds);
+        tempDiv.innerHTML = lecHtml;
+        const text = tempDiv.textContent || tempDiv.innerText || '';
+        const wordCount = text.split(/\s+/).filter((w: string) => w.length > 0).length;
+        cumulativeWords += wordCount;
+      });
+
       this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
       this.isContentReady.set(true);
+      this.activeLectureIndex.set(0);
 
       // Set active section for speech
       const firstSection = sc.lectures?.[0]?.lectureSections?.[0] || this.lectureSection()?.[0];
@@ -757,7 +808,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
 
       // Start speech
-      const tempDiv = document.createElement('div');
       tempDiv.innerHTML = combinedContent;
       const text = tempDiv.textContent || tempDiv.innerText || '';
       this.speechService.speak(text);
@@ -847,18 +897,32 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   goToPreviousSection() {
-    const index = this.currentSectionIndex();
-    const sections = this.allSections();
+    const sc = this.currentShortCourse();
+    if (!sc?.lectures || this.lectureStartTimes.length === 0) return;
+    const index = this.activeLectureIndex();
     if (index > 0) {
-      this.onSectionSelect(sections[index - 1]);
+      const newIndex = index - 1;
+      this.activeLectureIndex.set(newIndex);
+      this.activeLectureTitle.set(sc.lectures[newIndex]?.title || null);
+      this.speechService.seekToTime(this.lectureStartTimes[newIndex]);
     }
   }
 
   goToNextSection() {
-    const index = this.currentSectionIndex();
-    const sections = this.allSections();
-    if (index < sections.length - 1) {
-      this.onSectionSelect(sections[index + 1]);
+    const sc = this.currentShortCourse();
+    if (!sc?.lectures || this.lectureStartTimes.length === 0) return;
+    const index = this.activeLectureIndex();
+    if (index < sc.lectures.length - 1) {
+      const newIndex = index + 1;
+      this.activeLectureIndex.set(newIndex);
+      this.activeLectureTitle.set(sc.lectures[newIndex]?.title || null);
+      this.speechService.seekToTime(this.lectureStartTimes[newIndex]);
+    } else {
+      // Last lecture - complete course then trigger Start Assessment
+      this.stopSpeech();
+      if (this.courseTree()?.courseTypeId !== 3) {
+        this.completeAndTriggerAssessment();
+      }
     }
   }
 
@@ -1117,7 +1181,41 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   startAssessment() {
-    this.assessmentStep.set('start');
+    const tree = this.courseTree();
+    if (tree?.courseTypeId == 2) {
+      const shortCourse = tree?.certificateCourse?.shortCourses?.find((item: any) => item.shortCourseId === this.activeShortCourseId());
+      if (shortCourse?.isCompleted) {
+        this.assessmentStep.set('start');
+      }
+    } else if (tree?.courseTypeId == 1) {
+      const certificate = tree?.professionalCourse?.courseCertificates?.find((item: any) => item.courseCertificateId === this.activeCertificateId());
+      const shortCourse = certificate?.shortCourses?.find((item: any) => item.shortCourseId === this.activeShortCourseId());
+      if (shortCourse?.isCompleted) {
+        this.assessmentStep.set('start');
+      }
+    }
+  }
+
+  completeAndTriggerAssessment() {
+    const payload = {
+      shortCourseId: this.completeOrderPayload().shortCourseId ?? null,
+      courseCertificateId: this.completeOrderPayload().courseCertificateId ?? null,
+      professionalCertificateId: this.completeOrderPayload().professionalCertificateId ?? null
+    };
+    this.courseService.completeCourse(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => {
+        if (res?.isSuccess) {
+          this.toastr.success('Your course is completed!', 'Success');
+          this.refreshCourseTree();
+        }
+        this.stopSpeech();
+        this.assessmentStep.set('start');
+      },
+      error: () => {
+        this.stopSpeech();
+        this.assessmentStep.set('start');
+      }
+    });
   }
 
   onAssessmentNext(currentStep: string) {

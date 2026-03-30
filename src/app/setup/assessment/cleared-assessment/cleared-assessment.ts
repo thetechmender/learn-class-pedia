@@ -10,6 +10,7 @@ import { DecimalPipe } from '@angular/common';
 export class ClearedAssessment {
   @Input() resultData: any = null;
   @Output() finish = new EventEmitter<void>();
+  @Output() goBack = new EventEmitter<void>();
 
   get isAlreadyPassed(): boolean {
     return this.resultData?.resultStatus === 'AlreadyPassed';
@@ -45,5 +46,9 @@ export class ClearedAssessment {
 
   onFinish() {
     this.finish.emit();
+  }
+
+  back() {
+    this.goBack.emit();
   }
 }

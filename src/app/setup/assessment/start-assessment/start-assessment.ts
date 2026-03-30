@@ -8,8 +8,13 @@ import { Component, Output, EventEmitter, SimpleChanges } from '@angular/core';
 })
 export class StartAssessment {
   @Output() next = new EventEmitter<void>();
+  @Output() goBack = new EventEmitter<void>();
 
   onStartAssessment() {
     this.next.emit();
+  }
+
+  back() {
+    this.goBack.emit();
   }
 }

@@ -10,6 +10,7 @@ import { DecimalPipe } from '@angular/common';
 export class FailedAssessment {
   @Input() resultData: any = null;
   @Output() next = new EventEmitter<void>();
+  @Output() goBack = new EventEmitter<void>();
 
   get isMaxAttempts(): boolean {
     return this.resultData?.resultStatus === 'MaxAttemptsExceeded';
@@ -37,5 +38,9 @@ export class FailedAssessment {
 
   onReattempt() {
     this.next.emit();
+  }
+
+  back() {
+    this.goBack.emit();
   }
 }
