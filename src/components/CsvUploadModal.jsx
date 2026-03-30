@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Upload, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 
 const CsvUploadModal = ({
@@ -12,6 +12,17 @@ const CsvUploadModal = ({
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedFile(null);
+      setDragActive(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isOpen]);
 
   const handleFileSelect = (file) => {
     // Validate file type
