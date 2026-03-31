@@ -297,7 +297,7 @@
       </button>
       }
 
-      <button (click)="complete()" [disabled]="isCompleting()"
+      <button (click)="complete()" [disabled]="isCompleting() || courseTree()?.isCompleted"
         class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[20px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
         @if (isCompleting()) {
         <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -545,7 +545,7 @@
           [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()"></app-overview>
         }
         @if (activeTab() === 'notebook') {
-        <app-notebook [orderPayload]="completeOrderPayload()" [videoTimeSeconds]="currentTime()"></app-notebook>
+        <app-notebook [orderPayload]="completeOrderPayload()" [videoTimeSeconds]="currentTime()" (notePlaying)="isPlaying.set(true)"></app-notebook>
         }
         @if (activeTab() === 'transcript') {
         <app-transcript></app-transcript>

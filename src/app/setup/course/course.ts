@@ -74,6 +74,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   completionData = signal<any>(null);
   isCompleting = signal(false);
   courseLevel = signal<string>('');
+  existingSeasionCourseId = signal<number>(0)
   assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts'>('none');
   assessmentResult = signal<any>(null);
   completeOrderPayload = signal<any>({
@@ -287,7 +288,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       } else {
         const existingSession = this.authService.getStoredSession();
         if (existingSession?.courseId && existingSession?.sessionToken) {
-          this.loadCourseData(existingSession.courseId);
+          this.existingSeasionCourseId.set(existingSession.courseId);
+          this.loadCourseData(this.existingSeasionCourseId());
         } else {
           this.error.set('No access token provided. Please access through the main portal.');
           this.isLoading.set(false);
@@ -348,14 +350,18 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           const firstCert = tree.professionalCourse.courseCertificates[0];
           this.activeCertificateId.set(firstCert.courseCertificateId);
           this.expandedCertificates.set(new Set([firstCert.courseCertificateId]));
-          this.completeOrderPayload.set({
-            courseCertificateId: firstCert.courseCertificateId,
-            shortCourseId: firstCert.shortCourses[0].shortCourseId,
-            professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
-          })
           if (firstCert.shortCourses?.length > 0) {
-            const firstSc = firstCert.shortCourses[0];
-            this.selectFirstShortCourse(firstSc);
+            const incompleteSc = firstCert.shortCourses.find((sc: any) => !sc.isCompleted);
+            const targetSc = incompleteSc || firstCert.shortCourses[0];
+            this.completeOrderPayload.set({
+              courseCertificateId: firstCert.courseCertificateId,
+              shortCourseId: targetSc.shortCourseId,
+              professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
+            });
+            this.selectFirstShortCourse(targetSc);
+            if (!incompleteSc) {
+              this.toastr.info('All lectures completed. Ready to start the assessment.', 'Info');
+            }
           }
           tree.professionalCourse.courseCertificates =
             tree.professionalCourse.courseCertificates.map((cert: any) => ({
@@ -366,13 +372,18 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               }))
             }));
         } else if (tree?.courseTypeId === 2 && tree?.certificateCourse?.shortCourses?.length > 0) {
+          const shortCourses = tree.certificateCourse.shortCourses;
+          const incompleteSc = shortCourses.find((sc: any) => !sc.isCompleted);
+          const targetSc = incompleteSc || shortCourses[0];
           this.completeOrderPayload.set({
             courseCertificateId: tree.courseId,
-            shortCourseId: tree.certificateCourse.shortCourses[0].shortCourseId,
+            shortCourseId: targetSc.shortCourseId,
             professionalCertificateId: null
-          })
-          const firstSc = tree.certificateCourse.shortCourses[0];
-          this.selectFirstShortCourse(firstSc);
+          });
+          this.selectFirstShortCourse(targetSc);
+          if (!incompleteSc) {
+            this.toastr.info('All lectures completed. Ready to start the assessment.', 'Info');
+          }
         } else if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
           this.completeOrderPayload.set({
             courseCertificateId: null,
@@ -607,26 +618,56 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  refreshProgress() {
+    const token = this.authService.getToken();
+    const courseId = this.existingSeasionCourseId() || this.courseTree()?.courseId;
+    if (!courseId) return;
+    this.courseService.getCourseProgressWithToken(courseId, token).subscribe({
+      next: (res: any) => {
+        const data = res.isSuccess !== undefined ? res.data : res;
+        this.progress.set(data);
+      },
+      error: (err: any) => console.error('Progress Refresh Error:', err)
+    });
+  }
+
+  prepareLectureSectionsAndSetActive(sc: any) {
+    const allSections: any[] = [];
+    let combinedContent = '';
+    let allPdfPaths: string[] = [];
+
+    if (sc.lectures && sc.lectures.length > 0) {
+      sc.lectures.forEach((lec: any) => {
+        if (lec.lectureSections && lec.lectureSections.length > 0) {
+          allSections.push(...lec.lectureSections);
+          lec.lectureSections.forEach((section: any) => {
+            if (section.content) combinedContent += section.content + '<br/><br/>';
+            if (section.pdfPath) allPdfPaths.push(section.pdfPath);
+          });
+        }
+        if (lec.content && !combinedContent) combinedContent += lec.content + '<br/><br/>';
+        if (lec.pdfPath) allPdfPaths.push(lec.pdfPath);
+      });
+    }
+
+    if (allSections.length > 0) this.lectureSection.set(allSections);
+
+    if (allSections.length > 0 || combinedContent) {
+      const firstSection = allSections[0] || sc.lectures?.[0] || {};
+      const pdfPath = allPdfPaths.filter(p => p).join(',');
+      const sectionData = { ...firstSection, content: combinedContent, sectionTitle: sc.title, pdfPath: pdfPath || firstSection.pdfPath };
+      this.activeSection.set(sectionData);
+      this.courseService.activeSection.set(sectionData);
+    }
+  }
+
   selectFirstShortCourse(sc: any) {
-    // Select first short course on load - expand it and set as active
     this.activeShortCourseId.set(sc.shortCourseId);
     this.expandedShortCourses.set(new Set([sc.shortCourseId]));
     this.currentShortCourse.set(sc);
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
-
-    // Prepare lecture sections - collect all sections from all lectures
-    const allSections: any[] = [];
-    if (sc.lectures && sc.lectures.length > 0) {
-      sc.lectures.forEach((lec: any) => {
-        if (lec.lectureSections && lec.lectureSections.length > 0) {
-          allSections.push(...lec.lectureSections);
-        }
-      });
-    }
-    if (allSections.length > 0) {
-      this.lectureSection.set(allSections);
-    }
+    this.prepareLectureSectionsAndSetActive(sc);
   }
 
   selectFirstLecture(lec: any) {
@@ -643,6 +684,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       title: lec.title || lec.courseTitle,
       lectures: [{ ...lec, lectureSections: [lec] }]
     });
+
+    // Set activeSection so transcript/download work on initial load
+    if (lec.content) {
+      this.activeSection.set({ ...lec, sectionTitle: lec.title || lec.courseTitle });
+      this.courseService.activeSection.set({ ...lec, sectionTitle: lec.title || lec.courseTitle });
+    }
   }
 
   onLectureSelectType3(lec: any) {
@@ -665,6 +712,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       title: lec.title || lec.courseTitle,
       lectures: [{ ...lec, lectureSections: [lec] }]
     });
+
+    // Set activeSection so transcript/download work immediately
+    if (lec.content) {
+      this.activeSection.set({ ...lec, sectionTitle: lec.title || lec.courseTitle });
+      this.courseService.activeSection.set({ ...lec, sectionTitle: lec.title || lec.courseTitle });
+    }
+    this.refreshProgress();
   }
 
   onShortCourseSelectType1(sc: any) {
@@ -690,18 +744,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     this.expandedShortCourses.set(current);
 
-    // Prepare lecture sections - collect all sections from all lectures
-    const allSections: any[] = [];
-    if (sc.lectures && sc.lectures.length > 0) {
-      sc.lectures.forEach((lec: any) => {
-        if (lec.lectureSections && lec.lectureSections.length > 0) {
-          allSections.push(...lec.lectureSections);
-        }
-      });
-    }
-    if (allSections.length > 0) {
-      this.lectureSection.set(allSections);
-    }
+    this.prepareLectureSectionsAndSetActive(sc);
+    this.refreshProgress();
   }
 
   onShortCourseSelect(sc: any) {
@@ -728,18 +772,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     this.expandedShortCourses.set(current);
 
-    // Prepare lecture sections - collect all sections from all lectures
-    const allSections: any[] = [];
-    if (sc.lectures && sc.lectures.length > 0) {
-      sc.lectures.forEach((lec: any) => {
-        if (lec.lectureSections && lec.lectureSections.length > 0) {
-          allSections.push(...lec.lectureSections);
-        }
-      });
-    }
-    if (allSections.length > 0) {
-      this.lectureSection.set(allSections);
-    }
+    this.prepareLectureSectionsAndSetActive(sc);
+    this.refreshProgress();
   }
 
   playShortCourse() {
@@ -1178,25 +1212,36 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     }
     return null;
-  }
+  };
 
-  startAssessment() {
+  checkIsAssessmentAccess(): boolean {
     const tree = this.courseTree();
     if (tree?.courseTypeId == 2) {
       const shortCourse = tree?.certificateCourse?.shortCourses?.find((item: any) => item.shortCourseId === this.activeShortCourseId());
       if (shortCourse?.isCompleted) {
-        this.assessmentStep.set('start');
+        return true;
       }
     } else if (tree?.courseTypeId == 1) {
       const certificate = tree?.professionalCourse?.courseCertificates?.find((item: any) => item.courseCertificateId === this.activeCertificateId());
       const shortCourse = certificate?.shortCourses?.find((item: any) => item.shortCourseId === this.activeShortCourseId());
       if (shortCourse?.isCompleted) {
-        this.assessmentStep.set('start');
+        return true;
       }
+    }
+    return false;
+  }
+
+  startAssessment() {
+    if (this.checkIsAssessmentAccess()) {
+      this.assessmentStep.set('start');
     }
   }
 
   completeAndTriggerAssessment() {
+    if (this.checkIsAssessmentAccess()) {
+      this.startAssessment();
+      return;
+    }
     const payload = {
       shortCourseId: this.completeOrderPayload().shortCourseId ?? null,
       courseCertificateId: this.completeOrderPayload().courseCertificateId ?? null,
@@ -1208,12 +1253,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.toastr.success('Your course is completed!', 'Success');
           this.refreshCourseTree();
         }
+        this.startAssessment();
+        this.loadCourseData(this.existingSeasionCourseId());
         this.stopSpeech();
-        this.assessmentStep.set('start');
       },
       error: () => {
         this.stopSpeech();
-        this.assessmentStep.set('start');
+        this.startAssessment();
       }
     });
   }

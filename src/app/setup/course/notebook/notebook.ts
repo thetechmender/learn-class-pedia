@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
 import { CourseService } from '../../../services/course.service';
 import { AuthService } from '../../../services/auth.service';
 import { SpeechService } from '../../../services/speech.service';
@@ -9,9 +9,10 @@ import { SpeechService } from '../../../services/speech.service';
   templateUrl: './notebook.html',
   styleUrl: './notebook.sass',
 })
-export class Notebook implements OnInit {
+export class Notebook implements OnInit, OnChanges {
   @Input() orderPayload: any = null;
   @Input() videoTimeSeconds: number = 0;
+  @Output() notePlaying = new EventEmitter<void>();
   deletingNoteId = signal<number | null>(null);
 
   private courseService = inject(CourseService);
@@ -23,8 +24,22 @@ export class Notebook implements OnInit {
   noteText = signal('');
   savedNotes = signal<any[]>([]);
 
+  private lastShortCourseId: number | null = null;
+
   ngOnInit() {
     this.fetchNotes();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['orderPayload'] && !changes['orderPayload'].firstChange) {
+      const newId = this.orderPayload?.shortCourseId;
+      if (newId && newId !== this.lastShortCourseId) {
+        this.lastShortCourseId = newId;
+        this.isAddingNote.set(false);
+        this.noteText.set('');
+        this.fetchNotes();
+      }
+    }
   }
 
   fetchNotes() {
@@ -77,6 +92,7 @@ export class Notebook implements OnInit {
   onNoteClick(seconds: number) {
     if (this.speechService.totalDuration() > 0) {
       this.speechService.seekToTime(seconds);
+      this.notePlaying.emit();
     }
   }
 
@@ -94,6 +110,40 @@ export class Notebook implements OnInit {
       }
 
     });
+  }
+
+  exportNotesPdf() {
+    const notes = this.savedNotes();
+    if (notes.length === 0) return;
+
+    let content = '<html><head><style>';
+    content += 'body { font-family: Poppins, sans-serif; padding: 40px; color: #1a1a2e; }';
+    content += 'h1 { font-size: 22px; margin-bottom: 20px; color: #0062CC; }';
+    content += '.note { border-bottom: 1px solid #e5e7eb; padding: 12px 0; }';
+    content += '.time { color: #0062CC; font-size: 13px; font-weight: 600; }';
+    content += '.text { font-size: 14px; color: #374151; margin-top: 4px; }';
+    content += '</style></head><body>';
+    content += '<h1>Course Notes</h1>';
+
+    notes.forEach((note: any) => {
+      content += '<div class="note">';
+      content += `<div class="time">${this.formatTime(note.videoTimeSeconds || 0)}</div>`;
+      content += `<div class="text">${note.noteText}</div>`;
+      content += '</div>';
+    });
+
+    content += '</body></html>';
+
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'course-notes.pdf';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   formatTime(seconds: number): string {
