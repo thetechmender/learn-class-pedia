@@ -1,0 +1,9 @@
+{
+  "routes": {
+    "/": {},
+    "/classroom": {},
+    "/course": {},
+    "/course/classroom": {},
+    "/dashboard": {}
+  }
+}
