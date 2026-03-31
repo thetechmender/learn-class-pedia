@@ -28,7 +28,7 @@ const SkillMapping = () => {
     allCourses,
     courseTypes,
     courseLevels,
-    categories,
+    subcategories,
     skillCourses,
     loading,
     loadingCourses,
@@ -645,7 +645,7 @@ const SkillMapping = () => {
                         Category
                       </label>
                       <CategoryDropdown
-                        categories={categories}
+                        categories={subcategories}
                         value={courseFilters.categoryId}
                         onChange={(value) => handleCourseFilterChange('categoryId', value)}
                         placeholder="All Categories"
@@ -711,7 +711,7 @@ const SkillMapping = () => {
                                   <div className="text-sm text-gray-500 dark:text-gray-400">
                                     {(() => {
                                       const courseType = courseTypes.find(ct => ct.id === course.courseTypeId);
-                                      const category = categories.find(cat => cat.id === course.categoryId);
+                                      const category = subcategories.find(cat => cat.id === course.categoryId);
                                       const courseLevel = courseLevels.find(cl => cl.id === course.courseLevelId);
                                       
                                       const parts = [];
@@ -900,7 +900,7 @@ const SkillMapping = () => {
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
                                   {course && (() => {
                                     const courseType = courseTypes.find(ct => ct.id === course.courseTypeId);
-                                    const category = categories.find(cat => cat.id === course.categoryId);
+                                    const category = subcategories.find(cat => cat.id === course.categoryId);
                                     const courseLevel = courseLevels.find(cl => cl.id === course.courseLevelId);
                                     
                                     const parts = [];

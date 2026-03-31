@@ -6,7 +6,7 @@ const CsvUploadModal = ({
   onClose,
   onSubmit,
   loading = false,
-  error = null,
+  csvError = null,
   onClearError
 }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -101,8 +101,8 @@ const CsvUploadModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -219,7 +219,7 @@ const CsvUploadModal = ({
             </div>
 
             {/* Error Display */}
-            {error && (
+            {csvError && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
                   <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
@@ -228,7 +228,7 @@ const CsvUploadModal = ({
                       Upload Failed
                     </p>
                     <p className="text-red-700 dark:text-red-300 mt-1">
-                      {error}
+                      {csvError}
                     </p>
                   </div>
                 </div>

@@ -435,6 +435,20 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
     }
   }, []);
 
+  const getAllSubcategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.getAllSubcategories();
+      return data;
+    } catch (err) {
+      setError('Failed to fetch subcategories');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const createCategoryWithFile = useCallback(async (formData) => {
     try {
       setLoading(true);
@@ -575,7 +589,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
       
       return data;
     } catch (err) {
-      setError(err.response?.data || err.message || 'Failed to upload CSV file');
+      // Don't set global error for CSV uploads - let the component handle it locally
       throw err;
     } finally {
       setLoading(false);
@@ -817,6 +831,7 @@ export const useAdmin = (initialPage = 1, pageSize = 100) => {
 
     // Category operations
     getAllCategories,
+    getAllSubcategories,
     getCategoryById,
     createCategory,
     updateCategory,

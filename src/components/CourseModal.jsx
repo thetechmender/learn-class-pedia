@@ -998,6 +998,7 @@ const CourseModal = ({
                   loading={dropdownLoading.courseTypes}
                   error={dropdownError.courseTypes}
                   disabled={loading}
+                  displayField='typeName'
                 />
                 {formErrors.courseTypeId && <p className="mt-1 text-sm text-red-600">{formErrors.courseTypeId}</p>}
                 
@@ -1032,6 +1033,7 @@ const CourseModal = ({
                   loading={dropdownLoading.courseLevels}
                   error={dropdownError.courseLevels}
                   disabled={loading}
+                  displayField='title'
                 />
                 {formErrors.courseLevelId && <p className="mt-1 text-sm text-red-600">{formErrors.courseLevelId}</p>}
               </div>

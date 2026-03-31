@@ -19,7 +19,8 @@ const CourseManagement = () => {
   const { 
     error, getCourseById, clearError,
     getCourseTypes, getCourseLevels, getCourseTopics, getAllCategories, deleteCourse, getAllCoursesAdmin,
-    createCourseWithFile, uploadCourseCsv, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent, removeThumbnail
+    createCourseWithFile, uploadCourseCsv, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent, removeThumbnail,
+    getAllSubcategories
   } = useAdmin();
   
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const CourseManagement = () => {
   const [courseDetails, setCourseDetails] = useState({});
   const [detailsLoading, setDetailsLoading] = useState({});
 
-  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [courseLevels, setCourseLevels] = useState([]);
   const [courseTypes, setCourseTypes] = useState([]);
   const [courseTopics, setCourseTopics] = useState([]);
@@ -63,7 +64,7 @@ const CourseManagement = () => {
   const [courseSkills, setCourseSkills] = useState([]);
   
   const [dropdownLoading, setDropdownLoading] = useState({
-    categories: false,
+    subcategories: false,
     courseLevels: false,
     courseTypes: false,
     courseTopics: false,
@@ -72,7 +73,7 @@ const CourseManagement = () => {
   });
   
   const [dropdownError, setDropdownError] = useState({
-    categories: '',
+    subcategories: '',
     courseLevels: '',
     courseTypes: '',
     courseTopics: '',
@@ -219,16 +220,28 @@ const CourseManagement = () => {
   }, [courseTypeTotals.advanced, courseTypeTotals.basic, courseTypeTotals.intermediate, filters.courseTypeId, paginationInfo.totalCount]);
   useEffect(() => {
     const fetchDropdownData = async () => {
-      setDropdownLoading(prev => ({ ...prev, categories: true }));
+      setDropdownLoading(prev => ({ ...prev, subcategories: true }));
       try {
-        const data = await getAllCategories();
-        const categories = data.items || data || [];
-        setCategories(categories);
-        setDropdownError(prev => ({ ...prev, categories: '' }));
-      } catch (error) {
-        setDropdownError(prev => ({ ...prev, categories: 'Failed to load categories' }));
+        const data = await getAllSubcategories();
+        let subcategories = [];
+        
+        // Handle different response structures
+        if (data && data.items && Array.isArray(data.items)) {
+          subcategories = data.items;
+        } else if (data && Array.isArray(data)) {
+          subcategories = data;
+        } else if (data && data.data && Array.isArray(data.data)) {
+          subcategories = data.data;
+        }
+        
+        setSubcategories(subcategories);
+        setDropdownError(prev => ({ ...prev, subcategories: '' }));
+      } catch (err) {
+        console.error('Failed to fetch subcategories:', err);
+        setDropdownError(prev => ({ ...prev, subcategories: 'Failed to load subcategories' }));
+        setSubcategories([]);
       } finally {
-        setDropdownLoading(prev => ({ ...prev, categories: false }));
+        setDropdownLoading(prev => ({ ...prev, subcategories: false }));
       }
 
       // Fetch Course Types
@@ -304,7 +317,7 @@ const CourseManagement = () => {
     };
 
     fetchDropdownData();
-  }, [getAllCategories, getCourseTypes, getCourseLevels, getCourseTopics, getAllCourseBadgesNew, getAllSkills]);
+  }, [getAllSubcategories, getCourseTypes, getCourseLevels, getCourseTopics, getAllCourseBadgesNew, getAllSkills]);
 
   // Handle view details
  const handleViewDetails = useCallback(async (course) => {
@@ -721,7 +734,7 @@ const CourseManagement = () => {
    
   }, []); // Only run on mount
 
-  if (error && !modalState.isOpen) {
+  if (error && !modalState.isOpen && !csvModalOpen && modalState.mode === null) {
     return (
       <AdminPageLayout
         title="Course Management"
@@ -846,7 +859,7 @@ const CourseManagement = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                 <CategoryDropdown
-                  categories={categories}
+                  categories={subcategories}
                   value={filters.categoryId}
                   onChange={(categoryId) => handleFilterChange('categoryId', categoryId)}
                   placeholder="Select category..."
@@ -1411,7 +1424,7 @@ const CourseManagement = () => {
         onClose={handleCloseModal}
         mode={modalState.mode}
         course={modalState.course}
-        categories={categories}
+        categories={subcategories}
         courseLevels={courseLevels}
         courseTypes={courseTypes}
         courseTopics={courseTopics}
@@ -1431,7 +1444,7 @@ const CourseManagement = () => {
         onClose={() => setCsvModalOpen(false)}
         onSubmit={handleCsvUpload}
         loading={csvModalLoading}
-        error={csvModalError}
+        csvError={csvModalError}
         onClearError={() => setCsvModalError('')}
       />
 

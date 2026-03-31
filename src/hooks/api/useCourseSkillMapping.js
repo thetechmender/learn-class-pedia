@@ -8,7 +8,7 @@ export const useCourseSkillMapping = () => {
   const [allCourses, setAllCourses] = useState([]); // Store all courses for client-side pagination
   const [courseTypes, setCourseTypes] = useState([]);
   const [courseLevels, setCourseLevels] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [error, setError] = useState(null);
@@ -286,15 +286,15 @@ export const useCourseSkillMapping = () => {
     }
   }, []);
 
-  // Fetch categories
-  const fetchCategories = useCallback(async () => {
+  // Fetch subcategories
+  const fetchSubcategories = useCallback(async () => {
     try {
-      const data = await ApiService.getAllCategories();
+      const data = await ApiService.getAllSubcategories();
       // Handle both direct array and paginated response formats
-      const categoriesData = Array.isArray(data) ? data : data?.items || [];
-      setCategories(categoriesData);
+      const subcategoriesData = Array.isArray(data) ? data : data?.items || [];
+      setSubcategories(subcategoriesData);
     } catch (err) {
-      console.error('Failed to fetch categories:', err);
+      console.error('Failed to fetch subcategories:', err);
     }
   }, []);
 
@@ -411,14 +411,14 @@ export const useCourseSkillMapping = () => {
         fetchAllSkills({ page: 1, pageSize: skillsPagination.pageSize, search: '' }),
         fetchCourseTypes(),
         fetchCourseLevels(),
-        fetchCategories()
+        fetchSubcategories()
       ]);
     } catch (err) {
       setError(err.message || 'Failed to load initial data');
     } finally {
       setLoading(false);
     }
-  }, [fetchAllSkills, fetchCourseTypes, fetchCourseLevels, fetchCategories, skillsPagination.pageSize]);
+  }, [fetchAllSkills, fetchCourseTypes, fetchCourseLevels, fetchSubcategories, skillsPagination.pageSize]);
 
   // Initialize data on mount
   useEffect(() => {
@@ -433,7 +433,7 @@ export const useCourseSkillMapping = () => {
     allCourses,
     courseTypes,
     courseLevels,
-    categories,
+    subcategories,
     skillCourses,
     
     // Loading states
@@ -456,7 +456,7 @@ export const useCourseSkillMapping = () => {
     fetchCourseDetailsByIds,
     fetchCourseTypes,
     fetchCourseLevels,
-    fetchCategories,
+    fetchSubcategories,
     assignCoursesToSkill,
     getSkillCourses,
     loadInitialData,
