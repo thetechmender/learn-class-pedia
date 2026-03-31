@@ -32,5 +32,21 @@ export class AssessmentService {
             headers: this.getHeaders(token)
         });
     }
+  getCourseCertificateAssessment(courseId: number, token: string | null) {
+       return this.http.get<any>(
+      `${this.apiUrl}/assessment/certificate/${courseId}/final-assessment`,
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  };
 
+    getProfessionalCourseAssessment(courseId: number, token: string | null) {
+       return this.http.get<any>(
+      `${this.apiUrl}/assessment/professional/${courseId}/final-assessment`,
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  }
 }

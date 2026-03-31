@@ -13,6 +13,10 @@ export class FinalAssessment implements OnInit {
   @Output() next = new EventEmitter<any>();
   @Output() goBack = new EventEmitter<void>();
   @Input() orderPayload: any = null;
+  @Input()
+  courseTypeId!: number;
+  @Input() isFinalAssessmentNotEligable!: boolean;
+  @Input() isClickFinalAssessment!: boolean;
   isCompleting = signal(false);
   questions = signal<any[]>([]);
   currentQuestionIndex = signal(0);
@@ -28,8 +32,20 @@ export class FinalAssessment implements OnInit {
   private assessmentService = inject(AssessmentService);
 
   ngOnInit(): void {
-    if (this.orderPayload?.shortCourseId) {
+    if (!this.isClickFinalAssessment) {
       this._fetchAssessmentQuestions();
+      return;
+    }
+    if (this.isClickFinalAssessment && !this.isFinalAssessmentNotEligable) {
+      if (this.courseTypeId == 1) {
+        this._fetchProfessionalCertificate();
+      }
+      if (this.courseTypeId == 2) {
+        this._fetchCertificateCourse();
+      }
+      if (this.courseTypeId == 3) {
+        this._fetchAssessmentQuestions();
+      }
     }
   }
 
@@ -39,6 +55,46 @@ export class FinalAssessment implements OnInit {
     this.isQuestionLoading.set(true);
     const token = this.authService.getToken();
     this.assessmentService.getAssessmentQuestions(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          this.questions.set(details['data']['questions'].map((q: any) => ({
+            isSelect: false,
+            selectedOption: '',
+            ...q,
+          })) || []);
+          this.isQuestionLoading.set(false);
+        },
+        error: (err: any) => {
+          console.error('Fetch Assessment Questions Error:', err);
+        }
+      });
+  };
+
+  _fetchCertificateCourse() {
+    if (!this.orderPayload?.courseCertificateId) return;
+    this.isQuestionLoading.set(true);
+    const token = this.authService.getToken();
+    this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          this.questions.set(details['data']['questions'].map((q: any) => ({
+            isSelect: false,
+            selectedOption: '',
+            ...q,
+          })) || []);
+          this.isQuestionLoading.set(false);
+        },
+        error: (err: any) => {
+          console.error('Fetch Assessment Questions Error:', err);
+        }
+      });
+  };
+
+  _fetchProfessionalCertificate() {
+    if (!this.orderPayload?.professionalCertificateId) return;
+    this.isQuestionLoading.set(true);
+    const token = this.authService.getToken();
+    this.assessmentService.getProfessionalCourseAssessment(this.orderPayload.professionalCertificateId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           this.questions.set(details['data']['questions'].map((q: any) => ({
@@ -101,8 +157,15 @@ export class FinalAssessment implements OnInit {
         next: (response: any) => {
           this.isCompleting.set(false);
           if (response?.statusCode == 200) {
-            const data = response['data'];
-            this.next.emit(data);
+            if (response['data']['isPassed']) {
+              if (response['data']['isPassed']) {
+                this.next.emit('cleared');
+              } else {
+                this.next.emit('failed');
+              }
+            } else {
+              this.next.emit('failed');
+            }
           }
         },
         error: (err: any) => {
@@ -111,3 +174,8 @@ export class FinalAssessment implements OnInit {
       });
   }
 }
+// if (response['data']['isPassed']) {
+//         this.next.emit('cleared');
+//       } else {
+//         this.next.emit('failed');
+//       }

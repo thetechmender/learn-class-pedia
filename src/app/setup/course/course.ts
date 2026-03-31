@@ -72,9 +72,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private pauseOverlayTimeout: any = null;
   showCompletionModal = signal(false);
   completionData = signal<any>(null);
-  isCompleting = signal(false);
   courseLevel = signal<string>('');
   existingSeasionCourseId = signal<number>(0)
+  isClickedFinalAssessment = signal<boolean>(false);
   assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts'>('none');
   assessmentResult = signal<any>(null);
   completeOrderPayload = signal<any>({
@@ -284,6 +284,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           lectureId: lectureId || null,
           sessionToken: token
         });
+        this.existingSeasionCourseId.set(parseInt(courseId));
         this.loadCourseDataWithToken(parseInt(courseId), token);
       } else {
         const existingSession = this.authService.getStoredSession();
@@ -359,8 +360,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
             });
             this.selectFirstShortCourse(targetSc);
+            this.refreshProgress();
             if (!incompleteSc) {
-              this.toastr.info('All lectures completed. Ready to start the assessment.', 'Info');
+              this.toastr.info('All lectures completed. Ready to start the final assessment.', 'Info');
             }
           }
           tree.professionalCourse.courseCertificates =
@@ -381,8 +383,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             professionalCertificateId: null
           });
           this.selectFirstShortCourse(targetSc);
+          this.refreshProgress();
           if (!incompleteSc) {
-            this.toastr.info('All lectures completed. Ready to start the assessment.', 'Info');
+            this.toastr.info('All lectures completed. Ready to start the final assessment.', 'Info');
           }
         } else if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
           this.completeOrderPayload.set({
@@ -392,6 +395,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           })
           const firstLec = tree.shortCourseLectures[0];
           this.selectFirstLecture(firstLec);
+          this.refreshProgress();
         }
 
         this.isLoading.set(false);
@@ -401,15 +405,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         console.error('Course Load Error:', err);
         this.isLoading.set(false);
       }
-    });
-
-    this.courseService.getCourseProgressWithToken(courseId, token).subscribe({
-      next: (res: any) => {
-        const data = res.isSuccess !== undefined ? res.data : res;
-        this.progress.set(data);
-        this.startProgressTracking(token);
-      },
-      error: (err: any) => console.error('Progress Error:', err)
     });
   }
 
@@ -429,6 +424,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private updateProgress(token: string | null) {
     const tree = this.courseTree();
     if (!tree) return;
+
+    // Only update progress if audio is playing
+    if (!this.isPlaying()) return;
 
     const elapsedSeconds = Math.floor((Date.now() - this.progressStartTime) / 1000);
     const totalSecondsWatched = this.lastProgressUpdate + elapsedSeconds;
@@ -620,12 +618,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   refreshProgress() {
     const token = this.authService.getToken();
-    const courseId = this.existingSeasionCourseId() || this.courseTree()?.courseId;
-    if (!courseId) return;
-    this.courseService.getCourseProgressWithToken(courseId, token).subscribe({
+    const selectedId = this.completeOrderPayload()?.shortCourseId;
+    if (!selectedId) return;
+    this.courseService.getCourseProgressWithToken(selectedId, token).subscribe({
       next: (res: any) => {
         const data = res.isSuccess !== undefined ? res.data : res;
         this.progress.set(data);
+        this.startProgressTracking(token);
       },
       error: (err: any) => console.error('Progress Refresh Error:', err)
     });
@@ -702,7 +701,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
     this.isContentReady.set(false);
     this.lectureContent.set('');
-
+      this.isClickedFinalAssessment.set(false);
     // Set lecture section with this single lecture
     this.lectureSection.set([lec]);
 
@@ -733,7 +732,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
     this.lectureContent.set('');
-
+      this.isClickedFinalAssessment.set(false);
     // Toggle expand state
     const current = new Set(this.expandedShortCourses());
     if (current.has(sc.shortCourseId)) {
@@ -760,7 +759,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
     this.lectureContent.set('');
-
+      this.isClickedFinalAssessment.set(false);
     // Toggle expand state
     const current = new Set(this.expandedShortCourses());
     if (current.has(sc.shortCourseId)) {
@@ -1100,7 +1099,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.isLoading()) {
       return;
     }
-    this.isCompleting.set(true);
     const payload = {
       shortCourseId: this.completeOrderPayload().shortCourseId ?? null,
       courseCertificateId: this.completeOrderPayload().courseCertificateId ?? null,
@@ -1111,7 +1109,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res: any) => {
-          this.isCompleting.set(false);
           if (res?.isSuccess && res?.data) {
             this.completionData.set(res.data);
             this.showCompletionModal.set(true);
@@ -1121,7 +1118,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           }
         },
         error: (err: any) => {
-          this.isCompleting.set(false);
           this.toastr.error('An error occurred while marking course complete', 'Error');
           console.error('Complete Course Error:', err);
         }
@@ -1233,6 +1229,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   startAssessment() {
     if (this.checkIsAssessmentAccess()) {
+      this.isClickedFinalAssessment.set(true);
       this.assessmentStep.set('start');
     }
   }
@@ -1253,13 +1250,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.toastr.success('Your course is completed!', 'Success');
           this.refreshCourseTree();
         }
-        this.startAssessment();
+        this.assessmentStep.set('start');
         this.loadCourseData(this.existingSeasionCourseId());
         this.stopSpeech();
       },
       error: () => {
         this.stopSpeech();
-        this.startAssessment();
       }
     });
   }
@@ -1297,4 +1293,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       clearInterval(this.progressInterval);
     }
   }
+
+  disbaledFinalAssessment = computed(() => {
+    if (this.courseTree()?.courseTypeId == 2) {
+      return this.courseTree()?.certificateCourse?.isCompleted ? false : true;
+    }
+    if (this.courseTree()?.courseTypeId == 1 || this.courseTree()?.courseTypeId == 3) {
+      return this.courseTree()?.isCompleted ? false : true;
+    }
+    return true;
+  });
 }

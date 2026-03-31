@@ -117,7 +117,7 @@ export class CourseService {
     );
   };
 
-  
+
 
   completeCourse(payload: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/learning/v2/course/complete`, payload);
