@@ -15,8 +15,7 @@ export class FinalAssessment implements OnInit {
   @Input() orderPayload: any = null;
   @Input()
   courseTypeId!: number;
-  @Input() isFinalAssessmentNotEligable!: boolean;
-  @Input() isClickFinalAssessment!: boolean;
+
   isCompleting = signal(false);
   questions = signal<any[]>([]);
   currentQuestionIndex = signal(0);
@@ -32,11 +31,6 @@ export class FinalAssessment implements OnInit {
   private assessmentService = inject(AssessmentService);
 
   ngOnInit(): void {
-    if (!this.isClickFinalAssessment) {
-      this._fetchAssessmentQuestions();
-      return;
-    }
-    if (this.isClickFinalAssessment && !this.isFinalAssessmentNotEligable) {
       if (this.courseTypeId == 1) {
         this._fetchProfessionalCertificate();
       }
@@ -44,17 +38,17 @@ export class FinalAssessment implements OnInit {
         this._fetchCertificateCourse();
       }
       if (this.courseTypeId == 3) {
-        this._fetchAssessmentQuestions();
+        this._fetchShoortCourseAssessment();
       }
-    }
+      console.log(this.courseTypeId)
   }
 
 
-  _fetchAssessmentQuestions() {
+  _fetchShoortCourseAssessment() {
     if (!this.orderPayload?.shortCourseId) return;
     this.isQuestionLoading.set(true);
     const token = this.authService.getToken();
-    this.assessmentService.getAssessmentQuestions(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getShortCourseAssessment(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           this.questions.set(details['data']['questions'].map((q: any) => ({
@@ -152,7 +146,7 @@ export class FinalAssessment implements OnInit {
       })
     };
     const token = this.authService.getToken();
-    this.assessmentService.submitAssessment(payload, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
           this.isCompleting.set(false);
@@ -173,9 +167,5 @@ export class FinalAssessment implements OnInit {
         }
       });
   }
+
 }
-// if (response['data']['isPassed']) {
-//         this.next.emit('cleared');
-//       } else {
-//         this.next.emit('failed');
-//       }

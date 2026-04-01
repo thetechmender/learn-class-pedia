@@ -1,13 +1,28 @@
-<div class="p-6">
-  @if (activeSection) {
-    <div class="space-y-3">
-      @for (para of transcriptParagraphs; track $index) {
-        <p class="text-gray-700 text-sm leading-relaxed">{{ para }}</p>
+<div class="p-2 pb-20">
+  @if (lectures.length > 0) {
+  <div class="space-y-6">
+    <!-- <h2 class="text-xl font-bold text-gray-900">{{ currentShortCourse?.title }}</h2> -->
+    @for (lecture of lectures; track $index) {
+    <div class="space-y-2">
+      @if (lecture.content) {
+      <h2 class="text-xl font-bold text-gray-900">{{ getHeadingFromContent(lecture.content) }}</h2>
+      }
+      @if (lecture.content) {
+      <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{{ getContentText(lecture.content) }}</p>
       }
     </div>
+    }
+
+  </div>
+  <div class="mt-4 pb-20">
+    <button (click)="onButtonClick()"
+      class="px-8 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
+      {{ courseTypeId == 3 ? 'Move to Assessment' : 'Move to Quiz' }}
+    </button>
+  </div>
   } @else {
-    <div class="text-center py-8">
-      <p class="text-gray-500">Select a section to view transcript</p>
-    </div>
+  <div class="text-center py-8">
+    <p class="text-gray-500">No lecture content available</p>
+  </div>
   }
 </div>

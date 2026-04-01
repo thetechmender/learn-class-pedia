@@ -1,0 +1,51 @@
+<div class="p-2 pb-20">
+  <p class="text-sm text-gray-500 mb-4">Please note: This is just a preparatory quiz. Its grading will not effect your report.</p>
+
+  @if(isQuestionLoading()) {
+  <div class="flex items-center justify-center py-8">
+    <div class="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+    <p class="ml-3 text-gray-600">Loading Questions...</p>
+  </div>
+  } @else {
+  <div class="space-y-6">
+    @for (question of questions(); track question.id; let i = $index) {
+    <div class="bg-gray-50 rounded-xl p-5">
+      @if (isSubmitted()) {
+        @if (getQuestionResult(question.id)?.isCorrect) {
+        <p class="text-sm font-medium text-green-600 mb-2">✓ Correct Answer</p>
+        } @else {
+        <p class="text-sm font-medium text-red-600 mb-2">✗ Wrong Answer</p>
+        }
+      }
+      <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}</h3>
+      <div class="grid grid-cols-2 gap-3">
+        @for (option of question.options; track option.optionLetter) {
+        <label class="flex items-center gap-2 cursor-pointer" [class.pointer-events-none]="isSubmitted()">
+          <input type="radio" [name]="'question-' + question.id" [value]="option.optionLetter"
+            [checked]="question.selectedOption === option.optionLetter"
+            (change)="onOptionChange(question, option.optionLetter)"
+            [disabled]="isSubmitted()"
+            class="w-4 h-4 text-primary border-gray-300 focus:ring-primary" />
+          <span class="text-sm text-gray-700">{{ option.optionLetter }}. {{ option.optionText }}</span>
+        </label>
+        }
+      </div>
+    </div>
+    }
+  </div>
+
+  @if (questions().length > 0 && !isSubmitted()) {
+  <div class="mt-6 flex justify-left">
+    <button (click)="onCheckResult()" [disabled]="isCompleting()"
+      class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+      @if (isCompleting()) {
+      <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+      Submitting...
+      } @else {
+      Submit Quiz
+      }
+    </button>
+  </div>
+  }
+  }
+</div>

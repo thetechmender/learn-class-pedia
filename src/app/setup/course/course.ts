@@ -9,18 +9,21 @@ import { Overview } from './overview/overview';
 import { Notebook } from './notebook/notebook';
 import { Transcript } from './transcript/transcript';
 import { Download } from './download/download';
+import { KeyPoints } from './key-points/key-points';
 import { CompletionModal } from '../../shared/completion-modal/completion-modal';
 import { StartAssessment } from '../assessment/start-assessment/start-assessment';
 import { FinalAssessment } from '../assessment/final-assessment/final-assessment';
 import { FailedAssessment } from '../assessment/failed-assessment/failed-assessment';
 import { ClearedAssessment } from '../assessment/cleared-assessment/cleared-assessment';
+import { Quiz } from './quiz/quiz';
+import { EnrolledCourses } from './enrolled-courses/enrolled-courses';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Transcript, Download, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -60,7 +63,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   expandedCertificates = signal<Set<number>>(new Set());
   activeCertificateId = signal<number | null>(null);
   expandedShortCourses = signal<Set<number>>(new Set());
-  activeTab = signal<'overview' | 'notebook' | 'transcript' | 'download'>('overview');
+  activeTab = signal<'overview' | 'keyPoints' | 'notebook' | 'transcript' | 'download' | 'quiz'>('overview');
   activeLectureTitle = signal<string | null>(null);
   activeLectureIndex = signal<number>(0);
   lectureStartTimes: number[] = [];
@@ -74,7 +77,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   completionData = signal<any>(null);
   courseLevel = signal<string>('');
   existingSeasionCourseId = signal<number>(0)
-  isClickedFinalAssessment = signal<boolean>(false);
   assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts'>('none');
   assessmentResult = signal<any>(null);
   completeOrderPayload = signal<any>({
@@ -172,10 +174,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.isPlaying.set(false);
         this.speechService.isCompleted.set(false);
         this.speechService.isPaused.set(false);
-        // Auto-trigger: complete course then Start Assessment
-        if (this.courseTree()?.courseTypeId !== 3) {
-          this.completeAndTriggerAssessment();
-        }
+        // Auto-select next lecture when current one finishes
+        this.goToNextSection();
       }
     });
   }
@@ -475,9 +475,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (res: any) => {
         const data = res.isSuccess !== undefined ? res.data : res;
         this.progress.set(data);
-        if (completionPercentage >= 100 && this.courseTree()?.courseTypeId !== 3) {
-          this.completeAndTriggerAssessment();
-        }
       },
       error: (err: any) => console.error('Progress Update Error:', err)
     });
@@ -671,17 +668,23 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   selectFirstLecture(lec: any) {
     // For courseTypeId=3 - select first lecture directly (no accordion)
+    const tree = this.courseTree();
+    const allLectures = tree?.shortCourseLectures || [];
+    const lectureIndex = allLectures.findIndex((l: any) => l.id === lec.id);
+
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
     this.isContentReady.set(false);
+    this.activeLectureIndex.set(lectureIndex >= 0 ? lectureIndex : 0);
+    this.activeLectureTitle.set(lec.title || lec.courseTitle || null);
 
     // Set lecture section with this single lecture
     this.lectureSection.set([lec]);
 
-    // Create a pseudo short course object for playback compatibility
+    // Create a pseudo short course object with ALL lectures for playback compatibility
     this.currentShortCourse.set({
-      shortCourseId: lec.id,
-      title: lec.title || lec.courseTitle,
-      lectures: [{ ...lec, lectureSections: [lec] }]
+      shortCourseId: tree?.courseId,
+      title: tree?.courseTitle,
+      lectures: allLectures.map((l: any) => ({ ...l, lectureSections: [l] }))
     });
 
     // Set activeSection so transcript/download work on initial load
@@ -692,8 +695,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onLectureSelectType3(lec: any) {
+    const tree = this.courseTree();
+    const allLectures = tree?.shortCourseLectures || [];
+    const lectureIndex = allLectures.findIndex((l: any) => l.id === lec.id);
+
     this.completeOrderPayload.set({
-      shortCourseId: lec?.id,
+      shortCourseId: tree?.courseId,
       courseCertificateId: null,
       professionalCertificateId: null
     });
@@ -701,15 +708,17 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
     this.isContentReady.set(false);
     this.lectureContent.set('');
-      this.isClickedFinalAssessment.set(false);
+    this.activeLectureIndex.set(lectureIndex >= 0 ? lectureIndex : 0);
+    this.activeLectureTitle.set(lec.title || lec.courseTitle || null);
+
     // Set lecture section with this single lecture
     this.lectureSection.set([lec]);
 
-    // Create a pseudo short course object for playback compatibility
+    // Create a pseudo short course object with ALL lectures for playback compatibility
     this.currentShortCourse.set({
-      shortCourseId: lec.id,
-      title: lec.title || lec.courseTitle,
-      lectures: [{ ...lec, lectureSections: [lec] }]
+      shortCourseId: tree?.courseId,
+      title: tree?.courseTitle,
+      lectures: allLectures.map((l: any) => ({ ...l, lectureSections: [l] }))
     });
 
     // Set activeSection so transcript/download work immediately
@@ -732,7 +741,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
     this.lectureContent.set('');
-      this.isClickedFinalAssessment.set(false);
     // Toggle expand state
     const current = new Set(this.expandedShortCourses());
     if (current.has(sc.shortCourseId)) {
@@ -759,7 +767,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
     this.lectureContent.set('');
-      this.isClickedFinalAssessment.set(false);
     // Toggle expand state
     const current = new Set(this.expandedShortCourses());
     if (current.has(sc.shortCourseId)) {
@@ -935,9 +942,21 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     const index = this.activeLectureIndex();
     if (index > 0) {
       const newIndex = index - 1;
+      const prevLecture = sc.lectures[newIndex];
       this.activeLectureIndex.set(newIndex);
-      this.activeLectureTitle.set(sc.lectures[newIndex]?.title || null);
+      this.activeLectureTitle.set(prevLecture?.title || null);
       this.speechService.seekToTime(this.lectureStartTimes[newIndex]);
+
+      // For courseTypeId=3, update lectureSection and activeSection
+      const tree = this.courseTree();
+      if (tree?.courseTypeId === 3 && prevLecture) {
+        this.courseTitle.set(prevLecture.title || prevLecture.courseTitle || 'Lecture');
+        this.lectureSection.set([prevLecture]);
+        if (prevLecture.content) {
+          this.activeSection.set({ ...prevLecture, sectionTitle: prevLecture.title || prevLecture.courseTitle });
+          this.courseService.activeSection.set({ ...prevLecture, sectionTitle: prevLecture.title || prevLecture.courseTitle });
+        }
+      }
     }
   }
 
@@ -947,15 +966,24 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     const index = this.activeLectureIndex();
     if (index < sc.lectures.length - 1) {
       const newIndex = index + 1;
+      const nextLecture = sc.lectures[newIndex];
       this.activeLectureIndex.set(newIndex);
-      this.activeLectureTitle.set(sc.lectures[newIndex]?.title || null);
+      this.activeLectureTitle.set(nextLecture?.title || null);
       this.speechService.seekToTime(this.lectureStartTimes[newIndex]);
-    } else {
-      // Last lecture - complete course then trigger Start Assessment
-      this.stopSpeech();
-      if (this.courseTree()?.courseTypeId !== 3) {
-        this.completeAndTriggerAssessment();
+
+      // For courseTypeId=3, update lectureSection and activeSection
+      const tree = this.courseTree();
+      if (tree?.courseTypeId === 3 && nextLecture) {
+        this.courseTitle.set(nextLecture.title || nextLecture.courseTitle || 'Lecture');
+        this.lectureSection.set([nextLecture]);
+        if (nextLecture.content) {
+          this.activeSection.set({ ...nextLecture, sectionTitle: nextLecture.title || nextLecture.courseTitle });
+          this.courseService.activeSection.set({ ...nextLecture, sectionTitle: nextLecture.title || nextLecture.courseTitle });
+        }
       }
+    } else {
+      // Last lecture - just stop speech, no auto-assessment
+      this.stopSpeech();
     }
   }
 
@@ -1217,7 +1245,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (shortCourse?.isCompleted) {
         return true;
       }
-    } else if (tree?.courseTypeId == 1) {
+    }
+    if (tree?.courseTypeId == 3) {
+      if (tree?.isCompleted) {
+        return true;
+      }
+    }
+    else if (tree?.courseTypeId == 1) {
       const certificate = tree?.professionalCourse?.courseCertificates?.find((item: any) => item.courseCertificateId === this.activeCertificateId());
       const shortCourse = certificate?.shortCourses?.find((item: any) => item.shortCourseId === this.activeShortCourseId());
       if (shortCourse?.isCompleted) {
@@ -1228,10 +1262,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   startAssessment() {
-    if (this.checkIsAssessmentAccess()) {
-      this.isClickedFinalAssessment.set(true);
-      this.assessmentStep.set('start');
-    }
+    this.assessmentStep.set('start');
   }
 
   completeAndTriggerAssessment() {
@@ -1294,13 +1325,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  disbaledFinalAssessment = computed(() => {
+  isFinalAssessmentButton()  {
     if (this.courseTree()?.courseTypeId == 2) {
-      return this.courseTree()?.certificateCourse?.isCompleted ? false : true;
+      return this.courseTree()?.isCompleted ? false : true;
     }
-    if (this.courseTree()?.courseTypeId == 1 || this.courseTree()?.courseTypeId == 3) {
+    if (this.courseTree()?.courseTypeId == 1) {
+      return this.courseTree()?.isCompleted ? false : true;
+    }
+    if (this.courseTree()?.courseTypeId == 3) {
       return this.courseTree()?.isCompleted ? false : true;
     }
     return true;
-  });
+  }
 }

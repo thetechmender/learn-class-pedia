@@ -5,35 +5,70 @@ import { environment } from '../environments/environment';
 
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class AssessmentService {
-    private apiUrl = environment.API_URL;
-    private http = inject(HttpClient);
+  private apiUrl = environment.API_URL;
+  private http = inject(HttpClient);
 
 
-    getAssessmentQuestions(courseId: number, token: string | null): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/assessment/${courseId}/questions`, {
-            headers: this.getHeaders(token)
-        });
+  getQuizQuestions(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/assessment/quiz/${courseId}/questions`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  private getHeaders(token: string | null): HttpHeaders {
+    let headers = new HttpHeaders();
+    headers = headers.set('Content-Type', 'application/json');
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+    return headers;
+  };
+
+  submitQuizAssessment(payload: any = {}, token: string | null): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/assessment/quiz/submit`, payload, {
+      headers: this.getHeaders(token)
+    });
+  };
+
+  submitFinalAssessment(
+    courseTypeId: number,
+    payload: any = {},
+    token: string | null
+  ): Observable<any> {
+
+    let endpoint = '';
+
+    switch (courseTypeId) {
+      case 1: // professional
+        endpoint = 'professional';
+        break;
+
+      case 2: // certificate
+        endpoint = 'certificate';
+        break;
+
+      case 3: // short-course
+        endpoint = 'short-course';
+        break;
+
+      default:
+        throw new Error('Invalid courseTypeId');
     }
 
-    private getHeaders(token: string | null): HttpHeaders {
-        let headers = new HttpHeaders();
-        headers = headers.set('Content-Type', 'application/json');
-        if (token) {
-            headers = headers.set('Authorization', `Bearer ${token}`);
-        }
-        return headers;
-    };
+    return this.http.post<any>(
+      `${this.apiUrl}/assessment/${endpoint}/final-assessment/submit`,
+      payload,
+      { headers: this.getHeaders(token) }
+    );
+  }
 
-      submitAssessment(payload: any = {}, token: string | null): Observable<any> {
-        return this.http.post<any>(`${this.apiUrl}/assessment/submit`, payload, {
-            headers: this.getHeaders(token)
-        });
-    }
+
+
   getCourseCertificateAssessment(courseId: number, token: string | null) {
-       return this.http.get<any>(
+    return this.http.get<any>(
       `${this.apiUrl}/assessment/certificate/${courseId}/final-assessment`,
       {
         headers: this.getHeaders(token)
@@ -41,9 +76,28 @@ export class AssessmentService {
     );
   };
 
-    getProfessionalCourseAssessment(courseId: number, token: string | null) {
-       return this.http.get<any>(
+  getProfessionalCourseAssessment(courseId: number, token: string | null) {
+    return this.http.get<any>(
       `${this.apiUrl}/assessment/professional/${courseId}/final-assessment`,
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  }
+
+  getShortCourseAssessment(courseId: number, token: string | null) {
+    return this.http.get<any>(
+      `${this.apiUrl}/assessment/short-course/${courseId}/final-assessment`,
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  }
+
+  getQuizesResult(payload: any, token: string | null) {
+    return this.http.post<any>(
+      `${this.apiUrl}/assessment/coursewiseresult`,
+      payload,
       {
         headers: this.getHeaders(token)
       }

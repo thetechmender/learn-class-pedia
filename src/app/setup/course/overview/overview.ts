@@ -44,7 +44,7 @@ export class Overview implements OnInit, OnChanges {
   }
 
   ngOnInit() {
-    this._fetchRelatedCourses();
+    // this._fetchRelatedCourses();
     switch (this.courseTypeId) {
       case 1:
         this._fetchProfessionalCertificate()
@@ -84,19 +84,19 @@ export class Overview implements OnInit, OnChanges {
     return total;
   }
 
-  _fetchRelatedCourses() {
-    const courseIds = this.authService.getCourseId();
-    const token = this.authService.getToken();
-    this.courseService.getRelatedCourse(courseIds?.toString() || null, token).pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (courses: any) => {
-          this.relatedCourses.set(courses['data']['courses'] || []);
-        },
-        error: (err: any) => {
-          console.error('Refresh Course Tree Error:', err);
-        }
-      });
-  }
+  // _fetchRelatedCourses() {
+  //   const courseIds = this.authService.getCourseId();
+  //   const token = this.authService.getToken();
+  //   this.courseService.getRelatedCourse(courseIds?.toString() || null, token).pipe(takeUntil(this.destroy$))
+  //     .subscribe({
+  //       next: (courses: any) => {
+  //         this.relatedCourses.set(courses['data']['courses'] || []);
+  //       },
+  //       error: (err: any) => {
+  //         console.error('Refresh Course Tree Error:', err);
+  //       }
+  //     });
+  // }
 
   getTotalVideos(): number {
     return this.getTotalLectures();

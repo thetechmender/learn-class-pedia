@@ -87,6 +87,16 @@ export class CourseService {
       }
     );
   };
+
+   getEnrolledCourse( token: string | null) {
+    return this.http.get<any>(
+      `${this.apiUrl}/CustomerProfile/GetEnrolledCourses`,
+      {
+        headers: this.getHeaders(token)
+      }
+    );
+  };
+
   getShortCourseDetails(courseSlug: string  = '', token: string | null){
        return this.http.post<any>(
       `${this.apiUrl}/Courses/ShortCourseDetail`,

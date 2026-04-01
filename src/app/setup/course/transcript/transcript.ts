@@ -1,6 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CourseService } from '../../../services/course.service';
 
 @Component({
   selector: 'app-transcript',
@@ -10,20 +9,52 @@ import { CourseService } from '../../../services/course.service';
   styleUrl: './transcript.sass',
 })
 export class Transcript {
-  private courseService = inject(CourseService);
+  @Input() currentShortCourse: any = null;
+  @Input() courseTypeId: any = null;
+  @Output() moveToQuiz = new EventEmitter<void>();
+  @Output() startAssessment = new EventEmitter<void>();
 
-  get activeSection() {
-    return this.courseService.activeSection();
+  onButtonClick() {
+    if (this.courseTypeId == 3) {
+      this.startAssessment.emit();
+    } else {
+      this.moveToQuiz.emit();
+    }
+  }
+  get lectures(): any[] {
+    const sc = this.currentShortCourse;
+    if (!sc?.lectures) return [];
+    return sc.lectures;
   }
 
-  get transcriptParagraphs(): string[] {
-    const section = this.activeSection;
-    if (!section?.content) return [];
-
+  getHeadingFromContent(content: string): string {
+    if (!content) return '';
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = section.content;
-    const text = tempDiv.textContent || tempDiv.innerText || '';
+    tempDiv.innerHTML = content;
+    const h2 = tempDiv.querySelector('h2');
+    return h2?.textContent?.trim() || '';
+  }
 
-    return text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0).map(s => s.trim());
+  getContentText(content: string): string {
+    if (!content) return '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    // Extract only <p> elements, skip h2 since it's shown as subheading above
+    const paragraphs = tempDiv.querySelectorAll('p');
+    let result = '';
+    paragraphs.forEach((p, index) => {
+      const text = (p.textContent || '').trim();
+      if (text) {
+        result += text + (index < paragraphs.length - 1 ? '\n\n' : '');
+      }
+    });
+    
+    // Fallback if no <p> elements found
+    if (!result) {
+      result = tempDiv.textContent || tempDiv.innerText || '';
+    }
+    
+    return result.trim();
   }
 }
