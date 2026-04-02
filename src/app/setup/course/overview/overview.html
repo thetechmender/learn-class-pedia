@@ -177,7 +177,7 @@
       </div>
 
       <!-- Introduction to Sales - Clickable item (Accordion Header) -->
-      @if(this.overView()?.keyPoints?.length > 0) {
+      <!-- @if(this.overView()?.keyPoints?.length > 0) {
       <div class="mb-6 flex items-center justify-between py-3 border-b border-dashed border-gray-300 cursor-pointer"
         (click)="isLearningOutcomesExpanded.set(!isLearningOutcomesExpanded())">
         <div class="flex items-center gap-2">
@@ -189,18 +189,12 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </div>
-
-      <!-- Learning Outcomes (Accordion Content) -->
       @if(isLearningOutcomesExpanded()) {
       <div class="mb-8">
         <h3 class="text-lg font-bold text-gray-900 mb-4">Learning Outcomes</h3>
         <div class="space-y-4">
           @for(point of this.overView()?.keyPoints || []; track point; let i = $index) {
           <div class="flex items-start gap-3">
-            <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0 mt-0.5" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg> -->
             <i class="ic-53 text-primary mt-1"></i>
             <p class="text-sm text-gray-600 leading-relaxed">{{point}}</p>
           </div>
@@ -208,7 +202,7 @@
         </div>
       </div>
       }
-      }
+      } -->
 
       }
       <!-- Knowledge & Skills - Green/Cyan background -->

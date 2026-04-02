@@ -547,7 +547,7 @@
       </div>
       <!-- Tab Content -->
       <div class="flex gap-6 p-4">
-        <div class="flex-1 bg-white rounded-xl border border-gray-200 p-2">
+        <div class="flex-1 bg-white rounded-xl">
           @if (activeTab() === 'overview') {
           <app-overview [courseTypeId]="courseTree()?.courseTypeId" [title]="courseTree()?.courseTitle"
             [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()"></app-overview>
@@ -605,7 +605,7 @@
 
   <!-- Ask Course Companion Button -->
   <button (click)="courseService.toggleChat()"
-    class="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-thirdly text-gray-600 rounded-full shadow-lg hover:bg-[#00c494] transition-all duration-300 font-medium text-sm"
+    class="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3 py-3 bg-thirdly text-gray-600 rounded-full shadow-lg hover:bg-[#00c494] transition-all duration-300 font-medium text-sm"
     [class.hidden]="courseService.isChatOpen()">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -616,14 +616,14 @@
 
   <!-- Chat Sidebar -->
   <div
-    class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-96 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
+    class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-72 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
     [class.translate-x-full]="!courseService.isChatOpen()" [class.translate-x-0]="courseService.isChatOpen()">
 
     <!-- Chat Header - Optional background with centered content -->
     <div class="bg-optional text-center py-2 px-2 relative border-b border-gray-300">
       <button (click)="courseService.toggleChat()"
         class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
@@ -631,29 +631,30 @@
       <div class="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center">
         <img src="/assets/icons/chat-icon-em.svg" class="h-9 w-9" />
       </div>
-      <h2 class="text-lg font-bold text-primary">Classpedia Course Companion</h2>
+      <h2 class="text-md font-bold text-primary">Classpedia Course Companion</h2>
     </div>
 
     <!-- Chat Messages -->
     <div class="flex-1 overflow-y-auto p-2 bg-optional overscroll-contain">
       <div class="space-y-4">
         @for (msg of chatMessages(); track $index) {
-        <div class="flex gap-3" [class.flex-row-reverse]="msg.role === 'user'">
+        <div class="flex flex-col gap-1" [class.items-start]="msg.role === 'bot'"
+          [class.items-end]="msg.role === 'user'">
           @if (msg.role === 'bot') {
-          <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-            <img src="/assets/icons/chat-icon-sm.svg" class="h-5 w-5" />
+          <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+            <img src="/assets/icons/chat-icon-sm.svg" class="h-3 w-3" />
           </div>
           }
           @if (msg.role === 'user') {
-          <div class="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
-            <img src="/assets/icons/chat-icon-sm.svg" class="h-5 w-5" />
+          <div class="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
+            <img src="/assets/icons/chat-icon-sm.svg" class="h-3 w-3" />
           </div>
           }
-          <div class="rounded-2xl p-4 max-w-[85%]" [class.bg-primary]="msg.role === 'bot'"
+          <div class="rounded-2xl p-3 max-w-[85%]" [class.bg-primary]="msg.role === 'bot'"
             [class.text-white]="msg.role === 'bot'" [class.rounded-tl-none]="msg.role === 'bot'"
             [class.bg-gray-500]="msg.role === 'user'" [class.text-white]="msg.role === 'user'"
             [class.rounded-tr-none]="msg.role === 'user'">
-            <p class="text-sm leading-relaxed text-white">{{ msg.text }}</p>
+            <p class="text-[11px] leading-relaxed text-white">{{ msg.text }}</p>
           </div>
         </div>
         }
@@ -663,8 +664,8 @@
           <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
             <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           </div>
-          <div class="bg-primary text-white rounded-2xl rounded-tl-none p-4 max-w-[85%]">
-            <p class="text-sm leading-relaxed">Typing...</p>
+          <div class="bg-primary text-white rounded-2xl rounded-tl-none p-3 max-w-[85%]">
+            <p class="text-[11px] leading-relaxed">Typing...</p>
           </div>
         </div>
         }
@@ -672,21 +673,21 @@
     </div>
 
     <!-- Chat Input -->
-    <div class="p-4 bg-optional">
+    <div class="p-2 bg-optional">
       <div class="flex gap-3 items-center">
         <input type="text" placeholder="Ask a question" [value]="chatInput()"
           (input)="chatInput.set($any($event.target).value)" (keydown.enter)="sendChatMessage()"
           [disabled]="isChatSending()"
-          class="flex-1 px-4 py-3 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+          class="flex-1 px-2 py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
         <button (click)="sendChatMessage()" [disabled]="isChatSending() || !(chatInput() || '').trim()"
-          class="w-12 h-12 bg-[#00D9A5] rounded-full flex items-center justify-center hover:bg-[#00c494] transition-all shadow-md">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+          class="w-8 h-8 bg-[#00D9A5] rounded-full flex items-center justify-center hover:bg-[#00c494] transition-all shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
           </svg>
         </button>
       </div>
-      <p class="text-xs text-gray-400 text-center mt-3">This is powered by AI and may make mistakes.<br />Use more
-        robust chat for your conversations on web.</p>
+      <p class="text-xs text-gray-400 text-center mt-3">If you are confused about any course material, assessment, or
+        experiencing any difficulty, feel free to use this chatbox.</p>
     </div>
   </div>
 
