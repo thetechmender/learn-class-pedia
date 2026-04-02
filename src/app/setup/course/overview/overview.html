@@ -3,7 +3,7 @@
     <!-- Left Column - Main Content -->
     <div class="flex-1">
       <!-- Course Details -->
-      <div class="mb-6">
+      <div class="mb-6 course-content-left">
         <h2 class="text-lg font-bold text-gray-900 mb-3">Course Details</h2>
         <div class="flex items-center gap-3 text-sm text-gray-500 mb-3">
           <span>{{this.formatDuration(this.overView()?.estimatedTimeMinutes,false)}}</span>
@@ -139,7 +139,7 @@
 
       <!-- Topic of the Course - Green/Cyan background (for courseTypeId 2 & 3) -->
       @if(courseTypeId == 3 || courseTypeId == 2) {
-      <div class="mb-6 bg-thirdly rounded-xl p-5">
+      <div class="mb-6 bg-thirdly topisec rounded-xl p-5">
         <div class="flex items-center justify-between">
           <h3 class="text-primary text-xl font-semibold">Topic of the course</h3>
           <div class="flex items-center gap-6 text-sm text-gray-700">
@@ -207,9 +207,9 @@
       }
       <!-- Knowledge & Skills - Green/Cyan background -->
       @if(this.overView()?.courseTags?.length > 0) {
-      <div class="mb-8 bg-thirdly rounded-2xl p-6">
+      <div class="mb-8 bg-thirdly knowledge-box rounded-2xl p-6">
         <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-3 text-lg">
-          <span class="text-2xl">💡</span>
+          <span class="text-2xl"><img src="assets/icons/bulb.svg" alt=""></span>
           Knowledge & Skills You Will Learn
         </h3>
         <div class="flex flex-wrap gap-3">
@@ -220,57 +220,7 @@
       </div>
       }
       <!-- Learner Reviews & Feedback -->
-      <div class="bg-thirdly rounded-2xl p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-bold text-gray-900">Learner Reviews & Feedback</h3>
-
-          <div class="flex items-center gap-2">
-            <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              <span class="text-sm font-medium text-gray-700"> {{ getAverageReviewRating() }}</span>
-            </div>
-            <!-- Review Count -->
-            <span class="text-sm text-gray-500 cursor-pointer hover:underline" (click)="openReviewsModal()">
-              | {{ this.overView()?.reviewCount }} Total Reviews
-            </span>
-          </div>
-
-        </div>
-
-        <!-- Review 1 -->
-        @for (
-        review of (this.overView()?.reviews || []).slice(0, 2);
-        track review;
-        let i = $index
-        ) {
-        <div class="bg-thirdly rounded-xl p-4 mb-4 border-b border-black/10">
-          <div class="flex items-start gap-4 ">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Adeel Farooq"
-              class="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
-
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="font-semibold text-gray-900">{{review?.customerName || ''}}</h4>
-                <div class="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  <span class="text-sm font-medium text-gray-700">{{review?.rating}}</span>
-                </div>
-              </div>
-              <p class="text-sm text-gray-600 leading-relaxed">"{{review?.reviewText}}"</p>
-            </div>
-
-          </div>
-        </div>
-        }
-      </div>
+      
     </div>
 
     <!-- Right Column - Related Courses -->
