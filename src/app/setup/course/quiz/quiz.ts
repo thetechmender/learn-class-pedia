@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, signal } from '@angular/core';
+import { Component, inject, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, signal } from '@angular/core';
 import { AssessmentService } from '../../../services/assessment.service';
 import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
@@ -13,21 +13,37 @@ import { Subject, takeUntil } from 'rxjs';
 export class Quiz implements OnInit, OnDestroy, OnChanges {
   questions = signal<any[]>([]);
   @Input() orderPayload: any = null;
+  @Input() isCourseCompleted: boolean = false;
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
   private assessmentService = inject(AssessmentService);
   isQuestionLoading = signal(false)
   isCompleting = signal(false);
   isSubmitted = signal(false);
+  showCompletionScreen = signal(false);
+  showAnswers = signal(false);
   quizResult = signal<any>(null);
+  @Output() moveToNextTopic = new EventEmitter<void>();
+  @Output() refreshTree = new EventEmitter<void>();
+  @Output() startAssessment = new EventEmitter<void>();
+  @Output() goToDashboard = new EventEmitter<void>();
+  @Output() selectIncomplete = new EventEmitter<void>();
   ngOnInit(): void {
     this._fetchQuizes()
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['orderPayload'] && !changes['orderPayload'].firstChange) {
+      this.resetQuizState();
       this._fetchQuizes();
     }
+  }
+
+  resetQuizState() {
+    this.isSubmitted.set(false);
+    this.showCompletionScreen.set(false);
+    this.showAnswers.set(false);
+    this.quizResult.set(null);
   }
   _fetchQuizes() {
     if (!this.orderPayload?.shortCourseId) return;
@@ -105,6 +121,8 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
           if (details?.isSuccess) {
             this.quizResult.set(details.data);
             this.isSubmitted.set(true);
+            this.showCompletionScreen.set(true);
+            this.refreshTree.emit();
           }
         },
         error: (err: any) => {
@@ -117,6 +135,24 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
     const result = this.quizResult();
     if (!result?.questionResults) return null;
     return result.questionResults.find((qr: any) => qr.questionId === questionId);
+  }
+
+  onCheckAnswers() {
+    this.showCompletionScreen.set(false);
+    this.showAnswers.set(true);
+    this.refreshTree.emit();
+  }
+
+  onMoveToNextTopic() {
+    this.selectIncomplete.emit();
+  }
+
+  onStartAssessment() {
+    this.startAssessment.emit();
+  }
+
+  onGoToDashboard() {
+    this.goToDashboard.emit();
   }
 
 }

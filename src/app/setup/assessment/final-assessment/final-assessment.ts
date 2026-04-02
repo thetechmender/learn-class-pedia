@@ -31,16 +31,16 @@ export class FinalAssessment implements OnInit {
   private assessmentService = inject(AssessmentService);
 
   ngOnInit(): void {
-      if (this.courseTypeId == 1) {
-        this._fetchProfessionalCertificate();
-      }
-      if (this.courseTypeId == 2) {
-        this._fetchCertificateCourse();
-      }
-      if (this.courseTypeId == 3) {
-        this._fetchShoortCourseAssessment();
-      }
-      console.log(this.courseTypeId)
+    if (this.courseTypeId == 1) {
+      this._fetchProfessionalCertificate();
+    }
+    if (this.courseTypeId == 2) {
+      this._fetchCertificateCourse();
+    }
+    if (this.courseTypeId == 3) {
+      this._fetchShoortCourseAssessment();
+    }
+    console.log(this.courseTypeId)
   }
 
 
@@ -151,21 +151,49 @@ export class FinalAssessment implements OnInit {
         next: (response: any) => {
           this.isCompleting.set(false);
           if (response?.statusCode == 200) {
-            if (response['data']['isPassed']) {
-              if (response['data']['isPassed']) {
-                this.next.emit('cleared');
-              } else {
-                this.next.emit('failed');
-              }
-            } else {
-              this.next.emit('failed');
-            }
+            this._fetchQuizesResult();
           }
         },
         error: (err: any) => {
           console.error('Submit Assessment Error:', err);
         }
       });
+  };
+
+  getCourseId(): string | number {
+    if (this.courseTypeId == 2) {
+      return this.orderPayload?.courseCertificateId || null;
+    }
+    if (this.courseTypeId == 3) {
+      return this.orderPayload?.shortCourseId || null;
+    }
+    return this.orderPayload?.professionalCertificateId || null;
   }
+
+  _fetchQuizesResult() {
+    const token = this.authService.getToken();
+    const payload = {
+      courseId: this.getCourseId() || null,
+      courseCertificateId: this.getCourseId() || null,
+      professionalCertificateId: this.getCourseId() || null,
+      assessmentTypeId: 2
+    };
+    this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          if (details?.isSuccess) {
+            if (details['data']['isPassed']) {
+              this.next.emit('cleared');
+            } else {
+              this.next.emit('failed');
+            }
+          }
+        },
+        error: (err: any) => {
+          console.error('Fetch Quiz Result Error:', err);
+        }
+      });
+  }
+
 
 }

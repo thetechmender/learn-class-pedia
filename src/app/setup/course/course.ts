@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed, PLATFORM_ID, effect, AfterViewChecked, ViewEncapsulation } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 import { AuthService } from '../../services/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -30,6 +30,7 @@ import { map, Subject, switchMap, takeUntil } from 'rxjs';
 })
 export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   public courseService = inject(CourseService);
   private speechService = inject(SpeechService)
   private authService = inject(AuthService);
@@ -1158,22 +1159,33 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.goToNextLecture();
   }
 
-  refreshCourseTree() {
+  refreshCourseTree(callback?: () => void) {
     const courseId = this.route.snapshot.params['courseId'];
     const token = this.authService.getToken();
     const courseTypeId = this.courseTree()?.courseTypeId;
-    if (!courseId || !courseTypeId) return;
+    if (!courseId || !courseTypeId) {
+      if (callback) callback();
+      return;
+    }
 
     this.courseService.getUnifiedLectureSectionsByTypeV2WithToken(courseId, token, courseTypeId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (tree: any) => {
           this.courseTree.set(tree);
+          if (callback) callback();
         },
         error: (err: any) => {
           console.error('Refresh Course Tree Error:', err);
+          if (callback) callback();
         }
       });
+  }
+
+  refreshTreeAndSelectIncomplete() {
+    this.refreshCourseTree(() => {
+      this.selectIncompleteShortCourse();
+    });
   }
 
   goToNextLecture() {
@@ -1336,5 +1348,92 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       return this.courseTree()?.isCompleted ? false : true;
     }
     return true;
+  }
+
+  goToDashboard() {
+    this.router.navigate(['/dashboard']);
+  }
+
+  selectIncompleteShortCourse() {
+    const tree = this.courseTree();
+    if (!tree) return;
+
+    const currentScId = this.activeShortCourseId();
+    const currentCertId = this.activeCertificateId();
+
+    if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
+      const certs = tree.professionalCourse.courseCertificates;
+      
+      // Find current certificate index
+      const currentCertIndex = certs.findIndex((c: any) => c.courseCertificateId === currentCertId);
+      
+      // First: Check remaining short courses in current certificate (after current one)
+      if (currentCertIndex !== -1) {
+        const currentCert = certs[currentCertIndex];
+        const currentScIndex = currentCert.shortCourses?.findIndex((sc: any) => sc.shortCourseId === currentScId) ?? -1;
+        
+        // Look for incomplete after current short course in same certificate
+        for (let i = currentScIndex + 1; i < (currentCert.shortCourses?.length || 0); i++) {
+          const sc = currentCert.shortCourses[i];
+          if (!sc.isCompleted) {
+            this.onShortCourseSelectType1(sc);
+            return;
+          }
+        }
+        
+        // Look for incomplete before current short course in same certificate
+        for (let i = 0; i < currentScIndex; i++) {
+          const sc = currentCert.shortCourses[i];
+          if (!sc.isCompleted) {
+            this.onShortCourseSelectType1(sc);
+            return;
+          }
+        }
+      }
+      
+      // Second: Check next certificates
+      for (let certIdx = currentCertIndex + 1; certIdx < certs.length; certIdx++) {
+        const cert = certs[certIdx];
+        const incompleteSc = cert.shortCourses?.find((sc: any) => !sc.isCompleted);
+        if (incompleteSc) {
+          this.expandedCertificates.set(new Set([cert.courseCertificateId]));
+          this.activeCertificateId.set(cert.courseCertificateId);
+          this.onShortCourseSelectType1(incompleteSc);
+          return;
+        }
+      }
+      
+      // Third: Check previous certificates (wrap around)
+      for (let certIdx = 0; certIdx < currentCertIndex; certIdx++) {
+        const cert = certs[certIdx];
+        const incompleteSc = cert.shortCourses?.find((sc: any) => !sc.isCompleted);
+        if (incompleteSc) {
+          this.expandedCertificates.set(new Set([cert.courseCertificateId]));
+          this.activeCertificateId.set(cert.courseCertificateId);
+          this.onShortCourseSelectType1(incompleteSc);
+          return;
+        }
+      }
+      
+    } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
+      const shortCourses = tree.certificateCourse.shortCourses;
+      const currentScIndex = shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
+      
+      // Look for incomplete after current
+      for (let i = currentScIndex + 1; i < shortCourses.length; i++) {
+        if (!shortCourses[i].isCompleted) {
+          this.onShortCourseSelect(shortCourses[i]);
+          return;
+        }
+      }
+      
+      // Look for incomplete before current
+      for (let i = 0; i < currentScIndex; i++) {
+        if (!shortCourses[i].isCompleted) {
+          this.onShortCourseSelect(shortCourses[i]);
+          return;
+        }
+      }
+    }
   }
 }
