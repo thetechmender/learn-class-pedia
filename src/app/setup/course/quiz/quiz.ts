@@ -121,8 +121,12 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
           if (details?.isSuccess) {
             this.quizResult.set(details.data);
             this.isSubmitted.set(true);
-            this.showCompletionScreen.set(true);
+            // Emit refreshTree to update course completion status before showing screen
             this.refreshTree.emit();
+            // Small delay to allow tree to refresh before showing completion screen
+            setTimeout(() => {
+              this.showCompletionScreen.set(true);
+            }, 600);
           }
         },
         error: (err: any) => {
@@ -151,8 +155,5 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
     this.startAssessment.emit();
   }
 
-  onGoToDashboard() {
-    this.goToDashboard.emit();
-  }
 
 }

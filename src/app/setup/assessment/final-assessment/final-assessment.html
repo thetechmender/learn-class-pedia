@@ -1,8 +1,8 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6">
   <div class="rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full bg-white pb-4 p-6">
-    <div class="pb-4">
+    <!-- <div class="pb-4">
       <button (click)="back()" class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</button>
-    </div>
+    </div> -->
     @if(!this.isQuestionLoading()) {
     <!-- Header -->
     <div class="flex items-start justify-between mb-6 pb-4">
@@ -16,7 +16,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        15:00 mins
+        {{ formattedTime() }}
       </div>
     </div>
 
@@ -73,10 +73,10 @@
         @if (isCompleting()) {
         <span class="flex items-center gap-2">
           <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-          Checking Result...
+          Submiting Result...
         </span>
         } @else {
-        Check Result
+        Submit Result
         }
       </button>
       }

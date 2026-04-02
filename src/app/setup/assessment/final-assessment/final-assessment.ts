@@ -13,13 +13,24 @@ export class FinalAssessment implements OnInit {
   @Output() next = new EventEmitter<any>();
   @Output() goBack = new EventEmitter<void>();
   @Input() orderPayload: any = null;
-  @Input()
-  courseTypeId!: number;
+  @Input() courseTypeId!: number;
 
   isCompleting = signal(false);
   questions = signal<any[]>([]);
   currentQuestionIndex = signal(0);
-  isQuestionLoading = signal(false)
+  isQuestionLoading = signal(false);
+  
+  private timerInterval: any = null;
+  remainingSeconds = signal(0);
+  
+  totalMinutes = computed(() => this.questions().length || 15);
+
+  formattedTime = computed(() => {
+    const total = this.remainingSeconds();
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  });
 
   currentQuestion = computed(() => {
     const list = this.questions();
@@ -57,6 +68,7 @@ export class FinalAssessment implements OnInit {
             ...q,
           })) || []);
           this.isQuestionLoading.set(false);
+          this.startTimer();
         },
         error: (err: any) => {
           console.error('Fetch Assessment Questions Error:', err);
@@ -77,6 +89,7 @@ export class FinalAssessment implements OnInit {
             ...q,
           })) || []);
           this.isQuestionLoading.set(false);
+          this.startTimer();
         },
         error: (err: any) => {
           console.error('Fetch Assessment Questions Error:', err);
@@ -97,13 +110,13 @@ export class FinalAssessment implements OnInit {
             ...q,
           })) || []);
           this.isQuestionLoading.set(false);
+          this.startTimer();
         },
         error: (err: any) => {
           console.error('Fetch Assessment Questions Error:', err);
         }
       });
   };
-
 
   onNext() {
     if (this.currentQuestion()?.isSelect) {
@@ -125,14 +138,63 @@ export class FinalAssessment implements OnInit {
   }
 
   ngOnDestroy() {
+    this.stopTimer();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  startTimer() {
+    this.remainingSeconds.set(this.totalMinutes() * 60);
+    this.timerInterval = setInterval(() => {
+      const current = this.remainingSeconds();
+      if (current <= 1) {
+        this.stopTimer();
+        this._autoSubmit();
+      } else {
+        this.remainingSeconds.set(current - 1);
+      }
+    }, 1000);
+  }
+
+  stopTimer() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  _autoSubmit() {
+    this.isCompleting.set(true);
+    const payload = {
+      shortCourseId: this.orderPayload?.shortCourseId || null,
+      courseCertificateId: this.orderPayload?.courseCertificateId || null,
+      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      answers: this.questions().map(data => ({
+        questionId: data?.id,
+        selectedAnswer: data?.selectedOption || ''
+      }))
+    };
+    const token = this.authService.getToken();
+    this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          this.isCompleting.set(false);
+          if (response?.statusCode == 200) {
+            this._fetchQuizesResult();
+          }
+        },
+        error: () => {
+          this.isCompleting.set(false);
+          this.next.emit('failed');
+        }
+      });
   }
 
   onCheckResult() {
     if (!this.currentQuestion()?.isSelect) {
       return;
     }
+    this.stopTimer();
     this.isCompleting.set(true);
     const payload = {
       shortCourseId: this.orderPayload?.shortCourseId || null,

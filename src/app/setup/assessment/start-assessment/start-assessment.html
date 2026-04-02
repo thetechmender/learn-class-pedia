@@ -8,7 +8,7 @@
     <div class="flex items-start justify-between p-6 pb-4">
       <div>
         <h1 class="text-xl font-bold text-gray-900 mb-2">Ready To Start Your Assessment?</h1>
-        <p class="text-sm text-gray-600">You will have <span class="text-primary font-semibold">15 minutes</span> to
+        <p class="text-sm text-gray-600">You will have <span class="text-primary font-semibold">{{ totalMinutes() }} minutes</span> to
           complete this assessment</p>
       </div>
       <div class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">
@@ -16,7 +16,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        15:00 mins
+        {{ formattedTime() }} mins
       </div>
     </div>
 
@@ -31,7 +31,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>Time limit: 15 minutes</span>
+        <span>Time limit: {{ totalMinutes() }} minutes</span>
       </div>
       <div class="flex items-center gap-3 text-sm text-gray-600">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"

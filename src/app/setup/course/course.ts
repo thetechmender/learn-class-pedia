@@ -104,6 +104,24 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   isSidebarOpen = signal<boolean>(true);
 
+  // Check if all shortCourses are completed across all certificates
+  allShortCoursesCompleted = computed(() => {
+    const tree = this.courseTree();
+    if (!tree) return false;
+
+    if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
+      for (const cert of tree.professionalCourse.courseCertificates) {
+        if (cert.shortCourses?.some((sc: any) => !sc.isCompleted)) {
+          return false;
+        }
+      }
+      return true;
+    } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
+      return !tree.certificateCourse.shortCourses.some((sc: any) => !sc.isCompleted);
+    }
+    return tree.isCompleted || false;
+  });
+
   totalLearningItems = computed(() => {
     const sc = this.currentShortCourse();
     if (sc?.lectures) {
@@ -349,23 +367,46 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
         const tree = this.courseTree();
         if (tree?.courseTypeId === 1 && tree?.professionalCourse?.courseCertificates?.length > 0) {
-          const firstCert = tree.professionalCourse.courseCertificates[0];
-          this.activeCertificateId.set(firstCert.courseCertificateId);
-          this.expandedCertificates.set(new Set([firstCert.courseCertificateId]));
-          if (firstCert.shortCourses?.length > 0) {
-            const incompleteSc = firstCert.shortCourses.find((sc: any) => !sc.isCompleted);
-            const targetSc = incompleteSc || firstCert.shortCourses[0];
+          const certs = tree.professionalCourse.courseCertificates;
+          
+          // Find first incomplete shortCourse across ALL certificates
+          let targetCert: any = null;
+          let targetSc: any = null;
+          let allCompleted = true;
+          
+          for (const cert of certs) {
+            if (cert.shortCourses?.length > 0) {
+              const incompleteSc = cert.shortCourses.find((sc: any) => !sc.isCompleted);
+              if (incompleteSc) {
+                targetCert = cert;
+                targetSc = incompleteSc;
+                allCompleted = false;
+                break;
+              }
+            }
+          }
+          
+          // If all completed, use first certificate's first shortCourse
+          if (!targetCert || !targetSc) {
+            targetCert = certs[0];
+            targetSc = targetCert.shortCourses?.[0];
+          }
+          
+          if (targetCert && targetSc) {
+            this.activeCertificateId.set(targetCert.courseCertificateId);
+            this.expandedCertificates.set(new Set([targetCert.courseCertificateId]));
             this.completeOrderPayload.set({
-              courseCertificateId: firstCert.courseCertificateId,
+              courseCertificateId: targetCert.courseCertificateId,
               shortCourseId: targetSc.shortCourseId,
               professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
             });
             this.selectFirstShortCourse(targetSc);
             this.refreshProgress();
-            if (!incompleteSc) {
+            if (allCompleted) {
               this.toastr.info('All lectures completed. Ready to start the final assessment.', 'Info');
             }
           }
+          
           tree.professionalCourse.courseCertificates =
             tree.professionalCourse.courseCertificates.map((cert: any) => ({
               ...cert,
@@ -965,6 +1006,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     const sc = this.currentShortCourse();
     if (!sc?.lectures || this.lectureStartTimes.length === 0) return;
     const index = this.activeLectureIndex();
+    const tree = this.courseTree();
+    
     if (index < sc.lectures.length - 1) {
       const newIndex = index + 1;
       const nextLecture = sc.lectures[newIndex];
@@ -973,7 +1016,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.speechService.seekToTime(this.lectureStartTimes[newIndex]);
 
       // For courseTypeId=3, update lectureSection and activeSection
-      const tree = this.courseTree();
       if (tree?.courseTypeId === 3 && nextLecture) {
         this.courseTitle.set(nextLecture.title || nextLecture.courseTitle || 'Lecture');
         this.lectureSection.set([nextLecture]);
@@ -983,9 +1025,41 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
     } else {
-      // Last lecture - just stop speech, no auto-assessment
+      // Last lecture reached - call progress API and handle based on courseTypeId
       this.stopSpeech();
+      this.onLastLectureComplete();
     }
+  }
+
+  onLastLectureComplete() {
+    const tree = this.courseTree();
+    if (!tree) return;
+
+    // Call progress/complete API
+    const payload = {
+      shortCourseId: this.completeOrderPayload().shortCourseId ?? null,
+      courseCertificateId: this.completeOrderPayload().courseCertificateId ?? null,
+      professionalCertificateId: this.completeOrderPayload().professionalCertificateId ?? null
+    };
+
+    this.courseService.completeCourse(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => {
+        if (res?.isSuccess) {
+          this.refreshCourseTree(() => {
+            if (tree.courseTypeId === 3) {
+              // courseTypeId=3: Start Assessment directly (no quiz)
+              this.startAssessment();
+            } else if (tree.courseTypeId === 1 || tree.courseTypeId === 2) {
+              // courseTypeId=1&2: Show Quiz tab
+              this.activeTab.set('quiz');
+            }
+          });
+        }
+      },
+      error: (err: any) => {
+        console.error('Complete Course Error:', err);
+      }
+    });
   }
 
 
@@ -1160,18 +1234,24 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   refreshCourseTree(callback?: () => void) {
-    const courseId = this.route.snapshot.params['courseId'];
+    const courseId = this.existingSeasionCourseId() || this.courseTree()?.courseId;
     const token = this.authService.getToken();
     const courseTypeId = this.courseTree()?.courseTypeId;
+    console.log('refreshCourseTree called', { courseId, courseTypeId });
     if (!courseId || !courseTypeId) {
+      console.log('refreshCourseTree early return - missing courseId or courseTypeId');
       if (callback) callback();
       return;
     }
 
-    this.courseService.getUnifiedLectureSectionsByTypeV2WithToken(courseId, token, courseTypeId)
-      .pipe(takeUntil(this.destroy$))
+    this.courseService.getCourseTreeV2WithToken(courseId, token)
+      .pipe(
+        map((res: any) => res?.isSuccess !== undefined ? res.data : res),
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: (tree: any) => {
+          console.log('refreshCourseTree API success', tree);
           this.courseTree.set(tree);
           if (callback) callback();
         },
@@ -1183,7 +1263,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   refreshTreeAndSelectIncomplete() {
+    console.log('refreshTreeAndSelectIncomplete called');
     this.refreshCourseTree(() => {
+      console.log('refreshTreeAndSelectIncomplete callback - calling selectIncompleteShortCourse');
       this.selectIncompleteShortCourse();
     });
   }
@@ -1304,10 +1386,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onAssessmentNext(currentStep: string) {
-    if (currentStep === 'start') {
+    if (currentStep === 'start' || currentStep === undefined) {
       this.assessmentStep.set('final');
     } else if (currentStep === 'failed') {
-      this.assessmentStep.set('final');
+      this.assessmentStep.set('failed');
+    } else if (currentStep === 'cleared') {
+      this.assessmentStep.set('cleared');
     }
   }
 
@@ -1435,5 +1519,135 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
     }
+  }
+
+  goToPreviousShortCourse() {
+    const tree = this.courseTree();
+    if (!tree) return;
+
+    const currentScId = this.activeShortCourseId();
+    const currentCertId = this.activeCertificateId();
+
+    if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
+      const certs = tree.professionalCourse.courseCertificates;
+      const currentCertIndex = certs.findIndex((c: any) => c.courseCertificateId === currentCertId);
+      if (currentCertIndex === -1) return;
+
+      const currentCert = certs[currentCertIndex];
+      const currentScIndex = currentCert.shortCourses?.findIndex((sc: any) => sc.shortCourseId === currentScId) ?? -1;
+
+      // Previous short course in same certificate
+      if (currentScIndex > 0) {
+        const prevSc = currentCert.shortCourses[currentScIndex - 1];
+        this.onShortCourseSelectType1(prevSc);
+        return;
+      }
+
+      // Previous certificate's last short course
+      if (currentCertIndex > 0) {
+        const prevCert = certs[currentCertIndex - 1];
+        if (prevCert.shortCourses?.length > 0) {
+          const lastSc = prevCert.shortCourses[prevCert.shortCourses.length - 1];
+          this.expandedCertificates.set(new Set([prevCert.courseCertificateId]));
+          this.activeCertificateId.set(prevCert.courseCertificateId);
+          this.onShortCourseSelectType1(lastSc);
+        }
+      }
+    } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
+      const shortCourses = tree.certificateCourse.shortCourses;
+      const currentScIndex = shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
+
+      if (currentScIndex > 0) {
+        this.onShortCourseSelect(shortCourses[currentScIndex - 1]);
+      }
+    }
+  }
+
+  goToNextShortCourse() {
+    const tree = this.courseTree();
+    if (!tree) return;
+
+    const currentScId = this.activeShortCourseId();
+    const currentCertId = this.activeCertificateId();
+
+    if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
+      const certs = tree.professionalCourse.courseCertificates;
+      const currentCertIndex = certs.findIndex((c: any) => c.courseCertificateId === currentCertId);
+      if (currentCertIndex === -1) return;
+
+      const currentCert = certs[currentCertIndex];
+      const currentScIndex = currentCert.shortCourses?.findIndex((sc: any) => sc.shortCourseId === currentScId) ?? -1;
+
+      // Next short course in same certificate
+      if (currentScIndex < (currentCert.shortCourses?.length || 0) - 1) {
+        const nextSc = currentCert.shortCourses[currentScIndex + 1];
+        this.onShortCourseSelectType1(nextSc);
+        return;
+      }
+
+      // Next certificate's first short course
+      if (currentCertIndex < certs.length - 1) {
+        const nextCert = certs[currentCertIndex + 1];
+        if (nextCert.shortCourses?.length > 0) {
+          const firstSc = nextCert.shortCourses[0];
+          this.expandedCertificates.set(new Set([nextCert.courseCertificateId]));
+          this.activeCertificateId.set(nextCert.courseCertificateId);
+          this.onShortCourseSelectType1(firstSc);
+        }
+      }
+    } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
+      const shortCourses = tree.certificateCourse.shortCourses;
+      const currentScIndex = shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
+
+      if (currentScIndex < shortCourses.length - 1) {
+        this.onShortCourseSelect(shortCourses[currentScIndex + 1]);
+      }
+    }
+  }
+
+  canGoPreviousShortCourse(): boolean {
+    const tree = this.courseTree();
+    if (!tree || tree.courseTypeId === 3) return false;
+
+    const currentScId = this.activeShortCourseId();
+    const currentCertId = this.activeCertificateId();
+
+    if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
+      const certs = tree.professionalCourse.courseCertificates;
+      const currentCertIndex = certs.findIndex((c: any) => c.courseCertificateId === currentCertId);
+      if (currentCertIndex === -1) return false;
+
+      const currentCert = certs[currentCertIndex];
+      const currentScIndex = currentCert.shortCourses?.findIndex((sc: any) => sc.shortCourseId === currentScId) ?? -1;
+
+      return currentScIndex > 0 || currentCertIndex > 0;
+    } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
+      const currentScIndex = tree.certificateCourse.shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
+      return currentScIndex > 0;
+    }
+    return false;
+  }
+
+  canGoNextShortCourse(): boolean {
+    const tree = this.courseTree();
+    if (!tree || tree.courseTypeId === 3) return false;
+
+    const currentScId = this.activeShortCourseId();
+    const currentCertId = this.activeCertificateId();
+
+    if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
+      const certs = tree.professionalCourse.courseCertificates;
+      const currentCertIndex = certs.findIndex((c: any) => c.courseCertificateId === currentCertId);
+      if (currentCertIndex === -1) return false;
+
+      const currentCert = certs[currentCertIndex];
+      const currentScIndex = currentCert.shortCourses?.findIndex((sc: any) => sc.shortCourseId === currentScId) ?? -1;
+
+      return currentScIndex < (currentCert.shortCourses?.length || 0) - 1 || currentCertIndex < certs.length - 1;
+    } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
+      const currentScIndex = tree.certificateCourse.shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
+      return currentScIndex < tree.certificateCourse.shortCourses.length - 1;
+    }
+    return false;
   }
 }

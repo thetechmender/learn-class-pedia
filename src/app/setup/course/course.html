@@ -334,8 +334,8 @@
     </div>
     @if (assessmentStep() !== 'none') {
     @if (assessmentStep() === 'start') {
-    <app-start-assessment (next)="onAssessmentNext('start')"
-      (goBack)="assessmentStep.set('none')"></app-start-assessment>
+    <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')"
+      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"></app-start-assessment>
     }
     @if (assessmentStep() === 'final') {
     <app-final-assessment (next)="onAssessmentResult($event)" (goBack)="assessmentStep.set('start')"
