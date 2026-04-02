@@ -338,15 +338,15 @@
       [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"></app-start-assessment>
     }
     @if (assessmentStep() === 'final') {
-    <app-final-assessment (next)="onAssessmentResult($event)" (goBack)="assessmentStep.set('start')"
+    <app-final-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('start')"
       [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"></app-final-assessment>
     }
     @if (assessmentStep() === 'failed') {
-    <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('failed')"
+    <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('start')"
       (goBack)="assessmentStep.set('final')"></app-failed-assessment>
     }
     @if (assessmentStep() === 'maxattempts') {
-    <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('failed')"
+    <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('start')"
       (goBack)="assessmentStep.set('start')"></app-failed-assessment>
     }
     @if (assessmentStep() === 'cleared') {
