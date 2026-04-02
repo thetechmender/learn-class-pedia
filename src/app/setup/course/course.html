@@ -10,13 +10,13 @@
   }
 
   <!-- Left Sidebar -->
-  <aside class="bg-white w-80 flex-shrink-0 flex flex-col border-r border-gray-100 transition-all duration-300"
+  <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300"
     [class.w-60]="isSidebarOpen()" [class.w-0]="!isSidebarOpen()" [class.overflow-hidden]="!isSidebarOpen()"
-    [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: calc(100vh - 56px);">
+    [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: calc(100vh - 200px);">
     <!-- Sidebar Header with Title and Close Button -->
-    <div class="p-4 border-b border-gray-100">
+    <div class="fondation">
       <div class="flex items-center justify-between">
-        <h2 class="text-primary text-md font-semibold">{{ courseTree()?.courseTitle || 'Course' }}</h2>
+        <h5 class="text-primary font-medium fnt18 ">{{ courseTree()?.courseTitle || 'Course' }}</h5>
         <button (click)="toggleSidebar()" class="text-gray-400 hover:text-gray-600 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -32,7 +32,7 @@
       @if (courseTree().courseTypeId === 1 && courseTree().professionalCourse?.courseCertificates) {
       @for (cert of courseTree().professionalCourse.courseCertificates; track cert.courseCertificateId) {
       @let certExpanded = isCertificateExpanded(cert.courseCertificateId);
-      <div class="border-b border-gray-100">
+      <div class="accord-sec">
         <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
           (click)="toggleCertificate(cert.courseCertificateId)">
           <div class="flex items-center justify-between gap-2">
@@ -49,7 +49,7 @@
         @for (sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
         @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
         @let isActive = activeShortCourseId() === sc.shortCourseId;
-        <div class="pl-4 border-t border-gray-50">
+        <div class="">
           <div class="w-full px-4 py-2 text-left hover:bg-optional transition-all cursor-pointer"
             [class.bg-optional]="isActive" (click)="onShortCourseSelectType1(sc)">
             <div class="flex items-center gap-2 mb-1">
@@ -134,7 +134,7 @@
       @for (sc of courseTree().certificateCourse.shortCourses; track sc.shortCourseId; let i = $index) {
       @let isActive = activeShortCourseId() === sc.shortCourseId;
       @let scExpanded = isShortCourseExpanded(sc.shortCourseId);
-      <div class="border-b border-gray-100">
+      <div class="accord-sec">
         <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
           [class.bg-optional]="isActive" (click)="onShortCourseSelect(sc)">
           <div class="flex items-center gap-2 mb-1">
@@ -212,7 +212,7 @@
       @let lec = courseTree().shortCourseLectures[0];
       @let isActive = currentShortCourse()?.shortCourseId === lec.id;
       @let lecExpanded = isShortCourseExpanded(lec.id);
-      <div class="border-b border-gray-100">
+      <div class="accord-sec">
         <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
           [class.bg-optional]="isActive" (click)="onLectureSelectType3(lec)">
           <div class="flex items-center gap-2">
@@ -294,7 +294,7 @@
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
       @if(!isFinalAssessmentButton() && courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) {
       <button (click)="startAssessment()"
-        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
         Final Assessment
       </button>
       }
@@ -484,7 +484,7 @@
     <!-- Tabs Section -->
     <div class="bg-white border-t border-gray-200">
       <!-- Tab Headers -->
-      <div class="flex justify-left border-b border-gray-200">
+      <div class="flex justify-left border-b border-gray-200 screen-tab">
         <button (click)="activeTab.set('overview')"
           class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
           [class.text-primary]="activeTab() === 'overview'" [class.border-primary]="activeTab() === 'overview'"
@@ -620,7 +620,7 @@
     [class.translate-x-full]="!courseService.isChatOpen()" [class.translate-x-0]="courseService.isChatOpen()">
 
     <!-- Chat Header - Optional background with centered content -->
-    <div class="bg-optional text-center py-2 px-2 relative border-b border-gray-300">
+    <div class="bg-optional text-center py-2 px-2 relative border-b border-gray-300 chat-top">
       <button (click)="courseService.toggleChat()"
         class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -628,14 +628,14 @@
         </svg>
       </button>
       <!-- Robot Icon - Blue rounded square -->
-      <div class="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center">
+      <div class="w-12 h-12 mx-auto mb-1 rounded-2xl flex items-center justify-center">
         <img src="/assets/icons/chat-icon-em.svg" class="h-9 w-9" />
       </div>
       <h2 class="text-md font-bold text-primary">Classpedia Course Companion</h2>
     </div>
 
     <!-- Chat Messages -->
-    <div class="flex-1 overflow-y-auto p-2 bg-optional overscroll-contain">
+    <div class="flex-1 overflow-y-auto p-2 bg-optional overscroll-contain chat-body">
       <div class="space-y-4">
         @for (msg of chatMessages(); track $index) {
         <div class="flex flex-col gap-1" [class.items-start]="msg.role === 'bot'"
@@ -686,7 +686,7 @@
           </svg>
         </button>
       </div>
-      <p class="text-xs text-gray-400 text-center mt-3">If you are confused about any course material, assessment, or
+      <p class="text-xs text-gray-400 text-center mt-3 chat-note">If you are confused about any course material, assessment, or
         experiencing any difficulty, feel free to use this chatbox.</p>
     </div>
   </div>

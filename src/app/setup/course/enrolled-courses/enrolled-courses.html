@@ -1,13 +1,13 @@
 
     @if(enrolledCourses()?.length > 0) {
     <div class="w-[20rem] flex-shrink-0">
-      <div class="bg-white  border-l border-gray-200 p-5">
+      <div class="bg-white p-5 other-enroll">
         <h3 class="text-[18px]  text-gray-900 mb-6">Other Enrolled Courses</h3>
 
         <!-- Related Course 1 -->
         @for(item of enrolledCourses(); track item.id; let i = $index){
         <a [href]="'https://classpedia.ai/' + item.courseSlug" target="_blank" rel="noopener noreferrer">
-          <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
+          <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity brddiv">
             <img [src]="item?.courseThumbnail" [alt]="item?.courseName"
               class="w-22 h-14 rounded-lg flex-shrink-0 object-cover bg-gray-200">
             <div class="flex-1">

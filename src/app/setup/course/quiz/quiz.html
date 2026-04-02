@@ -1,5 +1,5 @@
 <div class="p-2 pb-20">
-  <p class="text-sm text-gray-500 mb-4">Please note: This is just a preparatory quiz. Its grading will not effect your report.</p>
+  <p class="text-sm mb-4 font-medium">Please note: This is just a preparatory quiz. Its grading will not effect your report.</p>
 
   @if(isQuestionLoading()) {
   <div class="flex items-center justify-center py-8">
@@ -9,12 +9,12 @@
   } @else {
   <div class="space-y-6">
     @for (question of questions(); track question.id; let i = $index) {
-    <div class="bg-gray-50 rounded-xl p-5">
+    <div class="bg-gray-50 rounded-xl p-5 quizsec">
       @if (isSubmitted()) {
         @if (getQuestionResult(question.id)?.isCorrect) {
-        <p class="text-sm font-medium text-green-600 mb-2">✓ Correct Answer</p>
+        <p class="text-sm font-medium text-green-600 mb-2 correct">✓ Correct Answer</p>
         } @else {
-        <p class="text-sm font-medium text-red-600 mb-2">✗ Wrong Answer</p>
+        <p class="text-sm font-medium text-red-600 mb-2 correct">✗ Wrong Answer</p>
         }
       }
       <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}</h3>
