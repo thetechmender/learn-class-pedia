@@ -45,7 +45,7 @@
 
       <!-- courseTypeId == 1: Course Content with Certificates Accordion -->
       @if(courseTypeId == 1 && courseTree?.professionalCourse?.courseCertificates) {
-      <div class="mb-6 bg-thirdly topisec rounded-xl p-5">
+      <div class="mb-0 bg-thirdly topisec rounded-xl p-5">
         <div class="flex items-center justify-between">
           <h3 class="text-primary text-xl font-semibold">Course content</h3>
           <div class="flex items-center gap-6 text-sm text-primary">
@@ -139,7 +139,7 @@
 
       <!-- Topic of the Course - Green/Cyan background (for courseTypeId 2 & 3) -->
       @if(courseTypeId == 3 || courseTypeId == 2) {
-      <div class="mb-6 bg-thirdly topisec rounded-xl p-5">
+      <div class="mb-0 bg-thirdly topisec rounded-xl p-5">
         <div class="flex items-center justify-between">
           <h3 class="text-primary text-xl font-semibold">{{courseTypeId == 2 ? 'Course content' : 'Topic of the course'}}
           </h3>
@@ -179,9 +179,9 @@
 
       <!-- courseTypeId == 2: Short Courses/Lectures List -->
       @if(courseTypeId == 2 && courseTree?.certificateCourse?.shortCourses) {
-      <div class="mb-8">
+      <div class="mb-8 topic-accor">
         @for (sc of courseTree.certificateCourse.shortCourses; track sc.shortCourseId; let scIndex = $index) {
-        <div class="py-4 border-b border-gray-100">
+        <div class="py-4 border-b border-gray-100 prof-topic">
           <p class="text-sm text-gray-500 mb-2">{{ scIndex + 1 }}. {{ sc.title }}</p>
           <div class="flex items-center gap-6 text-xs text-primary">
             <span class="flex items-center gap-1">
@@ -247,7 +247,7 @@
       }
       <!-- Knowledge & Skills - Green/Cyan background -->
       @if(this.overView()?.courseTags?.length > 0) {
-      <div class="mb-8 bg-thirdly knowledge-box rounded-2xl p-6">
+      <div class="mb-8 mt-3 bg-thirdly knowledge-box rounded-2xl p-6">
         <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-3 text-lg">
           <span class="text-2xl"><img src="assets/icons/bulb.svg" alt=""></span>
           Knowledge & Skills You Will Learn
