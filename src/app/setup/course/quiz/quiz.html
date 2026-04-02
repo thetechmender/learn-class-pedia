@@ -6,6 +6,43 @@
     <div class="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
     <p class="ml-3 text-gray-600">Loading Questions...</p>
   </div>
+  } @else if (isLectureCompleted) {
+  <!-- Already Completed Lecture - Show completion screen directly -->
+  <div class="flex flex-col items-center justify-center py-16">
+    <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Quiz Already Completed</h2>
+    <p class="text-gray-500 mb-4">You have already completed this lecture quiz.</p>
+    
+    @if (isCourseCompleted) {
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can now start the final assessment or go to dashboard.</p>
+    <div class="flex items-center gap-4" id="aftersubmitquiz">
+      <button (click)="onCheckAnswers()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+        Check Answers
+      </button>
+      <button (click)="onStartAssessment()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+        Start Assessment
+      </button>
+    </div>
+    } @else {
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your course.</p>
+    <div class="flex items-center gap-4" id="aftersubmitquiz">
+      <button (click)="onCheckAnswers()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+        Check Answers
+      </button>
+      <button (click)="onMoveToNextTopic()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+        Move To Next Topic
+      </button>
+    </div>
+    }
+  </div>
   } @else if (showCompletionScreen()) {
   <!-- Quiz Complete Screen -->
   <div class="flex flex-col items-center justify-center py-16">
@@ -19,7 +56,7 @@
     
     @if (isCourseCompleted) {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can now start the final assessment or go to dashboard.</p>
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
         Check Answers

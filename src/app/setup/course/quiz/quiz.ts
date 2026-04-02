@@ -14,6 +14,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   questions = signal<any[]>([]);
   @Input() orderPayload: any = null;
   @Input() isCourseCompleted: boolean = false;
+  @Input() isLectureCompleted: boolean = false;
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
   private assessmentService = inject(AssessmentService);
@@ -121,12 +122,9 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
           if (details?.isSuccess) {
             this.quizResult.set(details.data);
             this.isSubmitted.set(true);
-            // Emit refreshTree to update course completion status before showing screen
+            // Refresh tree to update isCompleted status after quiz submit
             this.refreshTree.emit();
-            // Small delay to allow tree to refresh before showing completion screen
-            setTimeout(() => {
-              this.showCompletionScreen.set(true);
-            }, 600);
+            this.showCompletionScreen.set(true);
           }
         },
         error: (err: any) => {
@@ -144,10 +142,12 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   onCheckAnswers() {
     this.showCompletionScreen.set(false);
     this.showAnswers.set(true);
+    // Refresh tree to update isCompleted status in sidebar
     this.refreshTree.emit();
   }
 
   onMoveToNextTopic() {
+    // This will refresh tree and select next incomplete shortCourse
     this.selectIncomplete.emit();
   }
 

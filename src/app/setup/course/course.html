@@ -357,7 +357,25 @@
 
 
     <!-- Video/Content Area -->
-    <div class="bg-slate-800 relative flex-shrink-0 group">
+    <div class="bg-[#081449] relative flex-shrink-0 group">
+      <!-- Left Navigation Arrow (courseTypeId 1 & 2 only, hide if first) -->
+      @if (courseTree()?.courseTypeId !== 3 && canGoPreviousShortCourse()) {
+      <button (click)="goToPreviousShortCourse()"
+        class="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      }
+      <!-- Right Navigation Arrow (hide if last) -->
+      @if (courseTree()?.courseTypeId !== 3 && canGoNextShortCourse()) {
+      <button (click)="goToNextShortCourse()"
+        class="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      }
       <!-- Content Display -->
       <div id="content-container" class="px-12 py-8 h-[550px] overflow-y-auto relative">
         @if (isContentReady()) {
@@ -580,6 +598,7 @@
           }
           @if (activeTab() === 'quiz') {
           <app-quiz [orderPayload]="completeOrderPayload()" [isCourseCompleted]="courseTree()?.isCompleted"
+            [isLectureCompleted]="currentShortCourse()?.isCompleted"
             (refreshTree)="refreshCourseTree()" (startAssessment)="startAssessment()" 
             (goToDashboard)="goToDashboard()" (selectIncomplete)="refreshTreeAndSelectIncomplete()"></app-quiz>
           }
