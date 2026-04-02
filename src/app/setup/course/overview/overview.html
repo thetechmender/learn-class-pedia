@@ -45,7 +45,7 @@
 
       <!-- courseTypeId == 1: Course Content with Certificates Accordion -->
       @if(courseTypeId == 1 && courseTree?.professionalCourse?.courseCertificates) {
-      <div class="mb-6 bg-thirdly rounded-xl p-5">
+      <div class="mb-6 bg-thirdly topisec rounded-xl p-5">
         <div class="flex items-center justify-between">
           <h3 class="text-primary text-xl font-semibold">Course content</h3>
           <div class="flex items-center gap-6 text-sm text-primary">
@@ -80,10 +80,10 @@
       </div>
 
       <!-- Certificates Accordion -->
-      <div class="mb-8">
+      <div class="mb-8 topic-accor">
         @for (cert of courseTree.professionalCourse.courseCertificates; track cert.courseCertificateId) {
         @let certExpanded = isCertificateExpanded(cert.courseCertificateId);
-        <div class="border-b border-dashed border-gray-200">
+        <div class="topic-head">
           <!-- Certificate Header -->
           <div class="flex items-center justify-between py-4 cursor-pointer"
             (click)="toggleCertificate(cert.courseCertificateId)">
@@ -98,7 +98,7 @@
           @if (certExpanded && cert.shortCourses) {
           <div class="pb-4">
             @for (sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
-            <div class="py-3 pl-4 border-t border-gray-100">
+            <div class="topic-inner">
               <p class="text-sm text-gray-500 font-small mb-2">{{ scIndex + 1 }}. {{ sc.title }}</p>
               <div class="flex items-center gap-4 text-xs text-primary">
                 <span class="flex items-center gap-1">
