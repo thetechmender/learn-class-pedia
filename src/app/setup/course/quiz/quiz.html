@@ -84,7 +84,7 @@
   <!-- Show Questions with Answers -->
   <div class="space-y-6">
     @for (question of questions(); track question.id; let i = $index) {
-    <div class="bg-gray-50 rounded-xl p-5 quizsec">
+    <div class=" quizsec">
       @if (isSubmitted()) {
         @if (getQuestionResult(question.id)?.isCorrect) {
         <p class="text-sm font-medium text-green-600 mb-2 correct">✓ Correct Answer</p>
@@ -111,7 +111,7 @@
   <!-- Quiz Questions -->
   <div class="space-y-6">
     @for (question of questions(); track question.id; let i = $index) {
-    <div class="bg-gray-50 rounded-xl p-5">
+    <div class=" quizsec">
       <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}</h3>
       <div class="grid grid-cols-2 gap-3">
         @for (option of question.options; track option.optionLetter) {

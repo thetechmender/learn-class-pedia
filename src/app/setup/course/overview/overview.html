@@ -34,7 +34,7 @@
           </div>
 
           <!-- Review Count -->
-          <span class="text-sm text-primary">
+          <span class="text-sm review-count">
             ({{ this.overView()?.reviewCount }} reviews)
           </span>
         </div>
@@ -55,7 +55,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              {{ getTotalLectures() }} Lecture
+              {{ getTotalLectures() }} Lessons
             </span>
             <span class="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -65,7 +65,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {{ getTotalVideos() }} Video
+              {{ getTotalVideos() }} Videos
             </span>
             <span class="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -73,7 +73,15 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
-              {{ getTotalPDFs() }} PDF
+              {{ getTotalPDFs() }} Pdfs
+            </span>
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              1 Quiz
             </span>
           </div>
         </div>
@@ -141,38 +149,29 @@
       @if(courseTypeId == 3 || courseTypeId == 2) {
       <div class="mb-0 bg-thirdly topisec rounded-xl p-5">
         <div class="flex items-center justify-between">
-          <h3 class="text-primary text-xl font-semibold">{{courseTypeId == 2 ? 'Course content' : 'Topic of the course'}}
+          <h3 class="text-primary text-xl font-semibold">{{courseTypeId == 2 ? 'Course content' : 'Topic of the
+            course'}}
           </h3>
-          <div class="flex items-center gap-6 text-sm text-gray-700">
+          <div class="flex items-center gap-6 courses-serials sty1">
             <span class="flex items-center gap-2">
-              <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg> -->
+
               <i class="ic-72 cl-iPrimary"></i>
               {{ this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons :
-                this.overView()?.totalLessons || 0 }} Lecture </span>
+                this.overView()?.totalLessons || 0 }} Lessons </span>
                 <span class="flex items-center gap-2">
-                  <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg> -->
+
                   <i class="ic-73 cl-iPrimary"></i>
                   {{ this.overView()?.totalVideos < 10 ? '0' + this.overView()?.totalVideos :
-                    this.overView()?.totalVideos || 0 }} Video </span>
+                    this.overView()?.totalVideos || 0 }} Videos </span>
                     <span class="flex items-center gap-2">
-                      <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg> -->
+
                       <i class="ic-74 cl-iPrimary"></i>
                       {{ this.overView()?.totalPDFs < 10 ? '0' + this.overView()?.totalPDFs : this.overView()?.totalPDFs
-                        || 0 }} PDF </span>
+                        || 0 }} Pdfs </span>
+                                  <span class="flex items-center gap-2">
+
+                      <i class="ic-85 cl-iPrimary"></i>
+                      {{ 1}} Quiz </span>
           </div>
         </div>
       </div>
@@ -183,31 +182,17 @@
         @for (sc of courseTree.certificateCourse.shortCourses; track sc.shortCourseId; let scIndex = $index) {
         <div class="py-4 border-b border-gray-100 prof-topic">
           <p class="text-sm text-gray-500 mb-2">{{ scIndex + 1 }}. {{ sc.title }}</p>
-          <div class="flex items-center gap-6 text-xs text-primary">
+          <div class="flex items-center gap-6 text-xs dd-ico">
             <span class="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <i class="ic-83"></i>
               1 Lecture
             </span>
             <span class="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+             <i class="ic-73"></i>
               {{ sc.lectures?.length || 1 }} Videos
             </span>
             <span class="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
+             <i class="ic-74"></i>
               {{ sc.lectures?.length || 1 }} PDFs
             </span>
           </div>
