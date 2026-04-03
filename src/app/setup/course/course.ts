@@ -1459,14 +1459,25 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (res: any) => {
         const data = res?.isSuccess !== undefined ? res.data : res;
         if (data?.canTakeAssessment === false) {
-          this.assessmentResult.set({
-            attemptsUsed: data.attemptsUsed,
-            attemptsRemaining: data.attemptsRemaining,
-            maxAttempts: data.maxAttempts,
-            requiresRepurchase: data.requiresRepurchase,
-            resultStatus: 'MaxAttemptsExceeded'
-          });
-          this.assessmentStep.set('maxattempts');
+          if (data?.isAssessmentCompleted === true) {
+            this.assessmentResult.set({
+              attemptsUsed: data.attemptsUsed,
+              attemptsRemaining: data.attemptsRemaining,
+              maxAttempts: data.maxAttempts,
+              requiresRepurchase: data.requiresRepurchase,
+              resultStatus: 'AlreadyPassed'
+            });
+            this.assessmentStep.set('cleared');
+          } else {
+            this.assessmentResult.set({
+              attemptsUsed: data.attemptsUsed,
+              attemptsRemaining: data.attemptsRemaining,
+              maxAttempts: data.maxAttempts,
+              requiresRepurchase: data.requiresRepurchase,
+              resultStatus: 'MaxAttemptsExceeded'
+            });
+            this.assessmentStep.set('maxattempts');
+          }
         } else {
           this.assessmentStep.set('start');
         }
