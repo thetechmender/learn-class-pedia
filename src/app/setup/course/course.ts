@@ -835,7 +835,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Block selection only if going FORWARD and current shortCourse is not completed
     const currentScId = this.activeShortCourseId();
     const tree = this.courseTree();
-    
+
     if (sc.shortCourseId !== currentScId && tree?.courseTypeId === 1) {
       // Check if selecting a NEXT shortCourse (not previous)
       const certs = tree.professionalCourse?.courseCertificates || [];
@@ -843,7 +843,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       let targetGlobalIndex = -1;
       let globalIdx = 0;
       let currentScFromTree: any = null;
-      
+
       for (const cert of certs) {
         for (const s of cert.shortCourses || []) {
           if (s.shortCourseId === currentScId) {
@@ -854,16 +854,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           globalIdx++;
         }
       }
-      
+
       // Only block if going forward AND current lecture is not completed
       if (targetGlobalIndex > currentGlobalIndex && currentScFromTree && !currentScFromTree.isCompleted) {
         // Block if lecture hasn't been played yet (progress is 0)
         if (this.currentTime() === 0) {
-          this.toastr.warning('Please play the lecture before moving to the next one.', 'Play Required');
+          this.toastr.warning(`Please complete "${currentScFromTree.title}" before moving to the next one.`, 'Play Required');
           return;
         }
         // Block if current shortCourse quiz is not completed
-        this.toastr.warning('Please complete the current lecture quiz before moving to the next lecture.', 'Quiz Required');
+        this.toastr.warning(`Please complete the quiz for "${currentScFromTree.title}" before moving to the next lecture.`, 'Quiz Required');
         return;
       }
     }
@@ -896,23 +896,20 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Block selection only if going FORWARD and current shortCourse is not completed
     const currentScId = this.activeShortCourseId();
     const tree = this.courseTree();
-    
+
     if (sc.shortCourseId !== currentScId && tree?.courseTypeId === 2) {
       // Check if selecting a NEXT shortCourse (not previous)
       const shortCourses = tree.certificateCourse?.shortCourses || [];
       const currentIndex = shortCourses.findIndex((s: any) => s.shortCourseId === currentScId);
       const targetIndex = shortCourses.findIndex((s: any) => s.shortCourseId === sc.shortCourseId);
       const currentScFromTree = shortCourses[currentIndex]; // Get from tree (has updated isCompleted)
-      
+
       // Only block if going forward AND current lecture is not completed
       if (targetIndex > currentIndex && currentScFromTree && !currentScFromTree.isCompleted) {
-        // Block if lecture hasn't been played yet (progress is 0)
-        if (this.currentTime() === 0) {
-          this.toastr.warning('Please play the lecture before moving to the next one.', 'Play Required');
-          return;
-        }
-        // Block if current shortCourse quiz is not completed
-        this.toastr.warning('Please complete the current lecture quiz before moving to the next lecture.', 'Quiz Required');
+        this.toastr.warning(
+          `Please complete the lecture and its quiz for "${currentScFromTree.title}" before proceeding to the next.`,
+          'Completion Required'
+        );
         return;
       }
     }
@@ -1367,8 +1364,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   refreshTreeAndSelectIncomplete() {
     console.log('refreshTreeAndSelectIncomplete called');
     this.refreshCourseTree(() => {
-      console.log('refreshTreeAndSelectIncomplete callback - calling selectIncompleteShortCourse');
-      this.selectIncompleteShortCourse();
+      console.log('refreshCourseTree completed - calling selectIncompleteShortCourse');
+      this.selectIncompleteShortCourse(() => {
+        console.log('selectIncompleteShortCourse completed - switching to lecture content tab');
+        // Switch to lecture content tab after everything is loaded
+        this.activeTab.set('transcript');
+      });
     });
   }
 
@@ -1556,13 +1557,20 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return true;
   }
 
+  switchToLectureContentTab() {
+    this.activeTab.set('transcript');
+  }
+
   goToDashboard() {
     this.router.navigate(['/dashboard']);
   }
 
-  selectIncompleteShortCourse() {
+  selectIncompleteShortCourse(callback?: () => void) {
     const tree = this.courseTree();
-    if (!tree) return;
+    if (!tree) {
+      if (callback) callback();
+      return;
+    }
 
     const currentScId = this.activeShortCourseId();
     const currentCertId = this.activeCertificateId();
@@ -1582,7 +1590,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         for (let i = currentScIndex + 1; i < (currentCert.shortCourses?.length || 0); i++) {
           const sc = currentCert.shortCourses[i];
           if (!sc.isCompleted) {
-            this._selectShortCourseType1Direct(sc);
+            // Ensure activeCertificateId is set correctly
+            this.activeCertificateId.set(currentCert.courseCertificateId);
+            this._selectShortCourseType1Direct(sc, callback);
             return;
           }
         }
@@ -1591,7 +1601,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         for (let i = 0; i < currentScIndex; i++) {
           const sc = currentCert.shortCourses[i];
           if (!sc.isCompleted) {
-            this._selectShortCourseType1Direct(sc);
+            // Ensure activeCertificateId is set correctly
+            this.activeCertificateId.set(currentCert.courseCertificateId);
+            this._selectShortCourseType1Direct(sc, callback);
             return;
           }
         }
@@ -1604,7 +1616,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (incompleteSc) {
           this.expandedCertificates.set(new Set([cert.courseCertificateId]));
           this.activeCertificateId.set(cert.courseCertificateId);
-          this._selectShortCourseType1Direct(incompleteSc);
+          this._selectShortCourseType1Direct(incompleteSc, callback);
           return;
         }
       }
@@ -1616,7 +1628,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (incompleteSc) {
           this.expandedCertificates.set(new Set([cert.courseCertificateId]));
           this.activeCertificateId.set(cert.courseCertificateId);
-          this._selectShortCourseType1Direct(incompleteSc);
+          this._selectShortCourseType1Direct(incompleteSc, callback);
           return;
         }
       }
@@ -1628,7 +1640,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       // Look for incomplete after current
       for (let i = currentScIndex + 1; i < shortCourses.length; i++) {
         if (!shortCourses[i].isCompleted) {
-          this._selectShortCourseType2Direct(shortCourses[i]);
+          this._selectShortCourseType2Direct(shortCourses[i], callback);
           return;
         }
       }
@@ -1636,18 +1648,49 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       // Look for incomplete before current
       for (let i = 0; i < currentScIndex; i++) {
         if (!shortCourses[i].isCompleted) {
-          this._selectShortCourseType2Direct(shortCourses[i]);
+          this._selectShortCourseType2Direct(shortCourses[i], callback);
           return;
         }
       }
     }
+
+    // If no incomplete lecture found, execute callback if provided
+    if (callback) callback();
+  }
+
+  private refreshLectureSectionsForShortCourse(sc: any, callback?: () => void) {
+    // Extract lecture sections from the current course tree
+    const data = this.courseService.extractLectureSectionsFromTree(this.courseTree());
+
+    if (data && Array.isArray(data)) {
+      this.lectureSection.set(data);
+
+      // Group by title for proper organization
+      const grouped: Record<string, Record<string, any[]>> = {};
+      data.forEach((item: any) => {
+        const title = item.sectionTitle;
+        const type = item.sectionType;
+
+        if (!grouped[title]) {
+          grouped[title] = {};
+        }
+        if (!grouped[title][type]) {
+          grouped[title][type] = [];
+        }
+        grouped[title][type].push(item);
+      });
+
+      this.groupedByTitle.set(grouped);
+    }
+
+    if (callback) callback();
   }
 
   // Direct selection methods without restrictions (used by selectIncompleteShortCourse after quiz completion)
-  private _selectShortCourseType1Direct(sc: any) {
+  private _selectShortCourseType1Direct(sc: any, callback?: () => void) {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
-      courseCertificateId: sc.certificateId,
+      courseCertificateId: this.activeCertificateId() || sc.certificateId,
       professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
     });
     this.stopSpeech();
@@ -1660,11 +1703,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     current.clear();
     current.add(sc.shortCourseId);
     this.expandedShortCourses.set(current);
-    this.prepareLectureSectionsAndSetActive(sc);
-    this.refreshProgress();
+
+    // Refresh lecture sections for the new short course
+    this.refreshLectureSectionsForShortCourse(sc, () => {
+      this.prepareLectureSectionsAndSetActive(sc);
+      this.refreshProgress();
+      if (callback) callback();
+    });
   }
 
-  private _selectShortCourseType2Direct(sc: any) {
+  private _selectShortCourseType2Direct(sc: any, callback?: () => void) {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.courseTree()?.courseId,
@@ -1680,8 +1728,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     current.clear();
     current.add(sc.shortCourseId);
     this.expandedShortCourses.set(current);
-    this.prepareLectureSectionsAndSetActive(sc);
-    this.refreshProgress();
+
+    // Refresh lecture sections for the new short course
+    this.refreshLectureSectionsForShortCourse(sc, () => {
+      this.prepareLectureSectionsAndSetActive(sc);
+      this.refreshProgress();
+      if (callback) callback();
+    });
   }
 
   goToPreviousShortCourse() {
