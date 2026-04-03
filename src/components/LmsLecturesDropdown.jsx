@@ -189,6 +189,13 @@ const LmsLecturesDropdown = ({
                           <p>{lecture.source}</p>
                         </div>
                       )}
+                      {lecture.courseType && (
+                        <div className="mt-1">
+                          <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                            {lecture.courseType}
+                          </span>
+                        </div>
+                      )}
 
                       {(lecture.lmsCourseName || lecture.lmsModuleName || lecture.lmsSubjectName) && (
                         <div className="mt-1 text-xs text-gray-500 space-y-1">

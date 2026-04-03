@@ -35,7 +35,6 @@ const SelectedLecturesTable = ({
 
  
  const getLectureDisplayName = (lecture) => {
-  debugger;
     return lecture.lmsLectureName?lecture.lmsLectureName:lecture.displayName || `${lecture.lmsCourseName} - ${lecture.lmsLectureName}`;
   };
   const getLectureTypeLabel = (lectureType) => {
@@ -78,7 +77,7 @@ const SelectedLecturesTable = ({
             Selected Lectures ({selectedLectures.length})
           </h3>
           <div className="text-xs text-gray-500">
-            {courseType === 1 ? 'Direct Lectures' : 'Section Lectures'}
+            {courseType === 1 ? 'Direct Lectures' : 'Course Lectures'}
           </div>
         </div>
       </div>
@@ -131,6 +130,11 @@ const SelectedLecturesTable = ({
                       {getMappedItemLabel(lecture) && (
                         <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">
                           {getMappedItemLabel(lecture)}
+                        </span>
+                      )}
+                      {lecture.courseType && (
+                        <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">
+                          {lecture.courseType}
                         </span>
                       )}
                       <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">

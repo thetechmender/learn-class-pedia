@@ -378,7 +378,8 @@ const CourseModal = ({
       lmsLectureName: lecture.lmsLectureName || lecture.title,
       lectureOverview: lecture.lectureOverview,
       lectureDescription: lecture.lectureDescription,
-      tags: lecture.tags
+      tags: lecture.tags,
+      courseType: lecture.courseType
     };
   };
 
