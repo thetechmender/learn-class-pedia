@@ -867,9 +867,21 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         return;
       }
     }
+    
+    // Ensure activeCertificateId is set correctly for the current certificate
+    if (tree?.courseTypeId === 1) {
+      const certs = tree.professionalCourse?.courseCertificates || [];
+      for (const cert of certs) {
+        if (cert.shortCourses?.some((s: any) => s.shortCourseId === sc.shortCourseId)) {
+          this.activeCertificateId.set(cert.courseCertificateId);
+          break;
+        }
+      }
+    }
+    
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
-      courseCertificateId: sc.certificateId,
+      courseCertificateId: this.activeCertificateId() || sc.certificateId,
       professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
     });
     this.stopSpeech();
