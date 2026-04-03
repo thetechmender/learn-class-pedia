@@ -72,6 +72,9 @@ const CourseModal = ({
 
   const [formErrors, setFormErrors] = useState({});
 
+  // State to track if modal is closing
+  const [isClosing, setIsClosing] = useState(false);
+
   // Confirmation modal state
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -596,7 +599,23 @@ const CourseModal = ({
     });
   };
 
+  const handleModalClose = () => {
+    setIsClosing(true);
+    // Clear any existing errors
+    setFormErrors({});
+    // Call the parent onClose function
+    onClose();
+    // Reset closing state after a short delay
+    setTimeout(() => setIsClosing(false), 100);
+  };
+
   const validateForm = () => {
+    // Skip validation if modal is closing
+    if (isClosing) {
+      setFormErrors({});
+      return true;
+    }
+
     const errors = {};
 
     if (!formData.title || !formData.title.trim()) errors.title = 'Title is required';
@@ -611,7 +630,7 @@ const CourseModal = ({
     // Validate lectures mapping based on course type
     if (formData.courseTypeId === 1) {
       // For course type 1 (Professional Certificate), must select at least one course certificate
-      if (!formData.mappedLectures || formData.mappedLectures.length === 0) {
+      if (!formData.mappedLectures || formData.mappedLectures.length === 0 ) {
         errors.mappedLectures = 'Please select at least one course certificate';
       }
     } else if (formData.courseTypeId === 2) {
@@ -838,7 +857,7 @@ const CourseModal = ({
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">{getModalTitle()}</h2>
           <button
-            onClick={onClose}
+            onClick={handleModalClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <XCircle className="w-6 h-6" />
@@ -1397,7 +1416,7 @@ const CourseModal = ({
           <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleModalClose}
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               disabled={loading}
             >
