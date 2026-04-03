@@ -140,10 +140,43 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   }
 
   onCheckAnswers() {
-    this.showCompletionScreen.set(false);
-    this.showAnswers.set(true);
-    // Refresh tree to update isCompleted status in sidebar
-    this.refreshTree.emit();
+    if (this.isLectureCompleted && !this.isSubmitted()) {
+      // Lecture already completed - fetch results from API before showing answers
+      const token = this.authService.getToken();
+      const payload = {
+        courseId: this.orderPayload?.shortCourseId || null,
+        courseCertificateId: this.orderPayload?.courseCertificateId || null,
+        professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+        assessmentTypeId: 1
+      };
+      this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (details: any) => {
+            if (details?.isSuccess) {
+              this.quizResult.set(details.data);
+              this.isSubmitted.set(true);
+              // Merge selected options from API results into questions
+              const results = details.data?.questionResults || [];
+              const updated = this.questions().map((q: any) => {
+                const match = results.find((r: any) => r.questionId === q.id);
+                return match ? { ...q, selectedOption: match.selectedAnswer } : q;
+              });
+              this.questions.set(updated);
+            }
+            this.showCompletionScreen.set(false);
+            this.showAnswers.set(true);
+          },
+          error: () => {
+            this.showCompletionScreen.set(false);
+            this.showAnswers.set(true);
+          }
+        });
+    } else {
+      this.showCompletionScreen.set(false);
+      this.showAnswers.set(true);
+      // Refresh tree to update isCompleted status in sidebar
+      this.refreshTree.emit();
+    }
   }
 
   onMoveToNextTopic() {

@@ -117,7 +117,7 @@
               </svg>
               Lecture
             </span>
-            <span class="flex items-center gap-1">
+            <span class="flex items-center gap-1 cursor-pointer hover:text-primary" (click)="scrollToQuiz()">
               <i class="ic-86"></i>
               Lecture Quiz
             </span>
@@ -201,7 +201,7 @@
             </svg>
             Lecture
           </span>
-          <span class="flex items-center gap-1">
+          <span class="flex items-center gap-1 cursor-pointer hover:text-primary" (click)="scrollToQuiz()">
             <i class="ic-86"></i>
             Lecture Quiz
           </span>
@@ -362,6 +362,15 @@
       <!-- Right Navigation Arrow (hide if last) -->
       @if (courseTree()?.courseTypeId !== 3 && canGoNextShortCourse()) {
       <button (click)="goToNextShortCourse()"
+        class="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      }
+      <!-- Right arrow to Quiz tab: for types 1 & 2 only when on last short course -->
+      @if ((courseTree()?.courseTypeId === 1 || courseTree()?.courseTypeId === 2) && !canGoNextShortCourse()) {
+      <button (click)="scrollToQuiz()"
         class="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -550,7 +559,7 @@
           <img src="/assets/icons/notebook.svg" class="w-4 h-4" alt="Notebook icon" />
           Notebook
         </button>
-        @if(this.courseTree()?.courseTypeId !== 3) {
+        @if (courseTree()?.courseTypeId !== 3) {
         <button (click)="activeTab.set('quiz')"
           class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
           [class.text-primary]="activeTab() === 'quiz'" [class.border-primary]="activeTab() === 'quiz'"
@@ -559,7 +568,6 @@
           Quiz
         </button>
         }
-
       </div>
       <!-- Tab Content -->
       <div class="flex gap-6 p-4">

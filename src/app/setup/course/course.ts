@@ -340,9 +340,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (courseDetails?.estimatedTimeMinutes) {
           this.estimatedTimeMinutes.set(courseDetails.estimatedTimeMinutes);
         }
+        const courseTypeIdFromDetails = courseDetails?.courseTypeId;
         return this.courseService.getCourseTreeV2WithToken(courseId, token).pipe(
           map((treeRes: any) => treeRes?.isSuccess !== undefined ? treeRes.data : treeRes),
           map((tree: any) => {
+            // Always use courseTypeId from the details API as the authoritative source
+            if (courseTypeIdFromDetails && tree) {
+              tree.courseTypeId = courseTypeIdFromDetails;
+            }
             this.courseTree.set(tree);
             return this.courseService.extractLectureSectionsFromTree(tree);
           })
@@ -1345,6 +1350,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       .subscribe({
         next: (tree: any) => {
           console.log('refreshCourseTree API success', tree);
+          // Preserve courseTypeId from the details API (authoritative source)
+          if (tree && courseTypeId) {
+            tree.courseTypeId = courseTypeId;
+          }
           this.courseTree.set(tree);
           if (callback) callback();
         },
@@ -1797,6 +1806,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       return currentScIndex > 0;
     }
     return false;
+  }
+
+  scrollToQuiz() {
+    this.activeTab.set('quiz');
+    setTimeout(() => {
+      const tabSection = document.querySelector('.screen-tab');
+      if (tabSection) {
+        tabSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
   }
 
   canGoNextShortCourse(): boolean {

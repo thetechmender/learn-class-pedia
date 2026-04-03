@@ -35,6 +35,11 @@ export class EnrolledCourses implements OnInit {
       });
   };
 
+  getClassroomUrl(resourceId: number): string {
+    const token = this.authService.getToken();
+    return `https://learning.classpedia.ai/classroom?t=${token}&courseId=${resourceId}`;
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
