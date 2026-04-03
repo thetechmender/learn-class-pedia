@@ -103,4 +103,11 @@ export class AssessmentService {
       }
     );
   }
+
+  getAttemptStatus(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/assessment/attempt-status/${courseId}`,
+      { headers: this.getHeaders(token) }
+    );
+  }
 }

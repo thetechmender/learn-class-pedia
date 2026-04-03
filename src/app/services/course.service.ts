@@ -280,6 +280,12 @@ export class CourseService {
     });
   }
 
+  updateNotebook(noteId: number, payload: { videoTimeSeconds: number; noteText: string }, token: string | null): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/learning/v2/notebook/${noteId}`, payload, {
+      headers: this.getHeaders(token)
+    });
+  }
+
   toggleChat() {
     this.isChatOpen.set(!this.isChatOpen());
   }

@@ -13,7 +13,7 @@ export class FailedAssessment {
   @Output() goBack = new EventEmitter<void>();
 
   get isMaxAttempts(): boolean {
-    return this.resultData?.resultStatus === 'MaxAttemptsExceeded';
+    return this.resultData?.resultStatus === 'MaxAttemptsExceeded' || this.attemptsRemaining <= 0;
   }
 
   get attemptsRemaining(): number {
@@ -29,7 +29,7 @@ export class FailedAssessment {
   }
 
   get scorePercentage(): number {
-    return this.resultData?.scorePercentage ?? 0;
+    return this.resultData?.score ?? this.resultData?.scorePercentage ?? 0;
   }
 
   get requiresRepurchase(): boolean {

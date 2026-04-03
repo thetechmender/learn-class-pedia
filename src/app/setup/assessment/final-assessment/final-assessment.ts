@@ -244,11 +244,7 @@ export class FinalAssessment implements OnInit {
       .subscribe({
         next: (details: any) => {
           if (details?.isSuccess) {
-            if (details['data']['isPassed']) {
-              this.next.emit('cleared');
-            } else {
-              this.next.emit('failed');
-            }
+            this.next.emit(details['data']);
           }
         },
         error: (err: any) => {

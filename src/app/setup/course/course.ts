@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 import { AuthService } from '../../services/auth.service';
+import { AssessmentService } from '../../services/assessment.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SpeechService } from '../../services/speech.service';
 import { Overview } from './overview/overview';
@@ -37,6 +38,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private sanitizer = inject(DomSanitizer);
   private platformId = inject(PLATFORM_ID);
   private toastr = inject(ToastrService);
+  private assessmentService = inject(AssessmentService);
 
   chatInput = signal<string>('');
   chatThreadId = signal<string>('');
@@ -1447,17 +1449,51 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   startAssessment() {
-    this.assessmentStep.set('start');
+    const token = this.authService.getToken();
+    const courseId = this.existingSeasionCourseId();
+    if (!courseId) {
+      this.assessmentStep.set('start');
+      return;
+    }
+    this.assessmentService.getAttemptStatus(courseId, token).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => {
+        const data = res?.isSuccess !== undefined ? res.data : res;
+        if (data?.canTakeAssessment === false) {
+          this.assessmentResult.set({
+            attemptsUsed: data.attemptsUsed,
+            attemptsRemaining: data.attemptsRemaining,
+            maxAttempts: data.maxAttempts,
+            requiresRepurchase: data.requiresRepurchase,
+            resultStatus: 'MaxAttemptsExceeded'
+          });
+          this.assessmentStep.set('maxattempts');
+        } else {
+          this.assessmentStep.set('start');
+        }
+      },
+      error: () => {
+        this.assessmentStep.set('start');
+      }
+    });
   }
 
 
-  onAssessmentNext(currentStep: string) {
-    if (currentStep === 'start' || currentStep === undefined) {
+  onAssessmentNext(result: any) {
+    if (result === 'start' || result === undefined) {
       this.assessmentStep.set('final');
-    } else if (currentStep === 'failed') {
+    } else if (result === 'failed') {
       this.assessmentStep.set('failed');
-    } else if (currentStep === 'cleared') {
+    } else if (result === 'cleared') {
       this.assessmentStep.set('cleared');
+    } else if (typeof result === 'object') {
+      this.assessmentResult.set(result);
+      if (result?.isPassed) {
+        this.assessmentStep.set('cleared');
+      } else if (result?.attemptsRemaining === 0) {
+        this.assessmentStep.set('maxattempts');
+      } else {
+        this.assessmentStep.set('failed');
+      }
     }
   }
 

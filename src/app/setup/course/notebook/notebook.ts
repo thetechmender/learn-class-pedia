@@ -23,6 +23,8 @@ export class Notebook implements OnInit, OnChanges {
   isSaving = signal(false);
   noteText = signal('');
   savedNotes = signal<any[]>([]);
+  editingNoteId = signal<number | null>(null);
+  editNoteText = signal('');
 
   private lastShortCourseId: number | null = null;
 
@@ -96,6 +98,38 @@ export class Notebook implements OnInit, OnChanges {
     }
   }
 
+  onEditNote(note: any) {
+    this.editingNoteId.set(note.id);
+    this.editNoteText.set(note.noteText);
+  }
+
+  onCancelEdit() {
+    this.editingNoteId.set(null);
+    this.editNoteText.set('');
+  }
+
+  onUpdateNote(note: any) {
+    if (!this.editNoteText()) return;
+    this.isSaving.set(true);
+    const token = this.authService.getToken();
+    const payload = {
+      videoTimeSeconds: note.videoTimeSeconds,
+      noteText: this.editNoteText()
+    };
+    this.courseService.updateNotebook(note.id, payload, token).subscribe({
+      next: () => {
+        this.savedNotes.update(notes => notes.map(n => n.id === note.id ? { ...n, noteText: this.editNoteText() } : n));
+        this.editingNoteId.set(null);
+        this.editNoteText.set('');
+        this.isSaving.set(false);
+      },
+      error: (err: any) => {
+        console.error('Update Note Error:', err);
+        this.isSaving.set(false);
+      }
+    });
+  }
+
   onDeleteNote(id: number) {
     const token = this.authService.getToken();
     this.deletingNoteId.set(id);
@@ -105,10 +139,9 @@ export class Notebook implements OnInit, OnChanges {
         this.deletingNoteId.set(null);
       },
       error: (err: any) => {
-        console.error('Delete Note Error:', err)
-           this.deletingNoteId.set(null);
+        console.error('Delete Note Error:', err);
+        this.deletingNoteId.set(null);
       }
-
     });
   }
 
@@ -116,8 +149,9 @@ export class Notebook implements OnInit, OnChanges {
     const notes = this.savedNotes();
     if (notes.length === 0) return;
 
-    let content = '<html><head><style>';
-    content += 'body { font-family: Poppins, sans-serif; padding: 40px; color: #1a1a2e; }';
+    let content = '<html><head><title>Course Notes</title><style>';
+    content += '@media print { body { margin: 0; } }';
+    content += 'body { font-family: Poppins, Arial, sans-serif; padding: 40px; color: #1a1a2e; }';
     content += 'h1 { font-size: 22px; margin-bottom: 20px; color: #0062CC; }';
     content += '.note { border-bottom: 1px solid #e5e7eb; padding: 12px 0; }';
     content += '.time { color: #0062CC; font-size: 13px; font-weight: 600; }';
@@ -134,16 +168,14 @@ export class Notebook implements OnInit, OnChanges {
 
     content += '</body></html>';
 
-    const blob = new Blob([content], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'course-notes.pdf';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(content);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
   }
 
   formatTime(seconds: number): string {

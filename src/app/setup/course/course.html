@@ -12,7 +12,7 @@
   <!-- Left Sidebar -->
   <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300"
     [class.w-80]="isSidebarOpen()" [class.w-0]="!isSidebarOpen()" [class.overflow-hidden]="!isSidebarOpen()"
-    [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: calc(100vh - 200px);">
+    [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: 100%;">
     <!-- Sidebar Header with Title and Close Button -->
     <div class="fondation">
       <div class="flex items-center justify-between">
@@ -707,12 +707,5 @@
     </div>
   </div>
 
-  <!-- Overlay -->
-  @if (courseService.isChatOpen()) {
-  <div (click)="courseService.toggleChat()" class="fixed inset-0 bg-black/30 z-40"></div>
-  }
-</div>
-
-<!-- Completion Modal -->
-<app-completion-modal [isOpen]="showCompletionModal()" [data]="completionData()" (close)="onCompletionModalClose()">
-</app-completion-modal>
+  <!-- Completion Modal -->
+  <app-completion-modal [isOpen]="showCompletionModal()" [data]="completionData()" (close)="onCompletionModalClose()">

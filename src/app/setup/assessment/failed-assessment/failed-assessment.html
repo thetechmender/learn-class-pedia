@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6">
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 max-w-2xl w-full">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 max-w-8xl w-full">
     <!-- <div class="pt-4 px-4">
       <button (click)="back()" class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</button>
     </div> -->
@@ -17,7 +17,7 @@
           </svg>
         </div>
         @if (isMaxAttempts) {
-        <h1 class="text-2xl font-bold text-red-500">Maximum Attempts Reached</h1>
+        <h1 class="text-2xl font-bold text-red-500">Exam Not Passed</h1>
         } @else {
         <h1 class="text-2xl font-bold text-red-500">Exam Not Passed</h1>
         }
@@ -27,33 +27,21 @@
     <!-- Divider -->
     <div class="border-t border-gray-100"></div>
 
-    <!-- Score Section -->
-    @if (scorePercentage > 0) {
-    <div class="px-6 pt-4 pb-2">
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </div>
-        <span class="text-sm text-gray-600">Your score: <span class="font-semibold text-gray-900">{{ scorePercentage | number:'1.0-1' }}%</span></span>
-      </div>
-    </div>
-    }
-
+  
     <!-- Content Section -->
     <div class="p-6">
       @if (isMaxAttempts) {
-      <h2 class="text-lg font-bold text-gray-900 mb-2">You've Used All {{ maxAttempts }} Attempts</h2>
-      @if (requiresRepurchase) {
-      <p class="text-sm text-gray-600 mb-2">You have exhausted all your attempts for this assessment.</p>
-      <p class="text-sm text-gray-600 mb-6">To retake the exam, you will need to repurchase the course.</p>
-      <a href="/courses" class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all inline-block">
-        Browse Courses
-      </a>
-      } @else {
-      <p class="text-sm text-gray-600 mb-6">You have used all available attempts. Please contact support for assistance.</p>
-      }
+      <h2 class="text-lg font-bold text-gray-900 mb-2">No Attempts Remaining</h2>
+      <p class="text-sm text-gray-600 mb-2">You've completed all assessments, but unfortunately the passing score was not achieved. Since all attempts are finished, the only way to continue is by repurchasing the short course.</p>
+      <p class="text-sm text-gray-600 mb-6">Need help? Our support team is here for you.</p>
+      <div class="flex items-center gap-3">
+        <a href="https://www.classpedia.ai/offerings" target="_blank" class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all inline-block">
+          Repurchase Course
+        </a>
+        <a href="/support" class="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all inline-block">
+          Get Support
+        </a>
+      </div>
       } @else {
       <h2 class="text-lg font-bold text-gray-900 mb-2">Unfortunately, You Didn't Pass This Attempt</h2>
       <p class="text-sm text-gray-600 mb-2">Don't worry, you still have {{ attemptsRemaining }} {{ attemptsRemaining === 1 ? 'attempt' : 'attempts' }} remaining to retake the exam and complete your course.</p>
