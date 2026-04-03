@@ -19,6 +19,7 @@ export class Overview implements OnInit, OnChanges {
   @Input() courseLevel: string = '';
   @Input() courseTree: any = null;
   @Input() courseId: any = null;
+  @Input() totalDuration: number = 0;
 
   courseService = inject(CourseService);
   private authService = inject(AuthService);
@@ -172,6 +173,13 @@ export class Overview implements OnInit, OnChanges {
     return remainingMinutes > 0
       ? `${hours}h ${remainingMinutes}m`
       : `${hours}h`;
+  };
+
+  formatTimeFromSeconds(seconds: number): string {
+    if (!seconds || seconds <= 0) return '0m';
+    
+    const minutes = Math.floor(seconds / 60);
+    return this.formatDuration(minutes, true);
   };
 
   getRoundedRating(): number {

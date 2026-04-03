@@ -6,7 +6,7 @@
       <div class="mb-6 course-content-left">
         <h2 class="text-lg font-bold text-gray-900 mb-3">Course Details</h2>
         <div class="flex items-center gap-3 text-sm text-gray-500 mb-3">
-          <span>{{this.formatDuration(this.overView()?.estimatedTimeMinutes,false)}}</span>
+          <span>{{this.overView()?.estimatedTimeMinutes ? this.formatDuration(this.overView()?.estimatedTimeMinutes, false) : this.formatTimeFromSeconds(this.totalDuration)}}</span>
           <span>{{this.courseLevel || 'N/A'}}</span>
           <span>Released: {{(this.overView()?.releaseDate | date:'dd/MM/yyyy') || 'N/A'}}</span>
         </div>
@@ -156,8 +156,7 @@
             <span class="flex items-center gap-2">
 
               <i class="ic-72 cl-iPrimary"></i>
-              {{ this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons :
-                this.overView()?.totalLessons || 0 }} Lessons </span>
+              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Lessons </span>
                 <span class="flex items-center gap-2">
 
                   <i class="ic-73 cl-iPrimary"></i>
@@ -168,13 +167,38 @@
                       <i class="ic-74 cl-iPrimary"></i>
                       {{ this.overView()?.totalPDFs < 10 ? '0' + this.overView()?.totalPDFs : this.overView()?.totalPDFs
                         || 0 }} Pdfs </span>
+                        @if(courseTypeId != 3) {
                                   <span class="flex items-center gap-2">
 
                       <i class="ic-85 cl-iPrimary"></i>
                       {{ 1}} Quiz </span>
+                        }
           </div>
         </div>
       </div>
+
+      <!-- courseTypeId == 3: Show course title from content -->
+      @if(courseTypeId == 3 && this.overView()?.courseName) {
+      <div class="mb-8 topic-accor">
+        <div class="py-4 border-b border-gray-100 prof-topic">
+          <p class="text-sm text-gray-500 mb-2">1. {{ this.overView()?.courseName }}</p>
+          <div class="flex items-center gap-6 text-xs dd-ico">
+            <span class="flex items-center gap-1">
+              <i class="ic-83"></i>
+              1 Lecture
+            </span>
+            <span class="flex items-center gap-1">
+              <i class="ic-73"></i>
+              01 Videos
+            </span>
+            <span class="flex items-center gap-1">
+              <i class="ic-74"></i>
+              01 PDFs
+            </span>
+          </div>
+        </div>
+      </div>
+      }
 
       <!-- courseTypeId == 2: Short Courses/Lectures List -->
       @if(courseTypeId == 2 && courseTree?.certificateCourse?.shortCourses) {

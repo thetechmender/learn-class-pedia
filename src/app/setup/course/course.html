@@ -214,8 +214,8 @@
       @if (courseTree().courseTypeId === 3 && courseTree().shortCourseLectures &&
       courseTree().shortCourseLectures.length > 0) {
       @let lec = courseTree().shortCourseLectures[0];
-      @let isActive = currentShortCourse()?.shortCourseId === lec.id;
-      @let lecExpanded = isShortCourseExpanded(lec.id);
+      @let isActive = true;
+      @let lecExpanded = true;
       <div class="accord-sec">
         <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
           [class.bg-optional]="isActive" (click)="onLectureSelectType3(lec)">
@@ -245,7 +245,7 @@
               (click)="toggleShortCourse(lec.id); $event.stopPropagation()">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
-            }
+            } 
           </div>
         </div>
 
@@ -257,7 +257,7 @@
               <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9z" />
               <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
             </svg>
-            {{ lec.duration || '00:00' }}
+            {{ estimatedTimeMinutes() ? estimatedTimeMinutes() + 'm' : (lec.duration || '13:00') }}
           </span>
           <span class="flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 22 22"
@@ -436,13 +436,13 @@
             </svg>
           </button>
           <!-- Progress Slider (draggable) -->
-          <input type="range" min="0" [max]="totalDuration()" [value]="currentTime()" (input)="onSliderChange($event)"
+          <input type="range" min="0" [max]="estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()" [value]="currentTime()" (input)="onSliderChange($event)"
             (mousedown)="onSliderStart()" (mouseup)="onSliderEnd()"
             class="w-32 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
             style="background: linear-gradient(to right, #2655FF 0%, #2655FF calc(var(--progress, 0) * 100%), #e5e7eb calc(var(--progress, 0) * 100%), #e5e7eb 100%);"
-            [style.--progress]="totalDuration() > 0 ? currentTime() / totalDuration() : 0" />
+            [style.--progress]="(estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) > 0 ? currentTime() / (estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) : 0" />
           <!-- Progress Time -->
-          <span class="text-xs text-gray-500">{{ formatTime(currentTime()) }} / {{ formatTime(totalDuration()) }}</span>
+          <span class="text-xs text-gray-500">{{ formatTime(currentTime()) }} / {{ formatTime(estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) }}</span>
         </div>
 
         <!-- <div class="flex items-center gap-2">
@@ -566,10 +566,10 @@
         <div class="flex-1 bg-white rounded-xl">
           @if (activeTab() === 'overview') {
           <app-overview [courseTypeId]="courseTree()?.courseTypeId" [title]="courseTree()?.courseTitle"
-            [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()"></app-overview>
+            [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()" [totalDuration]="calculatedTotalDuration()"></app-overview>
           }
           @if (activeTab() === 'keyPoints') {
-          <app-key-points [slug]="courseSlug()" [courseTypeId]="courseTree()?.courseTypeId"></app-key-points>
+          <app-key-points [slug]="courseSlug()" [courseTypeId]="courseTree()?.courseTypeId" [courseTree]="courseTree()" [activeShortCourseId]="activeShortCourseId()" [activeCertificateId]="activeCertificateId()"></app-key-points>
           }
           @if (activeTab() === 'notebook') {
           <app-notebook [orderPayload]="completeOrderPayload()" [videoTimeSeconds]="currentTime()"

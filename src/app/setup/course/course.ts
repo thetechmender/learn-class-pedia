@@ -157,6 +157,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   currentTime = computed(() => this.speechService.currentTime());
   totalDuration = computed(() => this.speechService.totalDuration());
+  calculatedTotalDuration = signal<number>(0);
+  estimatedTimeMinutes = signal<number>(0);
   currentWordIndex = computed(() => this.speechService.currentWordIndex());
   isCompleted = computed(() => this.speechService.isCompleted());
 
@@ -332,6 +334,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.courseSlug.set(courseDetails?.slug || '');
         this.courseLevel.set(courseDetails?.courseLevelName || '');
         this.course.set(courseDetails);
+        // Set estimatedTimeMinutes from course details API
+        if (courseDetails?.estimatedTimeMinutes) {
+          this.estimatedTimeMinutes.set(courseDetails.estimatedTimeMinutes);
+        }
         return this.courseService.getCourseTreeV2WithToken(courseId, token).pipe(
           map((treeRes: any) => treeRes?.isSuccess !== undefined ? treeRes.data : treeRes),
           map((tree: any) => {
@@ -438,6 +444,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           const firstLec = tree.shortCourseLectures[0];
           this.selectFirstLecture(firstLec);
           this.refreshProgress();
+          // Fetch estimatedTimeMinutes from ShortCourseDetail API
+          this.courseService.getShortCourseDetails(this.courseSlug(), token).pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (details: any) => {
+                if (details?.data?.estimatedTimeMinutes) {
+                  this.estimatedTimeMinutes.set(details.data.estimatedTimeMinutes);
+                }
+              }
+            });
         }
 
         this.isLoading.set(false);
@@ -729,6 +744,44 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       lectures: allLectures.map((l: any) => ({ ...l, lectureSections: [l] }))
     });
 
+    // Calculate total duration for short courses (courseTypeId=3)
+    if (tree?.courseTypeId === 3) {
+      const lectureContents: string[] = [];
+      let combinedContent = '';
+
+      allLectures.forEach((lecture: any) => {
+        let lecContent = '';
+        if (lecture.content) {
+          lecContent = lecture.content + '<br/><br/>';
+        }
+        lectureContents.push(lecContent);
+        combinedContent += lecContent;
+      });
+
+      if (combinedContent) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = combinedContent;
+        const fullText = tempDiv.textContent || tempDiv.innerText || '';
+        const totalWords = fullText.split(/\s+/).filter((w: string) => w.length > 0).length;
+        const wordsPerMinute = 150 * this.speechService.rate();
+        const durationInSeconds = Math.ceil((totalWords / wordsPerMinute) * 60);
+        this.calculatedTotalDuration.set(durationInSeconds);
+
+        // Calculate lecture start times
+        let cumulativeWords = 0;
+        this.lectureStartTimes = [];
+
+        lectureContents.forEach((lecHtml) => {
+          const startSeconds = (cumulativeWords / wordsPerMinute) * 60;
+          this.lectureStartTimes.push(startSeconds);
+          tempDiv.innerHTML = lecHtml;
+          const lecText = tempDiv.textContent || tempDiv.innerText || '';
+          const wordCount = lecText.split(/\s+/).filter((w: string) => w.length > 0).length;
+          cumulativeWords += wordCount;
+        });
+      }
+    }
+
     // Set activeSection so transcript/download work on initial load
     if (lec.content) {
       this.activeSection.set({ ...lec, sectionTitle: lec.title || lec.courseTitle });
@@ -921,9 +974,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     if (combinedContent) {
-      // Calculate lecture start times based on word counts
+      // Calculate total duration from combined content
       const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = combinedContent;
+      const fullText = tempDiv.textContent || tempDiv.innerText || '';
+      const totalWords = fullText.split(/\s+/).filter((w: string) => w.length > 0).length;
       const wordsPerMinute = 150 * this.speechService.rate();
+      const durationInSeconds = Math.ceil((totalWords / wordsPerMinute) * 60);
+      this.calculatedTotalDuration.set(durationInSeconds);
+
+      // Calculate lecture start times based on word counts
       let cumulativeWords = 0;
       this.lectureStartTimes = [];
 
@@ -931,8 +991,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         const startSeconds = (cumulativeWords / wordsPerMinute) * 60;
         this.lectureStartTimes.push(startSeconds);
         tempDiv.innerHTML = lecHtml;
-        const text = tempDiv.textContent || tempDiv.innerText || '';
-        const wordCount = text.split(/\s+/).filter((w: string) => w.length > 0).length;
+        const lecText = tempDiv.textContent || tempDiv.innerText || '';
+        const wordCount = lecText.split(/\s+/).filter((w: string) => w.length > 0).length;
         cumulativeWords += wordCount;
       });
 
