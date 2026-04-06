@@ -1,9 +1,7 @@
 import { Component, Output, EventEmitter, Input } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-failed-assessment',
-  imports: [DecimalPipe],
   templateUrl: './failed-assessment.html',
   styleUrl: './failed-assessment.sass',
 })
