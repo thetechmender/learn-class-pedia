@@ -1,10 +1,10 @@
 <div class="p-2 pb-20">
-  <div class="flex gap-8">
+  <div class="flex gap-4">
     <!-- Left Column - Main Content -->
     <div class="flex-1">
       @if (!isAddingNote()) {
       <!-- Info Box -->
-      <div class="bg-white p-4 mb-6 cap-box">
+      <div class="bg-white px-3 py-2 mb-6 cap-box">
         <p class="text-sm text-gray-600 leading-relaxed">
           Click the Save Note button below the lecture when you want to capture a screen. You can also highlight and
           save lines from the transcript. Add your own notes to anything you've captured.
@@ -98,7 +98,9 @@
       <div class="mb-6">
         <!-- Add your thoughts -->
         <div class="mb-4">
-          <p class="text-sm font-medium text-gray-800 mb-2">Add your note at {{ formatTime(videoTimeSeconds) }}</p>
+          <!-- <p class="text-sm font-medium text-gray-800 mb-2">Add your note at {{ formatTime(videoTimeSeconds) }}</p> -->
+          <p class="text-sm font-medium text-gray-800 mb-2">Add your note</p>
+
           <input type="text"
             class="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="" [value]="noteText()" (input)="noteText.set($any($event.target).value)" />

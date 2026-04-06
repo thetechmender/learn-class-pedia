@@ -1,13 +1,14 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Component, Output, EventEmitter, Input, signal } from '@angular/core';
+// import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-failed-assessment',
-  imports: [DecimalPipe],
+  // imports: [DecimalPipe],
   templateUrl: './failed-assessment.html',
   styleUrl: './failed-assessment.sass',
 })
 export class FailedAssessment {
+  @Input('slug') courseSlug: string = '';
   @Input() resultData: any = null;
   @Output() next = new EventEmitter<void>();
   @Output() goBack = new EventEmitter<void>();
@@ -34,6 +35,10 @@ export class FailedAssessment {
 
   get requiresRepurchase(): boolean {
     return this.resultData?.requiresRepurchase ?? false;
+  }
+
+  getClassroomUrl(slug: string): string {
+    return `https://www.classpedia.ai/${slug}`;
   }
 
   onReattempt() {

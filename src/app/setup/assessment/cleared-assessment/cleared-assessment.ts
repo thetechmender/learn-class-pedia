@@ -25,15 +25,20 @@ export class ClearedAssessment {
   }
 
   get correctAnswers(): number {
+    console.log(this.resultData);
+
     return this.resultData?.correctAnswers ?? 0;
   }
 
   get wrongAnswers(): number {
+    console.log(this.resultData);
+
     return this.resultData?.wrongAnswers ?? 0;
   }
 
   get scorePercentage(): number {
-    return this.resultData?.scorePercentage ?? 0;
+    console.log(this.resultData);
+    return this.resultData?.score ?? 0;
   }
 
   get attemptsUsed(): number {

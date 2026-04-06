@@ -11,8 +11,7 @@
 
   <!-- Left Sidebar -->
   <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300"
-    [class.w-80]="isSidebarOpen()" [class.w-0]="!isSidebarOpen()" [class.overflow-hidden]="!isSidebarOpen()"
-    [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: 100%;">
+    [class.w-80]="isSidebarOpen()" [class.w-0]="!isSidebarOpen()" [class.overflow-hidden]="!isSidebarOpen()" [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: 100%;">
     <!-- Sidebar Header with Title and Close Button -->
     <div class="fondation">
       <div class="flex items-center justify-between">
@@ -335,11 +334,11 @@
     }
     @if (assessmentStep() === 'failed') {
     <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('start')"
-      (goBack)="assessmentStep.set('final')"></app-failed-assessment>
+      (goBack)="assessmentStep.set('final')" [slug]="courseSlug()"></app-failed-assessment>
     }
     @if (assessmentStep() === 'maxattempts') {
     <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('start')"
-      (goBack)="assessmentStep.set('start')"></app-failed-assessment>
+      (goBack)="assessmentStep.set('start')" [slug]="courseSlug()"></app-failed-assessment>
     }
     @if (assessmentStep() === 'cleared') {
     <app-cleared-assessment [resultData]="assessmentResult()" (finish)="onAssessmentFinish()"
@@ -581,7 +580,10 @@
           }
           @if (activeTab() === 'notebook') {
           <app-notebook [orderPayload]="completeOrderPayload()" [videoTimeSeconds]="currentTime()"
-            (notePlaying)="isPlaying.set(true)"></app-notebook>
+            [isPlaying]="isPlaying()"
+            (notePlaying)="isPlaying.set(true)"
+            (pauseVideo)="pauseVideoFromNotebook()"
+            (resumeVideo)="resumeVideoFromNotebook()"></app-notebook>
           }
           @if (activeTab() === 'transcript') {
           <app-transcript [currentShortCourse]="currentShortCourse()" [courseTypeId]="courseTree()?.courseTypeId"
@@ -599,7 +601,7 @@
         </div>
         @if (activeTab() === 'overview' || activeTab() === 'transcript' || activeTab() === 'keyPoints' || activeTab()
         === 'quiz') {
-        <app-enrolled-courses></app-enrolled-courses>
+        <app-enrolled-courses [courseId]="existingSeasionCourseId()"></app-enrolled-courses>
         }
       </div>
     </div>
@@ -633,7 +635,7 @@
   <!-- Ask Course Companion Button -->
   <button (click)="courseService.toggleChat()"
     class="fixed bottom-6 chat-widget right-6 z-40 flex items-center gap-2 px-3 py-3 bg-thirdly text-gray-600 rounded-full shadow-lg hover:bg-[#00c494] transition-all duration-300 font-medium text-sm"
-    [class.hidden]="courseService.isChatOpen()">
+    [class.hidden]="courseService.isChatOpen() || (assessmentStep() !== 'none' && assessmentStep() !== 'start')">
     <img src="assets/icons/chat-black-icon.svg" alt="Chat" class="">
     Ask Course Companion
   </button>

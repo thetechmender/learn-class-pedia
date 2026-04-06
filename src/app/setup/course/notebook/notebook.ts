@@ -12,8 +12,12 @@ import { SpeechService } from '../../../services/speech.service';
 export class Notebook implements OnInit, OnChanges {
   @Input() orderPayload: any = null;
   @Input() videoTimeSeconds: number = 0;
+  @Input() isPlaying: boolean = false;
   @Output() notePlaying = new EventEmitter<void>();
+  @Output() pauseVideo = new EventEmitter<void>();
+  @Output() resumeVideo = new EventEmitter<void>();
   deletingNoteId = signal<number | null>(null);
+  wasPlayingBeforeNote = false;
 
   private courseService = inject(CourseService);
   private authService = inject(AuthService);
@@ -58,12 +62,24 @@ export class Notebook implements OnInit, OnChanges {
   }
 
   onSaveNote() {
+    // Pause video if playing
+    if (this.isPlaying) {
+      this.wasPlayingBeforeNote = true;
+      this.pauseVideo.emit();
+    } else {
+      this.wasPlayingBeforeNote = false;
+    }
     this.isAddingNote.set(true);
   }
 
   onCancelNote() {
     this.isAddingNote.set(false);
     this.noteText.set('');
+    // Resume video if it was playing before
+    if (this.wasPlayingBeforeNote) {
+      this.resumeVideo.emit();
+      this.wasPlayingBeforeNote = false;
+    }
   }
 
   onSaveNoteConfirm() {
@@ -83,6 +99,11 @@ export class Notebook implements OnInit, OnChanges {
         this.isAddingNote.set(false);
         this.noteText.set('');
         this.fetchNotes();
+        // Resume video if it was playing before
+        if (this.wasPlayingBeforeNote) {
+          this.resumeVideo.emit();
+          this.wasPlayingBeforeNote = false;
+        }
       },
       error: (err: any) => {
         console.error('Save Note Error:', err);

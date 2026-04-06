@@ -1,5 +1,14 @@
 <div class="p-2 pb-20">
-  <p class="text-sm mb-4 font-medium">Please note: This is just a preparatory quiz. Its grading will not effect your report.</p>
+  @if(!showCompletionScreen() && !showAnswers()) {
+  <p class="text-sm mb-4 font-medium">Please note: This is just a preparatory quiz. Its grading will not effect your
+    report.</p>
+  }
+  @if(showAnswers()) {
+  <div class="py-2">
+    <button (click)="onBack()"
+      class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium"> Back</button>
+  </div>
+  }
 
   @if(isQuestionLoading()) {
   <div class="flex items-center justify-center py-8">
@@ -10,15 +19,17 @@
   <!-- Already Completed Lecture - Show completion screen directly -->
   <div class="flex flex-col items-center justify-center py-16">
     <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mb-6">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
       </svg>
     </div>
     <h2 class="text-2xl font-bold text-gray-900 mb-2">Quiz Already Completed</h2>
     <p class="text-gray-500 mb-4">You have already completed this lecture quiz.</p>
-    
+
     @if (isCourseCompleted) {
-    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can now start the final assessment or go to dashboard.</p>
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can
+      now start the final assessment or go to dashboard.</p>
     <div class="flex items-center gap-4" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
@@ -30,7 +41,8 @@
       </button>
     </div>
     } @else {
-    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your course.</p>
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
+      course.</p>
     <div class="flex items-center gap-4" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
@@ -47,15 +59,18 @@
   <!-- Quiz Complete Screen -->
   <div class="flex flex-col items-center justify-center py-16">
     <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mb-6">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
       </svg>
     </div>
-    <h2 class="text-2xl font-bold text-gray-900 mb-2">Quiz Complete</h2>
-    <p class="text-gray-500 mb-4">Your Scored {{ quizResult()?.correctAnswers || 0 }} / {{ quizResult()?.totalQuestions || questions().length }}</p>
-    
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Quiz Complete {{showCompletionScreen()}}</h2>
+    <p class="text-gray-500 mb-4">Your Scored {{ quizResult()?.correctAnswers || 0 }} / {{ quizResult()?.totalQuestions
+      || questions().length }}</p>
+
     @if (isCourseCompleted) {
-    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can now start the final assessment or go to dashboard.</p>
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can
+      now start the final assessment or go to dashboard.</p>
     <div class="flex items-center gap-4" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
@@ -67,7 +82,8 @@
       </button>
     </div>
     } @else {
-    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your course.</p>
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
+      course.</p>
     <div class="flex items-center gap-4">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
@@ -86,19 +102,18 @@
     @for (question of questions(); track question.id; let i = $index) {
     <div class=" quizsec">
       @if (isSubmitted()) {
-        @if (getQuestionResult(question.id)?.isCorrect) {
-        <p class="text-sm font-medium text-green-600 mb-2 correct">✓ Correct Answer</p>
-        } @else {
-        <p class="text-sm font-medium text-red-600 mb-2 correct">✗ Wrong Answer</p>
-        }
+      @if (getQuestionResult(question.id)?.isCorrect) {
+      <p class="text-sm font-medium text-green-600 mb-2 correct">✓ Correct Answer</p>
+      } @else {
+      <p class="text-sm font-medium text-red-600 mb-2 correct">✗ Wrong Answer</p>
+      }
       }
       <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}</h3>
       <div class="grid grid-cols-2 gap-3">
         @for (option of question.options; track option.optionLetter) {
         <label class="flex items-center gap-2 pointer-events-none">
           <input type="radio" [name]="'question-answer-' + question.id" [value]="option.optionLetter"
-            [checked]="question.selectedOption === option.optionLetter"
-            disabled
+            [checked]="question.selectedOption === option.optionLetter" disabled
             class="w-4 h-4 text-primary border-gray-300 focus:ring-primary" />
           <span class="text-sm text-gray-700">{{ option.optionLetter }}. {{ option.optionText }}</span>
         </label>

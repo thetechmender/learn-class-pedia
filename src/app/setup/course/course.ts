@@ -1112,6 +1112,20 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.isPlaying.set(false);
   }
 
+  pauseVideoFromNotebook() {
+    if (this.isPlaying()) {
+      this.speechService.pause();
+      this.isPlaying.set(false);
+    }
+  }
+
+  resumeVideoFromNotebook() {
+    if (this.speechService.isPaused()) {
+      this.speechService.resume();
+      this.isPlaying.set(true);
+    }
+  }
+
   goToPreviousSection() {
     const sc = this.currentShortCourse();
     if (!sc?.lectures || this.lectureStartTimes.length === 0) return;
@@ -1501,6 +1515,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.assessmentStep.set('maxattempts');
           }
         } else {
+          // Only start assessment, don't reset lectures yet
           this.assessmentStep.set('start');
         }
       },
@@ -1513,6 +1528,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   onAssessmentNext(result: any) {
     if (result === 'start' || result === undefined) {
+      // Reset sidebar selections when user actually starts the assessment
+      this.activeShortCourseId.set(null);
+      this.activeCertificateId.set(null);
+      // Don't reset expanded states to avoid affecting completion display
       this.assessmentStep.set('final');
     } else if (result === 'failed') {
       this.assessmentStep.set('failed');

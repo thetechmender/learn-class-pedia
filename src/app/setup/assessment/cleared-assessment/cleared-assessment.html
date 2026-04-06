@@ -1,9 +1,9 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6">
   <div class="rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full bg-white p-6 w-full text-center">
-    <div class="pb-4 text-left">
+    <!-- <div class="pb-4 text-left">
       <a href="https://www.classpedia.ai/learning" target="_blank"
         class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</a>
-    </div>
+    </div> -->
     <!-- Header -->
     @if (isAlreadyPassed) {
     <h1 class="text-2xl font-bold text-gray-900 mb-2">Already Passed</h1>
@@ -14,6 +14,7 @@
     }
 
     <!-- Score Badge -->
+     <!-- @if (isAlreadyPassed) { -->
     <div class="flex items-center justify-center gap-2 mb-4">
       <div class="w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -28,7 +29,7 @@
           number:'1.0-1' }}%</span></span>
       }
     </div>
-
+  <!-- } -->
     <!-- Score Details -->
     @if (totalQuestions > 0 && !isAlreadyPassed) {
     <div class="flex items-center justify-center gap-6 mb-8">

@@ -172,16 +172,16 @@
                 <span class="flex items-center gap-2">
 
                   <i class="ic-73 cl-iPrimary"></i>
-                  1 Videos </span>
+                      {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Videos </span>
                     <span class="flex items-center gap-2">
 
                       <i class="ic-74 cl-iPrimary"></i>
-                      1 Pdfs </span>
+                          {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Pdfs </span>
                         @if(courseTypeId != 3) {
                                   <span class="flex items-center gap-2">
 
                       <i class="ic-85 cl-iPrimary"></i>
-                      {{ 1}} Quiz </span>
+                          {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Quiz </span>
                         }
           </div>
         </div>
