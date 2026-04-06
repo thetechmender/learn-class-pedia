@@ -1058,19 +1058,19 @@ const CourseManagement = () => {
               )}
             </div>
 
-            {/* Promo Video */}
-            {(details?.promoVideoUrl || course?.promoVideoUrl) && (
+            {/* Lecture Video - Only for Short Courses */}
+            {(details?.promoVideoUrl || course?.promoVideoUrl) && (details?.courseTypeId === 3 || course?.courseTypeId === 3 || course?.courseTypeID === 3) && (
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                 <div className="flex items-center mb-3">
                   <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-2">
                     <Video className="w-4 h-4 text-white" />
                   </div>
-                  <h5 className="text-sm font-bold text-gray-900 dark:text-white">Promo Video</h5>
+                  <h5 className="text-sm font-bold text-gray-900 dark:text-white">Lecture Video</h5>
                 </div>
-                <div className="lg:w-80">
+                <div className="w-80 h-48">
                   <video
                     src={details?.promoVideoUrl || course?.promoVideoUrl}
-                    className="w-full rounded-lg shadow-md"
+                    className="w-full h-full rounded-lg shadow-md object-contain bg-black"
                     controls
                     preload="metadata"
                   />
