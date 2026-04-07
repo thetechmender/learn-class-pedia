@@ -424,7 +424,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             });
             this.selectFirstShortCourse(targetSc);
             this.refreshProgress();
-            if (allCompleted) {
+            if (allCompleted && this.assessmentStep() !== 'none') {
               this.toastr.info('All lectures completed. Ready to start the final assessment.', 'Info');
             }
           }
@@ -448,7 +448,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           });
           this.selectFirstShortCourse(targetSc);
           this.refreshProgress();
-          if (!incompleteSc) {
+          if (!incompleteSc && this.assessmentStep() !== 'none') {
             this.toastr.info('All lectures completed. Ready to start the final assessment.', 'Info');
           }
         } else if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
@@ -1514,7 +1514,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               maxAttempts: data.maxAttempts,
               requiresRepurchase: data.requiresRepurchase,
               score: data.score,
-              resultStatus: 'AlreadyPassed'
+              resultStatus: 'AlreadyPassed',
+              certificatePngUrl: data.certificatePngUrl
             });
             this.assessmentStep.set('cleared');
           } else {
@@ -1596,7 +1597,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             maxAttempts: data.maxAttempts,
             requiresRepurchase: data.requiresRepurchase,
             score: data.score,
-            resultStatus: 'AlreadyPassed'
+            resultStatus: 'AlreadyPassed',
+            certificatePngUrl: data.certificatePngUrl
           });
           this.assessmentStep.set('cleared');
           

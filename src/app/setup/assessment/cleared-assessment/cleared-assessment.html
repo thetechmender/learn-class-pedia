@@ -1,9 +1,5 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6">
   <div class="rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full bg-white p-6 w-full text-center">
-    <!-- <div class="pb-4 text-left">
-      <a href="https://www.classpedia.ai/learning" target="_blank"
-        class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</a>
-    </div> -->
     <!-- Header -->
     @if (isAlreadyPassed) {
     <h1 class="text-2xl font-bold text-gray-900 mb-2">Already Passed</h1>
@@ -14,7 +10,6 @@
     }
 
     <!-- Score Badge -->
-     <!-- @if (isAlreadyPassed) { -->
     <div class="flex items-center justify-center gap-2 mb-4">
       <div class="w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -51,8 +46,9 @@
     }
 
     <!-- Certificate Preview Card -->
+    @if (courseTypeId === 3) {
+    <!-- Show existing blurred image with content for courseTypeId 3 -->
     <div class="rounded-2xl shadow-lg border border-gray-200 relative overflow-hidden">
-      <!-- Certificate Background Image -->
       <img src="images/passed-blur-img.webp" alt="Certificate Preview" class="w-full h-full object-cover block" />
 
       <!-- Lock Icon Overlay -->
@@ -79,6 +75,17 @@
         <p class="text-sm text-gray-600">to get your certificate</p>
       </div>
     </div>
+    } @else {
+    <!-- Show certificatePngUrl without content for courseTypeId 1 or 2 -->
+    <div class="rounded-2xl shadow-lg border border-gray-200 overflow-hidden aspect-w-16 aspect-h-12">
+      @if (certificatePngUrl) {
+      <img [src]="certificatePngUrl" alt="Certificate Preview" class="w-full h-full object-cover block" 
+           style="filter: none !important; -webkit-filter: none !important; backdrop-filter: none !important;" />
+      } @else {
+      <img src="images/passed-blur-img.webp" alt="Certificate Preview" class="w-full h-full object-cover block" />
+      }
+    </div>
+    }
     <div class="p-6 flex items-center justify-center gap-3">
       <a href="https://www.classpedia.ai/learning" target="_blank"
         class="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-3xl hover:bg-primary hover:text-white transition-all inline-block">
@@ -90,13 +97,50 @@
     <div class="border-t border-gray-100"></div>
 
     <!-- Score Info -->
-    <div class="p-6 flex items-center justify-center gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-        stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+    <div class="p-6 flex items-center justify-center gap-1">
+   <svg xmlns="http://www.w3.org/2000/svg"
+       class="h-5 w-5"
+       viewBox="0 0 24 24">
+
+    <!-- MASK (same SVG shape) -->
+    <defs>
+      <mask id="signalMask">
+        <path fill="white"
           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-      <span class="text-sm text-gray-600">Score: <span class="font-semibold text-gray-900">{{ scorePercentage }}%</span></span>
+      </mask>
+    </defs>
+
+    <!-- GRAY BACKGROUND (empty signal) -->
+    <rect width="24"
+          height="24"
+          fill="#e5e7eb"
+          mask="url(#signalMask)" />
+
+    <!-- GREEN BACKGROUND FILL (by score %) -->
+    <rect width="24"
+          [attr.height]="(scorePercentage / 100) * 24"
+          [attr.y]="24 - (scorePercentage / 100) * 24"
+          fill="#22c55e"
+          mask="url(#signalMask)" />
+
+    <!-- GRAY BORDER (ALWAYS VISIBLE) -->
+    <path
+      fill="none"
+      stroke="#9ca3af"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+
+  </svg>
+
+  <span class="text-sm text-gray-600">
+    Score:
+    <span class="font-semibold text-gray-900">
+      {{ scorePercentage }}%
+    </span>
+  </span>
+
     </div>
   </div>
 </div>

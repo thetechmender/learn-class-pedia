@@ -295,7 +295,7 @@
 
 
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
-      @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) && assessmentStep() !== 'cleared') {
+      @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) && assessmentStep() === 'none') {
       <button (click)="startAssessment()"
         class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
         Final Assessment
@@ -347,7 +347,7 @@
       (goBack)="assessmentStep.set('start')" [slug]="courseSlug()"></app-failed-assessment>
     }
     @if (assessmentStep() === 'cleared') {
-    <app-cleared-assessment [resultData]="assessmentResult()" (finish)="onAssessmentFinish()"
+    <app-cleared-assessment [resultData]="assessmentResult()" [courseTypeId]="courseTree()?.courseTypeId" (finish)="onAssessmentFinish()"
       (goBack)="assessmentStep.set('start')"></app-cleared-assessment>
     }
     } @else if (lectureSection() && lectureSection().length > 0) {
