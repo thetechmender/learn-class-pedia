@@ -24,7 +24,7 @@
           number:'1.0-1' }}%</span></span>
       }
     </div>
-  <!-- } -->
+    <!-- } -->
     <!-- Score Details -->
     @if (totalQuestions > 0 && !isAlreadyPassed) {
     <div class="flex items-center justify-center gap-6 mb-8">
@@ -47,12 +47,10 @@
 
     <!-- Certificate Preview Card -->
     @if (courseTypeId === 3) {
-    <!-- Show existing blurred image with content for courseTypeId 3 -->
-    <div class="rounded-2xl shadow-lg border border-gray-200 relative overflow-hidden">
+    <div class="rounded-2xl shadow-lg border border-gray-200 relative overflow-hidden aspect-[4/3] md:aspect-[16/10]">
       <img src="images/passed-blur-img.webp" alt="Certificate Preview" class="w-full h-full object-cover block" />
 
-      <!-- Lock Icon Overlay -->
-      <div class="absolute inset-0 flex flex-col items-center justify-center bg-white/40">
+      <div class="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[2px]">
         <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
@@ -61,13 +59,11 @@
           </svg>
         </div>
 
-        <!-- Unlock Button -->
         <a href="https://www.classpedia.ai/learning" target="_blank"
           class="px-6 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all mb-4 inline-block">
           Unlock Certificate - $1
         </a>
 
-        <!-- Learning Area Link -->
         <p class="text-sm text-gray-600">
           You can visit your <a href="https://www.classpedia.ai/learning"
             class="text-primary font-medium hover:underline">Learning Area</a>
@@ -77,13 +73,20 @@
     </div>
     } @else {
     <!-- Show certificatePngUrl without content for courseTypeId 1 or 2 -->
-    <div class="rounded-2xl shadow-lg border border-gray-200 overflow-hidden aspect-w-16 aspect-h-12">
-      @if (certificatePngUrl) {
-      <img [src]="certificatePngUrl" alt="Certificate Preview" class="w-full h-full object-cover block" 
-           style="filter: none !important; -webkit-filter: none !important; backdrop-filter: none !important;" />
-      } @else {
-      <img src="images/passed-blur-img.webp" alt="Certificate Preview" class="w-full h-full object-cover block" />
+    <div class="rounded-2xl shadow-lg border border-gray-200 relative overflow-hidden aspect-[4/3] md:aspect-[16/10]">
+      <!-- @if (isGeneratingCertificateValue && resultData?.isPassed === true) {
+      <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10">
+        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div class="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Generating Certificate</h3>
+        <p class="text-white/80 text-center px-4">Please wait while we generate your certificate...</p>
+        <p class="text-white/60 text-sm mt-2">This usually takes about 20 seconds</p>
+      </div>
       }
+       @else { -->
+      <img [src]="certificatePngUrl" alt="Certificate Preview" class="w-full h-full object-cover block" />
+      <!-- } -->
     </div>
     }
     <div class="p-6 flex items-center justify-center gap-3">
@@ -98,48 +101,35 @@
 
     <!-- Score Info -->
     <div class="p-6 flex items-center justify-center gap-1">
-   <svg xmlns="http://www.w3.org/2000/svg"
-       class="h-5 w-5"
-       viewBox="0 0 24 24">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24">
 
-    <!-- MASK (same SVG shape) -->
-    <defs>
-      <mask id="signalMask">
-        <path fill="white"
+        <!-- MASK (same SVG shape) -->
+        <defs>
+          <mask id="signalMask">
+            <path fill="white"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </mask>
+        </defs>
+
+        <!-- GRAY BACKGROUND (empty signal) -->
+        <rect width="24" height="24" fill="#e5e7eb" mask="url(#signalMask)" />
+
+        <!-- GREEN BACKGROUND FILL (by score %) -->
+        <rect width="24" [attr.height]="(scorePercentage / 100) * 24" [attr.y]="24 - (scorePercentage / 100) * 24"
+          fill="#22c55e" mask="url(#signalMask)" />
+
+        <!-- GRAY BORDER (ALWAYS VISIBLE) -->
+        <path fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </mask>
-    </defs>
 
-    <!-- GRAY BACKGROUND (empty signal) -->
-    <rect width="24"
-          height="24"
-          fill="#e5e7eb"
-          mask="url(#signalMask)" />
+      </svg>
 
-    <!-- GREEN BACKGROUND FILL (by score %) -->
-    <rect width="24"
-          [attr.height]="(scorePercentage / 100) * 24"
-          [attr.y]="24 - (scorePercentage / 100) * 24"
-          fill="#22c55e"
-          mask="url(#signalMask)" />
-
-    <!-- GRAY BORDER (ALWAYS VISIBLE) -->
-    <path
-      fill="none"
-      stroke="#9ca3af"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-
-  </svg>
-
-  <span class="text-sm text-gray-600">
-    Score:
-    <span class="font-semibold text-gray-900">
-      {{ scorePercentage }}%
-    </span>
-  </span>
+      <span class="text-sm text-gray-600">
+        Score:
+        <span class="font-semibold text-gray-900">
+          {{ scorePercentage }}%
+        </span>
+      </span>
 
     </div>
   </div>

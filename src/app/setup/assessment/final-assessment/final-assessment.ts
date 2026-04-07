@@ -16,6 +16,7 @@ export class FinalAssessment implements OnInit {
   @Input() courseTypeId!: number;
 
   isCompleting = signal(false);
+  isGeneratingCertificate = signal(false); // New loading state for certificate generation
   questions = signal<any[]>([]);
   currentQuestionIndex = signal(0);
   isQuestionLoading = signal(false);
@@ -240,11 +241,37 @@ export class FinalAssessment implements OnInit {
       professionalCertificateId: this.getCourseId() || null,
       assessmentTypeId: 2
     };
+
+    // Call API immediately to check if assessment is passed
     this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          if (details?.isSuccess) {
-            this.next.emit(details['data']);
+          if (details?.isSuccess && details?.data?.isPassed === true) {
+            // Show loading state ONLY for PASSED assessments
+            this.isGeneratingCertificate.set(true);
+            
+            // Wait 20 seconds for certificate generation, then call API again
+            setTimeout(() => {
+              this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+                .subscribe({
+                  next: (finalDetails: any) => {
+                    debugger
+                    this.isGeneratingCertificate.set(false);
+                    if (finalDetails?.isSuccess) {
+                      this.next.emit(finalDetails['data']);
+                    }
+                  },
+                  error: (err: any) => {
+                    this.isGeneratingCertificate.set(false);
+                    console.error('Fetch Quiz Result Error:', err);
+                  }
+                });
+            }, 20000);
+          } else {
+            // For failed assessments, emit result immediately without loader
+            if (details?.isSuccess) {
+              this.next.emit(details['data']);
+            }
           }
         },
         error: (err: any) => {

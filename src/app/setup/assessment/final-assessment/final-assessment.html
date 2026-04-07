@@ -88,5 +88,19 @@
       <p>Loading Questions...!</p>
     </div>
     }
+
+    <!-- Certificate Generation Loading Overlay -->
+    @if (isGeneratingCertificate()) {
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center">
+        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div class="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Generating Certificate</h3>
+        <p class="text-gray-600 mb-4">Please wait while we generate your certificate...</p>
+        <p class="text-sm text-gray-500">This usually takes about 20 seconds</p>
+      </div>
+    </div>
+    }
   </div>
 </div>

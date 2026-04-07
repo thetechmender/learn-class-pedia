@@ -1552,7 +1552,28 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else if (result === 'cleared') {
       this.assessmentStep.set('cleared');
     } else if (typeof result === 'object') {
-      this.assessmentResult.set(result);
+      // Map coursewiseresult API response to assessment result format
+      // Preserve certificate URL from previous assessment result if coursewiseresult returns null
+      const existingCertificateUrl = this.assessmentResult()?.certificatePngUrl;
+      
+      const mappedResult = {
+        attemptsUsed: result.attemptsUsed,
+        attemptsRemaining: result.attemptsRemaining,
+        maxAttempts: result.maxAttempts,
+        requiresRepurchase: result.requiresRepurchase,
+        score: result.score,
+        resultStatus: result.isPassed ? 'Passed' : 'Failed',
+        certificatePngUrl: result.certificatePngUrl || existingCertificateUrl, // Use existing URL if new one is null
+        // Include additional fields from coursewiseresult
+        totalQuestions: result.totalQuestions,
+        correctAnswers: result.correctAnswers,
+        wrongAnswers: result.wrongAnswers,
+        isPassed: result.isPassed,
+        courseId: result.courseId,
+        courseTitle: result.courseTitle
+      };
+      
+      this.assessmentResult.set(mappedResult);
       if (result?.isPassed) {
         this.assessmentStep.set('cleared');
       } else if (result?.attemptsRemaining === 0) {
@@ -1589,7 +1610,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.assessmentService.getAttemptStatus(courseId, token).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res: any) => {
         const data = res?.isSuccess !== undefined ? res.data : res;
-        if (data?.canTakeAssessment === false && data?.isAssessmentCompleted === true) {
+        // Only set AlreadyPassed if assessment is completed AND user hasn't started a new assessment
+        if (data?.canTakeAssessment === false && data?.isAssessmentCompleted === true && this.assessmentStep() === 'none') {
           // Execute the same logic as line 1507
           this.assessmentResult.set({
             attemptsUsed: data.attemptsUsed,

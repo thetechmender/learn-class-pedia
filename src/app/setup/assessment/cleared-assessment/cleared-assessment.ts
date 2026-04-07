@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Input, OnChanges } from '@angular/core';
+import { Component, Output, EventEmitter, Input, OnChanges, signal } from '@angular/core';
 import { DecimalPipe, CommonModule } from '@angular/common';
 
 @Component({
@@ -13,8 +13,35 @@ export class ClearedAssessment implements OnChanges {
   @Output() finish = new EventEmitter<void>();
   @Output() goBack = new EventEmitter<void>();
 
+  isGeneratingCertificate = signal(false); // Add loading state
+  loaderAlreadyActivated = false; // Prevent multiple activations
+
   ngOnChanges() {
-    // Certificate URL is now available in resultData
+    // Debug logging to see what's happening
+    console.log('=== Cleared Assessment Debug ===');
+    console.log('courseTypeId:', this.courseTypeId);
+    console.log('resultData:', this.resultData);
+    console.log('isPassed:', this.resultData?.isPassed);
+    console.log('resultStatus:', this.resultData?.resultStatus);
+    console.log('certificatePngUrl:', this.resultData?.certificatePngUrl);
+    console.log('loaderAlreadyActivated:', this.loaderAlreadyActivated);
+    console.log('================================');
+    
+    // Check if certificate is being generated for courseTypeId 1 & 2
+    if ((this.courseTypeId === 1 || this.courseTypeId === 2) && this.resultData) {
+      // Show loading ONLY if assessment is PASSED, certificate URL is null, and loader not already activated
+      if (this.resultData.isPassed === true && !this.resultData.certificatePngUrl && !this.loaderAlreadyActivated) {
+        console.log('SHOWING CERTIFICATE GENERATION LOADER');
+        this.loaderAlreadyActivated = true; // Set flag to prevent multiple activations
+        this.isGeneratingCertificate.set(true);
+        // Hide loading after 20 seconds (matching the delay in final-assessment)
+        setTimeout(() => {
+          this.isGeneratingCertificate.set(false);
+        }, 20000);
+      } else {
+        console.log('NOT SHOWING LOADER - isPassed:', this.resultData.isPassed, 'certificatePngUrl:', this.resultData.certificatePngUrl, 'loaderAlreadyActivated:', this.loaderAlreadyActivated);
+      }
+    }
   }
 
   onImageError(event: any) {
@@ -65,6 +92,10 @@ export class ClearedAssessment implements OnChanges {
   get certificatePngUrl(): string {
     // Use original thumbnail URL since full version doesn't exist on server
     return this.resultData?.certificatePngUrl ?? '';
+  }
+
+  get isGeneratingCertificateValue(): boolean {
+    return this.isGeneratingCertificate();
   }
 
   onFinish() {
