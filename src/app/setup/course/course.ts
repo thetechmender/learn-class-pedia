@@ -308,6 +308,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           sessionToken: token
         });
         this.existingSeasionCourseId.set(parseInt(courseId));
+        
+        // Remove token from URL immediately after storing it
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          queryParamsHandling: '',
+          replaceUrl: true
+        });
+        
         this.loadCourseDataWithToken(parseInt(courseId), token);
       } else {
         const existingSession = this.authService.getStoredSession();
@@ -1501,6 +1510,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               attemptsRemaining: data.attemptsRemaining,
               maxAttempts: data.maxAttempts,
               requiresRepurchase: data.requiresRepurchase,
+              score: data.score,
               resultStatus: 'AlreadyPassed'
             });
             this.assessmentStep.set('cleared');

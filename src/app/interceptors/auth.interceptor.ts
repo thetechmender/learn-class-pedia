@@ -11,10 +11,20 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       try {
         const session = JSON.parse(stored);
         if (session?.sessionToken) {
+          // Add security headers to prevent token theft
+          const headers: { [key: string]: string } = {
+            'Authorization': `Bearer ${session.sessionToken}`,
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-Client-Origin': window.location.origin
+          };
+          
+          // Add referrer if available
+          if (document.referrer) {
+            headers['X-Referrer'] = document.referrer;
+          }
+          
           const clonedReq = req.clone({
-            setHeaders: {
-              'Authorization': `Bearer ${session.sessionToken}`
-            }
+            setHeaders: headers
           });
           return next(clonedReq);
         }
