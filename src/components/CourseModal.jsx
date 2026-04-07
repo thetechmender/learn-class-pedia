@@ -1232,9 +1232,19 @@ const CourseModal = ({
                             className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
                             muted
                           />
-                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">
-                            <BookOpen className="w-3 h-3" />
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              promoVideoFile: null,
+                              promoVideoUrl: '',
+                              IsPromoVideoRemoved: true
+                            }))}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                            disabled={loading}
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
                         </div>
                       ) : (
                         <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">

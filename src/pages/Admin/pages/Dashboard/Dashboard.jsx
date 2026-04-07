@@ -19,7 +19,7 @@ const Dashboard = () => {
         <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
           Welcome to
           <span className="block bg-gradient-to-r from-yellow-200 via-pink-200 to-cyan-200 bg-clip-text text-transparent">
-            LearnClassPedia
+            ClassPedia Admin
           </span>
         </h1>
 
