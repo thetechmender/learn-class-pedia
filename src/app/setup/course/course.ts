@@ -471,6 +471,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             });
         }
 
+        // Check initial assessment status
+        this.checkInitialAssessmentStatus();
+
         this.isLoading.set(false);
       },
 
@@ -1541,7 +1544,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       // Reset sidebar selections when user actually starts the assessment
       this.activeShortCourseId.set(null);
       this.activeCertificateId.set(null);
-      // Don't reset expanded states to avoid affecting completion display
+      this.expandedShortCourses.set(new Set()); // Reset expanded short courses to collapse content
       this.assessmentStep.set('final');
     } else if (result === 'failed') {
       this.assessmentStep.set('failed');
@@ -1575,6 +1578,40 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.assessmentStep.set('none');
   }
 
+  private checkInitialAssessmentStatus() {
+    const token = this.authService.getToken();
+    const courseId = this.existingSeasionCourseId();
+    if (!courseId) {
+      return;
+    }
+    
+    this.assessmentService.getAttemptStatus(courseId, token).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => {
+        const data = res?.isSuccess !== undefined ? res.data : res;
+        if (data?.canTakeAssessment === false && data?.isAssessmentCompleted === true) {
+          // Execute the same logic as line 1507
+          this.assessmentResult.set({
+            attemptsUsed: data.attemptsUsed,
+            attemptsRemaining: data.attemptsRemaining,
+            maxAttempts: data.maxAttempts,
+            requiresRepurchase: data.requiresRepurchase,
+            score: data.score,
+            resultStatus: 'AlreadyPassed'
+          });
+          this.assessmentStep.set('cleared');
+          
+          // Unselect lectures when assessment is completed
+          this.activeShortCourseId.set(null);
+          this.activeCertificateId.set(null);
+          this.expandedShortCourses.set(new Set());
+        }
+      },
+      error: () => {
+        // Silently handle error, don't affect course loading
+      }
+    });
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
@@ -1586,6 +1623,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   isFinalAssessmentButton() {
+    // Hide Final Assessment button if assessment is cleared (completed)
+    if (this.assessmentStep() === 'cleared') {
+      return false;
+    }
+    
     if (this.courseTree()?.courseTypeId == 2) {
       return this.courseTree()?.isCompleted ? false : true;
     }

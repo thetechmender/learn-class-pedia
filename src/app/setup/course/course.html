@@ -295,22 +295,27 @@
 
 
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
-      @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2)) {
+      @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) && assessmentStep() !== 'cleared') {
       <button (click)="startAssessment()"
         class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
         Final Assessment
       </button>
       }
-      <!-- <button
-        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[20px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+      @if(assessmentStep() === 'cleared' || assessmentStep() === 'maxattempts') {
+      <button
+        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[20px] text-xs  transition-all shadow-sm text-white"
+        [class.bg-green-600]="assessmentStep() === 'cleared'"
+        [class.bg-red-600]="assessmentStep() === 'maxattempts'">
         Course Complete
-      </button> -->
+      </button>
+      }
     </div>
   </aside>
 
   <!-- Main Content -->
   <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 46px);">
     <!-- Assessment Flow -->
+    @if (assessmentStep() === 'none') {
     <!-- Progress Bar Above Content -->
     <div class="bg-white px-6 py-3  flex items-center justify-center">
       <div class="flex items-center gap-4 px-6 py-2 border border-gray-200 rounded-full prgresssec">
@@ -323,6 +328,7 @@
         <span class="text-sm text-primary">{{ completionPercentage() | number:'1.0-1' }}%</span>
       </div>
     </div>
+    }
     @if (assessmentStep() !== 'none') {
     @if (assessmentStep() === 'start') {
     <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')"
