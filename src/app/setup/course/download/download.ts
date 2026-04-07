@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CourseService } from '../../../services/course.service';
 
@@ -9,8 +9,12 @@ import { CourseService } from '../../../services/course.service';
   templateUrl: './download.html',
   styleUrl: './download.sass',
 })
-export class Download {
+export class Download implements OnInit {
   private courseService = inject(CourseService);
+
+  ngOnInit(): void {
+    console.log(this.activeSection)
+  }
 
   get activeSection() {
     return this.courseService.activeSection();

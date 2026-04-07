@@ -1,27 +1,26 @@
+@if(enrolledCourses()?.length > 0) {
+<div class="w-[20rem] flex-shrink-0 sticky top-4 self-start">
+  <div class="bg-white p-5 other-enroll">
+    <h3 class="text-[18px]  text-gray-900 mb-6">Other Enrolled Courses</h3>
 
-    @if(enrolledCourses()?.length > 0) {
-    <div class="w-[20rem] flex-shrink-0">
-      <div class="bg-white p-5 other-enroll">
-        <h3 class="text-[18px]  text-gray-900 mb-6">Other Enrolled Courses</h3>
-
-        <!-- Related Course 1 -->
-        @for(item of enrolledCourses(); track $index; let i = $index){
-        <a [href]="getClassroomUrl(item.resourceId)" target="_blank" rel="noopener noreferrer">
-          <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity brddiv">
-            <img [src]="item?.courseThumbnail" [alt]="item?.courseName"
-              class="w-22 h-14 rounded-lg flex-shrink-0 object-cover bg-gray-200">
-            <div class="flex-1">
-              <p class="text-xs text-gray-400 mb-1">{{item.courseType}}</p>
-              <h4 class="text-sm font-medium text-gray-600 leading-snug line-clamp-2">{{item?.courseName}}</h4>
-              <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden mt-2">
-                <div class="h-full bg-primary rounded-full transition-all duration-300"
-                  [style.width.%]="item?.completionPercentage || 0"></div>
-              </div>
-              <!-- <span class="text-sm text-gray-500">{{ (item?.completionPercentage || 0) | number:'1.0-1' }}%</span> -->
-            </div>
+    <!-- Related Course 1 -->
+    @for(item of enrolledCourses(); track $index; let i = $index){
+    <a [href]="getClassroomUrl(item.resourceId)" target="_blank" rel="noopener noreferrer">
+      <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity brddiv" [ngClass]="{'bg-primary/5': courseId && item.resourceId === courseId}">
+        <img [src]="item?.courseThumbnail" [alt]="item?.courseName"
+          class="w-22 h-14 rounded-lg flex-shrink-0 object-cover bg-gray-200">
+        <div class="flex-1">
+          <p class="text-xs text-gray-400 mb-1">{{item.courseType}}</p>
+          <h4 class="text-sm font-medium text-gray-600 leading-snug line-clamp-2">{{item?.courseName}}</h4>
+          <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden mt-2">
+            <div class="h-full bg-primary rounded-full transition-all duration-300"
+              [style.width.%]="item?.completionPercentage || 0"></div>
           </div>
-        </a>
-        }
+          <!-- <span class="text-sm text-gray-500">{{ (item?.completionPercentage || 0) | number:'1.0-1' }}%</span> -->
+        </div>
       </div>
-    </div>
+    </a>
     }
+  </div>
+</div>
+}

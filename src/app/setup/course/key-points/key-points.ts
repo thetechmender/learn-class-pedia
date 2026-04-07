@@ -34,7 +34,6 @@ export class KeyPoints implements OnInit, OnChanges {
   }
 
   extractKeyPointsFromTree() {
-    debugger
     if (!this.courseTree) return;
 
     switch (this.courseTypeId) {

@@ -308,6 +308,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           sessionToken: token
         });
         this.existingSeasionCourseId.set(parseInt(courseId));
+        
+        // Remove token from URL immediately after storing it
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          queryParamsHandling: '',
+          replaceUrl: true
+        });
+        
         this.loadCourseDataWithToken(parseInt(courseId), token);
       } else {
         const existingSession = this.authService.getStoredSession();
@@ -415,7 +424,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             });
             this.selectFirstShortCourse(targetSc);
             this.refreshProgress();
-            if (allCompleted) {
+            if (allCompleted && this.assessmentStep() !== 'none') {
               this.toastr.info('All lectures completed. Ready to start the final assessment.', 'Info');
             }
           }
@@ -439,7 +448,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           });
           this.selectFirstShortCourse(targetSc);
           this.refreshProgress();
-          if (!incompleteSc) {
+          if (!incompleteSc && this.assessmentStep() !== 'none') {
             this.toastr.info('All lectures completed. Ready to start the final assessment.', 'Info');
           }
         } else if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
@@ -461,6 +470,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               }
             });
         }
+
+        // Check initial assessment status
+        this.checkInitialAssessmentStatus();
 
         this.isLoading.set(false);
       },
@@ -1112,6 +1124,20 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.isPlaying.set(false);
   }
 
+  pauseVideoFromNotebook() {
+    if (this.isPlaying()) {
+      this.speechService.pause();
+      this.isPlaying.set(false);
+    }
+  }
+
+  resumeVideoFromNotebook() {
+    if (this.speechService.isPaused()) {
+      this.speechService.resume();
+      this.isPlaying.set(true);
+    }
+  }
+
   goToPreviousSection() {
     const sc = this.currentShortCourse();
     if (!sc?.lectures || this.lectureStartTimes.length === 0) return;
@@ -1487,7 +1513,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               attemptsRemaining: data.attemptsRemaining,
               maxAttempts: data.maxAttempts,
               requiresRepurchase: data.requiresRepurchase,
-              resultStatus: 'AlreadyPassed'
+              score: data.score,
+              resultStatus: 'AlreadyPassed',
+              certificatePngUrl: data.certificatePngUrl
             });
             this.assessmentStep.set('cleared');
           } else {
@@ -1501,6 +1529,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.assessmentStep.set('maxattempts');
           }
         } else {
+          // Only start assessment, don't reset lectures yet
           this.assessmentStep.set('start');
         }
       },
@@ -1513,13 +1542,38 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   onAssessmentNext(result: any) {
     if (result === 'start' || result === undefined) {
+      // Reset sidebar selections when user actually starts the assessment
+      this.activeShortCourseId.set(null);
+      this.activeCertificateId.set(null);
+      this.expandedShortCourses.set(new Set()); // Reset expanded short courses to collapse content
       this.assessmentStep.set('final');
     } else if (result === 'failed') {
       this.assessmentStep.set('failed');
     } else if (result === 'cleared') {
       this.assessmentStep.set('cleared');
     } else if (typeof result === 'object') {
-      this.assessmentResult.set(result);
+      // Map coursewiseresult API response to assessment result format
+      // Preserve certificate URL from previous assessment result if coursewiseresult returns null
+      const existingCertificateUrl = this.assessmentResult()?.certificatePngUrl;
+      
+      const mappedResult = {
+        attemptsUsed: result.attemptsUsed,
+        attemptsRemaining: result.attemptsRemaining,
+        maxAttempts: result.maxAttempts,
+        requiresRepurchase: result.requiresRepurchase,
+        score: result.score,
+        resultStatus: result.isPassed ? 'Passed' : 'Failed',
+        certificatePngUrl: result.certificatePngUrl || existingCertificateUrl, // Use existing URL if new one is null
+        // Include additional fields from coursewiseresult
+        totalQuestions: result.totalQuestions,
+        correctAnswers: result.correctAnswers,
+        wrongAnswers: result.wrongAnswers,
+        isPassed: result.isPassed,
+        courseId: result.courseId,
+        courseTitle: result.courseTitle
+      };
+      
+      this.assessmentResult.set(mappedResult);
       if (result?.isPassed) {
         this.assessmentStep.set('cleared');
       } else if (result?.attemptsRemaining === 0) {
@@ -1546,6 +1600,42 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.assessmentStep.set('none');
   }
 
+  private checkInitialAssessmentStatus() {
+    const token = this.authService.getToken();
+    const courseId = this.existingSeasionCourseId();
+    if (!courseId) {
+      return;
+    }
+    
+    this.assessmentService.getAttemptStatus(courseId, token).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => {
+        const data = res?.isSuccess !== undefined ? res.data : res;
+        // Only set AlreadyPassed if assessment is completed AND user hasn't started a new assessment
+        if (data?.canTakeAssessment === false && data?.isAssessmentCompleted === true && this.assessmentStep() === 'none') {
+          // Execute the same logic as line 1507
+          this.assessmentResult.set({
+            attemptsUsed: data.attemptsUsed,
+            attemptsRemaining: data.attemptsRemaining,
+            maxAttempts: data.maxAttempts,
+            requiresRepurchase: data.requiresRepurchase,
+            score: data.score,
+            resultStatus: 'AlreadyPassed',
+            certificatePngUrl: data.certificatePngUrl
+          });
+          this.assessmentStep.set('cleared');
+          
+          // Unselect lectures when assessment is completed
+          this.activeShortCourseId.set(null);
+          this.activeCertificateId.set(null);
+          this.expandedShortCourses.set(new Set());
+        }
+      },
+      error: () => {
+        // Silently handle error, don't affect course loading
+      }
+    });
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
@@ -1557,6 +1647,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   isFinalAssessmentButton() {
+    // Hide Final Assessment button if assessment is cleared (completed)
+    if (this.assessmentStep() === 'cleared') {
+      return false;
+    }
+    
     if (this.courseTree()?.courseTypeId == 2) {
       return this.courseTree()?.isCompleted ? false : true;
     }

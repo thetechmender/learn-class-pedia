@@ -7,13 +7,14 @@
     <div class="p-6 pb-4">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="10" fill="#FCD34D"/>
-            <circle cx="8" cy="10" r="1.5" fill="#92400E"/>
-            <circle cx="16" cy="10" r="1.5" fill="#92400E"/>
-            <path d="M8 16c1.5-2 6.5-2 8 0" stroke="#92400E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            <circle cx="17" cy="7" r="2.5" fill="#EF4444"/>
-            <path d="M15.5 5.5L18.5 8.5M18.5 5.5L15.5 8.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-amber-500" viewBox="0 0 24 24"
+            fill="currentColor">
+            <circle cx="12" cy="12" r="10" fill="#FCD34D" />
+            <circle cx="8" cy="10" r="1.5" fill="#92400E" />
+            <circle cx="16" cy="10" r="1.5" fill="#92400E" />
+            <path d="M8 16c1.5-2 6.5-2 8 0" stroke="#92400E" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            <circle cx="17" cy="7" r="2.5" fill="#EF4444" />
+            <path d="M15.5 5.5L18.5 8.5M18.5 5.5L15.5 8.5" stroke="white" stroke-width="1.5" stroke-linecap="round" />
           </svg>
         </div>
         @if (isMaxAttempts) {
@@ -27,26 +28,31 @@
     <!-- Divider -->
     <div class="border-t border-gray-100"></div>
 
-  
+
     <!-- Content Section -->
     <div class="p-6">
       @if (isMaxAttempts) {
       <h2 class="text-lg font-bold text-gray-900 mb-2">No Attempts Remaining</h2>
-      <p class="text-sm text-gray-600 mb-2">You've completed all assessments, but unfortunately the passing score was not achieved. Since all attempts are finished, the only way to continue is by repurchasing the short course.</p>
+      <p class="text-sm text-gray-600 mb-2">You've completed all assessments, but unfortunately the passing score was
+        not achieved. Since all attempts are finished, the only way to continue is by repurchasing the short course.</p>
       <p class="text-sm text-gray-600 mb-6">Need help? Our support team is here for you.</p>
       <div class="flex items-center gap-3">
-        <a href="https://www.classpedia.ai/offerings" target="_blank" class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all inline-block">
+        <a [href]="getClassroomUrl(courseSlug)" target="_blank"
+          class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all inline-block">
           Repurchase Course
         </a>
-        <a href="/support" class="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all inline-block">
+        <a href="/support"
+          class="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all inline-block">
           Get Support
         </a>
       </div>
       } @else {
       <h2 class="text-lg font-bold text-gray-900 mb-2">Unfortunately, You Didn't Pass This Attempt</h2>
-      <p class="text-sm text-gray-600 mb-2">Don't worry, you still have {{ attemptsRemaining }} {{ attemptsRemaining === 1 ? 'attempt' : 'attempts' }} remaining to retake the exam and complete your course.</p>
+      <p class="text-sm text-gray-600 mb-2">Don't worry, you still have {{ attemptsRemaining }} {{ attemptsRemaining ===
+        1 ? 'attempt' : 'attempts' }} remaining to retake the exam and complete your course.</p>
       <p class="text-sm text-gray-600 mb-6">Review the material and try again when you're ready.</p>
-      <button (click)="onReattempt()" class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all">
+      <button (click)="onReattempt()"
+        class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all">
         Reattempt Exam
       </button>
       }
@@ -57,12 +63,16 @@
 
     <!-- Attempts Info -->
     <div class="p-6 flex items-center gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
-      <span class="text-sm text-gray-600">Attempts used: <span class="font-semibold text-gray-900">{{ attemptsUsed }}/{{ maxAttempts }}</span> &mdash;
+      <span class="text-sm text-gray-600">Attempts used: <span class="font-semibold text-gray-900">{{ attemptsUsed }}/{{
+          maxAttempts }}</span> &mdash;
         @if (attemptsRemaining > 0) {
-        <span class="font-semibold text-gray-900">{{ attemptsRemaining }} {{ attemptsRemaining === 1 ? 'attempt' : 'attempts' }}</span> remaining
+        <span class="font-semibold text-gray-900">{{ attemptsRemaining }} {{ attemptsRemaining === 1 ? 'attempt' :
+          'attempts' }}</span> remaining
         } @else {
         <span class="font-semibold text-red-500">No attempts remaining</span>
         }

@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Component, inject, Input, OnInit, signal } from '@angular/core';
+import {  CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { CourseService } from '../../../services/course.service';
 import { AuthService } from '../../../services/auth.service';
@@ -7,6 +7,7 @@ import { AuthService } from '../../../services/auth.service';
 @Component({
   selector: 'app-enrolled-courses',
   imports: [
+    CommonModule,
     // DecimalPipe
   ],
   templateUrl: './enrolled-courses.html',
@@ -14,12 +15,14 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class EnrolledCourses implements OnInit {
   enrolledCourses = signal<any>(null);
+  @Input() courseId: number | null = null;
   private courseService = inject(CourseService);
   private authService = inject(AuthService);
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
-    this._fetchEnrolledCourses()
+    this._fetchEnrolledCourses();
+    console.log(this.courseId)
   };
 
   _fetchEnrolledCourses() {

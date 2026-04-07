@@ -188,5 +188,10 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
     this.startAssessment.emit();
   }
 
+  onBack() {
+    // Hide answers and show completion screen again
+    this.showAnswers.set(false);
+    this.showCompletionScreen.set(true);
+  }
 
 }
