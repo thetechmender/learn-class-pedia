@@ -399,11 +399,28 @@
         </div>
         }
         } @else {
+        <!-- Video Player Section -->
+        @if (courseTree()?.videoUrl || true) {
+        <div class="w-full h-full">
+          <app-simple-video-player 
+            [videoUrl]="courseTree()?.videoUrl || 'https://coursegeneration.s3.dualstack.us-west-2.amazonaws.com/Courses/lecture/Videos/1505/20251107_153038-92ee14c6-1a05-4a0b-b63d-113611d079c5/1505_Fire%20Dynamics%20and%20Spread.mp4'"
+            [isPlaying]="isPlaying()"
+            [currentTime]="videoCurrentTime()"
+            [duration]="videoDuration()"
+            (play)="onVideoPlay()"
+            (pause)="onVideoPause()"
+            (timeupdate)="onVideoTimeUpdate($event)"
+            (ended)="onVideoEnded()"
+            (goToPrevious)="onVideoPrevious()"
+            (goToNext)="onVideoNext()"
+            (seekTo)="onVideoSeek($event)">
+          </app-simple-video-player>
+        </div>
+        } @else {
         <!-- Ready To Learn - Play button centered (initial state) -->
         <div class="absolute inset-0 flex items-center justify-center playvideo">
           <div class="text-center">
-            <div (click)="playShortCourse()"
-              class="w-24 h-24 rounded-full bg-thirdly flex items-center justify-center mx-auto mb-3 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
+            <div (click)="playShortCourse()" class="w-24 h-24 rounded-full bg-thirdly flex items-center justify-center mx-auto mb-3 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
              <i class="ic-108"></i>
             </div>
             <p class="text-white text-xl font-semibold">Ready To Learn</p>
@@ -411,6 +428,7 @@
           </div>
         </div>
         }
+      }
       </div>
     </div>
 
@@ -700,7 +718,7 @@
             <p class="text-[11px] leading-relaxed">Typing...</p>
           </div>
         </div>
-        }
+      }
       </div>
     </div>
 

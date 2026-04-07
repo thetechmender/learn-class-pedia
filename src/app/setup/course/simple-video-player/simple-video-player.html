@@ -1,0 +1,179 @@
+<div class="video-player-container">
+  @if (videoUrl) {
+  <div class="video-wrapper" style="height: 550px; background: #081449;">
+    
+    @if (isYouTubeVideo()) {
+    <!-- YouTube iframe -->
+    <iframe 
+      [src]="getYouTubeEmbedUrl()"
+      class="video-element"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+    } @else {
+    <!-- Regular video element -->
+    <video 
+      #videoElement
+      [src]="getValidVideoUrl()" 
+      class="video-element"
+      (play)="onPlay()"
+      (pause)="onPause()"
+      (timeupdate)="onTimeUpdate($event)"
+      (ended)="onEnded()"
+      (seeked)="onSeek($event)"
+      (error)="onVideoError($event)"
+      (loadedmetadata)="onLoadedMetadata($event)"
+      (canplay)="onCanPlay($event)"
+      (waiting)="onWaiting($event)"
+      (playing)="onPlaying($event)"
+      preload="metadata">
+      Your browser does not support the video tag.
+    </video>
+    }
+
+    <!-- Error Message -->
+    @if (hasVideoError) {
+    <div class="error-overlay">
+      <div class="error-content">
+        <p class="error-text">Video could not be loaded</p>
+        <p class="error-url">{{ videoUrl }}</p>
+        <button (click)="retryVideo()" class="retry-button">Retry</button>
+      </div>
+    </div>
+    }
+
+    <!-- Custom Controls Overlay (only for non-YouTube videos) -->
+    @if (!isYouTubeVideo()) {
+    <div class="controls-overlay" [class.show-controls]="showControls">
+      <!-- Loading Indicator -->
+      @if (isLoading) {
+      <div class="loading-indicator">
+        <div class="spinner"></div>
+        <span>Loading video...</span>
+      </div>
+      }
+      
+      <!-- Center Play Button Overlay -->
+      @if (!isVideoPlaying && !isLoading && videoLoaded) {
+      <div class="center-play-overlay" (click)="onPlay()">
+        <div class="center-play-button">
+          <svg xmlns="http://www.w3.org/2000/svg" class="play-icon" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+      </div>
+      }
+      
+      <!-- Bottom Controls Bar -->
+      <div class="controls-bar">
+        <!-- Progress Bar -->
+        <div class="progress-container">
+          <input 
+            type="range" 
+            class="progress-slider"
+            [value]="currentTime" 
+            [max]="duration || 0"
+            (input)="onSeekSlider($event)"
+            (change)="onSeekSlider($event)">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="duration > 0 ? (currentTime / duration) * 100 : 0"></div>
+          </div>
+        </div>
+        
+        <div class="controls-row">
+          <!-- Play/Pause Button -->
+          <button 
+            (click)="isVideoPlaying ? onPause() : onPlay()"
+            class="control-button play-pause-btn"
+            [disabled]="hasVideoError || !videoLoaded">
+            @if (isVideoPlaying) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+            </svg>
+            } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            }
+          </button>
+          
+          <!-- Time Display -->
+          <div class="time-display">
+            <span class="current-time">{{ formatTime(currentTime) }}</span>
+            <span class="time-separator">/</span>
+            <span class="total-time">{{ formatTime(duration) }}</span>
+          </div>
+          
+          <!-- Volume Control -->
+          <div class="volume-control">
+            <button 
+              (click)="toggleMute()"
+              class="control-button volume-btn">
+              @if (isMuted || volume === 0) {
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M5.889 16H2a1 1 0 01-1-1V9a1 1 0 011-1h3.889l5.294-4.332a.5.5 0 01.817.387v15.89a.5.5 0 01-.817.387L5.89 16z"/>
+                <path d="M12 8.5a3.5 3.5 0 010 7M12 5.5a6.5 6.5 0 010 13"/>
+              </svg>
+              } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M5.889 16H2a1 1 0 01-1-1V9a1 1 0 011-1h3.889l5.294-4.332a.5.5 0 01.817.387v15.89a.5.5 0 01-.817.387L5.89 16z"/>
+              </svg>
+              }
+            </button>
+            <input 
+              type="range" 
+              class="volume-slider"
+              [value]="volume * 100" 
+              min="0" 
+              max="100"
+              (input)="onVolumeChange($event)">
+          </div>
+          
+          <!-- Navigation Buttons -->
+          <div class="nav-buttons">
+            <button 
+              (click)="onPrevious()"
+              class="control-button nav-button"
+              [disabled]="hasVideoError || !videoLoaded"
+              title="Previous (-2 min)">
+              <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span class="nav-label">-2m</span>
+            </button>
+            <button 
+              (click)="onNext()"
+              class="control-button nav-button"
+              [disabled]="hasVideoError || !videoLoaded"
+              title="Next (+2 min)">
+              <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              <span class="nav-label">+2m</span>
+            </button>
+          </div>
+          
+          <!-- Fullscreen Button -->
+          <button 
+            (click)="toggleFullscreen()"
+            class="control-button fullscreen-btn"
+            [disabled]="hasVideoError || !videoLoaded"
+            title="Fullscreen">
+            @if (isFullscreen) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M5 5h5v2H7v3H5V5zm9 0h5v5h-2V7h-3V5zm3 9h2v5h-5v-2h3v-3zm-7 3v2H5v-5h2v3h3z"/>
+            </svg>
+            } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

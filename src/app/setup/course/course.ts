@@ -18,13 +18,14 @@ import { FailedAssessment } from '../assessment/failed-assessment/failed-assessm
 import { ClearedAssessment } from '../assessment/cleared-assessment/cleared-assessment';
 import { Quiz } from './quiz/quiz';
 import { EnrolledCourses } from './enrolled-courses/enrolled-courses';
+import { SimpleVideoPlayerComponent } from './simple-video-player/simple-video-player';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -62,6 +63,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   isLoading = signal(true);
   error = signal<string | null>(null);
   isPlaying = signal(false);
+  videoCurrentTime = signal(0);
+  videoDuration = signal(0);
   expandedChapters = signal<Set<string>>(new Set());
   expandedCertificates = signal<Set<number>>(new Set());
   activeCertificateId = signal<number | null>(null);
@@ -2017,5 +2020,57 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       return currentScIndex < shortCourses.length - 1;
     }
     return false;
+  }
+
+  // Video-related methods
+  onVideoPlay() {
+    this.isPlaying.set(true);
+    // Stop speech if playing
+    if (this.speechService) {
+      this.speechService.pause();
+    }
+  }
+
+  onVideoPause() {
+    this.isPlaying.set(false);
+  }
+
+  onVideoTimeUpdate(event: any) {
+    const videoElement = event.target as HTMLVideoElement;
+    this.videoCurrentTime.set(videoElement.currentTime);
+    // Update progress tracking
+    this.updateVideoProgress(videoElement.currentTime);
+  }
+
+  onVideoEnded() {
+    this.isPlaying.set(false);
+    // Handle video completion
+    this.onLastLectureComplete();
+  }
+
+  onVideoPrevious() {
+    // Go back 2 minutes in video
+    const newTime = Math.max(0, this.videoCurrentTime() - 120);
+    this.videoCurrentTime.set(newTime);
+  }
+
+  onVideoNext() {
+    // Go forward 2 minutes in video
+    const newTime = Math.min(this.videoDuration(), this.videoCurrentTime() + 120);
+    this.videoCurrentTime.set(newTime);
+  }
+
+  onVideoSeek(time: number) {
+    this.videoCurrentTime.set(time);
+  }
+
+  private updateVideoProgress(time: number) {
+    // Update progress based on video time
+    const tree = this.courseTree();
+    if (tree && time > 0) {
+      // Similar to existing progress tracking but for video
+      const progressPercentage = (time / this.videoDuration()) * 100;
+      // Update progress if needed
+    }
   }
 }
