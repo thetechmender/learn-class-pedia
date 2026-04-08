@@ -48,6 +48,7 @@ const TemplateManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({
     templateKey: '',
@@ -876,7 +877,17 @@ const TemplateManagement = () => {
 
                 {selectedTemplate.htmlBody && (
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">HTML Body</label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700">HTML Body</label>
+                      <button
+                        onClick={() => setShowPreviewModal(true)}
+                        className="flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                        title="Preview HTML"
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Preview
+                      </button>
+                    </div>
                     <div className="px-4 py-3 bg-gray-50 rounded-lg max-h-64 overflow-y-auto">
                       <pre className="text-xs font-mono whitespace-pre-wrap">{selectedTemplate.htmlBody}</pre>
                     </div>
@@ -902,6 +913,88 @@ const TemplateManagement = () => {
                   className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HTML Preview Modal */}
+      {showPreviewModal && selectedTemplate && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="bg-white/20 backdrop-blur-sm p-3 rounded-lg mr-4">
+                    <Eye className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">HTML Preview</h2>
+                    <p className="text-green-100 text-sm mt-1">"{selectedTemplate.title}"</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="p-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 overflow-hidden shadow-inner">
+                <div className="bg-white px-4 py-3 border-b border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-semibold text-gray-700">Rendered HTML</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <span className="bg-gray-100 px-2 py-1 rounded-full font-mono">
+                        {selectedTemplate.templateKey}
+                      </span>
+                      {selectedTemplate.subject && (
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                          {selectedTemplate.subject}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6 bg-white min-h-[300px] max-h-[500px] overflow-auto">
+                  {selectedTemplate.htmlBody ? (
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: selectedTemplate.htmlBody }}
+                      className="w-full"
+                    />
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">No HTML Content</h3>
+                      <p className="text-gray-500">This template doesn't have any HTML content to preview.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+                <div className="text-sm text-gray-500">
+                  {selectedTemplate.htmlBody ? (
+                    <span>HTML content rendered successfully</span>
+                  ) : (
+                    <span>No HTML content available</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  Close Preview
                 </button>
               </div>
             </div>
