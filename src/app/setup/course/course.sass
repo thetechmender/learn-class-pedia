@@ -46,6 +46,8 @@
 
 .fnt18
   font-size:18px
+  @media (max-width:767px)
+    font-size: 14px
 
 .fondation
     border-bottom: 1px solid #BBC9ED  
@@ -57,19 +59,22 @@
     
 .bigscreen
   margin: 12px 10px 0
+
 .accord-sec
   padding: 0px 0px 0px 0px
   background-color: transparent
   border-bottom: 1px solid #BBC9ED
   margin: 0
   h3
-    font-size:14px
-    color:#000
+    font-size: 14px
+    color: #000
     font-weight: 400
+    @media (max-width:767px)
+      font-size: 13px
     &.text-green-600
-      color:#16a34a
+      color: #16a34a
   span
-    font-size:13px
+    font-size: 13px
   .bg-optional
     background-color: #D4E8FF 
   .animate-accordion-down
@@ -80,46 +85,58 @@
     font-weight: 500
   h4
     font-size:13px
-    color:#000
+    color: #000
     font-weight: 400
 .text-primary
-  color:#0062CC
+  color: #0062CC
 
 .cls-btn
   color: #fff
   padding: 14px 6px
   background-color: #61697B
   border-radius: 10px
-  font-size:15px
+  font-size: 15px
   &:hover
     background: #0062CC
 
 .screen-tab
   border-bottom: 1px solid #BBC9ED;
   padding: 14px 20px 3px
+  @media (max-width:767px)
+    overflow-y: hidden
+    overflow-x: auto
+    white-space: nowrap
   button
     margin: 0 30px 0 0
     padding: 12px 0;
-    font-size:16px
-    color:#9A9DA4
+    font-size: 16px
+    color: #9A9DA4
     font-weight: 400
+    @media (max-width:767px)
+      font-size: 14px 
     &.text-primary
-      color:#000
+      color: #000
     &.border-primary
-        border-color:#000  
+        border-color: #000  
 
 .border-gray-200
-  border-color:#BBC9ED
+  border-color: #BBC9ED
 
 .course-content-left
   h2
-    color:#000
-    font-size:20px
-    font-weight:600
+    color: #000
+    font-size: 20px
+    font-weight: 600
+    @media (max-width:767px)
+      font-size: 18px
   p
-    font-size:16px 
+    font-size: 16px 
     color: #61697B
     font-weight: 400 
+    @media (max-width:767px)
+      font-size: 14px
+    @media (max-width:480px)
+      font-size: 13px  
 .bg-thirdly
  
   &.topisec
@@ -127,66 +144,97 @@
     border:1px solid #BBC9ED
     background-color: #F6F8FD;
     padding: 20px 20px;
-
+    @media (max-width:767px)
+      padding: 10px 20px
     h3
-      font-size:20px
-      font-weight:500
-   
+      font-size: 20px
+      font-weight: 500
+      @media (max-width:767px)
+        font-size: 17px
+    >div
+      @media (max-width:767px)
+        display: block
+    span
+      @media (max-width:767px)
+        display: block
+        padding: 10px 0 0
+        font-size: 13px
+
   &.knowledge-box
     background-color: #F6F8FD;
     padding: 20px 20px;   
     h3
-      font-size:20px
-      font-weight:500
+      font-size: 20px
+      font-weight: 500
+      @media (max-width:767px)
+        font-size: 18px
+      @media (max-width:480px)
+        font-size: 15px
     span 
       font-weight: 500;
-      font-size:15px
+      font-size: 15px
+      @media (max-width:767px)
+        font-size: 13px
 .topic-accor
   padding: 0 20px
-  border:1px solid #BBC9ED
-  border-top:0
+  border: 1px solid #BBC9ED
+  border-top: 0
   h4
-    font-size:18px
-    font-weight:500  
+    font-size: 18px
+    font-weight: 500  
     color: #717D87
+    @media (max-width:767px)
+      font-size: 15px
   .topic-head
     border-bottom: 1px solid #9FA6BF;
     p
-      font-size:16px
+      font-size: 16px
     .topic-inner
       padding: 15px 20px;
       border-bottom: 1px dashed #BBC9ED;
       span
         
-        font-size:14px
+        font-size: 14px
       p
-        color:#11172C  
-        font-weight:300
+        color: #11172C  
+        font-weight: 300
   .prof-topic
     border-bottom: 1px dashed #BBC9ED;
     p
-      color:#11172C  
-      font-weight:300
-      font-size:16px    
+      color: #11172C  
+      font-weight: 300
+      font-size: 16px   
+      @media (max-width:767px)
+        font-size: 14px 
     .dd-ico
+      @media (max-width:767px)
+        padding: 10px 0 0
       span      
-        color:#68749F
-        font-size:14px  
+        color: #68749F
+        font-size: 14px  
+        @media (max-width:480px)
+          font-size: 12px
         i
           color: #0062CC
-          font-size:19px
-          font-weight:500
+          font-size: 19px
+          font-weight: 500
 .lecture-cont
+  @media (max-width:767px)
+    padding-bottom: 0
   p
-    font-size:16px  
-    color:#61697B
+    font-size: 16px  
+    color: #61697B
+    @media (max-width:767px)
+      font-size: 14px
   h2
-    font-size:20px
-    font-weight:500
+    font-size: 20px
+    font-weight: 500
+    @media (max-width:767px)
+      font-size: 16px
 .cap-box
   position: relative
   margin: 0 auto
-  padding: 30px 0 0
+  padding: 10px 0 0
   .leading-relaxed
     min-height: 80px
     border: 1px solid #D9D9D9
@@ -196,53 +244,79 @@
     margin-bottom: 10px
     font-size:16px
     background-color: #F6F8FD;
+    @media (max-width:767px)
+      font-size: 14px
   span
-    font-size:16px
+    font-size: 16px
+    @media (max-width:767px)
+      font-size: 14px
   button
-    font-size:16px
-    font-weight:400
+    font-size: 16px
+    font-weight: 400
+    @media (max-width:767px)
+      font-size: 14px
 .in-lft-side
   border-left: 1px solid #E4EBFB
   border-bottom: 1px solid #E4EBFB
   padding: 15px 20px
+  @media (max-width:767px)
+    width: 100%
+    display: block
+    border: 0
   h3
-    font-size:18px
-    font-weight:400    
+    font-size: 18px
+    font-weight: 400 
+    @media (max-width:767px)
+      font-size: 16px
+
   p
-   font-size:16px 
+   font-size: 16px 
+   @media (max-width:767px)
+      font-size: 14px
+
   button
     padding: 13px 30px;
 
 .notsave
   h3
-    font-size:23px
-    font-weight:400
+    font-size: 23px
+    font-weight: 400
+    @media (max-width:767px)
+      font-size: 20px
   p
-   font-size:16px  
+   font-size: 16px
+   @media (max-width:767px)
+      font-size: 14px
+
 .other-enroll
   border-left: 1px solid #E4EBFB
   border-bottom: 1px solid #E4EBFB
   padding: 15px 20px   
+  @media (max-width:767px)
+    padding: 10px 20px
+    border-left: 0
   p
-    color:#61697B
+    color: #61697B
   h4
     color: #000
     font-weight: 400
-    font-size:13px
+    font-size: 13px
   .brddiv
     border-bottom: 1px solid #E4EBFB
-    padding:10px 5px 15px 
+    padding: 10px 5px 15px 
 .chat-top
-  padding:10px 0 10px
+  padding: 10px 0 10px
   h2
-    font-size:16px
-    font-weight:600 
+    font-size: 16px
+    font-weight: 600 
+    @media (max-width:767px)
+      font-size: 15px
 .chat-body
-  padding:10px 10px
+  padding: 10px 10px
   p
     font-size:12px
 .chat-note
-  font-size:12px    
+  font-size: 12px    
   text-align: center
   padding: 8px
   color: #777
@@ -253,55 +327,82 @@
   border-radius: 14px
   padding: 30px 30px
   margin: 0 0 15px
+  @media (max-width:767px)
+    padding: 10px 15px
   h3
     color: #000
     border-bottom: 1px dashed #B1C3D9
     padding: 0 0 10px
     font-weight: 500
-    font-size:18px
+    font-size: 18px
+    @media (max-width:767px)
+      font-size: 14px
   label
     span
       font-weight: 400
       color: #878585
       padding: 0 0 0 6px 
-      font-size:16px
+      font-size: 16px
+      @media (max-width:767px)
+        font-size: 14px
   .correct
-    font-size:13px  
-    font-weight:600  
-
+    font-size: 13px  
+    font-weight: 600  
+  
 .review-count
-  color:#61697B
-  font-size:16px
-  font-weight:400
-
+  color: #61697B
+  font-size: 16px
+  font-weight: 400
+  @media (max-width:767px)
+    font-size: 14px
 .courses-serials
   color: #000
   font-weight: 500
-  font-size:16px
+  font-size: 16px
+  @media (max-width:767px)
+    padding: 15px 0 4px
   span
-    font-size:14px
-    font-weight:400
-    color:#000
+    font-size: 14px
+    font-weight: 400
+    color: #000
+    @media (max-width:767px)
+      font-size: 12px
+      display: block
     i
-      font-size:23px
-      vertical-align:middle
+      font-size: 23px
+      vertical-align: middle
 
 .playvideo
   i
     color: #385D71
     font-size: 30px
     margin: 0 0 0 7px
+    @media (max-width:767px)
+      font-size: 20px
   p
-   font-size:22px
-   font-weight:400  
+   font-size: 22px
+   font-weight: 400  
+   @media (max-width:767px)
+      font-size: 16px
 
 .prgresssec
+  @media (max-width: 767px)
+    width: auto
+    margin-left: 0
+    padding: 10px 20px
+  @media (max-width: 480px)
+    width: 90%
+    margin-left: auto
+    padding: 5px 14px
   span
     color: #000
     font-weight: 400
-    font-size:13px
+    font-size: 13px
+    @media (max-width:575px)
+      font-size: 12px
+      line-height: 1.2
     &.text-primary
-      color:#0062CC
+      color: #0062CC
 
 .dowload-box
   background-color: #F6F8FD !important
@@ -338,3 +439,41 @@
   font-weight: 400
   background-color: #D4E8FF
   font-size: 15px
+  @media (max-width:767px)
+    font-size: 14px
+    padding: 10px 10px
+.detailsec
+  @media (max-width: 767px)
+    display: block !important 
+
+.enrolldiv
+  @media (max-width: 767px)
+    width: 100% !important
+    display: block !important
+
+.overviewpadd
+  @media (max-width: 767px)
+    padding-bottom: 0 !important
+.btn-leftbar
+  @media (max-width: 767px)
+    margin: -5px 0 0
+    display: block
+
+.movebtn
+  @media (max-width: 767px)
+    padding-bottom: 10px
+
+.notesec
+  @media (max-width: 767px)
+    width: 100%
+    display: block   
+
+.playvideo
+  .bg-thirdly
+    @media (max-width: 575px)
+      width: 70px
+      height: 70px
+
+.btn-control
+  @media (max-width: 480px) 
+    padding: 10px 6px     
