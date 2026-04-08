@@ -55,7 +55,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>You have <span class="font-semibold text-gray-900">1 attempt</span> remaining</span>
+        <span>You have <span class="font-semibold text-gray-900">{{assessmentService.attemptsRemaining()}} attempt{{assessmentService.attemptsRemaining() !== 1 ? 's' : ''}}</span> remaining</span>
       </div>
 
       <!-- Warning Box -->

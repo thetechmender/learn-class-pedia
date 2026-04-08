@@ -11,6 +11,13 @@ export class AssessmentService {
   private apiUrl = environment.API_URL;
   private http = inject(HttpClient);
 
+  // Signals for attempt status
+  attemptsUsed = signal<number>(0);
+  attemptsRemaining = signal<number>(3);
+  maxAttempts = signal<number>(3);
+  isAttemptLimitReached = signal<boolean>(false);
+  isAssessmentCompleted = signal<boolean>(false);
+  canTakeAssessment = signal<boolean>(true);
 
   getQuizQuestions(courseId: number, token: string | null): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/assessment/quiz/${courseId}/questions`, {
@@ -108,6 +115,22 @@ export class AssessmentService {
     return this.http.get<any>(
       `${this.apiUrl}/assessment/attempt-status/${courseId}`,
       { headers: this.getHeaders(token) }
+    ).pipe(
+      map(response => {
+        if (response.isSuccess && response.data) {
+          this.updateAttemptStatus(response.data);
+        }
+        return response;
+      })
     );
+  }
+
+  updateAttemptStatus(data: any) {
+    this.attemptsUsed.set(data.attemptsUsed || 0);
+    this.attemptsRemaining.set(data.attemptsRemaining || 3);
+    this.maxAttempts.set(data.maxAttempts || 3);
+    this.isAttemptLimitReached.set(data.isAttemptLimitReached || false);
+    this.isAssessmentCompleted.set(data.isAssessmentCompleted || false);
+    this.canTakeAssessment.set(data.canTakeAssessment !== false);
   }
 }

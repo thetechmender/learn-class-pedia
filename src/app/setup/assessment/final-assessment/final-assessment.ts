@@ -255,7 +255,6 @@ export class FinalAssessment implements OnInit {
               this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
                 .subscribe({
                   next: (finalDetails: any) => {
-                    debugger
                     this.isGeneratingCertificate.set(false);
                     if (finalDetails?.isSuccess) {
                       this.next.emit(finalDetails['data']);

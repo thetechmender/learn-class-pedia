@@ -885,14 +885,19 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
       // Only block if going forward AND current lecture is not completed
       if (targetGlobalIndex > currentGlobalIndex && currentScFromTree && !currentScFromTree.isCompleted) {
-        // Block if lecture hasn't been played yet (progress is 0)
-        if (this.currentTime() === 0) {
-          this.toastr.warning(`Please complete "${currentScFromTree.title}" before moving to the next one.`, 'Play Required');
+        // Allow navigation if assessment failed and it's second-last or last attempt
+        if (this.assessmentStep() === 'failed' && this.assessmentService.attemptsRemaining() <= 2) {
+          // Allow navigation - user can review lectures after failing
+        } else {
+          // Block if lecture hasn't been played yet (progress is 0)
+          if (this.currentTime() === 0) {
+            this.toastr.warning(`Please complete "${currentScFromTree.title}" before moving to the next one.`, 'Play Required');
+            return;
+          }
+          // Block if current shortCourse quiz is not completed
+          this.toastr.warning(`Please complete the quiz for "${currentScFromTree.title}" before moving to the next lecture.`, 'Quiz Required');
           return;
         }
-        // Block if current shortCourse quiz is not completed
-        this.toastr.warning(`Please complete the quiz for "${currentScFromTree.title}" before moving to the next lecture.`, 'Quiz Required');
-        return;
       }
     }
     
@@ -930,6 +935,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.prepareLectureSectionsAndSetActive(sc);
     this.refreshProgress();
+    
+    // Hide assessment components when user clicks on lecture after failing
+    if (this.assessmentStep() === 'failed') {
+      this.assessmentStep.set('none');
+    }
+    
+    // Navigate to course route if not already on course page
+    if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
+      this.router.navigate(['/course']);
+    }
   }
 
   onShortCourseSelect(sc: any) {
@@ -946,11 +961,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
       // Only block if going forward AND current lecture is not completed
       if (targetIndex > currentIndex && currentScFromTree && !currentScFromTree.isCompleted) {
-        this.toastr.warning(
-          `Please complete the lecture and its quiz for "${currentScFromTree.title}" before proceeding to the next.`,
-          'Completion Required'
-        );
-        return;
+        // Allow navigation if assessment failed and it's second-last or last attempt
+        if (this.assessmentStep() === 'failed' && this.assessmentService.attemptsRemaining() <= 2) {
+          // Allow navigation - user can review lectures after failing
+        } else {
+          this.toastr.warning(
+            `Please complete the lecture and its quiz for "${currentScFromTree.title}" before proceeding to the next.`,
+            'Completion Required'
+          );
+          return;
+        }
       }
     }
     this.completeOrderPayload.set({
@@ -977,6 +997,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.prepareLectureSectionsAndSetActive(sc);
     this.refreshProgress();
+    
+    // Hide assessment components when user clicks on lecture after failing
+    if (this.assessmentStep() === 'failed') {
+      this.assessmentStep.set('none');
+    }
+    
+    // Navigate to course route if not already on course page
+    if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
+      this.router.navigate(['/course']);
+    }
   }
 
   playShortCourse() {
