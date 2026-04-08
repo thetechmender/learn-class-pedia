@@ -156,9 +156,25 @@
         display: block
     span
       @media (max-width:767px)
+        padding: 10px 27px 0 0
+        font-size: 14px
+        display: inline-block
+        vertical-align: middle
+        text-align: center
+        margin: 0 auto
+      svg
+        @media (max-width:767px)
+          text-align: center
+          margin: 0 auto
+          display: block
+      i
+        @media (max-width:767px)    
+          display: block
+          text-align: center
+    .contenttxt
+      @media (max-width:767px)  
         display: block
-        padding: 10px 0 0
-        font-size: 13px
+        padding: 10px 0
 
   &.knowledge-box
     background-color: #F6F8FD;
@@ -336,7 +352,7 @@
     font-weight: 500
     font-size: 18px
     @media (max-width:767px)
-      font-size: 14px
+      font-size: 13px
   label
     span
       font-weight: 400
@@ -344,11 +360,17 @@
       padding: 0 0 0 6px 
       font-size: 16px
       @media (max-width:767px)
-        font-size: 14px
+        font-size: 13px
   .correct
     font-size: 13px  
     font-weight: 600  
-  
+  .blckresp
+    @media (max-width:767px)
+      display: block !important
+    label
+      @media (max-width:767px)
+        padding: 0 0 10px
+
 .review-count
   color: #61697B
   font-size: 16px
@@ -360,17 +382,20 @@
   font-weight: 500
   font-size: 16px
   @media (max-width:767px)
-    padding: 15px 0 4px
+    padding: 10px 0 4px
+    display: block !important
   span
     font-size: 14px
     font-weight: 400
     color: #000
     @media (max-width:767px)
-      font-size: 12px
+      font-size: 12px !important
       display: block
     i
       font-size: 23px
       vertical-align: middle
+      @media (max-width:767px)
+        font-size: 18px
 
 .playvideo
   i
@@ -466,7 +491,7 @@
 .notesec
   @media (max-width: 767px)
     width: 100%
-    display: block   
+    display: block  !important  
 
 .playvideo
   .bg-thirdly
