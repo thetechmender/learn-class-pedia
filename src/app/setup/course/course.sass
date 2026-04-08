@@ -175,7 +175,10 @@
       @media (max-width:767px)  
         display: block
         padding: 10px 0
-
+      span
+        color: #000
+      svg
+        color: #0062CC   
   &.knowledge-box
     background-color: #F6F8FD;
     padding: 20px 20px;   
@@ -205,15 +208,27 @@
     border-bottom: 1px solid #9FA6BF;
     p
       font-size: 16px
+      @media (max-width:767px)
+        font-size: 14px
     .topic-inner
       padding: 15px 20px;
       border-bottom: 1px dashed #BBC9ED;
+      @media (max-width:767px)
+        padding: 10px 0
       span
-        
+        color: #68749F
         font-size: 14px
+        @media (max-width:767px)
+          font-size: 13px
+          display: block;
+          text-align: center;
       p
         color: #11172C  
         font-weight: 300
+      svg
+        color: #68749F
+        @media (max-width:767px)
+          margin: 0 auto  
   .prof-topic
     border-bottom: 1px dashed #BBC9ED;
     p
@@ -312,7 +327,7 @@
   border-bottom: 1px solid #E4EBFB
   padding: 15px 20px   
   @media (max-width:767px)
-    padding: 10px 20px
+    padding: 10px 10px !important
     border-left: 0
   p
     color: #61697B
@@ -394,6 +409,7 @@
     @media (max-width:767px)
       font-size: 12px !important
       display: block
+      padding: 10px 16px 0 0 !important
     i
       font-size: 23px
       vertical-align: middle
@@ -427,7 +443,7 @@
     font-weight: 400
     font-size: 13px
     @media (max-width:575px)
-      font-size: 12px
+      font-size: 11px
       line-height: 1.2
     &.text-primary
       color: #0062CC
@@ -486,6 +502,7 @@
   @media (max-width: 767px)
     margin: -7px 0 0
     display: block !important
+    
 
 .movebtn
   @media (max-width: 767px)
@@ -504,4 +521,23 @@
 
 .btn-control
   @media (max-width: 480px) 
-    padding: 10px 6px     
+    padding: 10px 6px !important     
+
+.comp-btn
+  @media (max-width: 767px)
+    display: block !important
+  button
+   @media (max-width: 767px)
+    width: 100%
+    margin: 0 0 10px   
+
+.videotxt
+  padding: 10px 10px
+  max-height: 300px
+  overflow-y: auto
+  overflow-x: hidden 
+
+  .txtfont
+    font-size: 14px
+    padding: 0
+    line-height: 1.3

@@ -383,10 +383,10 @@
       </button>
       }
       <!-- Content Display -->
-      <div id="content-container" class="px-12 py-8 h-[550px] overflow-y-auto overflow-x-hidden relative">
+      <div id="content-container" class="px-12 py-8 h-[550px] overflow-y-auto overflow-x-hidden relative videotxt">
         @if (isContentReady()) {
         <!-- Always show content with highlight when content is ready -->
-        <div class="max-w-3xl text-white text-lg leading-loose px-4 mx-auto" [innerHTML]="highlightedContent()"></div>
+        <div class="txtfont max-w-3xl text-white text-lg leading-loose px-4 mx-auto" [innerHTML]="highlightedContent()"></div>
 
         <!-- Play button overlay when paused - show for 5 seconds then hide -->
         @if (!isPlaying() && showPauseOverlay()) {

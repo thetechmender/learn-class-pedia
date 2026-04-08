@@ -56,7 +56,7 @@
     @if (isCourseCompleted) {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can
       now start the final assessment or go to dashboard.</p>
-    <div class="flex items-center gap-4" id="aftersubmitquiz">
+    <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
         Check Answers
@@ -69,7 +69,7 @@
     } @else {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
       course.</p>
-    <div class="flex items-center gap-4" id="aftersubmitquiz">
+    <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
         Check Answers
@@ -97,7 +97,7 @@
     @if (isCourseCompleted) {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can
       now start the final assessment or go to dashboard.</p>
-    <div class="flex items-center gap-4" id="aftersubmitquiz">
+    <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
         Check Answers
@@ -110,7 +110,7 @@
     } @else {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
       course.</p>
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4 comp-btn">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
         Check Answers
