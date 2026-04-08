@@ -382,7 +382,22 @@
         </svg>
       </button>
       }
-      <!-- Content Display -->
+      <!-- Video Player Section - Outside scrollable container -->
+      @if (courseTree()?.videoUrl) {
+      <div class="w-full h-[550px]">
+        <app-simple-video-player 
+          [videoUrl]="courseTree()?.videoUrl"
+          (play)="onVideoPlay()"
+          (pause)="onVideoPause()"
+          (timeupdate)="onVideoTimeUpdate($event)"
+          (ended)="onVideoEnded()"
+          (goToPrevious)="onVideoPrevious()"
+          (goToNext)="onVideoNext()"
+          (seekTo)="onVideoSeek($event)">
+        </app-simple-video-player>
+      </div>
+      } @else {
+      <!-- Content Display - Scrollable container when no video -->
       <div id="content-container" class="px-12 py-8 h-[550px] overflow-y-auto overflow-x-hidden relative">
         @if (isContentReady()) {
         <!-- Always show content with highlight when content is ready -->
@@ -399,24 +414,6 @@
         </div>
         }
         } @else {
-        <!-- Video Player Section -->
-        @if (courseTree()?.videoUrl || true) {
-        <div class="w-full h-full">
-          <app-simple-video-player 
-            [videoUrl]="courseTree()?.videoUrl || 'https://coursegeneration.s3.dualstack.us-west-2.amazonaws.com/Courses/lecture/Videos/1505/20251107_153038-92ee14c6-1a05-4a0b-b63d-113611d079c5/1505_Fire%20Dynamics%20and%20Spread.mp4'"
-            [isPlaying]="isPlaying()"
-            [currentTime]="videoCurrentTime()"
-            [duration]="videoDuration()"
-            (play)="onVideoPlay()"
-            (pause)="onVideoPause()"
-            (timeupdate)="onVideoTimeUpdate($event)"
-            (ended)="onVideoEnded()"
-            (goToPrevious)="onVideoPrevious()"
-            (goToNext)="onVideoNext()"
-            (seekTo)="onVideoSeek($event)">
-          </app-simple-video-player>
-        </div>
-        } @else {
         <!-- Ready To Learn - Play button centered (initial state) -->
         <div class="absolute inset-0 flex items-center justify-center playvideo">
           <div class="text-center">
@@ -428,11 +425,12 @@
           </div>
         </div>
         }
-      }
       </div>
+      }
     </div>
 
-    <!-- Bottom Controls -->
+    <!-- Bottom Controls - Only show when no video URL (for audio/text content) -->
+    @if (!courseTree()?.videoUrl) {
     <div class="bg-white border-t border-gray-200 px-6 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
@@ -520,14 +518,10 @@
           </button>
         </div>
         <div class="flex items-center gap-2">
-          <button
-            class="px-4 py-2 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Previous</button>
-          <button
-            class="btn-gradient-primary px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all">Next
-            Lesson</button>
         </div>
       </div> -->
     </div>
+    }
 
     <!-- Tabs Section -->
     <div class="bg-white border-t border-gray-200">
