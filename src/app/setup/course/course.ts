@@ -104,7 +104,17 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return sections;
   });
 
-  isSidebarOpen = signal<boolean>(true);
+  isSidebarOpen = signal<boolean>(false);
+
+  // Check if device is large screen (desktop)
+  private isLargeScreen = signal<boolean>(false);
+
+  private checkScreenSize() {
+    const isLarge = window.innerWidth >= 1024; // lg breakpoint
+    this.isLargeScreen.set(isLarge);
+    // Auto-open sidebar on large screens, close on small screens
+    this.isSidebarOpen.set(isLarge);
+  }
 
   // Check if all shortCourses are completed across all certificates
   allShortCoursesCompleted = computed(() => {
@@ -201,6 +211,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.goToNextSection();
       }
     });
+
+    // Check screen size on init and resize
+    if (isPlatformBrowser(this.platformId)) {
+      this.checkScreenSize();
+      window.addEventListener('resize', () => this.checkScreenSize());
+    }
   }
 
   sendChatMessage() {

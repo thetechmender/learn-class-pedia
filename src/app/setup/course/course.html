@@ -1,17 +1,22 @@
-<div class="flex bg-gray-50 font-sans" style="height: calc(100vh - 56px);">
+<div class="flex bg-gray-50 font-sans relative" style="height: calc(100vh - 56px);">
   <!-- Hamburger Button (visible when sidebar is closed) -->
   @if (!isSidebarOpen()) {
   <button (click)="toggleSidebar()"
-    class="fixed left-4 top-20 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 btn-leftbar text-gray-600 hover:text-primary transition-colors lg:block hidden">
+    class="fixed left-4 top-20 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 btn-leftbar text-gray-600 hover:text-primary transition-colors">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   </button>
   }
 
+  <!-- Overlay for mobile when sidebar is open -->
+  @if (isSidebarOpen()) {
+  <div class="fixed inset-0 bg-black/50 z-40 lg:hidden" (click)="toggleSidebar()"></div>
+  }
+
   <!-- Left Sidebar -->
-  <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300"
-    [class.w-80]="isSidebarOpen()" [class.w-0]="!isSidebarOpen()" [class.overflow-hidden]="!isSidebarOpen()" [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: 100%;">
+  <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300 fixed lg:relative lg:translate-x-0 z-50"
+    [class.translate-x-0]="isSidebarOpen()" [class.-translate-x-full]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" [class.hidden]="!isSidebarOpen()" style="height: 100%;">
     <!-- Sidebar Header with Title and Close Button -->
     <div class="fondation">
       <div class="flex items-center justify-between">
