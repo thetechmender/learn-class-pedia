@@ -321,7 +321,7 @@
       <div class="flex items-center gap-4 px-6 py-2 border border-gray-200 rounded-full prgresssec">
         <span class="text-sm text-gray-600">{{ completedItems() }}/{{ totalLearningItems() }}
           {{courseTree()?.id}}learning items</span>
-        <div class="w-48 h-2 bg-thirdly rounded-full overflow-hidden">
+        <div class="w-48 h-2 bg-thirdly rounded-full overflow-hidden progressbr">
           <div class="h-full bg-primary rounded-full transition-all duration-300"
             [style.width.%]="completionPercentage()"></div>
         </div>
