@@ -2064,13 +2064,29 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.videoCurrentTime.set(time);
   }
 
+  onVideoDurationChange(duration: number) {
+    this.videoDuration.set(duration);
+  }
+
   private updateVideoProgress(time: number) {
-    // Update progress based on video time
+    // Update video progress based on video time
     const tree = this.courseTree();
     if (tree && time > 0) {
       // Similar to existing progress tracking but for video
       const progressPercentage = (time / this.videoDuration()) * 100;
       // Update progress if needed
     }
+  };
+
+    formatTime2(seconds: number): string {
+    if (!seconds || seconds < 0 || !isFinite(seconds)) return '0:00';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 }
