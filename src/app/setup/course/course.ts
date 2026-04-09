@@ -18,14 +18,13 @@ import { FailedAssessment } from '../assessment/failed-assessment/failed-assessm
 import { ClearedAssessment } from '../assessment/cleared-assessment/cleared-assessment';
 import { Quiz } from './quiz/quiz';
 import { EnrolledCourses } from './enrolled-courses/enrolled-courses';
-import { SimpleVideoPlayerComponent } from './simple-video-player/simple-video-player';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -63,8 +62,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   isLoading = signal(true);
   error = signal<string | null>(null);
   isPlaying = signal(false);
-  videoCurrentTime = signal(0);
-  videoDuration = signal(0);
   expandedChapters = signal<Set<string>>(new Set());
   expandedCertificates = signal<Set<number>>(new Set());
   activeCertificateId = signal<number | null>(null);
@@ -123,7 +120,17 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return sections;
   });
 
-  isSidebarOpen = signal<boolean>(true);
+  isSidebarOpen = signal<boolean>(false);
+
+  // Check if device is large screen (desktop)
+  private isLargeScreen = signal<boolean>(false);
+
+  private checkScreenSize() {
+    const isLarge = window.innerWidth >= 1024; // lg breakpoint
+    this.isLargeScreen.set(isLarge);
+    // Auto-open sidebar on large screens, close on small screens
+    this.isSidebarOpen.set(isLarge);
+  }
 
   // Check if all shortCourses are completed across all certificates
   allShortCoursesCompleted = computed(() => {
@@ -220,6 +227,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.goToNextSection();
       }
     });
+
+    // Check screen size on init and resize
+    if (isPlatformBrowser(this.platformId)) {
+      this.checkScreenSize();
+      window.addEventListener('resize', () => this.checkScreenSize());
+    }
   }
 
   sendChatMessage() {
@@ -932,14 +945,19 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
       // Only block if going forward AND current lecture is not completed
       if (targetGlobalIndex > currentGlobalIndex && currentScFromTree && !currentScFromTree.isCompleted) {
-        // Block if lecture hasn't been played yet (progress is 0)
-        if (this.currentTime() === 0) {
-          this.toastr.warning(`Please complete "${currentScFromTree.title}" before moving to the next one.`, 'Play Required');
+        // Allow navigation if assessment failed and it's second-last or last attempt
+        if (this.assessmentStep() === 'failed' && this.assessmentService.attemptsRemaining() <= 2) {
+          // Allow navigation - user can review lectures after failing
+        } else {
+          // Block if lecture hasn't been played yet (progress is 0)
+          if (this.currentTime() === 0) {
+            this.toastr.warning(`Please complete "${currentScFromTree.title}" before moving to the next one.`, 'Play Required');
+            return;
+          }
+          // Block if current shortCourse quiz is not completed
+          this.toastr.warning(`Please complete the quiz for "${currentScFromTree.title}" before moving to the next lecture.`, 'Quiz Required');
           return;
         }
-        // Block if current shortCourse quiz is not completed
-        this.toastr.warning(`Please complete the quiz for "${currentScFromTree.title}" before moving to the next lecture.`, 'Quiz Required');
-        return;
       }
     }
     
@@ -984,6 +1002,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else if (tree && !sc.videoUrl) {
       const { videoUrl, ...treeWithoutVideo } = tree;
       this.courseTree.set(treeWithoutVideo);
+    // Hide assessment components when user clicks on lecture after failing
+    if (this.assessmentStep() === 'failed') {
+      this.assessmentStep.set('none');
+    }
+    
+    // Navigate to course route if not already on course page
+    if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
+      this.router.navigate(['/course']);
     }
   }
 
@@ -1001,11 +1027,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
       // Only block if going forward AND current lecture is not completed
       if (targetIndex > currentIndex && currentScFromTree && !currentScFromTree.isCompleted) {
-        this.toastr.warning(
-          `Please complete the lecture and its quiz for "${currentScFromTree.title}" before proceeding to the next.`,
-          'Completion Required'
-        );
-        return;
+        // Allow navigation if assessment failed and it's second-last or last attempt
+        if (this.assessmentStep() === 'failed' && this.assessmentService.attemptsRemaining() <= 2) {
+          // Allow navigation - user can review lectures after failing
+        } else {
+          this.toastr.warning(
+            `Please complete the lecture and its quiz for "${currentScFromTree.title}" before proceeding to the next.`,
+            'Completion Required'
+          );
+          return;
+        }
       }
     }
     this.completeOrderPayload.set({
@@ -1039,6 +1070,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else if (tree && !sc.videoUrl) {
       const { videoUrl, ...treeWithoutVideo } = tree;
       this.courseTree.set(treeWithoutVideo);
+    // Hide assessment components when user clicks on lecture after failing
+    if (this.assessmentStep() === 'failed') {
+      this.assessmentStep.set('none');
+    }
+    
+    // Navigate to course route if not already on course page
+    if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
+      this.router.navigate(['/course']);
     }
   }
 
@@ -2119,73 +2158,5 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       return currentScIndex < shortCourses.length - 1;
     }
     return false;
-  }
-
-  // Video-related methods
-  onVideoPlay() {
-    this.isPlaying.set(true);
-    // Stop speech if playing
-    if (this.speechService) {
-      this.speechService.pause();
-    }
-  }
-
-  onVideoPause() {
-    this.isPlaying.set(false);
-  }
-
-  onVideoTimeUpdate(event: any) {
-    const videoElement = event.target as HTMLVideoElement;
-    this.videoCurrentTime.set(videoElement.currentTime);
-    // Update progress tracking
-    this.updateVideoProgress(videoElement.currentTime);
-  }
-
-  onVideoEnded() {
-    this.isPlaying.set(false);
-    // Handle video completion
-    this.onLastLectureComplete();
-  }
-
-  onVideoPrevious() {
-    // Go back 2 minutes in video
-    const newTime = Math.max(0, this.videoCurrentTime() - 120);
-    this.videoCurrentTime.set(newTime);
-  }
-
-  onVideoNext() {
-    // Go forward 2 minutes in video
-    const newTime = Math.min(this.videoDuration(), this.videoCurrentTime() + 120);
-    this.videoCurrentTime.set(newTime);
-  }
-
-  onVideoSeek(time: number) {
-    this.videoCurrentTime.set(time);
-  }
-
-  onVideoDurationChange(duration: number) {
-    this.videoDuration.set(duration);
-  }
-
-  private updateVideoProgress(time: number) {
-    // Update video progress based on video time
-    const tree = this.courseTree();
-    if (tree && time > 0) {
-      // Similar to existing progress tracking but for video
-      const progressPercentage = (time / this.videoDuration()) * 100;
-      // Update progress if needed
-    }
-  };
-
-    formatTime2(seconds: number): string {
-    if (!seconds || seconds < 0 || !isFinite(seconds)) return '0:00';
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 }

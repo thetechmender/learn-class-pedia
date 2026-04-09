@@ -17,7 +17,7 @@ export class StartAssessment implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
-  private assessmentService = inject(AssessmentService);
+  public assessmentService = inject(AssessmentService);
 
   questions = signal<any[]>([]);
   isQuestionLoading = signal(false);

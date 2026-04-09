@@ -1,17 +1,22 @@
-<div class="flex bg-gray-50 font-sans" style="height: calc(100vh - 56px);">
+<div class="flex bg-gray-50 font-sans relative" style="height: calc(100vh - 56px);">
   <!-- Hamburger Button (visible when sidebar is closed) -->
   @if (!isSidebarOpen()) {
   <button (click)="toggleSidebar()"
-    class="fixed left-4 top-20 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 text-gray-600 hover:text-primary transition-colors lg:block hidden">
+    class="fixed left-4 top-20 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200 btn-leftbar text-gray-600 hover:text-primary transition-colors">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   </button>
   }
 
+  <!-- Overlay for mobile when sidebar is open -->
+  @if (isSidebarOpen()) {
+  <div class="fixed inset-0 bg-black/50 z-40 lg:hidden" (click)="toggleSidebar()"></div>
+  }
+
   <!-- Left Sidebar -->
-  <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300"
-    [class.w-80]="isSidebarOpen()" [class.w-0]="!isSidebarOpen()" [class.overflow-hidden]="!isSidebarOpen()" [class.hidden]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" style="height: 100%;">
+  <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300 fixed lg:relative lg:translate-x-0 z-50"
+    [class.translate-x-0]="isSidebarOpen()" [class.-translate-x-full]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" [class.hidden]="!isSidebarOpen()" style="height: 100%;">
     <!-- Sidebar Header with Title and Close Button -->
     <div class="fondation">
       <div class="flex items-center justify-between">
@@ -105,8 +110,9 @@
               </svg>
               Video
             </span>
+            <!-- (click)="downloadShortCoursePdf(sc, $event)" -->
             <span class="flex items-center gap-1 cursor-pointer hover:text-primary"
-              (click)="downloadShortCoursePdf(sc, $event)" title="Download PDF">
+               title="Download PDF">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -190,7 +196,7 @@
             Video
           </span>
           <span class="flex items-center gap-1 cursor-pointer hover:text-primary"
-            (click)="downloadShortCoursePdf(sc, $event)" title="Download PDF">
+           title="Download PDF">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -262,8 +268,7 @@
               <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9z" />
               <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
             </svg>
-            <!-- {{ estimatedTimeMinutes() ? estimatedTimeMinutes() + 'm' : (lec.duration || '13:00') }} -->
-              {{formatTime2(videoDuration())}}
+            {{ estimatedTimeMinutes() ? estimatedTimeMinutes() + 'm' : (lec.duration || '13:00') }}
           </span>
           <span class="flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 22 22"
@@ -274,7 +279,7 @@
             Video
           </span>
           <span class="flex items-center gap-1 cursor-pointer hover:text-primary"
-            (click)="downloadLecturePdf(lec, $event)" title="Download PDF">
+            title="Download PDF">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -322,13 +327,13 @@
   <!-- Main Content -->
   <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 46px);">
     <!-- Assessment Flow -->
-    @if (assessmentStep() === 'none' && !courseTree()?.videoUrl) {
+    @if (assessmentStep() === 'none') {
     <!-- Progress Bar Above Content -->
     <div class="bg-white px-6 py-3  flex items-center justify-center">
       <div class="flex items-center gap-4 px-6 py-2 border border-gray-200 rounded-full prgresssec">
         <span class="text-sm text-gray-600">{{ completedItems() }}/{{ totalLearningItems() }}
           {{courseTree()?.id}}learning items</span>
-        <div class="w-48 h-2 bg-thirdly rounded-full overflow-hidden">
+        <div class="w-48 h-2 bg-thirdly rounded-full overflow-hidden progressbr">
           <div class="h-full bg-primary rounded-full transition-all duration-300"
             [style.width.%]="completionPercentage()"></div>
         </div>
@@ -389,27 +394,11 @@
         </svg>
       </button>
       }
-      <!-- Video Player Section - Outside scrollable container -->
-      @if (courseTree()?.videoUrl) {
-      <div class="w-full h-auto">
-        <app-simple-video-player 
-          [videoUrl]="courseTree()?.videoUrl"
-          (play)="onVideoPlay()"
-          (pause)="onVideoPause()"
-          (timeupdate)="onVideoTimeUpdate($event)"
-          (ended)="onVideoEnded()"
-          (goToPrevious)="onVideoPrevious()"
-          (goToNext)="onVideoNext()"
-          (seekTo)="onVideoSeek($event)"
-          (durationChange)="onVideoDurationChange($event)">
-        </app-simple-video-player>
-      </div>
-      } @else {
-      <!-- Content Display - Scrollable container when no video -->
-      <div id="content-container" class="px-12 py-8 h-[550px] overflow-y-auto overflow-x-hidden relative">
+      <!-- Content Display -->
+      <div id="content-container" class="px-12 py-8 h-[550px] overflow-y-auto overflow-x-hidden relative videotxt">
         @if (isContentReady()) {
         <!-- Always show content with highlight when content is ready -->
-        <div class="max-w-3xl text-white text-lg leading-loose px-4 mx-auto" [innerHTML]="highlightedContent()"></div>
+        <div class="txtfont max-w-3xl text-white text-lg leading-loose px-4 mx-auto" [innerHTML]="highlightedContent()"></div>
 
         <!-- Play button overlay when paused - show for 5 seconds then hide -->
         @if (!isPlaying() && showPauseOverlay()) {
@@ -425,7 +414,8 @@
         <!-- Ready To Learn - Play button centered (initial state) -->
         <div class="absolute inset-0 flex items-center justify-center playvideo">
           <div class="text-center">
-            <div (click)="playShortCourse()" class="w-24 h-24 rounded-full bg-thirdly flex items-center justify-center mx-auto mb-3 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
+            <div (click)="playShortCourse()"
+              class="w-24 h-24 rounded-full bg-thirdly flex items-center justify-center mx-auto mb-3 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
              <i class="ic-108"></i>
             </div>
             <p class="text-white text-xl font-semibold">Ready To Learn</p>
@@ -434,12 +424,10 @@
         </div>
         }
       </div>
-      }
     </div>
 
-    <!-- Bottom Controls - Only show when no video URL (for audio/text content) -->
-    @if (!courseTree()?.videoUrl) {
-    <div class="bg-white border-t border-gray-200 px-6 py-3">
+    <!-- Bottom Controls -->
+    <div class="bg-white border-t border-gray-200 px-6 py-3 btn-control">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <!-- Play/Pause Button -->
@@ -455,6 +443,7 @@
             </svg>
             }
           </button>
+          <!-- Previous Section -->
           <button (click)="goToPreviousSection()"
             class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
             [disabled]="activeLectureIndex() <= 0" title="Previous Lecture">
@@ -463,6 +452,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
+          <!-- Next Section -->
           <button (click)="goToNextSection()"
             class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
             title="Next Lecture">
@@ -471,16 +461,67 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
+          <!-- Progress Slider (draggable) -->
           <input type="range" min="0" [max]="estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()" [value]="currentTime()" (input)="onSliderChange($event)"
             (mousedown)="onSliderStart()" (mouseup)="onSliderEnd()"
             class="w-32 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
             style="background: linear-gradient(to right, #2655FF 0%, #2655FF calc(var(--progress, 0) * 100%), #e5e7eb calc(var(--progress, 0) * 100%), #e5e7eb 100%);"
             [style.--progress]="(estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) > 0 ? currentTime() / (estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) : 0" />
+          <!-- Progress Time -->
           <span class="text-xs text-gray-500">{{ formatTime(currentTime()) }} / {{ formatTime(estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) }}</span>
         </div>
+
+        <!-- <div class="flex items-center gap-2">
+          <span class="text-xs text-red-500">-16:50 remaining (1/7)</span>
+          <button
+            class="px-2 py-1 text-xs text-white btn-gradient-primary rounded hover:opacity-90 transition-all">0.90x</button>
+          <span class="text-xs text-gray-600 font-medium">David</span>
+          <button class="cursor-pointer hover:opacity-80 transition-opacity" title="Open Chat">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 fill-primary" viewBox="0 0 322.88 119.35">
+              <path
+                d="M57.49,29.2V23.53a14.41,14.41,0,0,1-2-.93A12.18,12.18,0,0,1,50.44,7.5a12.39,12.39,0,0,1,2.64-3.95A12.21,12.21,0,0,1,57,.92,12,12,0,0,1,61.66,0,12.14,12.14,0,0,1,72.88,7.5a12.14,12.14,0,0,1,0,9.27,12.08,12.08,0,0,1-2.64,3.94l-.06.06a12.74,12.74,0,0,1-2.36,1.83,11.26,11.26,0,0,1-2-.93V29.2H94.3a15.47,15.47,0,0,1,15.42,15.43v2.29H115a7.93,7.93,0,0,1,7.9,7.91V73.2A7.93,7.93,0,0,1,115,81.11h-5.25v2.07A15.48,15.48,0,0,1,94.3,98.61H55.23L31.81,118.72a2.58,2.58,0,0,1-3.65-.29,2.63,2.63,0,0,1-.63-1.85l1.25-18h-.21A15.45,15.45,0,0,1,13.16,83.18V81.11H7.91A7.93,7.93,0,0,1,0,73.2V54.83a7.93,7.93,0,0,1,7.9-7.91h5.26v-2.3A15.45,15.45,0,0,1,28.57,29.2H57.49ZM82.74,47.32a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm-42.58,0a9.36,9.36,0,1,1-9.36,9.36,9.36,9.36,0,0,1,9.36-9.36Zm6.38,31.36a2.28,2.28,0,0,1-.38-.38,2.18,2.18,0,0,1-.52-1.36,2.21,2.21,0,0,1,.46-1.39,2.4,2.4,0,0,1,.39-.39,3.22,3.22,0,0,1,3.88-.08A22.36,22.36,0,0,0,56,78.32a14.86,14.86,0,0,0,5.47,1A16.18,16.18,0,0,0,67,78.22,25.39,25.39,0,0,0,72.75,75a3.24,3.24,0,0,1,3.89.18,3,3,0,0,1,.37.41,2.22,2.22,0,0,1,.42,1.4,2.33,2.33,0,0,1-.58,1.35,2.29,2.29,0,0,1-.43.38,30.59,30.59,0,0,1-7.33,4,22.28,22.28,0,0,1-7.53,1.43A21.22,21.22,0,0,1,54,82.87a27.78,27.78,0,0,1-7.41-4.16l0,0ZM94.29,34.4H28.57A10.26,10.26,0,0,0,18.35,44.63V83.18A10.26,10.26,0,0,0,28.57,93.41h3.17a2.61,2.61,0,0,1,2.41,2.77l-1,14.58L52.45,94.15a2.56,2.56,0,0,1,1.83-.75h40a10.26,10.26,0,0,0,10.22-10.23V44.62A10.24,10.24,0,0,0,94.29,34.4Z" />
+            </svg>
+          </button>
+        </div> -->
       </div>
+
+      <!-- Action Buttons -->
+      <!-- <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+        <div class="flex items-center gap-4">
+          <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+            </svg>
+            Helpful
+          </button>
+          <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            Ask Question
+          </button>
+          <button class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Need Help?
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="px-4 py-2 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Previous</button>
+          <button
+            class="btn-gradient-primary px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-all">Next
+            Lesson</button>
+        </div>
+      </div> -->
     </div>
-    }
 
     <!-- Tabs Section -->
     <div class="bg-white border-t border-gray-200">
@@ -546,7 +587,7 @@
         }
       </div>
       <!-- Tab Content -->
-      <div class="flex gap-6 p-4">
+      <div class="flex gap-6 p-4 detailsec">
         <div class="flex-1 bg-white rounded-xl">
           @if (activeTab() === 'overview') {
           <app-overview [courseTypeId]="courseTree()?.courseTypeId" [title]="courseTree()?.courseTitle"
@@ -671,7 +712,7 @@
             <p class="text-[11px] leading-relaxed">Typing...</p>
           </div>
         </div>
-      }
+        }
       </div>
     </div>
 

@@ -1,4 +1,6 @@
-import { Component, Output, EventEmitter, Input, signal } from '@angular/core';
+import { Component, Output, EventEmitter, Input, signal, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { AssessmentService } from '../../../services/assessment.service';
 // import { DecimalPipe } from '@angular/common';
 
 @Component({
@@ -12,6 +14,20 @@ export class FailedAssessment {
   @Input() resultData: any = null;
   @Output() next = new EventEmitter<void>();
   @Output() goBack = new EventEmitter<void>();
+
+  private assessmentService = inject(AssessmentService);
+  private router = inject(Router);
+
+  ngOnInit() {
+    // Update assessment service with latest result data
+    if (this.resultData) {
+      this.assessmentService.updateAttemptStatus(this.resultData);
+    }
+  }
+
+  navigateToCourse() {
+    this.router.navigate(['/course']);
+  }
 
   get isMaxAttempts(): boolean {
     return this.resultData?.resultStatus === 'MaxAttemptsExceeded' || this.attemptsRemaining <= 0;
