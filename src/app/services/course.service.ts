@@ -299,6 +299,24 @@ export class CourseService {
     });
   }
 
+  downloadNotebookPdf(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, token: string | null): Observable<Blob> {
+    let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}/download-pdf`;
+    const params: string[] = [];
+    if (courseCertificateId) {
+      params.push(`courseCertificateId=${courseCertificateId}`);
+    }
+    if (professionalCertificateId) {
+      params.push(`professionalCertificateId=${professionalCertificateId}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return this.http.get(url, {
+      headers: this.getHeaders(token),
+      responseType: 'blob'
+    });
+  }
+
   toggleChat() {
     this.isChatOpen.set(!this.isChatOpen());
   }

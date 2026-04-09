@@ -82,6 +82,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   courseLevel = signal<string>('');
   existingSeasionCourseId = signal<number>(0)
   videoDuration = signal<number>(0)
+  videoCurrentTime = signal<number>(0)
   assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts'>('none');
   assessmentResult = signal<any>(null);
   completeOrderPayload = signal<any>({
@@ -185,7 +186,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     );
   });
 
-  currentTime = computed(() => this.speechService.currentTime());
+  currentTime = computed(() => {
+    // Use video time if videoUrl is present, otherwise use speech service time
+    return this.courseTree()?.videoUrl ? this.videoCurrentTime() : this.speechService.currentTime();
+  });
   totalDuration = computed(() => this.speechService.totalDuration());
   calculatedTotalDuration = signal<number>(0);
   estimatedTimeMinutes = signal<number>(0);
@@ -333,25 +337,43 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.route.queryParams.subscribe(params => {
       const token = params['t'] || params['token'];
       const courseId = params['courseId'];
+      const careerPathLevelDetailId = params['careerPathLevelDetailId'];
       const lectureId = params['lectureId'];
 
-      if (token && courseId) {
+      // Check if this is a career path course
+      if (careerPathLevelDetailId) {
+        this.isCareerPathCourse = true;
+      }
+
+      const targetId = careerPathLevelDetailId || courseId;
+
+      if (token && targetId) {
+        console.log('🔐 DEBUG MODE - Full URL with token:', window.location.href);
+        console.log('🔑 Token:', token);
+        if (careerPathLevelDetailId) {
+          console.log('🎯 Career Path Level Detail ID:', careerPathLevelDetailId);
+          console.log('📚 Course Type: Career Path');
+        } else {
+          console.log('📚 Course ID:', courseId);
+        }
+        console.log('📖 Lecture ID:', lectureId || 'N/A');
+        
         this.authService.storeSession({
-          courseId: parseInt(courseId),
+          courseId: parseInt(targetId),
           lectureId: lectureId || null,
           sessionToken: token
         });
-        this.existingSeasionCourseId.set(parseInt(courseId));
+        this.existingSeasionCourseId.set(parseInt(targetId));
         
-        // Remove token from URL immediately after storing it
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: {},
-          queryParamsHandling: '',
-          replaceUrl: true
-        });
+        // Keep token and parameters in URL - commented out for debugging
+        // this.router.navigate([], {
+        //   relativeTo: this.route,
+        //   queryParams: {},
+        //   queryParamsHandling: '',
+        //   replaceUrl: true
+        // });
         
-        this.loadCourseDataWithToken(parseInt(courseId), token);
+        this.loadCourseDataWithToken(parseInt(targetId), token);
       } else {
         const existingSession = this.authService.getStoredSession();
         if (existingSession?.courseId && existingSession?.sessionToken) {
@@ -488,7 +510,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.completeOrderPayload.set({
               courseCertificateId: targetCert.courseCertificateId,
               shortCourseId: targetSc.shortCourseId,
-              professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
+              professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId,
+              careerPathLevelMapId: this.isCareerPathCourse ? this.courseTree()?.careerPathLevel?.careerPathLevelMapId : null
             });
             this.selectFirstShortCourse(targetSc);
             this.refreshProgress();
@@ -512,7 +535,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.completeOrderPayload.set({
             courseCertificateId: tree.courseId,
             shortCourseId: targetSc.shortCourseId,
-            professionalCertificateId: null
+            professionalCertificateId: null,
+            careerPathLevelMapId: null
           });
           this.selectFirstShortCourse(targetSc);
           this.refreshProgress();
@@ -523,7 +547,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.completeOrderPayload.set({
             courseCertificateId: null,
             shortCourseId: tree.courseId,
-            professionalCertificateId: null
+            professionalCertificateId: null,
+            careerPathLevelMapId: null
           })
           const firstLec = tree.shortCourseLectures[0];
           this.selectFirstLecture(firstLec);
@@ -914,7 +939,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.completeOrderPayload.set({
       shortCourseId: tree?.courseId,
       courseCertificateId: null,
-      professionalCertificateId: null
+      professionalCertificateId: null,
+      careerPathLevelMapId: null
     });
     this.stopSpeech();
     this.courseTitle.set(lec.title || lec.courseTitle || 'Lecture');
@@ -997,7 +1023,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.activeCertificateId() || sc.certificateId,
-      professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
+      professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId,
+      careerPathLevelMapId: this.isCareerPathCourse ? this.courseTree()?.careerPathLevel?.careerPathLevelMapId : null
     });
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
@@ -1066,7 +1093,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.courseTree()?.courseId,
-      professionalCertificateId: null
+      professionalCertificateId: null,
+      careerPathLevelMapId: null
     });
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
@@ -1370,6 +1398,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   onVideoDurationChange(duration: number) {
     this.videoDuration.set(duration);
     // videoDuration signal will be used by getShortCourseDuration
+  }
+
+  onVideoTimeUpdate(time: number) {
+    this.videoCurrentTime.set(time);
   }
 
 
@@ -1952,7 +1984,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.activeCertificateId() || sc.certificateId,
-      professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId
+      professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId,
+      careerPathLevelMapId: this.isCareerPathCourse ? this.courseTree()?.careerPathLevel?.careerPathLevelMapId : null
     });
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);
@@ -1986,7 +2019,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.courseTree()?.courseId,
-      professionalCertificateId: null
+      professionalCertificateId: null,
+      careerPathLevelMapId: null
     });
     this.stopSpeech();
     this.activeShortCourseId.set(sc.shortCourseId);

@@ -104,6 +104,14 @@ export class SimpleVideoPlayerComponent implements AfterViewInit, OnChanges, OnD
   handleKeyboardShortcuts(event: KeyboardEvent) {
     if (!this.keyboardShortcutsEnabled || this.hasVideoError) return;
 
+    // Don't trigger shortcuts if user is typing in an input field
+    const target = event.target as HTMLElement;
+    const isTyping = target.tagName === 'INPUT' || 
+                     target.tagName === 'TEXTAREA' || 
+                     target.isContentEditable;
+    
+    if (isTyping) return;
+
     // Prevent default behavior for video controls
     const videoKeys = [' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'f', 'm', 'k', 'j', 'l', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     if (videoKeys.includes(event.key)) {

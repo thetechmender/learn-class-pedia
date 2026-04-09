@@ -372,7 +372,8 @@
         [videoUrl]="courseTree()?.videoUrl"
         [showControls]="true"
         (ended)="onLastLectureComplete()"
-        (durationChange)="onVideoDurationChange($event)">
+        (durationChange)="onVideoDurationChange($event)"
+        (timeupdate)="onVideoTimeUpdate($event)">
       </app-simple-video-player>
       } @else {
       <!-- Text/Audio Content Display -->
@@ -555,8 +556,13 @@
           <app-key-points [slug]="courseSlug()" [courseTypeId]="courseTree()?.courseTypeId" [courseTree]="courseTree()" [activeShortCourseId]="activeShortCourseId()" [activeCertificateId]="activeCertificateId()"></app-key-points>
           }
           @if (activeTab() === 'notebook') {
-          <app-notebook [orderPayload]="completeOrderPayload()" [videoTimeSeconds]="currentTime()"
+          <app-notebook 
+            [orderPayload]="completeOrderPayload()" 
+            [videoTimeSeconds]="currentTime()"
             [isPlaying]="isPlaying()"
+            [courseTitle]="courseTitle()"
+            [courseTree]="courseTree()"
+            [currentShortCourse]="currentShortCourse()"
             (notePlaying)="isPlaying.set(true)"
             (pauseVideo)="pauseVideoFromNotebook()"
             (resumeVideo)="resumeVideoFromNotebook()"></app-notebook>

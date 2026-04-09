@@ -87,6 +87,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
       shortCourseId: this.orderPayload?.shortCourseId || null,
       courseCertificateId: this.orderPayload?.courseCertificateId || null,
       professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null,
       answers: this.questions().map(data => {
         return {
           questionId: data?.id,

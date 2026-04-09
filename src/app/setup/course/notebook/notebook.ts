@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CourseService } from '../../../services/course.service';
 import { AuthService } from '../../../services/auth.service';
 import { SpeechService } from '../../../services/speech.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-notebook',
@@ -13,6 +14,9 @@ export class Notebook implements OnInit, OnChanges {
   @Input() orderPayload: any = null;
   @Input() videoTimeSeconds: number = 0;
   @Input() isPlaying: boolean = false;
+  @Input() courseTitle: string = '';
+  @Input() courseTree: any = null;
+  @Input() currentShortCourse: any = null;
   @Output() notePlaying = new EventEmitter<void>();
   @Output() pauseVideo = new EventEmitter<void>();
   @Output() resumeVideo = new EventEmitter<void>();
@@ -22,9 +26,11 @@ export class Notebook implements OnInit, OnChanges {
   private courseService = inject(CourseService);
   private authService = inject(AuthService);
   private speechService = inject(SpeechService);
+  private toastr = inject(ToastrService);
 
   isAddingNote = signal(false);
   isSaving = signal(false);
+  isDownloadingPdf = signal(false);
   noteText = signal('');
   savedNotes = signal<any[]>([]);
   editingNoteId = signal<number | null>(null);
@@ -170,33 +176,46 @@ export class Notebook implements OnInit, OnChanges {
     const notes = this.savedNotes();
     if (notes.length === 0) return;
 
-    let content = '<html><head><title>Course Notes</title><style>';
-    content += '@media print { body { margin: 0; } }';
-    content += 'body { font-family: Poppins, Arial, sans-serif; padding: 40px; color: #1a1a2e; }';
-    content += 'h1 { font-size: 22px; margin-bottom: 20px; color: #0062CC; }';
-    content += '.note { border-bottom: 1px solid #e5e7eb; padding: 12px 0; }';
-    content += '.time { color: #0062CC; font-size: 13px; font-weight: 600; }';
-    content += '.text { font-size: 14px; color: #374151; margin-top: 4px; }';
-    content += '</style></head><body>';
-    content += '<h1>Course Notes</h1>';
+    const p = this.orderPayload;
+    if (!p?.shortCourseId) return;
 
-    notes.forEach((note: any) => {
-      content += '<div class="note">';
-      content += `<div class="time">${this.formatTime(note.videoTimeSeconds || 0)}</div>`;
-      content += `<div class="text">${note.noteText}</div>`;
-      content += '</div>';
+    const token = this.authService.getToken();
+    
+    console.log('📥 Downloading PDF with parameters:', {
+      shortCourseId: p.shortCourseId,
+      courseCertificateId: p.courseCertificateId,
+      professionalCertificateId: p.professionalCertificateId
     });
-
-    content += '</body></html>';
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(content);
-      printWindow.document.close();
-      printWindow.onload = () => {
-        printWindow.print();
-      };
-    }
+    
+    this.isDownloadingPdf.set(true);
+    this.toastr.info('Generating your PDF...', 'Please wait');
+    
+    this.courseService.downloadNotebookPdf(
+      p.shortCourseId, 
+      p.courseCertificateId, 
+      p.professionalCertificateId, 
+      token
+    ).subscribe({
+      next: (blob: Blob) => {
+        // Create a download link and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Course_Notes_${p.shortCourseId}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        this.isDownloadingPdf.set(false);
+        this.toastr.success('PDF downloaded successfully!', 'Success');
+      },
+      error: (err: any) => {
+        console.error('Download PDF Error:', err);
+        this.isDownloadingPdf.set(false);
+        this.toastr.error('Failed to download PDF. Please try again.', 'Download Error');
+      }
+    });
   }
 
   formatTime(seconds: number): string {

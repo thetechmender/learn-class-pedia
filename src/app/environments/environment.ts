@@ -10,7 +10,7 @@ export const ENVIRONMENTS = {
     ENV_NAME: 'staging'
   },
   production: {
-    API_URL: 'https://class.thetechmenders.com/api',
+    API_URL: 'https://localhost:7224/api',
     DEBUG: false,
     ENV_NAME: 'production'
   }
