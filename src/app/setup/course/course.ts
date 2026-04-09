@@ -18,13 +18,14 @@ import { FailedAssessment } from '../assessment/failed-assessment/failed-assessm
 import { ClearedAssessment } from '../assessment/cleared-assessment/cleared-assessment';
 import { Quiz } from './quiz/quiz';
 import { EnrolledCourses } from './enrolled-courses/enrolled-courses';
+import { SimpleVideoPlayerComponent } from './simple-video-player/simple-video-player';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -80,6 +81,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   completionData = signal<any>(null);
   courseLevel = signal<string>('');
   existingSeasionCourseId = signal<number>(0)
+  videoDuration = signal<number>(0)
   assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts'>('none');
   assessmentResult = signal<any>(null);
   completeOrderPayload = signal<any>({
@@ -696,6 +698,17 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   getShortCourseDuration(sc: any): string {
     if (!isPlatformBrowser(this.platformId)) return '0min';
 
+    // If videoUrl exists, use videoDuration signal (from video player)
+    if (sc.videoUrl) {
+      const duration = this.videoDuration();
+      if (duration > 0) {
+        // Format as MM:SS for video
+        const minutes = Math.floor(duration / 60);
+        const seconds = Math.floor(duration % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+    }
+    // Otherwise calculate text/audio duration
     let totalSeconds = 0;
     if (sc.lectures && sc.lectures.length > 0) {
       sc.lectures.forEach((lec: any) => {
@@ -838,6 +851,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       title: tree?.courseTitle,
       lectures: allLectures.map((l: any) => ({ ...l, lectureSections: [l] }))
     });
+
+    // Set videoUrl from lecture to courseTree for video player (courseTypeId 3)
+    if (tree && lec.videoUrl) {
+      this.courseTree.set({ ...tree, videoUrl: lec.videoUrl, videoDuration: lec.videoDuration || 0 });
+    } else if (tree && !lec.videoUrl) {
+      // Remove videoUrl if lecture doesn't have one
+      const { videoUrl, videoDuration, ...treeWithoutVideo } = tree;
+      this.courseTree.set(treeWithoutVideo);
+    }
 
     // Calculate total duration for short courses (courseTypeId=3)
     if (tree?.courseTypeId === 3) {
@@ -1002,6 +1024,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else if (tree && !sc.videoUrl) {
       const { videoUrl, ...treeWithoutVideo } = tree;
       this.courseTree.set(treeWithoutVideo);
+    }
+    
     // Hide assessment components when user clicks on lecture after failing
     if (this.assessmentStep() === 'failed') {
       this.assessmentStep.set('none');
@@ -1070,6 +1094,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else if (tree && !sc.videoUrl) {
       const { videoUrl, ...treeWithoutVideo } = tree;
       this.courseTree.set(treeWithoutVideo);
+    }
+    
     // Hide assessment components when user clicks on lecture after failing
     if (this.assessmentStep() === 'failed') {
       this.assessmentStep.set('none');
@@ -1339,6 +1365,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     //     console.error('Complete Course Error:', err);
     //   }
     // });
+  }
+
+  onVideoDurationChange(duration: number) {
+    this.videoDuration.set(duration);
+    // videoDuration signal will be used by getShortCourseDuration
   }
 
 
