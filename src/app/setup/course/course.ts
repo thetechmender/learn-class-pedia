@@ -90,6 +90,22 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     courseCertificateId: null,
     professionalCertificateId: null
   });
+  
+  // Temporary flag for career path courses
+  isCareerPathCourse = false;
+  
+  // Computed signal for career path level label
+  careerPathLevelLabel = computed(() => {
+    if (!this.isCareerPathCourse || !this.courseTree()?.careerPathLevel) return '';
+    const levelId = this.courseTree().careerPathLevel.levelId;
+    switch(levelId) {
+      case 1: return 'Beginner Level';
+      case 2: return 'Intermediate Level';
+      case 3: return 'Advanced Level';
+      default: return '';
+    }
+  });
+  
   private destroy$ = new Subject<void>();
   private progressInterval: any = null;
   private progressStartTime: number = 0;
@@ -342,7 +358,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private loadCourseDataWithToken(courseId: number, token: string | null) {
     this.isLoading.set(true);
 
-    this.courseService.getCourseDetailsV2WithToken(courseId, token).pipe(
+    // Use career path API if flag is true, otherwise use regular course API
+    const courseDetailsApi = this.isCareerPathCourse 
+      ? this.courseService.getCareerPathDetailWithToken(courseId, token)
+      : this.courseService.getCourseDetailsV2WithToken(courseId, token);
+
+    courseDetailsApi.pipe(
       map((res: any) => res?.isSuccess !== undefined ? res.data : res),
       switchMap((courseDetails: any) => {
         this.courseSlug.set(courseDetails?.slug || '');
@@ -353,18 +374,47 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.estimatedTimeMinutes.set(courseDetails.estimatedTimeMinutes);
         }
         const courseTypeIdFromDetails = courseDetails?.courseTypeId;
-        return this.courseService.getCourseTreeV2WithToken(courseId, token).pipe(
+        
+        // Use career path tree API if flag is true, otherwise use regular tree API
+        const treeApi = this.isCareerPathCourse
+          ? this.courseService.getCareerPathTreeWithToken(courseId, token)
+          : this.courseService.getCourseTreeV2WithToken(courseId, token);
+        
+        return treeApi.pipe(
           map((treeRes: any) => treeRes?.isSuccess !== undefined ? treeRes.data : treeRes),
           map((tree: any) => {
-            // Always use courseTypeId from the details API as the authoritative source
-            if (courseTypeIdFromDetails && tree) {
-              tree.courseTypeId = courseTypeIdFromDetails;
+            // For career path courses, transform the structure to match professional course format
+            if (this.isCareerPathCourse && tree) {
+              // Set courseTypeId to 1 (Professional) for career path courses
+              tree.courseTypeId = 1;
+              
+              // Transform careerPathLevel to professionalCourse structure
+              if (tree.careerPathLevel) {
+                // Merge title and description from courseDetails into careerPathLevel
+                tree.careerPathLevel = {
+                  ...tree.careerPathLevel,
+                  title: courseDetails?.title || tree.careerPathLevel.title,
+                  description: courseDetails?.description || tree.careerPathLevel.description
+                };
+                
+                tree.professionalCourse = {
+                  professionalCourseId: tree.careerPathLevel.careerPathLevelMapId,
+                  courseCertificates: tree.careerPathLevel.courseCertificates || []
+                };
+                // Keep careerPathLevel for Overview tab
+              }
+            } else {
+              // Always use courseTypeId from the details API as the authoritative source
+              if (courseTypeIdFromDetails && tree) {
+                tree.courseTypeId = courseTypeIdFromDetails;
+              }
             }
+            
             this.courseTree.set(tree);
             return this.courseService.extractLectureSectionsFromTree(tree);
           })
-        );
-      })
+        )
+      }),
     ).subscribe({
       next: (data: any) => {
         if (!data || !Array.isArray(data) || data.length === 0) {
@@ -743,6 +793,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.courseTitle.set(sc.title);
     this.isContentReady.set(false);
     this.prepareLectureSectionsAndSetActive(sc);
+    
+    // Set videoUrl from shortCourse to courseTree for video player (courseTypeId 1 & 2)
+    const tree = this.courseTree();
+    if (tree && sc.videoUrl) {
+      this.courseTree.set({ ...tree, videoUrl: sc.videoUrl });
+    } else if (tree && !sc.videoUrl) {
+      // Remove videoUrl if shortCourse doesn't have one
+      const { videoUrl, ...treeWithoutVideo } = tree;
+      this.courseTree.set(treeWithoutVideo);
+    }
   }
 
   selectFirstLecture(lec: any) {
@@ -917,6 +977,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.prepareLectureSectionsAndSetActive(sc);
     this.refreshProgress();
+    
+    // Set videoUrl from shortCourse to courseTree for video player (courseTypeId 1)
+    if (tree && sc.videoUrl) {
+      this.courseTree.set({ ...tree, videoUrl: sc.videoUrl });
+    } else if (tree && !sc.videoUrl) {
+      const { videoUrl, ...treeWithoutVideo } = tree;
+      this.courseTree.set(treeWithoutVideo);
+    }
   }
 
   onShortCourseSelect(sc: any) {
@@ -964,6 +1032,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.prepareLectureSectionsAndSetActive(sc);
     this.refreshProgress();
+    
+    // Set videoUrl from shortCourse to courseTree for video player (courseTypeId 2)
+    if (tree && sc.videoUrl) {
+      this.courseTree.set({ ...tree, videoUrl: sc.videoUrl });
+    } else if (tree && !sc.videoUrl) {
+      const { videoUrl, ...treeWithoutVideo } = tree;
+      this.courseTree.set(treeWithoutVideo);
+    }
   }
 
   playShortCourse() {
@@ -1210,8 +1286,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         // courseTypeId=3: Start Assessment directly (no quiz)
         this.startAssessment();
       } else if (tree.courseTypeId === 1 || tree.courseTypeId === 2) {
-        // courseTypeId=1&2: Show Quiz tab
-        this.activeTab.set('quiz');
+        // courseTypeId=1&2: Show Quiz tab and scroll to it
+        this.scrollToQuiz();
       }
     });
     // this.courseService.completeCourse(payload).pipe(takeUntil(this.destroy$)).subscribe({
@@ -1391,6 +1467,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           // Preserve courseTypeId from the details API (authoritative source)
           if (tree && courseTypeId) {
             tree.courseTypeId = courseTypeId;
+          }
+          // Preserve videoUrl if it exists in current tree (for courseTypeId 1 & 2)
+          const currentTree = this.courseTree();
+          if (currentTree?.videoUrl) {
+            tree.videoUrl = currentTree.videoUrl;
           }
           this.courseTree.set(tree);
           if (callback) callback();
@@ -1820,6 +1901,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.refreshProgress();
       if (callback) callback();
     });
+    
+    // Set videoUrl from shortCourse to courseTree for video player (courseTypeId 1)
+    const tree = this.courseTree();
+    if (tree && sc.videoUrl) {
+      this.courseTree.set({ ...tree, videoUrl: sc.videoUrl });
+    } else if (tree && !sc.videoUrl) {
+      const { videoUrl, ...treeWithoutVideo } = tree;
+      this.courseTree.set(treeWithoutVideo);
+    }
   }
 
   private _selectShortCourseType2Direct(sc: any, callback?: () => void) {
@@ -1845,6 +1935,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.refreshProgress();
       if (callback) callback();
     });
+    
+    // Set videoUrl from shortCourse to courseTree for video player (courseTypeId 2)
+    const tree = this.courseTree();
+    if (tree && sc.videoUrl) {
+      this.courseTree.set({ ...tree, videoUrl: sc.videoUrl });
+    } else if (tree && !sc.videoUrl) {
+      const { videoUrl, ...treeWithoutVideo } = tree;
+      this.courseTree.set(treeWithoutVideo);
+    }
   }
 
   goToPreviousShortCourse() {

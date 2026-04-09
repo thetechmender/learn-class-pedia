@@ -20,11 +20,13 @@ export class Overview implements OnInit, OnChanges {
   @Input() courseTree: any = null;
   @Input() courseId: any = null;
   @Input() totalDuration: number = 0;
+  @Input() isCareerPathCourse: boolean = false;
 
   courseService = inject(CourseService);
   private authService = inject(AuthService);
   private destroy$ = new Subject<void>();
   expandedCertificates = signal<Set<number>>(new Set());
+  expandedCourses = signal<Map<string, boolean>>(new Map());
   relatedCourses = signal<any>(null);
   overView = signal<any>(null);
   isLearningOutcomesExpanded = signal<boolean>(true);
@@ -45,6 +47,21 @@ export class Overview implements OnInit, OnChanges {
   }
 
   ngOnInit() {
+    // For career path courses, use data from courseTree instead of API
+    if (this.isCareerPathCourse && this.courseTree?.careerPathLevel) {
+      this.overView.set({
+        title: this.courseTree.careerPathLevel.title,
+        overview: this.courseTree.careerPathLevel.description,
+        releaseDate: new Date(),
+        averageRating: 0,
+        reviewCount: 0,
+        reviews: [],
+        courseTags: [],
+        estimatedTimeMinutes: 0
+      });
+      return;
+    }
+    
     // this._fetchRelatedCourses();
     switch (this.courseTypeId) {
       case 1:
@@ -57,7 +74,6 @@ export class Overview implements OnInit, OnChanges {
         this._fetchShortCourse();
         break;
     }
-
   }
 
   toggleCertificate(certId: number) {
@@ -72,6 +88,18 @@ export class Overview implements OnInit, OnChanges {
 
   isCertificateExpanded(certId: number): boolean {
     return this.expandedCertificates().has(certId);
+  }
+
+  toggleCourse(certId: number, courseId: number) {
+    const key = `${certId}-${courseId}`;
+    const current = new Map(this.expandedCourses());
+    current.set(key, !current.get(key));
+    this.expandedCourses.set(current);
+  }
+
+  isCourseExpanded(certId: number, courseId: number): boolean {
+    const key = `${certId}-${courseId}`;
+    return this.expandedCourses().get(key) || false;
   }
 
   getTotalLectures(): number {

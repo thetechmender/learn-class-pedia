@@ -26,6 +26,12 @@
 
     <!-- Lecture List -->
     <div class="flex-1 overflow-y-auto overscroll-contain">
+      <!-- Career Path Level Label -->
+      @if (isCareerPathCourse && careerPathLevelLabel()) {
+      <div class="px-4 py-2 bg-primary/5 border-b border-primary/10">
+        <span class="text-xs font-semibold text-primary">{{ careerPathLevelLabel() }}</span>
+      </div>
+      }
 
       @if (courseTree()) {
       @if (courseTree().courseTypeId === 1 && courseTree().professionalCourse?.courseCertificates) {
@@ -544,7 +550,7 @@
         <div class="flex-1 bg-white rounded-xl">
           @if (activeTab() === 'overview') {
           <app-overview [courseTypeId]="courseTree()?.courseTypeId" [title]="courseTree()?.courseTitle"
-            [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()" [totalDuration]="calculatedTotalDuration()"></app-overview>
+            [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()" [totalDuration]="calculatedTotalDuration()" [isCareerPathCourse]="isCareerPathCourse"></app-overview>
           }
           @if (activeTab() === 'keyPoints') {
           <app-key-points [slug]="courseSlug()" [courseTypeId]="courseTree()?.courseTypeId" [courseTree]="courseTree()" [activeShortCourseId]="activeShortCourseId()" [activeCertificateId]="activeCertificateId()"></app-key-points>

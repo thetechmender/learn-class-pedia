@@ -78,6 +78,19 @@ export class CourseService {
     });
   };
 
+  // Career Path APIs
+  getCareerPathDetailWithToken(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/careerPathDetail/${courseId}`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
+  getCareerPathTreeWithToken(courseId: number, token: string | null): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/careerPathLevel/${courseId}/tree`, {
+      headers: this.getHeaders(token)
+    });
+  }
+
   getRelatedCourse(courseIds: string | null = null, token: string | null) {
     return this.http.post<any>(
       `${this.apiUrl}/Courses/SimilarCourses`,

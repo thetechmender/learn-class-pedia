@@ -1,5 +1,110 @@
 <div class="p-2 pb-20">
-  <div class="flex gap-8">
+  @if(isCareerPathCourse && courseTree?.careerPathLevel) {
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-3">{{ courseTree.careerPathLevel.title }}</h2>
+    <p class="text-sm text-gray-600 leading-relaxed">
+      {{ courseTree.careerPathLevel.description }}
+    </p>
+  </div>
+
+  @if(courseTree.professionalCourse?.courseCertificates) {
+  @for (cert of courseTree.professionalCourse.courseCertificates; track cert.courseCertificateId; let certIndex = $index) {
+  <div class="mb-8 bg-white rounded-xl border border-gray-200 p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Left Column: Image, Description, Stats -->
+      <div>
+        <p class="text-primary text-sm font-medium mb-2">Course Certificate {{ certIndex + 1 }}</p>
+        <h3 class="text-xl font-bold text-gray-900 mb-4">{{ cert.title }}</h3>
+
+        <!-- Certificate Image -->
+        <div class="mb-4">
+          <img [src]="cert.thumbnail || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500'" 
+               [alt]="cert.title"
+               class="w-full rounded-lg object-cover bg-gray-100" style="height: 250px;">
+        </div>
+
+        <!-- Description -->
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">
+          {{ cert.description || 'Learn statistics, Python fundamentals, data handling, and basic analytical techniques through practical examples and guided exercises.' }}
+        </p>
+
+        <!-- Stats -->
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full text-sm font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            4.6
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+            <i class="ic-83"></i>
+            {{ cert.shortCourses?.length || 8 }} Lecture
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+            <i class="ic-73"></i>
+            08 Video
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+            <i class="ic-135"></i>
+            01 PDF
+          </span>
+        </div>
+      </div>
+
+      <!-- Right Column: Content Covered Accordion -->
+      <div>
+        <h4 class="text-lg font-bold text-gray-900 mb-4">Content Covered</h4>
+        
+        @if(cert.shortCourses && cert.shortCourses.length > 0) {
+        <div class="space-y-2">
+          @for(sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
+          @let isExpanded = isCourseExpanded(cert.courseCertificateId, sc.shortCourseId);
+          <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <!-- Accordion Header -->
+            <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                 (click)="toggleCourse(cert.courseCertificateId, sc.shortCourseId)">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-primary text-lg font-bold">{{ (scIndex + 1).toString().padStart(2, '0') }}</span>
+                <div class="flex-1">
+                  <h5 class="text-sm font-medium text-gray-900">{{ sc.title }}</h5>
+                  @if(isExpanded) {
+                  <div class="flex items-center gap-3 mt-2 text-xs text-primary">
+                    <span class="flex items-center gap-1">
+                      <i class="ic-83"></i>
+                      01 Lecture
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <i class="ic-73"></i>
+                      01 Video
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <i class="ic-135"></i>
+                      01 PDF
+                    </span>
+                  </div>
+                  }
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" 
+                   class="h-5 w-5 text-gray-400 transition-transform duration-200"
+                   [class.rotate-180]="isExpanded"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+  }
+  }
+
+  @if(!isCareerPathCourse) {
+  <div class="flex gap-8 overviewpadd">
     <!-- Left Column - Main Content -->
     <div class="flex-1">
       <!-- Course Details -->
@@ -48,7 +153,7 @@
       <div class="mb-0 bg-thirdly topisec rounded-xl p-5">
         <div class="flex items-center justify-between">
           <h3 class="text-primary text-xl font-semibold">Course content</h3>
-          <div class="flex items-center gap-6 text-sm text-primary">
+          <div class="flex items-center gap-6 text-sm text-primary contenttxt">
             <span class="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
@@ -166,23 +271,23 @@
           </h3>
           <div class="flex items-center gap-6 courses-serials sty1">
             <span class="flex items-center gap-2">
-
               <i class="ic-72 cl-iPrimary"></i>
-              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Lessons </span>
-                <span class="flex items-center gap-2">
-
-                  <i class="ic-73 cl-iPrimary"></i>
-                      {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Videos </span>
-                    <span class="flex items-center gap-2">
-
-                      <i class="ic-74 cl-iPrimary"></i>
-                          {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Pdfs </span>
-                        @if(courseTypeId != 3) {
-                                  <span class="flex items-center gap-2">
-
-                      <i class="ic-85 cl-iPrimary"></i>
-                          {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Quiz </span>
-                        }
+              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Lessons
+            </span>
+            <span class="flex items-center gap-2">
+              <i class="ic-73 cl-iPrimary"></i>
+              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Videos
+            </span>
+            <span class="flex items-center gap-2">
+              <i class="ic-74 cl-iPrimary"></i>
+              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Pdfs
+            </span>
+            @if(courseTypeId != 3) {
+            <span class="flex items-center gap-2">
+              <i class="ic-85 cl-iPrimary"></i>
+              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Quiz
+            </span>
+            }
           </div>
         </div>
       </div>
@@ -234,36 +339,8 @@
         }
       </div>
       }
-
-      <!-- Introduction to Sales - Clickable item (Accordion Header) -->
-      <!-- @if(this.overView()?.keyPoints?.length > 0) {
-      <div class="mb-6 flex items-center justify-between py-3 border-b border-dashed border-gray-300 cursor-pointer"
-        (click)="isLearningOutcomesExpanded.set(!isLearningOutcomesExpanded())">
-        <div class="flex items-center gap-2">
-          <span class="text-primary text-lg">◆</span>
-          <span class="text-primary text-lg font-medium">{{ title }}</span>
-        </div>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary transition-transform duration-200"
-          [class.rotate-90]="isLearningOutcomesExpanded()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </div>
-      @if(isLearningOutcomesExpanded()) {
-      <div class="mb-8">
-        <h3 class="text-lg font-bold text-gray-900 mb-4">Learning Outcomes</h3>
-        <div class="space-y-4">
-          @for(point of this.overView()?.keyPoints || []; track point; let i = $index) {
-          <div class="flex items-start gap-3">
-            <i class="ic-53 text-primary mt-1"></i>
-            <p class="text-sm text-gray-600 leading-relaxed">{{point}}</p>
-          </div>
-          }
-        </div>
-      </div>
       }
-      } -->
 
-      }
       <!-- Knowledge & Skills - Green/Cyan background -->
       @if(this.overView()?.courseTags?.length > 0) {
       <div class="mb-8 mt-3 bg-thirdly knowledge-box rounded-2xl p-6">
@@ -272,86 +349,16 @@
           Knowledge & Skills You Will Learn
         </h3>
         <div class="flex flex-wrap gap-3">
-          @for(tag of this.overView()?.courseTags || []; track tag; let i = $index) {
+          @for(tag of this.overView()?.courseTags || []; track tag) {
           <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">{{tag}}</span>
           }
         </div>
       </div>
       }
-      <!-- Learner Reviews & Feedback -->
-      <!-- <div class="bg-thirdly rounded-2xl p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-bold text-gray-900">Learner Reviews & Feedback</h3>
-
-          <div class="flex items-center gap-2">
-            <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              <span class="text-sm font-medium text-gray-700"> {{ getAverageReviewRating() }}</span>
-            </div>
-            <span class="text-sm text-gray-500 cursor-pointer hover:underline" (click)="openReviewsModal()">
-              | {{ this.overView()?.reviewCount }} Total Reviews
-            </span>
-          </div>
-
-        </div>
-
-        @for (
-        review of (this.overView()?.reviews || []).slice(0, 2);
-        track review;
-        let i = $index
-        ) {
-        <div class="bg-thirdly rounded-xl p-4 mb-4 border-b border-black/10">
-          <div class="flex items-start gap-4 ">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Adeel Farooq"
-              class="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
-
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="font-semibold text-gray-900">{{review?.customerName || ''}}</h4>
-                <div class="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  <span class="text-sm font-medium text-gray-700">{{review?.rating}}</span>
-                </div>
-              </div>
-              <p class="text-sm text-gray-600 leading-relaxed">"{{review?.reviewText}}"</p>
-            </div>
-
-          </div>
-        </div>
-        }
-      </div> -->
     </div>
-
-    <!-- Right Column - Related Courses -->
-    <!-- @if(relatedCourses()?.length > 0) {
-    <div class="w-90 flex-shrink-0">
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-lg font-bold text-gray-900 mb-6">Related Courses</h3>
-        @for(item of relatedCourses(); track item.id; let i = $index){
-        <a [href]="'https://classpedia.ai/' + item.slug" target="_blank" rel="noopener noreferrer">
-          <div class="flex gap-4 mb-5 cursor-pointer hover:opacity-80 transition-opacity">
-            <img [src]="item.thumbnail" [alt]="item.title"
-              class="w-24 h-16 rounded-lg flex-shrink-0 object-cover bg-gray-200">
-            <div class="flex-1">
-              <p class="text-xs text-gray-500 mb-1">{{item.courseType}}</p>
-              <h4 class="text-sm font-medium text-gray-800 leading-snug line-clamp-2">{{item.title}}</h4>
-            </div>
-          </div>
-        </a>
-        }
-      </div>
-    </div>
-    } -->
   </div>
-  <!-- Reviews Modal -->
+  }
+
   @if (isReviewsModalOpen()) {
   <app-course-reviews [reviews]="overView()?.reviews || []" (close)="closeReviewsModal()"></app-course-reviews>
   }
