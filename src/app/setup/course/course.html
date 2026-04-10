@@ -15,12 +15,19 @@
   }
 
   <!-- Left Sidebar -->
-  <aside class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300 fixed lg:relative lg:translate-x-0 z-50"
-    [class.translate-x-0]="isSidebarOpen()" [class.-translate-x-full]="!isSidebarOpen()" [class.lg:flex]="isSidebarOpen()" [class.hidden]="!isSidebarOpen()" style="height: 100%;">
+  <aside
+    class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300 fixed lg:relative lg:translate-x-0 z-50"
+    [class.translate-x-0]="isSidebarOpen()" [class.-translate-x-full]="!isSidebarOpen()"
+    [class.lg:flex]="isSidebarOpen()" [class.hidden]="!isSidebarOpen()" style="height: 100%;">
     <!-- Sidebar Header with Title and Close Button -->
     <div class="fondation">
       <div class="flex items-center justify-between">
-        <h5 class="text-primary font-medium fnt18 ">{{ courseTree()?.courseTitle || 'Course' }}</h5>
+        <h5 class="text-primary font-medium fnt18 flex flex-col">
+          @if (careerPathLevelDetailId()) {
+          <span class="text-xs text-gray-500">{{ careerPathLevelLabel() }} Level</span>
+          }
+          {{ courseTree()?.courseTitle || 'Course' }}
+        </h5>
         <button (click)="toggleSidebar()" class="text-gray-400 hover:text-gray-600 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -32,19 +39,14 @@
     <!-- Lecture List -->
     <div class="flex-1 overflow-y-auto overscroll-contain">
       <!-- Career Path Level Label -->
-      @if (isCareerPathCourse && careerPathLevelLabel()) {
-      <div class="px-4 py-2 bg-primary/5 border-b border-primary/10">
-        <span class="text-xs font-semibold text-primary">{{ careerPathLevelLabel() }}</span>
-      </div>
-      }
-
       @if (courseTree()) {
       @if (courseTree().courseTypeId === 1 && courseTree().professionalCourse?.courseCertificates) {
       @for (cert of courseTree().professionalCourse.courseCertificates; track cert.courseCertificateId) {
       @let certExpanded = isCertificateExpanded(cert.courseCertificateId);
       <div class="accord-sec">
         <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
-          [class.bg-optional]="activeCertificateId() === cert.courseCertificateId" (click)="toggleCertificate(cert.courseCertificateId)">
+          [class.bg-optional]="activeCertificateId() === cert.courseCertificateId"
+          (click)="toggleCertificate(cert.courseCertificateId)">
           <div class="flex items-center justify-between gap-2">
             <h3 class="text-sm font-semibold text-gray-600 leading-snug">{{ cert.title }}</h3>
             <svg xmlns="http://www.w3.org/2000/svg"
@@ -111,8 +113,7 @@
               Video
             </span>
             <!-- (click)="downloadShortCoursePdf(sc, $event)" -->
-            <span class="flex items-center gap-1 cursor-pointer hover:text-primary"
-               title="Download PDF">
+            <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -128,7 +129,7 @@
               </svg>
               Lecture
             </span>
-            <span class="flex items-center gap-1 cursor-pointer hover:text-primary" (click)="scrollToQuiz()">
+            <span class="flex items-center gap-1 hover:text-primary">
               <i class="ic-86"></i>
               Lecture Quiz
             </span>
@@ -195,8 +196,7 @@
             </svg>
             Video
           </span>
-          <span class="flex items-center gap-1 cursor-pointer hover:text-primary"
-           title="Download PDF">
+          <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -212,7 +212,7 @@
             </svg>
             Lecture
           </span>
-          <span class="flex items-center gap-1 cursor-pointer hover:text-primary" (click)="scrollToQuiz()">
+          <span class="flex items-center gap-1 hover:text-primary">
             <i class="ic-86"></i>
             Lecture Quiz
           </span>
@@ -256,7 +256,7 @@
               (click)="toggleShortCourse(lec.id); $event.stopPropagation()">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
-            } 
+            }
           </div>
         </div>
 
@@ -269,9 +269,9 @@
               <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
             </svg>
             @if (courseTree()?.videoUrl && videoDuration() > 0) {
-              {{ formatVideoDuration(videoDuration()) }}
+            {{ formatVideoDuration(videoDuration()) }}
             } @else {
-              {{ estimatedTimeMinutes() ? estimatedTimeMinutes() + 'm' : (lec.duration || '13:00') }}
+            {{ estimatedTimeMinutes() ? estimatedTimeMinutes() + 'm' : (lec.duration || '13:00') }}
             }
           </span>
           <span class="flex items-center gap-1">
@@ -282,8 +282,7 @@
             </svg>
             Video
           </span>
-          <span class="flex items-center gap-1 cursor-pointer hover:text-primary"
-            title="Download PDF">
+          <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -311,7 +310,15 @@
 
 
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
-      @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) && assessmentStep() === 'none') {
+      @if(courseTree()?.courseTypeId == 3 &&
+      assessmentStep() === 'none') {
+      <button (click)="startAssessment()"
+        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+        Move to Assessment
+      </button>
+      }
+      @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) &&
+      assessmentStep() === 'none') {
       <button (click)="startAssessment()"
         class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
         Final Assessment
@@ -320,8 +327,7 @@
       @if(assessmentStep() === 'cleared' || assessmentStep() === 'maxattempts') {
       <button
         class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[20px] text-xs  transition-all shadow-sm text-white"
-        [class.bg-green-600]="assessmentStep() === 'cleared'"
-        [class.bg-red-600]="assessmentStep() === 'maxattempts'">
+        [class.bg-green-600]="assessmentStep() === 'cleared'" [class.bg-red-600]="assessmentStep() === 'maxattempts'">
         Course Complete
       </button>
       }
@@ -363,8 +369,8 @@
       (goBack)="assessmentStep.set('start')" [slug]="courseSlug()"></app-failed-assessment>
     }
     @if (assessmentStep() === 'cleared') {
-    <app-cleared-assessment [resultData]="assessmentResult()" [courseTypeId]="courseTree()?.courseTypeId" (finish)="onAssessmentFinish()"
-      (goBack)="assessmentStep.set('start')"></app-cleared-assessment>
+    <app-cleared-assessment [resultData]="assessmentResult()" [courseTypeId]="courseTree()?.courseTypeId"
+      (finish)="onAssessmentFinish()" (goBack)="assessmentStep.set('start')"></app-cleared-assessment>
     }
     } @else if (lectureSection() && lectureSection().length > 0) {
 
@@ -372,11 +378,8 @@
     <div class="bg-[#081449] relative flex-shrink-0 group bigscreen">
       @if (courseTree()?.videoUrl) {
       <!-- Video Player for courses with videoUrl -->
-      <app-simple-video-player 
-        [videoUrl]="courseTree()?.videoUrl"
-        [showControls]="true"
-        (ended)="onLastLectureComplete()"
-        (durationChange)="onVideoDurationChange($event)">
+      <app-simple-video-player [videoUrl]="courseTree()?.videoUrl" [showControls]="true"
+        (ended)="onLastLectureComplete()" (durationChange)="onVideoDurationChange($event)">
       </app-simple-video-player>
       } @else {
       <!-- Text/Audio Content Display -->
@@ -384,7 +387,8 @@
       @if (courseTree()?.courseTypeId !== 3 && canGoPreviousShortCourse()) {
       <button (click)="goToPreviousShortCourse()"
         class="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
@@ -393,7 +397,8 @@
       @if (courseTree()?.courseTypeId !== 3 && canGoNextShortCourse()) {
       <button (click)="goToNextShortCourse()"
         class="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -402,7 +407,8 @@
       @if ((courseTree()?.courseTypeId === 1 || courseTree()?.courseTypeId === 2) && !canGoNextShortCourse()) {
       <button (click)="scrollToQuiz()"
         class="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -411,7 +417,8 @@
       <div id="content-container" class="px-12 py-8 h-[550px] overflow-y-auto overflow-x-hidden relative videotxt">
         @if (isContentReady()) {
         <!-- Always show content with highlight when content is ready -->
-        <div class="txtfont max-w-3xl text-white text-lg leading-loose px-4 mx-auto" [innerHTML]="highlightedContent()"></div>
+        <div class="txtfont max-w-3xl text-white text-lg leading-loose px-4 mx-auto" [innerHTML]="highlightedContent()">
+        </div>
 
         <!-- Play button overlay when paused - show for 5 seconds then hide -->
         @if (!isPlaying() && showPauseOverlay()) {
@@ -429,7 +436,7 @@
           <div class="text-center">
             <div (click)="playShortCourse()"
               class="w-24 h-24 rounded-full bg-thirdly flex items-center justify-center mx-auto mb-3 cursor-pointer hover:bg-[#00c494] transition-all shadow-lg">
-             <i class="ic-108"></i>
+              <i class="ic-108"></i>
             </div>
             <p class="text-white text-xl font-semibold">Ready To Learn</p>
 
@@ -477,13 +484,15 @@
             </svg>
           </button>
           <!-- Progress Slider (draggable) -->
-          <input type="range" min="0" [max]="estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()" [value]="currentTime()" (input)="onSliderChange($event)"
-            (mousedown)="onSliderStart()" (mouseup)="onSliderEnd()"
+          <input type="range" min="0"
+            [max]="estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()" [value]="currentTime()"
+            (input)="onSliderChange($event)" (mousedown)="onSliderStart()" (mouseup)="onSliderEnd()"
             class="w-32 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
             style="background: linear-gradient(to right, #2655FF 0%, #2655FF calc(var(--progress, 0) * 100%), #e5e7eb calc(var(--progress, 0) * 100%), #e5e7eb 100%);"
             [style.--progress]="(estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) > 0 ? currentTime() / (estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) : 0" />
           <!-- Progress Time -->
-          <span class="text-xs text-gray-500">{{ formatTime(currentTime()) }} / {{ formatTime(estimatedTimeMinutes() * 60 || calculatedTotalDuration() || totalDuration()) }}</span>
+          <span class="text-xs text-gray-500">{{ formatTime(currentTime()) }} / {{ formatTime(estimatedTimeMinutes() *
+            60 || calculatedTotalDuration() || totalDuration()) }}</span>
         </div>
       </div>
     </div>
@@ -553,22 +562,20 @@
         <div class="flex-1 bg-white rounded-xl">
           @if (activeTab() === 'overview') {
           <app-overview [courseTypeId]="courseTree()?.courseTypeId" [title]="courseTree()?.courseTitle"
-            [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()" [totalDuration]="calculatedTotalDuration()" [isCareerPathCourse]="isCareerPathCourse"></app-overview>
+            [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()"
+            [totalDuration]="calculatedTotalDuration()"
+            [careerPathLevelDetailId]="careerPathLevelDetailId()"></app-overview>
           }
           @if (activeTab() === 'keyPoints') {
-          <app-key-points [slug]="courseSlug()" [courseTypeId]="courseTree()?.courseTypeId" [courseTree]="courseTree()" [activeShortCourseId]="activeShortCourseId()" [activeCertificateId]="activeCertificateId()"></app-key-points>
+          <app-key-points [slug]="courseSlug()" [courseTypeId]="courseTree()?.courseTypeId" [courseTree]="courseTree()"
+            [activeShortCourseId]="activeShortCourseId()"
+            [activeCertificateId]="activeCertificateId()"></app-key-points>
           }
           @if (activeTab() === 'notebook') {
-          <app-notebook 
-            [orderPayload]="completeOrderPayload()" 
-            [videoTimeSeconds]="currentTime()"
-            [isPlaying]="isPlaying()"
-            [courseTitle]="courseTitle()"
-            [courseTree]="courseTree()"
-            [currentShortCourse]="currentShortCourse()"
-            (notePlaying)="isPlaying.set(true)"
-            (pauseVideo)="pauseVideoFromNotebook()"
-            (resumeVideo)="resumeVideoFromNotebook()"></app-notebook>
+          <app-notebook [orderPayload]="completeOrderPayload()" [videoTimeSeconds]="currentTime()"
+            [isPlaying]="isPlaying()" [courseTitle]="courseTitle()" [courseTree]="courseTree()"
+            [currentShortCourse]="currentShortCourse()" (notePlaying)="isPlaying.set(true)"
+            (pauseVideo)="pauseVideoFromNotebook()" (resumeVideo)="resumeVideoFromNotebook()"></app-notebook>
           }
           @if (activeTab() === 'transcript') {
           <app-transcript [currentShortCourse]="currentShortCourse()" [courseTypeId]="courseTree()?.courseTypeId"
@@ -579,12 +586,13 @@
           }
           @if (activeTab() === 'quiz') {
           <app-quiz [orderPayload]="completeOrderPayload()" [isCourseCompleted]="courseTree()?.isCompleted"
-            [isLectureCompleted]="currentShortCourse()?.isCompleted"
-            (refreshTree)="refreshCourseTree()" (startAssessment)="startAssessment()" 
-            (goToDashboard)="goToDashboard()" (selectIncomplete)="refreshTreeAndSelectIncomplete()"></app-quiz>
+            [isLectureCompleted]="currentShortCourse()?.isCompleted" (refreshTree)="refreshCourseTree()"
+            (startAssessment)="startAssessment()" (goToDashboard)="goToDashboard()"
+            (selectIncomplete)="refreshTreeAndSelectIncomplete()"></app-quiz>
           }
         </div>
-        @if (activeTab() === 'overview' || activeTab() === 'transcript' || activeTab() === 'keyPoints' || activeTab() === 'quiz') {
+        @if (activeTab() === 'overview' || activeTab() === 'transcript' || activeTab() === 'keyPoints' || activeTab()
+        === 'quiz') {
         <app-enrolled-courses [courseId]="existingSeasionCourseId()"></app-enrolled-courses>
         }
       </div>
@@ -696,7 +704,8 @@
           </svg>
         </button>
       </div>
-      <p class="text-xs text-gray-400 text-center mt-3 chat-note">If you are confused about any course material, assessment, or
+      <p class="text-xs text-gray-400 text-center mt-3 chat-note">If you are confused about any course material,
+        assessment, or
         experiencing any difficulty, feel free to use this chatbox.</p>
     </div>
   </div>

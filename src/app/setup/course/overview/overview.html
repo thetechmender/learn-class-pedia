@@ -1,7 +1,7 @@
 <div class="p-2 pb-20">
-  @if(isCareerPathCourse && courseTree?.careerPathLevel) {
+  @if(careerPathLevelDetailId && courseTree?.careerPathLevel) {
   <div class="mb-6">
-    <h2 class="text-2xl font-bold text-gray-900 mb-3">{{ courseTree.careerPathLevel.title }}</h2>
+    <h2 class="text-3xl  text-gray-900 mb-3">{{ courseTree.careerPathLevel.title }}</h2>
     <p class="text-sm text-gray-600 leading-relaxed">
       {{ courseTree.careerPathLevel.description }}
     </p>
@@ -10,12 +10,12 @@
   @if(courseTree.professionalCourse?.courseCertificates) {
   @for (cert of courseTree.professionalCourse.courseCertificates; track cert.courseCertificateId; let certIndex =
   $index) {
-  <div class="mb-8 bg-white rounded-xl border border-gray-200 p-6">
+  <div class="mb-8 bg-white rounded-xl border border-gray-200 p-6 shadow-[0_0_14px_rgba(38,85,255,0.18)]">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Left Column: Image, Description, Stats -->
       <div>
-        <p class="text-primary text-sm font-medium mb-2">Course Certificate {{ certIndex + 1 }}</p>
-        <h3 class="text-xl font-bold text-gray-900 mb-4">{{ cert.title }}</h3>
+        <p class="text-primary text-sm mb-2">Course Certificate {{ certIndex + 1 }}</p>
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ cert.title }}</h3>
 
         <!-- Certificate Image -->
         <div class="mb-4">
@@ -32,21 +32,24 @@
         <!-- Stats -->
         <div class="flex flex-wrap items-center gap-3">
           <span
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full text-sm font-medium">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FDCD4E">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            4.6
+            {{cert.rating || 4.6}}
           </span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
             <i class="ic-83"></i>
             {{ cert.shortCourses?.length || 8 }} Lecture
           </span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
             <i class="ic-73"></i>
             08 Video
           </span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
             <i class="ic-135"></i>
             01 PDF
           </span>
@@ -55,18 +58,18 @@
 
       <!-- Right Column: Content Covered Accordion -->
       <div>
-        <h4 class="text-lg font-bold text-gray-900 mb-4">Content Covered</h4>
+        <h4 class="text-[16px] font-semibold text-gray-900 mb-4">Content Covered</h4>
 
         @if(cert.shortCourses && cert.shortCourses.length > 0) {
-        <div class="space-y-2">
-          @for(sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
+        <div class="space-y-1">
+          @for (sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
           @let isExpanded = isCourseExpanded(cert.courseCertificateId, sc.shortCourseId);
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <div class="border-t border-gray-200 overflow-hidden">
             <!-- Accordion Header -->
             <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
               (click)="toggleCourse(cert.courseCertificateId, sc.shortCourseId)">
               <div class="flex items-start gap-3 flex-1">
-                <span class="text-primary text-lg font-bold">{{ (scIndex + 1).toString().padStart(2, '0') }}</span>
+                <span class="text-primary text-lg font-semibold">{{ (scIndex + 1).toString().padStart(2, '0') }}</span>
                 <div class="flex-1">
                   <h5 class="text-sm font-medium text-gray-900">{{ sc.title }}</h5>
                   @if(isExpanded) {
@@ -103,7 +106,7 @@
   }
   }
 
-  @if(!isCareerPathCourse) {
+  @if(!careerPathLevelDetailId) {
   <div class="flex gap-8 overviewpadd">
     <!-- Left Column - Main Content -->
     <div class="flex-1">

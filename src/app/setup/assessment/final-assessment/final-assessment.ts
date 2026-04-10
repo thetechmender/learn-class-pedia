@@ -43,16 +43,15 @@ export class FinalAssessment implements OnInit {
   private assessmentService = inject(AssessmentService);
 
   ngOnInit(): void {
-    if (this.courseTypeId == 1) {
+    if (this.orderPayload?.careerPathLevelMapId) {
+      this._fetchCareerPathAssessment();
+    } else if (this.courseTypeId == 1) {
       this._fetchProfessionalCertificate();
-    }
-    if (this.courseTypeId == 2) {
+    } else if (this.courseTypeId == 2) {
       this._fetchCertificateCourse();
-    }
-    if (this.courseTypeId == 3) {
+    } else if (this.courseTypeId == 3) {
       this._fetchShoortCourseAssessment();
     }
-    console.log(this.courseTypeId)
   }
 
 
@@ -82,6 +81,27 @@ export class FinalAssessment implements OnInit {
     this.isQuestionLoading.set(true);
     const token = this.authService.getToken();
     this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          this.questions.set(details['data']['questions'].map((q: any) => ({
+            isSelect: false,
+            selectedOption: '',
+            ...q,
+          })) || []);
+          this.isQuestionLoading.set(false);
+          this.startTimer();
+        },
+        error: (err: any) => {
+          console.error('Fetch Assessment Questions Error:', err);
+        }
+      });
+  };
+
+_fetchCareerPathAssessment() {
+    if (!this.orderPayload?.careerPathLevelMapId) return;
+    this.isQuestionLoading.set(true);
+    const token = this.authService.getToken();
+    this.assessmentService.getCareerPathAssessment(this.orderPayload.careerPathLevelMapId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           this.questions.set(details['data']['questions'].map((q: any) => ({
@@ -166,17 +186,31 @@ export class FinalAssessment implements OnInit {
 
   _autoSubmit() {
     this.isCompleting.set(true);
-    const payload = {
+    
+    // Build payload based on career path or regular course
+    const payload: any = {
       shortCourseId: this.orderPayload?.shortCourseId || null,
       courseCertificateId: this.orderPayload?.courseCertificateId || null,
-      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
       answers: this.questions().map(data => ({
         questionId: data?.id,
         selectedAnswer: data?.selectedOption || ''
       }))
     };
+
+    // Career path excludes professionalCertificateId
+    if (this.orderPayload?.careerPathLevelMapId) {
+      payload.careerPathLevelMapId = this.orderPayload.careerPathLevelMapId;
+      payload.professionalCertificateId = null;
+    } else {
+      payload.professionalCertificateId = this.orderPayload?.professionalCertificateId || null;
+      payload.careerPathLevelMapId = null;
+    }
     const token = this.authService.getToken();
-    this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token).pipe(takeUntil(this.destroy$))
+    const submitApi = this.orderPayload?.careerPathLevelMapId
+      ? this.assessmentService.submitCareerPathAssessment(payload, token)
+      : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token);
+    
+    submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
           this.isCompleting.set(false);
@@ -197,10 +231,11 @@ export class FinalAssessment implements OnInit {
     }
     this.stopTimer();
     this.isCompleting.set(true);
-    const payload = {
+    
+    // Build payload based on career path or regular course
+    const payload: any = {
       shortCourseId: this.orderPayload?.shortCourseId || null,
       courseCertificateId: this.orderPayload?.courseCertificateId || null,
-      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
       answers: this.questions().map(data => {
         return {
           questionId: data?.id,
@@ -208,8 +243,21 @@ export class FinalAssessment implements OnInit {
         }
       })
     };
+
+    // Career path excludes professionalCertificateId
+    if (this.orderPayload?.careerPathLevelMapId) {
+      payload.careerPathLevelMapId = this.orderPayload.careerPathLevelMapId;
+      payload.professionalCertificateId = null;
+    } else {
+      payload.professionalCertificateId = this.orderPayload?.professionalCertificateId || null;
+      payload.careerPathLevelMapId = null;
+    }
     const token = this.authService.getToken();
-    this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token).pipe(takeUntil(this.destroy$))
+    const submitApi = this.orderPayload?.careerPathLevelMapId
+      ? this.assessmentService.submitCareerPathAssessment(payload, token)
+      : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token);
+    
+    submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
           this.isCompleting.set(false);

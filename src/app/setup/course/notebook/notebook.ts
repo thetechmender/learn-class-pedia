@@ -58,7 +58,7 @@ export class Notebook implements OnInit, OnChanges {
     const p = this.orderPayload;
     if (!p?.shortCourseId) return;
     const token = this.authService.getToken();
-    this.courseService.getNotebooks(p.shortCourseId, p.courseCertificateId, p.professionalCertificateId, token).subscribe({
+    this.courseService.getNotebooks(p.shortCourseId, p.courseCertificateId, p.professionalCertificateId, p.careerPathLevelMapId, token).subscribe({
       next: (res: any) => {
         const data = res?.isSuccess !== undefined ? res.data : res;
         this.savedNotes.set(Array.isArray(data?.notes) ? data.notes : []);
@@ -92,13 +92,25 @@ export class Notebook implements OnInit, OnChanges {
     if (!this.noteText() || !this.orderPayload?.shortCourseId) return;
     this.isSaving.set(true);
     const token = this.authService.getToken();
-    const payload = {
+    
+    // Build payload based on hierarchy
+    const payload: any = {
       shortCourseId: this.orderPayload.shortCourseId,
       courseCertificateId: this.orderPayload.courseCertificateId || null,
-      professionalCertificateId: this.orderPayload.professionalCertificateId || null,
       videoTimeSeconds: Math.floor(this.videoTimeSeconds),
       noteText: this.noteText()
     };
+
+    // Career path excludes professionalCertificateId
+    if (this.orderPayload.careerPathLevelMapId) {
+      payload.careerPathLevelMapId = this.orderPayload.careerPathLevelMapId;
+      payload.professionalCertificateId = null;
+    } else {
+      // Regular course includes professionalCertificateId
+      payload.professionalCertificateId = this.orderPayload.professionalCertificateId || null;
+      payload.careerPathLevelMapId = null;
+    }
+
     this.courseService.saveNotebook(payload, token).subscribe({
       next: (res: any) => {
         this.isSaving.set(false);
@@ -181,11 +193,6 @@ export class Notebook implements OnInit, OnChanges {
 
     const token = this.authService.getToken();
     
-    console.log('📥 Downloading PDF with parameters:', {
-      shortCourseId: p.shortCourseId,
-      courseCertificateId: p.courseCertificateId,
-      professionalCertificateId: p.professionalCertificateId
-    });
     
     this.isDownloadingPdf.set(true);
     this.toastr.info('Generating your PDF...', 'Please wait');
@@ -193,7 +200,8 @@ export class Notebook implements OnInit, OnChanges {
     this.courseService.downloadNotebookPdf(
       p.shortCourseId, 
       p.courseCertificateId, 
-      p.professionalCertificateId, 
+      p.professionalCertificateId,
+      p.careerPathLevelMapId,
       token
     ).subscribe({
       next: (blob: Blob) => {

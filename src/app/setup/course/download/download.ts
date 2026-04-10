@@ -13,7 +13,6 @@ export class Download implements OnInit {
   private courseService = inject(CourseService);
 
   ngOnInit(): void {
-    console.log(this.activeSection)
   }
 
   get activeSection() {

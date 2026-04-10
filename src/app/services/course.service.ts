@@ -270,15 +270,23 @@ export class CourseService {
     });
   }
 
-  getNotebooks(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, token: string | null): Observable<any> {
+  getNotebooks(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null, token: string | null): Observable<any> {
     let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}`;
     const params: string[] = [];
+    
+    // Always add courseCertificateId if present
     if (courseCertificateId) {
       params.push(`courseCertificateId=${courseCertificateId}`);
     }
-    if (professionalCertificateId) {
+    
+    // Career path excludes professionalCertificateId
+    if (careerPathLevelMapId) {
+      params.push(`careerPathLevelMapId=${careerPathLevelMapId}`);
+    } else if (professionalCertificateId) {
+      // Only add professionalCertificateId if NOT a career path
       params.push(`professionalCertificateId=${professionalCertificateId}`);
     }
+    
     if (params.length > 0) {
       url += `?${params.join('&')}`;
     }
@@ -299,15 +307,23 @@ export class CourseService {
     });
   }
 
-  downloadNotebookPdf(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, token: string | null): Observable<Blob> {
+  downloadNotebookPdf(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null, token: string | null): Observable<Blob> {
     let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}/download-pdf`;
     const params: string[] = [];
+    
+    // Always add courseCertificateId if present
     if (courseCertificateId) {
       params.push(`courseCertificateId=${courseCertificateId}`);
     }
-    if (professionalCertificateId) {
+    
+    // Career path excludes professionalCertificateId
+    if (careerPathLevelMapId) {
+      params.push(`careerPathLevelMapId=${careerPathLevelMapId}`);
+    } else if (professionalCertificateId) {
+      // Only add professionalCertificateId if NOT a career path
       params.push(`professionalCertificateId=${professionalCertificateId}`);
     }
+    
     if (params.length > 0) {
       url += `?${params.join('&')}`;
     }

@@ -83,11 +83,9 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
 
   onCheckResult() {
     this.isCompleting.set(true);
-    const payload = {
+    const payload: any = {
       shortCourseId: this.orderPayload?.shortCourseId || null,
       courseCertificateId: this.orderPayload?.courseCertificateId || null,
-      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
-      careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null,
       answers: this.questions().map(data => {
         return {
           questionId: data?.id,
@@ -95,6 +93,15 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
         }
       })
     };
+
+    // Career path excludes professionalCertificateId
+    if (this.orderPayload?.careerPathLevelMapId) {
+      payload.careerPathLevelMapId = this.orderPayload.careerPathLevelMapId;
+      payload.professionalCertificateId = null;
+    } else {
+      payload.professionalCertificateId = this.orderPayload?.professionalCertificateId || null;
+      payload.careerPathLevelMapId = null;
+    }
     const token = this.authService.getToken();
     this.assessmentService.submitQuizAssessment(payload, token).pipe(takeUntil(this.destroy$))
       .subscribe({

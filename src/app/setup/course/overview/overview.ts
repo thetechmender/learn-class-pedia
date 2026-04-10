@@ -20,7 +20,7 @@ export class Overview implements OnInit, OnChanges {
   @Input() courseTree: any = null;
   @Input() courseId: any = null;
   @Input() totalDuration: number = 0;
-  @Input() isCareerPathCourse: boolean = false;
+  @Input() careerPathLevelDetailId: number | null = null;
 
   courseService = inject(CourseService);
   private authService = inject(AuthService);
@@ -48,7 +48,7 @@ export class Overview implements OnInit, OnChanges {
 
   ngOnInit() {
     // For career path courses, use data from courseTree instead of API
-    if (this.isCareerPathCourse && this.courseTree?.careerPathLevel) {
+    if (this.careerPathLevelDetailId && this.courseTree?.careerPathLevel) {
       this.overView.set({
         title: this.courseTree.careerPathLevel.title,
         overview: this.courseTree.careerPathLevel.description,

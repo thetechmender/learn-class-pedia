@@ -5,6 +5,7 @@ export interface ClassroomSession {
   courseId: number | null;
   lectureId: string | null;
   sessionToken: string | null;
+  careerPathLevelDetailId?: number | null;
   storedAt?: number;
 }
 
