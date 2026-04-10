@@ -91,6 +91,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     professionalCertificateId: null
   });
   
+<<<<<<< Updated upstream
   // Temporary flag for career path courses
   isCareerPathCourse = false;
   
@@ -106,6 +107,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   });
   
+=======
+  // Flag to track if this is a career path course
+  isCareerPathCourse = false;
+  
+>>>>>>> Stashed changes
   private destroy$ = new Subject<void>();
   private progressInterval: any = null;
   private progressStartTime: number = 0;
@@ -510,7 +516,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.completeOrderPayload.set({
               courseCertificateId: targetCert.courseCertificateId,
               shortCourseId: targetSc.shortCourseId,
+<<<<<<< Updated upstream
               professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId,
+=======
+              professionalCertificateId: this.isCareerPathCourse ? null : this.courseTree()?.professionalCourse?.professionalCourseId,
+>>>>>>> Stashed changes
               careerPathLevelMapId: this.isCareerPathCourse ? this.courseTree()?.careerPathLevel?.careerPathLevelMapId : null
             });
             this.selectFirstShortCourse(targetSc);
@@ -1023,7 +1033,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.activeCertificateId() || sc.certificateId,
+<<<<<<< Updated upstream
       professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId,
+=======
+      professionalCertificateId: this.isCareerPathCourse ? null : this.courseTree()?.professionalCourse?.professionalCourseId,
+>>>>>>> Stashed changes
       careerPathLevelMapId: this.isCareerPathCourse ? this.courseTree()?.careerPathLevel?.careerPathLevelMapId : null
     });
     this.stopSpeech();
@@ -1984,7 +1998,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.completeOrderPayload.set({
       shortCourseId: sc.shortCourseId,
       courseCertificateId: this.activeCertificateId() || sc.certificateId,
+<<<<<<< Updated upstream
       professionalCertificateId: this.courseTree()?.professionalCourse?.professionalCourseId,
+=======
+      professionalCertificateId: this.isCareerPathCourse ? null : this.courseTree()?.professionalCourse?.professionalCourseId,
+>>>>>>> Stashed changes
       careerPathLevelMapId: this.isCareerPathCourse ? this.courseTree()?.careerPathLevel?.careerPathLevelMapId : null
     });
     this.stopSpeech();
