@@ -206,6 +206,13 @@ export class Overview implements OnInit, OnChanges {
   formatTimeFromSeconds(seconds: number): string {
     if (!seconds || seconds <= 0) return '0m';
     
+    // If videoUrl exists, show rounded minutes
+    if (this.courseTree?.videoUrl) {
+      const totalMinutes = Math.ceil(seconds / 60);
+      return `${totalMinutes}m`;
+    }
+    
+    // Otherwise show minutes format
     const minutes = Math.floor(seconds / 60);
     return this.formatDuration(minutes, true);
   };

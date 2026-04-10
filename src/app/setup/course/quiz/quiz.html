@@ -90,13 +90,13 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
       </svg>
     </div>
-    <h2 class="text-2xl font-bold text-gray-900 mb-2">Quiz Complete {{showCompletionScreen()}}</h2>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">All Lectures Completed
+</h2>
     <p class="text-gray-500 mb-4">Your Scored {{ quizResult()?.correctAnswers || 0 }} / {{ quizResult()?.totalQuestions
       || questions().length }}</p>
 
     @if (isCourseCompleted) {
-    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can
-      now start the final assessment or go to dashboard.</p>
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You’ve completed all lectures and quizzes. You’re now ready to take the final assessment and earn your certificate.</p>
     <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">

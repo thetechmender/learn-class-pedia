@@ -268,7 +268,11 @@
               <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.01 9.01 0 0 1-9 9z" />
               <path d="M12 6a1 1 0 0 0-1 1v5.382l3.447 2.298a1 1 0 1 0 1.11-1.664L13 11.618V7a1 1 0 0 0-1-1z" />
             </svg>
-            {{ estimatedTimeMinutes() ? estimatedTimeMinutes() + 'm' : (lec.duration || '13:00') }}
+            @if (courseTree()?.videoUrl && videoDuration() > 0) {
+              {{ formatVideoDuration(videoDuration()) }}
+            } @else {
+              {{ estimatedTimeMinutes() ? estimatedTimeMinutes() + 'm' : (lec.duration || '13:00') }}
+            }
           </span>
           <span class="flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 22 22"
@@ -372,8 +376,7 @@
         [videoUrl]="courseTree()?.videoUrl"
         [showControls]="true"
         (ended)="onLastLectureComplete()"
-        (durationChange)="onVideoDurationChange($event)"
-        (timeupdate)="onVideoTimeUpdate($event)">
+        (durationChange)="onVideoDurationChange($event)">
       </app-simple-video-player>
       } @else {
       <!-- Text/Audio Content Display -->

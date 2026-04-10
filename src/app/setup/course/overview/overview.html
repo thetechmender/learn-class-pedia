@@ -8,7 +8,8 @@
   </div>
 
   @if(courseTree.professionalCourse?.courseCertificates) {
-  @for (cert of courseTree.professionalCourse.courseCertificates; track cert.courseCertificateId; let certIndex = $index) {
+  @for (cert of courseTree.professionalCourse.courseCertificates; track cert.courseCertificateId; let certIndex =
+  $index) {
   <div class="mb-8 bg-white rounded-xl border border-gray-200 p-6">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Left Column: Image, Description, Stats -->
@@ -18,19 +19,20 @@
 
         <!-- Certificate Image -->
         <div class="mb-4">
-          <img [src]="cert.thumbnail || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500'" 
-               [alt]="cert.title"
-               class="w-full rounded-lg object-cover bg-gray-100" style="height: 250px;">
+          <img [src]="cert.thumbnail || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500'"
+            [alt]="cert.title" class="w-full rounded-lg object-cover bg-gray-100" style="height: 250px;">
         </div>
 
         <!-- Description -->
         <p class="text-sm text-gray-600 leading-relaxed mb-4">
-          {{ cert.description || 'Learn statistics, Python fundamentals, data handling, and basic analytical techniques through practical examples and guided exercises.' }}
+          {{ cert.description || 'Learn statistics, Python fundamentals, data handling, and basic analytical techniques
+          through practical examples and guided exercises.' }}
         </p>
 
         <!-- Stats -->
         <div class="flex flex-wrap items-center gap-3">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full text-sm font-medium">
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full text-sm font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
@@ -54,7 +56,7 @@
       <!-- Right Column: Content Covered Accordion -->
       <div>
         <h4 class="text-lg font-bold text-gray-900 mb-4">Content Covered</h4>
-        
+
         @if(cert.shortCourses && cert.shortCourses.length > 0) {
         <div class="space-y-2">
           @for(sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
@@ -62,7 +64,7 @@
           <div class="border border-gray-200 rounded-lg overflow-hidden">
             <!-- Accordion Header -->
             <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                 (click)="toggleCourse(cert.courseCertificateId, sc.shortCourseId)">
+              (click)="toggleCourse(cert.courseCertificateId, sc.shortCourseId)">
               <div class="flex items-start gap-3 flex-1">
                 <span class="text-primary text-lg font-bold">{{ (scIndex + 1).toString().padStart(2, '0') }}</span>
                 <div class="flex-1">
@@ -85,10 +87,8 @@
                   }
                 </div>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" 
-                   class="h-5 w-5 text-gray-400 transition-transform duration-200"
-                   [class.rotate-180]="isExpanded"
-                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 transition-transform duration-200"
+                [class.rotate-180]="isExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -111,7 +111,15 @@
       <div class="mb-6 course-content-left">
         <h2 class="text-lg font-bold text-gray-900 mb-3">Course Details</h2>
         <div class="flex items-center gap-3 text-sm text-gray-500 mb-3">
-          <span>{{this.overView()?.estimatedTimeMinutes ? this.formatDuration(this.overView()?.estimatedTimeMinutes, false) : this.formatTimeFromSeconds(this.totalDuration)}}</span>
+          <span>
+            @if(courseTree?.videoUrl && totalDuration > 0) {
+            {{ this.formatTimeFromSeconds(this.totalDuration) }}
+            }
+            @else {
+            {{this.overView()?.estimatedTimeMinutes ? this.formatDuration(this.overView()?.estimatedTimeMinutes, false)
+            : this.formatTimeFromSeconds(this.totalDuration)}}
+            }
+          </span>
           <span>{{this.courseLevel || 'N/A'}}</span>
           <span>Released: {{(this.overView()?.releaseDate | date:'dd/MM/yyyy') || 'N/A'}}</span>
         </div>
@@ -272,22 +280,22 @@
           <div class="flex items-center gap-6 courses-serials sty1">
             <span class="flex items-center gap-2">
               <i class="ic-72 cl-iPrimary"></i>
-              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Lessons
-            </span>
-            <span class="flex items-center gap-2">
-              <i class="ic-73 cl-iPrimary"></i>
-              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Videos
-            </span>
-            <span class="flex items-center gap-2">
-              <i class="ic-74 cl-iPrimary"></i>
-              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Pdfs
-            </span>
-            @if(courseTypeId != 3) {
-            <span class="flex items-center gap-2">
-              <i class="ic-85 cl-iPrimary"></i>
-              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' + this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Quiz
-            </span>
-            }
+              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Lessons </span>
+                <span class="flex items-center gap-2">
+                  <i class="ic-73 cl-iPrimary"></i>
+                  {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                    this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Videos </span>
+                    <span class="flex items-center gap-2">
+                      <i class="ic-74 cl-iPrimary"></i>
+                      {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                        this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Pdfs </span>
+                        @if(courseTypeId != 3) {
+                        <span class="flex items-center gap-2">
+                          <i class="ic-85 cl-iPrimary"></i>
+                          {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                            this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Quiz </span>
+                            }
           </div>
         </div>
       </div>
@@ -327,11 +335,11 @@
               1 Lecture
             </span>
             <span class="flex items-center gap-1">
-             <i class="ic-73"></i>
+              <i class="ic-73"></i>
               1 Videos
             </span>
             <span class="flex items-center gap-1">
-             <i class="ic-74"></i>
+              <i class="ic-74"></i>
               1 PDFs
             </span>
           </div>
