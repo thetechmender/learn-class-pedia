@@ -1051,6 +1051,8 @@ const CourseModal = ({
                 />
               </div>
 
+           {/* Hide isPaid checkbox when editing a course that is not paid */}
+           {!(mode === 'edit' && course && course.isPaid === false) && (
            <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -1062,6 +1064,7 @@ const CourseModal = ({
                       />
                       <label className="text-sm font-medium text-gray-700">This is a paid course</label>
                     </div>
+           )}
               {/* Pricing */}
               <div className="md:col-span-2">
                 {formData.isPaid && (
