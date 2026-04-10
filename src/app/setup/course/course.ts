@@ -1399,16 +1399,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   onVideoDurationChange(duration: number) {
     this.videoDuration.set(duration);
+  }
 
-    // Update calculatedTotalDuration for Overview display
-    const tree = this.courseTree();
-
-    // For all courseTypes with videoUrl, set the current video duration
-    // Note: For courseTypeId 1 & 2, this will only show current video duration
-    // Backend doesn't provide videoDuration field for all videos in API
-    if (tree?.videoUrl) {
-      this.calculatedTotalDuration.set(duration);
-    }
+  onVideoTimeUpdate(currentTime: number) {
+    // Update speech service with current video time so notebook gets correct time
+    this.speechService.setCurrentTime(currentTime);
   }
 
   formatVideoDuration(seconds: number): string {

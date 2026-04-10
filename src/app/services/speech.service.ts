@@ -24,6 +24,10 @@ export class SpeechService {
     isPaused = signal<boolean>(false);
     isCompleted = signal<boolean>(false);
 
+    setCurrentTime(time: number) {
+        this.currentTime.set(time);
+    }
+
     private getSynth(): SpeechSynthesis | null {
         if (!this.synth && isPlatformBrowser(this.platformId)) {
             this.synth = window.speechSynthesis;

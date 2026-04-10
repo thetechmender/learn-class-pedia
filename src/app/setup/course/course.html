@@ -379,7 +379,7 @@
       @if (courseTree()?.videoUrl) {
       <!-- Video Player for courses with videoUrl -->
       <app-simple-video-player [videoUrl]="courseTree()?.videoUrl" [showControls]="true"
-        (ended)="onLastLectureComplete()" (durationChange)="onVideoDurationChange($event)">
+        (ended)="onLastLectureComplete()" (durationChange)="onVideoDurationChange($event)" (timeupdate)="onVideoTimeUpdate($event)">
       </app-simple-video-player>
       } @else {
       <!-- Text/Audio Content Display -->

@@ -1,5 +1,5 @@
 import { Component, inject, Input, OnInit, signal } from '@angular/core';
-import {  CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { CourseService } from '../../../services/course.service';
 import { AuthService } from '../../../services/auth.service';
@@ -29,7 +29,12 @@ export class EnrolledCourses implements OnInit {
     this.courseService.getEnrolledCourse(token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (courses: any) => {
-          this.enrolledCourses.set(courses['data']['enrolledCourses'] || []);
+          const enrolledList = courses['data']['enrolledCourses'] || [];
+
+          // Filter out the current courseId
+          const filteredCourses = enrolledList.filter((item: any) => item.resourceId !== this.courseId);
+
+          this.enrolledCourses.set(filteredCourses);
         },
         error: (err: any) => {
           console.error('Get Enrolled Courses Error:', err);
