@@ -22,7 +22,6 @@ export class EnrolledCourses implements OnInit {
 
   ngOnInit(): void {
     this._fetchEnrolledCourses();
-    console.log(this.courseId)
   };
 
   _fetchEnrolledCourses() {
