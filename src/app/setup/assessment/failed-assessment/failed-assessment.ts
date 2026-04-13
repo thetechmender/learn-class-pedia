@@ -30,7 +30,11 @@ export class FailedAssessment {
   }
 
   get isMaxAttempts(): boolean {
-    return this.resultData?.resultStatus === 'MaxAttemptsExceeded' || this.attemptsRemaining <= 0;
+    const attemptsRemaining = this.resultData?.attemptsRemaining;
+    const requiresRepurchase = this.resultData?.requiresRepurchase;
+    
+    // Show "No Attempts Remaining" if no attempts left or repurchase is required
+    return attemptsRemaining <= 0 || requiresRepurchase === true;
   }
 
   get attemptsRemaining(): number {

@@ -16,7 +16,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        {{ formattedTime() }} mins
+        {{ formattedTime() }}
       </div>
     </div>
 
@@ -57,7 +57,14 @@
         </svg>
         <span>You have <span class="font-semibold text-gray-900">{{assessmentService.attemptsRemaining()}} attempt{{assessmentService.attemptsRemaining() !== 1 ? 's' : ''}}</span> remaining</span>
       </div>
-
+   <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>You must score at least 75% to pass</span>
+      </div>
       <!-- Warning Box -->
       <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mt-4">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 flex-shrink-0" fill="none"

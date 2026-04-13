@@ -6,7 +6,8 @@
   @if(showAnswers()) {
   <div class="py-2">
     <button (click)="onBack()"
-      class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium"> Back</button>
+      class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">
+      Back</button>
   </div>
   }
 
@@ -29,14 +30,52 @@
       }
       <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}</h3>
       <div class="grid grid-cols-2 gap-3 blckresp">
-        @for (option of question.options; track option.optionLetter) {
-        <label class="flex items-center gap-2 pointer-events-none">
-          <input type="radio" [name]="'question-answer-' + question.id" [value]="option.optionLetter"
-            [checked]="question.selectedOption === option.optionLetter" disabled
-            class="w-4 h-4 text-primary border-gray-300 focus:ring-primary" />
-          <span class="text-sm text-gray-700">{{ option.optionLetter }}. {{ option.optionText }}</span>
-        </label>
-        }
+@for (option of question.options; track option.optionLetter) {
+<label class="flex items-start gap-3 py-1 pointer-events-none">
+
+  <input
+    type="radio"
+    [name]="'question-answer-' + question.id"
+    [value]="option.optionLetter"
+    [checked]="question.selectedOption === option.optionLetter"
+    disabled
+    class="mt-1 w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+  />
+
+  <div class="flex flex-col">
+
+    <div class="flex items-center">
+      
+      @if (
+        isSubmitted() &&
+        !getQuestionResult(question.id)?.isCorrect &&
+        question.correctAnswer === option.optionLetter
+      ) {
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="h-4 w-4 text-green-500 flex-shrink-0"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor">
+          <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7" />
+        </svg>
+
+        <span class="font-semibold text-green-600 rounded-full" style="font-size: 14px;">
+          That's right
+        </span>
+      }
+
+    </div>
+
+    <span class="text-sm text-gray-700 leading-snug">
+      {{ option.optionLetter }}. {{ option.optionText }}
+    </span>
+
+  </div>
+</label>
+}
       </div>
     </div>
     }
@@ -91,12 +130,13 @@
       </svg>
     </div>
     <h2 class="text-2xl font-bold text-gray-900 mb-2">All Lectures Completed
-</h2>
+    </h2>
     <p class="text-gray-500 mb-4">Your Scored {{ quizResult()?.correctAnswers || 0 }} / {{ quizResult()?.totalQuestions
       || questions().length }}</p>
 
     @if (isCourseCompleted) {
-    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You’ve completed all lectures and quizzes. You’re now ready to take the final assessment and earn your certificate.</p>
+    <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You’ve completed all lectures and
+      quizzes. You’re now ready to take the final assessment and earn your certificate.</p>
     <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
@@ -144,7 +184,7 @@
 
   @if (questions().length > 0) {
   <div class="mt-6 flex justify-left">
-    <button (click)="onCheckResult()" [disabled]="isCompleting()"
+    <button (click)="onCheckResult()" [disabled]="isCompleting() || !isSomeQuestionAnswered()"
       class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
       @if (isCompleting()) {
       <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

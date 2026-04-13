@@ -1,9 +1,10 @@
 import { Component, Output, EventEmitter, Input, OnChanges, signal } from '@angular/core';
 import { DecimalPipe, CommonModule } from '@angular/common';
+import { ShareYourAccomplishment } from '../share-your-accomplishment/share-your-accomplishment';
 
 @Component({
   selector: 'app-cleared-assessment',
-  imports: [DecimalPipe, CommonModule],
+  imports: [DecimalPipe, CommonModule, ShareYourAccomplishment],
   templateUrl: './cleared-assessment.html',
   styleUrl: './cleared-assessment.sass',
 })
@@ -15,13 +16,14 @@ export class ClearedAssessment implements OnChanges {
 
   isGeneratingCertificate = signal(false); // Add loading state
   loaderAlreadyActivated = false; // Prevent multiple activations
+  showShareModal = signal(false);
 
   ngOnChanges() {
     
     // Check if certificate is being generated for courseTypeId 1 & 2
     if ((this.courseTypeId === 1 || this.courseTypeId === 2) && this.resultData) {
       // Show loading ONLY if assessment is PASSED, certificate URL is null, and loader not already activated
-      if (this.resultData.isPassed === true && !this.resultData.certificatePngUrl && !this.loaderAlreadyActivated) {
+      if (this.resultData.isPassed === true && !this.resultData.pngPath && !this.loaderAlreadyActivated) {
         this.loaderAlreadyActivated = true; // Set flag to prevent multiple activations
         this.isGeneratingCertificate.set(true);
         // Hide loading after 20 seconds (matching the delay in final-assessment)
@@ -75,9 +77,13 @@ export class ClearedAssessment implements OnChanges {
     return this.resultData?.maxAttempts ?? 3;
   }
 
-  get certificatePngUrl(): string {
+  get pngPath(): string {
     // Use original thumbnail URL since full version doesn't exist on server
-    return this.resultData?.certificatePngUrl ?? '';
+    return this.resultData?.pngPath ?? '';
+  }
+
+  get htmlPath(): string {
+    return this.resultData?.htmlPath ?? '';
   }
 
   get isGeneratingCertificateValue(): boolean {
@@ -90,5 +96,13 @@ export class ClearedAssessment implements OnChanges {
 
   back() {
     this.goBack.emit();
+  }
+
+  openShareModal() {
+    this.showShareModal.set(true);
+  }
+
+  closeShareModal() {
+    this.showShareModal.set(false);
   }
 }

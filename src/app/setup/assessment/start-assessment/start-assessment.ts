@@ -22,13 +22,21 @@ export class StartAssessment implements OnInit, OnDestroy {
   questions = signal<any[]>([]);
   isQuestionLoading = signal(false);
   
-  totalMinutes = computed(() => this.questions().length || 15);
+  totalMinutes = computed(() => (this.questions().length || 15) * 3);
 
   formattedTime = computed(() => {
     const total = this.totalMinutes() * 60;
-    const mins = Math.floor(total / 60);
+    const hours = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
     const secs = total % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    
+    if (total >= 3600) {
+      // >= 60 minutes: show hh:mm:ss
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      // < 60 minutes: show mm:ss
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
   });
 
   ngOnInit(): void {

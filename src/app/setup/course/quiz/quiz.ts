@@ -58,6 +58,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
             selectedOption: '',
             ...q,
           })) || []);
+          console.log(this.questions())
           this.isQuestionLoading.set(false);
         },
         error: (err: any) => {
@@ -107,6 +108,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (response: any) => {
           this.isCompleting.set(false);
+       this.mapCorrectAnswers(response?.data?.questionResults || []);
           this._fetchQuizesResult();
         },
         error: (err: any) => {
@@ -130,7 +132,6 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
           if (details?.isSuccess) {
             this.quizResult.set(details.data);
             this.isSubmitted.set(true);
-            // Refresh tree to update isCompleted status after quiz submit
             this.refreshTree.emit();
             this.showCompletionScreen.set(true);
           }
@@ -202,4 +203,21 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
     this.showCompletionScreen.set(true);
   }
 
+  isSomeQuestionAnswered(): boolean {
+    const result = this.questions().some((q: any) => q.isSelect);
+    return result;
+  };
+
+  mapCorrectAnswers(questionResults: any[]) {
+    const resultMap = new Map(
+      questionResults.map(r => [r.questionId, r.correctAnswer])
+    );
+
+    this.questions.update(questions =>
+      questions.map(q => ({
+        ...q,
+        correctAnswer: resultMap.get(q.id) || ''
+      }))
+    );
+  }
 }

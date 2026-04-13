@@ -44,10 +44,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   chatInput = signal<string>('');
   chatThreadId = signal<string>('');
   isChatSending = signal<boolean>(false);
-  chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string }>>([
+  chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string | SafeHtml }>>([
     {
       role: 'bot',
-      text: "Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics."
+      text: this.sanitizer.bypassSecurityTrustHtml("Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics. If you're looking for live support, please start our <a href='#' class='text-white underline'>live chat</a>.")
     }
   ]);
 
@@ -248,7 +248,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       threadId: this.chatThreadId() || ''
     };
 
-    this.chatMessages.set([...this.chatMessages(), { role: 'user', text: question }]);
+    this.chatMessages.set([...this.chatMessages(), { role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
     this.chatInput.set('');
     this.isChatSending.set(true);
 
@@ -429,7 +429,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
                   courseCertificates: tree.careerPathLevel.courseCertificates || []
                 };
                 // Keep careerPathLevel for Overview tab
-                
+
                 // Set isCompleted based on actual completion status of all short courses
                 let allCompleted = true;
                 if (tree.careerPathLevel.courseCertificates) {
@@ -1576,7 +1576,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       )
       .subscribe({
         next: (tree: any) => {
-          
+
           // Transform career path tree structure if needed
           if (this.careerPathLevelDetailId() && tree) {
             tree.courseTypeId = 1;
@@ -1598,7 +1598,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             }
             tree.isCompleted = allCompleted;
           }
-          
+
           // Preserve courseTypeId from the details API (authoritative source)
           if (tree && courseTypeId) {
             tree.courseTypeId = courseTypeId;
@@ -1741,7 +1741,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               requiresRepurchase: data.requiresRepurchase,
               score: data.score,
               resultStatus: 'AlreadyPassed',
-              certificatePngUrl: data.certificatePngUrl
+              pngPath: data.pngPath,
+              publicCertificateLink: data.publicCertificateLink,
+              htmlPath: data.htmlPath
             });
             this.assessmentStep.set('cleared');
           } else {
@@ -1750,7 +1752,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               attemptsRemaining: data.attemptsRemaining,
               maxAttempts: data.maxAttempts,
               requiresRepurchase: data.requiresRepurchase,
-              resultStatus: 'MaxAttemptsExceeded'
+              resultStatus: 'MaxAttemptsExceeded',
+              publicCertificateLink: data.publicCertificateLink,
+              htmlPath: data.htmlPath
             });
             this.assessmentStep.set('maxattempts');
           }
@@ -1774,13 +1778,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.expandedShortCourses.set(new Set()); // Reset expanded short courses to collapse content
       this.assessmentStep.set('final');
     } else if (result === 'failed') {
-      this.assessmentStep.set('failed');
+      this._fetchAssessmentResultAndSetStep('failed');
     } else if (result === 'cleared') {
-      this.assessmentStep.set('cleared');
+      this._fetchAssessmentResultAndSetStep('cleared');
     } else if (typeof result === 'object') {
       // Map coursewiseresult API response to assessment result format
       // Preserve certificate URL from previous assessment result if coursewiseresult returns null
-      const existingCertificateUrl = this.assessmentResult()?.certificatePngUrl;
+      const existingCertificateUrl = this.assessmentResult()?.pngPath;
 
       const mappedResult = {
         attemptsUsed: result.attemptsUsed,
@@ -1789,7 +1793,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         requiresRepurchase: result.requiresRepurchase,
         score: result.score,
         resultStatus: result.isPassed ? 'Passed' : 'Failed',
-        certificatePngUrl: result.certificatePngUrl || existingCertificateUrl, // Use existing URL if new one is null
+        pngPath: result.pngPath || existingCertificateUrl, // Use existing URL if new one is null
         // Include additional fields from coursewiseresult
         totalQuestions: result.totalQuestions,
         correctAnswers: result.correctAnswers,
@@ -1799,7 +1803,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         courseTitle: result.courseTitle
       };
 
-      this.assessmentResult.set(mappedResult);
+      this.assessmentResult.set({
+        ...mappedResult,
+        publicCertificateLink: result.publicCertificateLink,
+        htmlPath: result.htmlPath
+      });
       if (result?.isPassed) {
         this.assessmentStep.set('cleared');
       } else if (result?.attemptsRemaining === 0) {
@@ -1820,6 +1828,38 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else {
       this.assessmentStep.set('failed');
     }
+  }
+
+  _fetchAssessmentResultAndSetStep(defaultStep: 'failed' | 'cleared' | 'maxattempts') {
+    const token = this.authService.getToken();
+    const payload = {
+      courseId: this.completeOrderPayload()?.shortCourseId || null,
+      courseCertificateId: this.completeOrderPayload()?.courseCertificateId || null,
+      professionalCertificateId: this.completeOrderPayload()?.professionalCertificateId || null,
+      assessmentTypeId: 2
+    };
+
+    this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          if (details?.isSuccess && details?.data) {
+            this.assessmentResult.set(details.data);
+            const data = details.data;
+            if (data?.isPassed) {
+              this.assessmentStep.set('cleared');
+            } else if (data?.attemptsRemaining === 0) {
+              this.assessmentStep.set('maxattempts');
+            } else {
+              this.assessmentStep.set(defaultStep);
+            }
+          } else {
+            this.assessmentStep.set(defaultStep);
+          }
+        },
+        error: () => {
+          this.assessmentStep.set(defaultStep);
+        }
+      });
   }
 
   onAssessmentFinish() {
@@ -1855,7 +1895,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             requiresRepurchase: data.requiresRepurchase,
             score: data.score,
             resultStatus: 'AlreadyPassed',
-            certificatePngUrl: data.certificatePngUrl
+            pngPath: data.pngPath,
+            htmlPath: data.htmlPath,
+            publicCertificateLink: data.publicCertificateLink
           });
           this.assessmentStep.set('cleared');
 

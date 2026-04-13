@@ -2,10 +2,11 @@ import { Component, Output, EventEmitter, inject, Input, OnInit, signal, compute
 import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
 import { AssessmentService } from '../../../services/assessment.service';
+import { GenerateCertificateModal } from '../generate-certificate-modal/generate-certificate-modal';
 
 @Component({
   selector: 'app-final-assessment',
-  imports: [],
+  imports: [GenerateCertificateModal],
   templateUrl: './final-assessment.html',
   styleUrl: './final-assessment.sass',
 })
@@ -17,6 +18,8 @@ export class FinalAssessment implements OnInit {
 
   isCompleting = signal(false);
   isGeneratingCertificate = signal(false); // New loading state for certificate generation
+  showGenerateCertificateModal = signal(false);
+  assessmentResultData = signal<any>(null);
   questions = signal<any[]>([]);
   currentQuestionIndex = signal(0);
   isQuestionLoading = signal(false);
@@ -24,13 +27,21 @@ export class FinalAssessment implements OnInit {
   private timerInterval: any = null;
   remainingSeconds = signal(0);
   
-  totalMinutes = computed(() => this.questions().length || 15);
+  totalMinutes = computed(() => (this.questions().length || 15) * 3);
 
   formattedTime = computed(() => {
     const total = this.remainingSeconds();
-    const mins = Math.floor(total / 60);
+    const hours = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
     const secs = total % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    
+    if (total >= 3600) {
+      // >= 60 minutes: show hh:mm:ss
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      // < 60 minutes: show mm:ss
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
   });
 
   currentQuestion = computed(() => {
@@ -295,36 +306,54 @@ _fetchCareerPathAssessment() {
       .subscribe({
         next: (details: any) => {
           if (details?.isSuccess && details?.data?.isPassed === true) {
-            // Show loading state ONLY for PASSED assessments
-            this.isGeneratingCertificate.set(true);
-            
-            // Wait 20 seconds for certificate generation, then call API again
-            setTimeout(() => {
-              this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
-                .subscribe({
-                  next: (finalDetails: any) => {
-                    this.isGeneratingCertificate.set(false);
-                    if (finalDetails?.isSuccess) {
-                      this.next.emit(finalDetails['data']);
-                    }
-                  },
-                  error: (err: any) => {
-                    this.isGeneratingCertificate.set(false);
-                    console.error('Fetch Quiz Result Error:', err);
-                  }
-                });
-            }, 20000);
+            // Show modal first with score details
+            this.assessmentResultData.set(details.data);
+            this.showGenerateCertificateModal.set(true);
           } else {
-            // For failed assessments, emit result immediately without loader
-            if (details?.isSuccess) {
-              this.next.emit(details['data']);
-            }
+            // For failed assessments, emit directly
+            this.next.emit(details?.data?.isPassed === true ? 'cleared' : 'failed');
           }
         },
         error: (err: any) => {
           console.error('Fetch Quiz Result Error:', err);
+          this.next.emit('failed');
         }
       });
+  }
+
+  onGenerateCertificate() {
+    const token = this.authService.getToken();
+    const payload = {
+      courseId: this.getCourseId() || null,
+      courseCertificateId: this.getCourseId() || null,
+      professionalCertificateId: this.getCourseId() || null,
+      assessmentTypeId: 2
+    };
+
+    // Close modal and show loading state
+    this.showGenerateCertificateModal.set(false);
+    this.isGeneratingCertificate.set(true);
+    
+    // Wait 20 seconds for certificate generation, then call API again
+    setTimeout(() => {
+      this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (finalDetails: any) => {
+            this.isGeneratingCertificate.set(false);
+            if (finalDetails?.isSuccess) {
+              this.next.emit(finalDetails['data']);
+            }
+          },
+          error: (err: any) => {
+            this.isGeneratingCertificate.set(false);
+            console.error('Fetch Quiz Result Error:', err);
+          }
+        });
+    }, 20000);
+  }
+
+  onCloseModal() {
+    this.showGenerateCertificateModal.set(false);
   }
 
 
