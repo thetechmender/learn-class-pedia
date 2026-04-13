@@ -35,6 +35,36 @@ export const useCareerPathDiscount = () => {
     }
   }, []);
 
+  // Assign price to course
+  const assignPriceToCourse = useCallback(async (courseId, price) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.assignPrice(2, courseId, price); // PriceType.Course = 2
+      return data;
+    } catch (err) {
+      setError('Failed to assign price to course');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Assign price to career path
+  const assignPriceToCareerPath = useCallback(async (careerPathId, price) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await ApiService.assignPrice(3, careerPathId, price); // PriceType.CareerPath = 3
+      return data;
+    } catch (err) {
+      setError('Failed to assign price to career path');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Clear error
   const clearError = useCallback(() => {
     setError(null);
@@ -46,5 +76,7 @@ export const useCareerPathDiscount = () => {
     clearError,
     assignDiscountRateToCareerPath,
     assignPriceToCourseType,
+    assignPriceToCourse,
+    assignPriceToCareerPath,
   };
 };

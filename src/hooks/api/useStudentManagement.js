@@ -166,6 +166,29 @@ export const useStudentManagement = () => {
     }
   }, []);
 
+  // Get student orders
+  const getStudentOrders = useCallback(async (customerId) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await ApiService.getStudentOrders(customerId);
+      
+      // Handle response format - data is directly in response
+      if (response && (response.customerId || response.data?.customerId)) {
+        const responseData = response.data || response;
+        return responseData;
+      }
+      throw new Error('Invalid response format');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch student orders';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     // State
     loading,
@@ -186,6 +209,9 @@ export const useStudentManagement = () => {
     getGendersDropdown,
     getSignupTypesDropdown,
     getQualificationsDropdown,
+    
+    // Orders
+    getStudentOrders,
   };
 };
 

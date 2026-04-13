@@ -42,7 +42,7 @@ const AssignDiscountRate = () => {
   
   const { getAllCareerPaths } = useCareerPath();
   const { getAllCoursesAdmin } = useAdmin();
-  const { assignDiscountRateToCareerPath, assignPriceToCourseType } = useCareerPathDiscount();
+  const { assignDiscountRateToCareerPath, assignPriceToCourseType, assignPriceToCourse, assignPriceToCareerPath } = useCareerPathDiscount();
   
   // Component-specific state
   const [courses, setCourses] = useState([]);
@@ -62,6 +62,18 @@ const AssignDiscountRate = () => {
   const [selectedCourseTypeForPrice, setSelectedCourseTypeForPrice] = useState(null);
   const [courseTypePrice, setCourseTypePrice] = useState('');
   const [settingPrice, setSettingPrice] = useState(false);
+  
+  // Course price management state
+  const [showCoursePriceModal, setShowCoursePriceModal] = useState(false);
+  const [selectedCourseForPrice, setSelectedCourseForPrice] = useState(null);
+  const [coursePrice, setCoursePrice] = useState('');
+  const [settingCoursePrice, setSettingCoursePrice] = useState(false);
+  
+  // Career path price management state
+  const [showCareerPathPriceModal, setShowCareerPathPriceModal] = useState(false);
+  const [selectedCareerPathForPrice, setSelectedCareerPathForPrice] = useState(null);
+  const [careerPathPrice, setCareerPathPrice] = useState('');
+  const [settingCareerPathPrice, setSettingCareerPathPrice] = useState(false);
   const [selectedCareerPath, setSelectedCareerPath] = useState(null);
   const [selectedCareerPathDiscountRate, setSelectedCareerPathDiscountRate] = useState('');
   const [showCareerPathModal, setShowCareerPathModal] = useState(false);
@@ -520,6 +532,74 @@ const AssignDiscountRate = () => {
       setSettingPrice(false);
     }
   }, [selectedCourseTypeForPrice, courseTypePrice, fetchAllDiscountRates, showToast, assignPriceToCourseType]);
+
+  // Handle set price for course
+  const handleSetPriceForCourse = useCallback(async (course) => {
+    setSelectedCourseForPrice(course);
+    // Pre-fill current price if exists
+    if (course.price) {
+      setCoursePrice(course.price.toString());
+    } else {
+      setCoursePrice('');
+    }
+    setShowCoursePriceModal(true);
+  }, []);
+
+  // Handle course price modal submit
+  const handleCoursePriceModalSubmit = useCallback(async () => {
+    if (!selectedCourseForPrice) return;
+
+    setSettingCoursePrice(true);
+    try {
+      await assignPriceToCourse(selectedCourseForPrice.id, parseFloat(coursePrice));
+      showToast('Price assigned to course successfully', 'success');
+      
+      // Refresh courses data
+      await fetchCourses(pagination.page, pagination.pageSize, searchTerm);
+      setShowCoursePriceModal(false);
+      setSelectedCourseForPrice(null);
+      setCoursePrice('');
+    } catch (error) {
+      console.error('Error assigning price to course:', error);
+      showToast('Failed to assign price to course', 'error');
+    } finally {
+      setSettingCoursePrice(false);
+    }
+  }, [selectedCourseForPrice, coursePrice, fetchCourses, pagination.page, pagination.pageSize, searchTerm, showToast, assignPriceToCourse]);
+
+  // Handle set price for career path
+  const handleSetPriceForCareerPath = useCallback(async (careerPath) => {
+    setSelectedCareerPathForPrice(careerPath);
+    // Pre-fill current price if exists
+    if (careerPath.price) {
+      setCareerPathPrice(careerPath.price.toString());
+    } else {
+      setCareerPathPrice('');
+    }
+    setShowCareerPathPriceModal(true);
+  }, []);
+
+  // Handle career path price modal submit
+  const handleCareerPathPriceModalSubmit = useCallback(async () => {
+    if (!selectedCareerPathForPrice) return;
+
+    setSettingCareerPathPrice(true);
+    try {
+      await assignPriceToCareerPath(selectedCareerPathForPrice.id, parseFloat(careerPathPrice));
+      showToast('Price assigned to career path successfully', 'success');
+      
+      // Refresh career paths data
+      await fetchCareerPaths(pagination.page, pagination.pageSize, searchTerm);
+      setShowCareerPathPriceModal(false);
+      setSelectedCareerPathForPrice(null);
+      setCareerPathPrice('');
+    } catch (error) {
+      console.error('Error assigning price to career path:', error);
+      showToast('Failed to assign price to career path', 'error');
+    } finally {
+      setSettingCareerPathPrice(false);
+    }
+  }, [selectedCareerPathForPrice, careerPathPrice, fetchCareerPaths, pagination.page, pagination.pageSize, searchTerm, showToast, assignPriceToCareerPath]);
 
   // Initialize data
   useEffect(() => {
@@ -1057,14 +1137,23 @@ const AssignDiscountRate = () => {
                     </div>
                   </div>
 
-                  {/* Enhanced Action Button */}
-                  <button
-                    onClick={() => handleAssignDiscount(course)}
-                    className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 font-medium transform hover:scale-105"
-                  >
-                    <Percent className="w-4 h-4 mr-2" />
-                    {course.discountRateId ? 'Change Discount' : 'Assign Discount'}
-                  </button>
+                  {/* Enhanced Action Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => handleAssignDiscount(course)}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 font-medium transform hover:scale-105"
+                    >
+                      <Percent className="w-4 h-4 mr-2" />
+                      {course.discountRateId ? 'Change Discount' : 'Assign Discount'}
+                    </button>
+                    <button
+                      onClick={() => handleSetPriceForCourse(course)}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium transform hover:scale-105"
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      {course.price ? 'Update Price' : 'Set Price'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -1228,14 +1317,23 @@ const AssignDiscountRate = () => {
                     </div>
                   </div>
 
-                  {/* Enhanced Action Button */}
-                  <button
-                    onClick={() => handleAssignCareerPathDiscount(careerPath)}
-                    className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium transform hover:scale-105"
-                  >
-                    <Percent className="w-4 h-4 mr-2" />
-                    {careerPath.discountRateId ? 'Change Discount' : 'Assign Discount'}
-                  </button>
+                  {/* Enhanced Action Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => handleAssignCareerPathDiscount(careerPath)}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium transform hover:scale-105"
+                    >
+                      <Percent className="w-4 h-4 mr-2" />
+                      {careerPath.discountRateId ? 'Change Discount' : 'Assign Discount'}
+                    </button>
+                    <button
+                      onClick={() => handleSetPriceForCareerPath(careerPath)}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 font-medium transform hover:scale-105"
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      {careerPath.price ? 'Update Price' : 'Set Price'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -1875,6 +1973,150 @@ const AssignDiscountRate = () => {
                   <>
                     <Save className="w-4 h-4 mr-2" />
                     Set Price
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Course Price Assignment Modal */}
+      {showCoursePriceModal && selectedCourseForPrice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
+                {selectedCourseForPrice.price ? 'Update Price' : 'Set Price'} for Course
+              </h3>
+              <button
+                onClick={() => setShowCoursePriceModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Course: <span className="font-medium">{selectedCourseForPrice.title}</span>
+              </p>
+              {selectedCourseForPrice.price && (
+                <p className="text-sm text-gray-600">
+                  Current Price: <span className="font-medium text-green-600">${selectedCourseForPrice.price}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Price *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={coursePrice}
+                onChange={(e) => setCoursePrice(e.target.value)}
+                placeholder="Enter price"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCoursePriceModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCoursePriceModalSubmit}
+                disabled={settingCoursePrice || !coursePrice || parseFloat(coursePrice) < 0}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {settingCoursePrice ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {selectedCourseForPrice.price ? 'Update Price' : 'Set Price'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Career Path Price Assignment Modal */}
+      {showCareerPathPriceModal && selectedCareerPathForPrice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <DollarSign className="w-5 h-5 mr-2 text-purple-600" />
+                {selectedCareerPathForPrice.price ? 'Update Price' : 'Set Price'} for Career Path
+              </h3>
+              <button
+                onClick={() => setShowCareerPathPriceModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Career Path: <span className="font-medium">{selectedCareerPathForPrice.title}</span>
+              </p>
+              {selectedCareerPathForPrice.price && (
+                <p className="text-sm text-gray-600">
+                  Current Price: <span className="font-medium text-green-600">${selectedCareerPathForPrice.price}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Price *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={careerPathPrice}
+                onChange={(e) => setCareerPathPrice(e.target.value)}
+                placeholder="Enter price"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCareerPathPriceModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCareerPathPriceModalSubmit}
+                disabled={settingCareerPathPrice || !careerPathPrice || parseFloat(careerPathPrice) < 0}
+                className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              >
+                {settingCareerPathPrice ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {selectedCareerPathForPrice.price ? 'Update Price' : 'Set Price'}
                   </>
                 )}
               </button>

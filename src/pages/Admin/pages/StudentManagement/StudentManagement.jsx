@@ -18,7 +18,9 @@ import {
   GraduationCap,
   CreditCard,
   AlertCircle,
-  Globe
+  ShoppingBag,
+  FileText,
+  ShoppingCart
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import GenericDropdown from '../../../../components/GenericDropdown/GenericDropdown';
@@ -39,6 +41,7 @@ const StudentManagement = () => {
     getGendersDropdown,
     getSignupTypesDropdown,
     getQualificationsDropdown,
+    getStudentOrders,
   } = useStudentManagement();
 
   // Component state
@@ -54,6 +57,9 @@ const StudentManagement = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [studentOrders, setStudentOrders] = useState(null);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -169,6 +175,19 @@ const StudentManagement = () => {
       console.error('Failed to fetch student details:', err);
     }
   }, [getStudentById]);
+
+  const handleViewOrders = useCallback(async (studentId) => {
+    setLoadingOrders(true);
+    try {
+      const ordersData = await getStudentOrders(studentId);
+      setStudentOrders(ordersData);
+      setShowOrdersModal(true);
+    } catch (err) {
+      console.error('Failed to fetch student orders:', err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [getStudentOrders]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({
@@ -403,29 +422,30 @@ const StudentManagement = () => {
 
       {/* Students Table */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 border-b border-gray-200 dark:border-gray-600">
+        {/* Desktop Table */}
+        <div className="hidden xl:block overflow-x-auto">
+          <table className="w-full table-fixed">
+            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[200px]">
                   Student
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
                   Contact
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Email Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Enrollments
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Signup Type
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Joined Date
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[150px]">
                   Actions
                 </th>
               </tr>
@@ -452,126 +472,452 @@ const StudentManagement = () => {
                 </tr>
               ) : (
                 students.map((student) => (
-                  <tr key={student.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-900/10 dark:hover:to-purple-900/10 transition-all duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-12 w-12 flex-shrink-0">
                           {student.profileImageUrl ? (
                             <img
-                              className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-600"
+                              className="h-12 w-12 rounded-full object-cover border border-gray-300"
                               src={student.profileImageUrl}
                               alt={student.fullName}
                             />
                           ) : (
-                            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
-                              <User className="h-6 w-6 text-white" />
+                            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                              <User className="h-6 w-6 text-gray-600" />
                             </div>
                           )}
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <div className="ml-3 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {student.firstName && student.lastName 
                               ? `${student.firstName} ${student.lastName}`
                               : student.fullName || 'N/A'
                             }
                           </div>
-                          {student.landingPageUrl && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <Globe className="w-3 h-3 text-blue-500" />
-                              <a 
-                                href={student.landingPageUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 truncate max-w-xs inline-block"
-                              >
-                                {student.landingPageUrl}
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="truncate max-w-xs">{student.email}</span>
-                        </div>
-                        {student.phoneNumber && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span>{student.phoneNumber}</span>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {student.email}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        {student.isEmailVerified ? (
-                          <>
-                            <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded-full">
-                              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                            </div>
-                            <span className="text-sm font-medium text-green-600 dark:text-green-400">Verified</span>
-                          </>
-                        ) : (
-                          <>
-                            <div className="p-1 bg-red-100 dark:bg-red-900/30 rounded-full">
-                              <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                            </div>
-                            <span className="text-sm font-medium text-red-600 dark:text-red-400">Not Verified</span>
-                          </>
-                        )}
+                        <Mail className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
+                          {student.email}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                            <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                        student.isEmailVerified 
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : 'bg-gray-50 text-gray-700 border border-gray-200'
+                      }`}>
+                        {student.isEmailVerified ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          <XCircle className="w-4 h-4" />
+                        )}
+                        <span>
+                          {student.isEmailVerified ? 'Verified' : 'Not Verified'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-50 rounded-lg">
+                          <BookOpen className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {student.enrollmentCount || 0}
                           </div>
-                          <span className="font-medium">{student.enrollmentCount || 0}</span>
-                          <span className="text-gray-500 dark:text-gray-400">enrollments</span>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Enrollments
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${
                         student.signupTypeName === 'Email' 
-                          ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 dark:from-blue-900/30 dark:to-blue-800/30 dark:text-blue-400'
+                          ? 'bg-blue-100 text-blue-700'
                           : student.signupTypeName === 'Facebook'
-                          ? 'bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-800 dark:from-indigo-900/30 dark:to-indigo-800/30 dark:text-indigo-400'
+                          ? 'bg-indigo-100 text-indigo-700'
                           : student.signupTypeName === 'Google'
-                          ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 dark:from-red-900/30 dark:to-red-800/30 dark:text-red-400'
+                          ? 'bg-red-100 text-red-700'
                           : student.signupTypeName === 'LinkedIn'
-                          ? 'bg-gradient-to-r from-blue-100 to-cyan-200 text-blue-800 dark:from-blue-900/30 dark:to-cyan-800/30 dark:text-blue-400'
+                          ? 'bg-cyan-100 text-cyan-700'
                           : student.signupTypeName === 'Apple'
-                          ? 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 dark:from-gray-700 dark:to-gray-600 dark:text-gray-300'
-                          : 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 dark:from-purple-900/30 dark:to-purple-800/30 dark:text-purple-400'
+                          ? 'bg-gray-100 text-gray-700'
+                          : 'bg-purple-100 text-purple-700'
                       }`}>
                         {student.signupTypeName || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        {formatDate(student.createdAt)}
+                        <div className="p-1.5 bg-gray-50 rounded-lg">
+                          <Calendar className="w-4 h-4 text-gray-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {formatDate(student.createdAt)}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Joined
+                          </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleViewStudent(student.id)}
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View Details
-                      </button>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewStudent(student.id);
+                          }}
+                          className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewOrders(student.id);
+                          }}
+                          disabled={loadingOrders}
+                          className="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:opacity-50"
+                        >
+                          {loadingOrders ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <ShoppingBag className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Medium Screen Compact Table */}
+        <div className="hidden lg:block xl:hidden overflow-x-auto">
+          <table className="w-full table-fixed">
+            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[200px]">
+                  Student
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[200px]">
+                  Email
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+                  Enrollments
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-4 py-8 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">Loading students...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : students.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-4 py-8 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Users className="w-12 h-12 text-gray-400" />
+                      <span className="text-gray-500 dark:text-gray-400 font-medium">No students found</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                students.map((student) => (
+                  <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex-shrink-0">
+                          {student.profileImageUrl ? (
+                            <img
+                              className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-100 dark:ring-blue-900/50"
+                              src={student.profileImageUrl}
+                              alt={student.fullName}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center">
+                              <User className="h-5 w-5 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {student.firstName && student.lastName 
+                              ? `${student.firstName} ${student.lastName}`
+                              : student.fullName || 'N/A'
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+                        {student.email}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${
+                        student.isEmailVerified 
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      }`}>
+                        {student.isEmailVerified ? (
+                          <CheckCircle className="w-3 h-3" />
+                        ) : (
+                          <XCircle className="w-3 h-3" />
+                        )}
+                        <span className="ml-1">
+                          {student.isEmailVerified ? 'Verified' : 'Not Verified'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {student.enrollmentCount || 0}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewStudent(student.id);
+                          }}
+                          className="inline-flex items-center justify-center px-2 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                        >
+                          <Eye className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewOrders(student.id);
+                          }}
+                          disabled={loadingOrders}
+                          className="inline-flex items-center justify-center px-2 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs disabled:opacity-50"
+                        >
+                          {loadingOrders ? (
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <ShoppingBag className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Cards Layout */}
+        <div className="lg:hidden p-4 space-y-4">
+          {loading ? (
+            // Mobile loading skeleton
+            Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 animate-pulse">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-20"></div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            ))
+          ) : students.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No students found</h3>
+              <p className="text-gray-500 dark:text-gray-400">Try adjusting your search or filters</p>
+            </div>
+          ) : (
+            students.map((student) => (
+              <div key={student.id} className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300">
+                {/* Student Header */}
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 flex-shrink-0">
+                    {student.profileImageUrl ? (
+                      <img
+                        className="w-16 h-16 rounded-full object-cover ring-3 ring-blue-100 dark:ring-blue-900/50 shadow-lg"
+                        src={student.profileImageUrl}
+                        alt={student.fullName}
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                        <User className="h-8 w-8 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
+                      {student.firstName && student.lastName 
+                        ? `${student.firstName} ${student.lastName}`
+                        : student.fullName || 'N/A'
+                      }
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Active Student</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="p-2 bg-blue-500 rounded-lg">
+                      <Mail className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {student.email}
+                    </span>
+                  </div>
+                  {student.phoneNumber && (
+                    <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <div className="p-2 bg-green-500 rounded-lg">
+                        <Phone className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {student.phoneCountryCode && `${student.phoneCountryCode} `}{student.phoneNumber}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status and Stats Grid */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl font-medium text-sm ${
+                    student.isEmailVerified 
+                      ? 'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                      : 'bg-gradient-to-r from-red-100 to-pink-100 dark:from-red-900/30 dark:to-pink-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                  }`}>
+                    <div className={`p-1 rounded-full ${
+                      student.isEmailVerified 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-red-500 text-white'
+                    }`}>
+                      {student.isEmailVerified ? (
+                        <CheckCircle className="w-3 h-3" />
+                      ) : (
+                        <XCircle className="w-3 h-3" />
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold">
+                      {student.isEmailVerified ? 'Verified' : 'Not Verified'}
+                    </span>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+                        <BookOpen className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-gray-900 dark:text-white">
+                          {student.enrollmentCount || 0}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          Enrollments
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm ${
+                    student.signupTypeName === 'Email' 
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-200 dark:border-blue-800'
+                      : student.signupTypeName === 'Facebook'
+                      ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-indigo-200 dark:border-indigo-800'
+                      : student.signupTypeName === 'Google'
+                      ? 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-200 dark:border-red-800'
+                      : student.signupTypeName === 'LinkedIn'
+                      ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white border-cyan-200 dark:border-cyan-800'
+                      : student.signupTypeName === 'Apple'
+                      ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white border-gray-200 dark:border-gray-800'
+                      : 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-200 dark:border-purple-800'
+                  }`}>
+                    <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+                    <span className="text-xs">{student.signupTypeName || 'N/A'}</span>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-3 rounded-xl border border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg">
+                        <Calendar className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-gray-900 dark:text-white">
+                          {formatDate(student.createdAt)}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          Member Since
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewStudent(student.id);
+                    }}
+                    className="flex-1 group inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    <Eye className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="font-medium">View Details</span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewOrders(student.id);
+                    }}
+                    disabled={loadingOrders}
+                    className="flex-1 group inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    {loadingOrders ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <ShoppingBag className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                    )}
+                    <span className="font-medium">View Orders</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Pagination */}
@@ -835,6 +1181,230 @@ const StudentManagement = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Orders Modal */}
+      {showOrdersModal && studentOrders && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl max-w-6xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-slideUp">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-700 dark:to-emerald-700 p-6 rounded-t-3xl border-b border-gray-200/50 dark:border-gray-700/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                    <ShoppingBag className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Orders</h2>
+                    <p className="text-green-100 text-sm">
+                      {studentOrders.customerFullName} (ID: {studentOrders.customerId}) - {studentOrders.orders?.length || 0} orders
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowOrdersModal(false);
+                    setStudentOrders(null);
+                  }}
+                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-all duration-200 group"
+                >
+                  <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 lg:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+              {studentOrders.orders && studentOrders.orders.length > 0 ? (
+                <div className="space-y-6">
+                  {studentOrders.orders.map((order) => (
+                    <div key={order.id} className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border border-gray-200/50 dark:border-gray-600/50 hover:shadow-lg transition-all duration-300">
+                      {/* Order Header */}
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
+                            <ShoppingBag className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                              Order #{order.orderNo}
+                            </h3>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md ${
+                                order.statusName === 'Paid' 
+                                  ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
+                                  : order.statusName === 'Pending'
+                                  ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-400'
+                                  : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 dark:from-red-900/30 dark:to-red-800/30 dark:text-red-400'
+                              }`}>
+                                {order.statusName}
+                              </span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {formatDate(order.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                            ${order.totalAmount.toFixed(2)}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {order.currencyCode}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Order Items */}
+                      <div className="mb-6">
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                          <BookOpen className="w-4 h-4" />
+                          Order Items ({order.orderItems?.length || 0})
+                        </h4>
+                        <div className="space-y-3">
+                          {order.orderItems?.map((item) => (
+                            <div key={item.id} className="bg-white dark:bg-gray-700 rounded-xl p-4 border border-gray-200/50 dark:border-gray-600/50 hover:shadow-md transition-all duration-200">
+                              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div>
+                                  <h5 className="font-semibold text-gray-900 dark:text-white mb-2">
+                                    {item.resourceTitle}
+                                  </h5>
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${
+                                      item.resourceType === 'Career Path'
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                                        : item.resourceType === 'Course'
+                                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                                        : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
+                                    }`}>
+                                      {item.resourceType}
+                                    </span>
+                                    <span className="px-3 py-1 text-xs font-bold rounded-full shadow-md bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                                      {item.packageName}
+                                    </span>
+                                  </div>
+                                  {item.levelName && (
+                                    <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${
+                                      item.levelId === 1
+                                        ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white'
+                                        : 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white'
+                                    }`}>
+                                      {item.levelName}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                  <div>
+                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                      ${item.finalPrice.toFixed(2)}
+                                    </div>
+                                    {item.discount > 0 && (
+                                      <div className="flex items-center gap-2">
+                                        <div className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                                          ${item.unitPrice.toFixed(2)}
+                                        </div>
+                                        <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                                          Save ${item.discount.toFixed(2)}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Payment Information */}
+                      {order.paymentId && (
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200/50 dark:border-blue-800/30">
+                          <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                            <CreditCard className="w-4 h-4" />
+                            Payment Information
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Status</div>
+                              <div className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md inline-block ${
+                                order.paymentStatusName === 'Captured'
+                                  ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
+                                  : 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-400'
+                              }`}>
+                                {order.paymentStatusName}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Transaction ID</div>
+                              <div className="text-sm font-mono text-gray-900 dark:text-white">
+                                {order.transactionId}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Method</div>
+                              <div className="text-sm text-gray-900 dark:text-white">
+                                {order.cardHolderName && (
+                                  <span>{order.cardHolderName} ({order.paymentMethodType})</span>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Paid At</div>
+                              <div className="text-sm text-gray-900 dark:text-white">
+                                {order.paidAt ? formatDate(order.paidAt) : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Response</div>
+                              <div className="text-sm text-gray-900 dark:text-white">
+                                {order.paymentResponse || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Order Summary */}
+                      <div className="bg-gradient-to-r from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200/50 dark:border-purple-800/30">
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Order Summary</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                            <span className="text-gray-900 dark:text-white">${order.subtotalAmount.toFixed(2)}</span>
+                          </div>
+                          {order.discountAmount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">Discount:</span>
+                              <span className="text-green-600 dark:text-green-400">-${order.discountAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {order.taxAmount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">Tax:</span>
+                              <span className="text-gray-900 dark:text-white">${order.taxAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-300 dark:border-gray-600">
+                            <span className="text-gray-900 dark:text-white">Total:</span>
+                            <span className="text-gray-900 dark:text-white">${order.totalAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Orders Found</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    This student hasn't placed any orders yet.
+                  </p>
                 </div>
               )}
             </div>

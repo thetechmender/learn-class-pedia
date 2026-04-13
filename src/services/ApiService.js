@@ -1873,6 +1873,25 @@ async uploadCsvFileByName(formData) {
     });
   }
 
+  // ASSIGN price with PriceType (universal method for courses, course types, and career paths)
+  async assignPrice(priceType, courseTypeId, price) {
+    const params = new URLSearchParams({
+      PriceType: priceType,
+      courseTypeId: courseTypeId.toString(),
+      price: price.toString()
+    });
+    return this.request(`/courses/assign-price?${params}`, {
+      method: 'POST',
+    });
+  }
+
+  // GET student orders
+  async getStudentOrders(customerId) {
+    return this.request(`/StudentManagement/${customerId}/orders`, {
+      method: 'GET',
+    });
+  }
+
   // UPDATE discount rate mapping
   async updateDiscountRateMapping(id, mappingData) {
     return this.request(ENDPOINTS.DISCOUNT_RATES_MAPPINGS_UPDATE(id), {
