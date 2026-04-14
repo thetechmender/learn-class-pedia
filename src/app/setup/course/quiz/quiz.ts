@@ -34,17 +34,52 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('[Quiz Debug] ngOnChanges triggered', changes);
+    
+    if (changes['orderPayload']) {
+      console.log('[Quiz Debug] orderPayload changed');
+      console.log('[Quiz Debug] firstChange:', changes['orderPayload'].firstChange);
+      console.log('[Quiz Debug] previousValue:', changes['orderPayload'].previousValue);
+      console.log('[Quiz Debug] currentValue:', changes['orderPayload'].currentValue);
+    }
+    
+    if (changes['isLectureCompleted']) {
+      console.log('[Quiz Debug] isLectureCompleted changed');
+      console.log('[Quiz Debug] previousValue:', changes['isLectureCompleted'].previousValue);
+      console.log('[Quiz Debug] currentValue:', changes['isLectureCompleted'].currentValue);
+    }
+    
     if (changes['orderPayload'] && !changes['orderPayload'].firstChange) {
-      this.resetQuizState();
-      this._fetchQuizes();
+      const previousShortCourseId = changes['orderPayload'].previousValue?.shortCourseId;
+      const currentShortCourseId = changes['orderPayload'].currentValue?.shortCourseId;
+      
+      console.log('[Quiz Debug] previousShortCourseId:', previousShortCourseId);
+      console.log('[Quiz Debug] currentShortCourseId:', currentShortCourseId);
+      console.log('[Quiz Debug] Are they different?', previousShortCourseId !== currentShortCourseId);
+      
+      // Only reset if the shortCourseId actually changed
+      if (previousShortCourseId !== currentShortCourseId) {
+        console.log('[Quiz Debug] Resetting quiz state and fetching new quiz');
+        this.resetQuizState();
+        this._fetchQuizes();
+      } else {
+        console.log('[Quiz Debug] Same shortCourseId, NOT resetting');
+      }
     }
   }
 
   resetQuizState() {
+    console.log('[Quiz Debug] resetQuizState called');
+    console.log('[Quiz Debug] Before reset - isSubmitted:', this.isSubmitted());
+    console.log('[Quiz Debug] Before reset - showCompletionScreen:', this.showCompletionScreen());
+    console.log('[Quiz Debug] Before reset - showAnswers:', this.showAnswers());
+    
     this.isSubmitted.set(false);
     this.showCompletionScreen.set(false);
     this.showAnswers.set(false);
     this.quizResult.set(null);
+    
+    console.log('[Quiz Debug] After reset - all states set to false/null');
   }
   _fetchQuizes() {
     if (!this.orderPayload?.shortCourseId) return;
