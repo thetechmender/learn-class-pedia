@@ -22,6 +22,17 @@ import { SimpleVideoPlayerComponent } from './simple-video-player/simple-video-p
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 
+// Declare global window interface for chattrik API
+declare global {
+  interface Window {
+    Chattrak?: {
+      openChat: () => void;
+      closeChat: () => void;
+      onChatMinimized?: (callback: () => void) => void;
+    };
+  }
+}
+
 @Component({
   selector: 'app-course',
   standalone: true,
@@ -44,10 +55,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   chatInput = signal<string>('');
   chatThreadId = signal<string>('');
   isChatSending = signal<boolean>(false);
+  isLiveChatActive = signal<boolean>(false);
   chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string | SafeHtml }>>([
     {
       role: 'bot',
-      text: this.sanitizer.bypassSecurityTrustHtml("Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics. If you're looking for live support, please start our <a href='#' class='text-white underline'>live chat</a>.")
+      text: this.sanitizer.bypassSecurityTrustHtml("Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics. If you're looking for live support, please start our <a href='javascript:void(0)' class='text-white underline live-chat-link' data-live-chat='true'>live chat</a>.")
     }
   ]);
 
@@ -227,6 +239,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (isPlatformBrowser(this.platformId)) {
       this.checkScreenSize();
       window.addEventListener('resize', () => this.checkScreenSize());
+      
+      // Set up global reference for onclick handler
+      (window as any).angularComponentRef = this;
     }
   }
 
@@ -1740,6 +1755,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               maxAttempts: data.maxAttempts,
               requiresRepurchase: data.requiresRepurchase,
               score: data.score,
+              scorePercentage: data.scorePercentage,
+              passingPercentage: data.passingPercentage,
               resultStatus: 'AlreadyPassed',
               pngPath: data.pngPath,
               publicCertificateLink: data.publicCertificateLink,
@@ -1792,12 +1809,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         maxAttempts: result.maxAttempts,
         requiresRepurchase: result.requiresRepurchase,
         score: result.score,
+        scorePercentage: result.scorePercentage,
         resultStatus: result.isPassed ? 'Passed' : 'Failed',
         pngPath: result.pngPath || existingCertificateUrl, // Use existing URL if new one is null
         // Include additional fields from coursewiseresult
         totalQuestions: result.totalQuestions,
         correctAnswers: result.correctAnswers,
         wrongAnswers: result.wrongAnswers,
+        passingPercentage: result.passingPercentage,
         isPassed: result.isPassed,
         courseId: result.courseId,
         courseTitle: result.courseTitle
@@ -1894,6 +1913,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             maxAttempts: data.maxAttempts,
             requiresRepurchase: data.requiresRepurchase,
             score: data.score,
+            scorePercentage: data.scorePercentage,
+            passingPercentage: data.passingPercentage,
             resultStatus: 'AlreadyPassed',
             pngPath: data.pngPath,
             htmlPath: data.htmlPath,
@@ -1920,6 +1941,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.isPlaying.set(false);
     if (this.progressInterval) {
       clearInterval(this.progressInterval);
+    }
+    
+    // Clean up global reference
+    if (isPlatformBrowser(this.platformId)) {
+      delete (window as any).angularComponentRef;
     }
   }
 
@@ -2314,4 +2340,218 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     return false;
   }
+
+  activateLiveChat() {
+    if (isPlatformBrowser(this.platformId)) {
+      console.log('[Live Chat Debug] activateLiveChat called');
+      
+      // Hide course chat and button
+      this.isLiveChatActive.set(true);
+      console.log('[Live Chat Debug] isLiveChatActive set to true');
+      
+      // Close course companion chat if open
+      if (this.courseService.isChatOpen()) {
+        console.log('[Live Chat Debug] Course chat is open, closing it');
+        this.courseService.toggleChat();
+      } else {
+        console.log('[Live Chat Debug] Course chat was not open');
+      }
+
+      // Dynamically load the chattrik script
+      console.log('[Live Chat Debug] Loading chattrik script dynamically');
+      const script = document.createElement('script');
+      script.id = 'cd360-snippet';
+      script.src = 'https://app.chattrik.com/assets/scripts/snippet.js?key=69dd2f99b2f813411fe1e011';
+      script.async = true;
+      
+      script.onload = () => {
+        console.log('[Live Chat Debug] Chattrik script loaded');
+        
+        // Add CSS to hide launcher button
+        this.addLauncherButtonHidingCSS();
+        
+        // Wait for widget to render, then attach event listener to minimize button
+        setTimeout(() => {
+          this.attachMinimizeButtonListener();
+          
+          // Open live chat
+          if (window.Chattrak?.openChat) {
+            console.log('[Live Chat Debug] Calling Chattrak.openChat()');
+            window.Chattrak.openChat();
+          } else {
+            console.log('[Live Chat Debug] Chattrik.openChat not available, widget might auto-open');
+          }
+        }, 2000); // Wait 2 seconds for widget to render
+      };
+      
+      script.onerror = () => {
+        console.error('[Live Chat Debug] Failed to load chattrik script');
+      };
+      
+      document.body.appendChild(script);
+    }
+  }
+
+  private addLauncherButtonHidingCSS() {
+    if (isPlatformBrowser(this.platformId)) {
+      // Add CSS rule to hide launcher button
+      const style = document.createElement('style');
+      style.id = 'launcher-button-hider';
+      style.textContent = `
+        #launcher_btn {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+      console.log('[Live Chat Debug] Added CSS to hide launcher button');
+    }
+  }
+
+  private removeLauncherButtonHidingCSS() {
+    if (isPlatformBrowser(this.platformId)) {
+      const style = document.getElementById('launcher-button-hider');
+      if (style) {
+        style.remove();
+        console.log('[Live Chat Debug] Removed CSS to hide launcher button');
+      }
+    }
+  }
+
+  private attachMinimizeButtonListener() {
+    console.log('[Live Chat Debug] Using polling to detect widget minimization');
+    
+    // Remove any existing listener to avoid duplicates
+    if ((window as any).liveChatMinimizeHandler) {
+      document.removeEventListener('click', (window as any).liveChatMinimizeHandler);
+    }
+    
+    // Use polling to check if widget is visible
+    let widgetWasVisible = false;
+    const checkInterval = setInterval(() => {
+      if (!this.isLiveChatActive()) {
+        clearInterval(checkInterval);
+        return;
+      }
+      
+      // Check if widget is visible
+      const contentBody = document.querySelector('.content_body');
+      const isVisible = contentBody && 
+                       (contentBody as HTMLElement).offsetParent !== null &&
+                       (contentBody as HTMLElement).style.display !== 'none';
+      
+      console.log('[Live Chat Debug] Widget visibility check:', isVisible);
+      
+      if (isVisible) {
+        widgetWasVisible = true;
+      } else if (widgetWasVisible && !isVisible) {
+        console.log('[Live Chat Debug] Widget was visible and now hidden (minimized), deactivating');
+        this.deactivateLiveChat();
+        clearInterval(checkInterval);
+      }
+    }, 1000);
+    
+    // Also try to attach direct click listener
+    const pollForButton = setInterval(() => {
+      const minimizeBtn = document.getElementById('minimize_chat');
+      if (minimizeBtn) {
+        console.log('[Live Chat Debug] Minimize button found via polling, attaching direct listener');
+        minimizeBtn.onclick = (e) => {
+          console.log('[Live Chat Debug] Minimize button clicked via onclick!');
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          this.deactivateLiveChat();
+        };
+        clearInterval(pollForButton);
+      }
+    }, 500);
+    
+    // Stop polling after 10 seconds
+    setTimeout(() => {
+      clearInterval(pollForButton);
+    }, 10000);
+  }
+
+  handleChatMessageClick(event: Event) {
+    console.log('[Live Chat Debug] Chat message clicked:', event.target);
+    const target = event.target as HTMLElement;
+    console.log('[Live Chat Debug] Target classes:', target.classList);
+    console.log('[Live Chat Debug] Target data-live-chat:', target.getAttribute('data-live-chat'));
+    console.log('[Live Chat Debug] Target closest .live-chat-link:', target.closest('.live-chat-link'));
+    console.log('[Live Chat Debug] Target closest [data-live-chat]:', target.closest('[data-live-chat]'));
+    
+    // Check if the clicked element or its parent is the live chat link
+    if (target.classList.contains('live-chat-link') || 
+        target.closest('.live-chat-link') ||
+        target.getAttribute('data-live-chat') === 'true' ||
+        target.closest('[data-live-chat]')) {
+      console.log('[Live Chat Debug] Live chat link clicked, calling activateLiveChat');
+      event.preventDefault();
+      event.stopPropagation();
+      this.activateLiveChat();
+    } else {
+      console.log('[Live Chat Debug] Clicked on non-live-chat element');
+    }
+  }
+
+  deactivateLiveChat() {
+    if (isPlatformBrowser(this.platformId)) {
+      console.log('[Live Chat Debug] deactivateLiveChat called');
+      console.log('[Live Chat Debug] Current isLiveChatActive value:', this.isLiveChatActive());
+      
+      this.isLiveChatActive.set(false);
+      console.log('[Live Chat Debug] isLiveChatActive set to false, new value:', this.isLiveChatActive());
+      
+      // Remove CSS hiding rule so launcher button can show again
+      this.removeLauncherButtonHidingCSS();
+      
+      // Remove the chattrik script
+      const script = document.getElementById('cd360-snippet');
+      console.log('[Live Chat Debug] Found script element:', script);
+      if (script) {
+        console.log('[Live Chat Debug] Removing chattrik script');
+        script.remove();
+        console.log('[Live Chat Debug] Script removed');
+      } else {
+        console.log('[Live Chat Debug] Script element not found');
+      }
+      
+      // Remove the chattrik widget HTML (app-root with content_body)
+      const chatWidget = document.querySelector('app-root div.content_body');
+      console.log('[Live Chat Debug] Found chat widget:', chatWidget);
+      if (chatWidget) {
+        const appRoot = chatWidget.closest('app-root');
+        console.log('[Live Chat Debug] Found app-root:', appRoot);
+        if (appRoot) {
+          console.log('[Live Chat Debug] Removing app-root element');
+          appRoot.remove();
+          console.log('[Live Chat Debug] App-root removed successfully');
+        }
+      } else {
+        console.log('[Live Chat Debug] Chat widget not found, trying alternative selectors');
+        // Try alternative selectors
+        const allAppRoots = document.querySelectorAll('app-root');
+        console.log('[Live Chat Debug] Found app-root elements:', allAppRoots.length);
+        allAppRoots.forEach((root, index) => {
+          console.log('[Live Chat Debug] App-root', index, ':', root);
+          if (root.querySelector('.content_body')) {
+            console.log('[Live Chat Debug] Found app-root with content_body, removing');
+            root.remove();
+          }
+        });
+      }
+      
+      // Remove the launcher button if it exists
+      const launcherBtn = document.getElementById('launcher_btn');
+      console.log('[Live Chat Debug] Found launcher button:', launcherBtn);
+      if (launcherBtn) {
+        console.log('[Live Chat Debug] Removing launcher button');
+        launcherBtn.remove();
+        console.log('[Live Chat Debug] Launcher button removed successfully');
+      }
+      
+      console.log('[Live Chat Debug] deactivateLiveChat completed');
+    }
+  }
+
 }

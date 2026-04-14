@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Input, signal, inject } from '@angular/core';
+import { Component, Output, EventEmitter, Input, signal, inject, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { AssessmentService } from '../../../services/assessment.service';
 // import { DecimalPipe } from '@angular/common';
@@ -9,7 +9,7 @@ import { AssessmentService } from '../../../services/assessment.service';
   templateUrl: './failed-assessment.html',
   styleUrl: './failed-assessment.sass',
 })
-export class FailedAssessment {
+export class FailedAssessment implements OnChanges {
   @Input('slug') courseSlug: string = '';
   @Input() resultData: any = null;
   @Output() next = new EventEmitter<void>();
@@ -22,6 +22,14 @@ export class FailedAssessment {
     // Update assessment service with latest result data
     if (this.resultData) {
       this.assessmentService.updateAttemptStatus(this.resultData);
+    }
+    console.log('[Failed Assessment] ngOnInit resultData:', this.resultData);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['resultData'] && changes['resultData'].currentValue) {
+      console.log('[Failed Assessment] ngOnChanges resultData:', changes['resultData'].currentValue);
+      this.assessmentService.updateAttemptStatus(changes['resultData'].currentValue);
     }
   }
 

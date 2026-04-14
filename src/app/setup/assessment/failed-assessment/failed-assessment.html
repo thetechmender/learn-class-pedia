@@ -48,7 +48,10 @@
       </div>
       } @else {
       <h2 class="text-lg font-bold text-gray-900 mb-2">Unfortunately, You Didn't Pass This Attempt</h2>
-      <p class="text-sm text-gray-600 mb-2">You scored {{ scorePercentage }}% and the passing score is {{ resultData?.passingPercentage || 70 }}%. You got {{ resultData?.correctAnswers || 0 }} out of {{ resultData?.totalQuestions || 0 }} questions correct.</p>
+      <p class="text-sm text-gray-600 mb-2">You scored <span class="font-bold">{{ scorePercentage }}%</span> and the
+        passing score is<span class="font-bold"> {{ resultData?.passingPercentage || 70 }}%. </span> You got <span
+          class="font-bold">{{ resultData?.correctAnswers || 0 }}</span> out of <span class="font-bold">{{
+          resultData?.totalQuestions || 0 }}</span> questions correct.</p>
       <p class="text-sm text-gray-600 mb-2">Don't worry, you still have {{ attemptsRemaining }} {{ attemptsRemaining ===
         1 ? 'attempt' : 'attempts' }} remaining to retake the exam and complete your course.</p>
       <p class="text-sm text-gray-600 mb-6">Review the material and try again when you're ready.</p>
