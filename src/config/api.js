@@ -115,6 +115,7 @@ export const ENDPOINTS = {
   REVIEW_COURSES_DROPDOWN: '/Review/courses/dropdown',
   REVIEW_CAREER_PATH_LEVELS: (careerPathId) => `/Review/careerpaths/${careerPathId}/levels`,
   REVIEW_WITH_DETAILS: (reviewId) => `/Review/${reviewId}/details`,
+  REVIEW_UPLOAD_CSV: '/Review/upload-excel',
 
   // Discount Rates endpoints
   DISCOUNT_RATES: '/DiscountRates',

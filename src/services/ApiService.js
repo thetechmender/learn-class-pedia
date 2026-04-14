@@ -1090,6 +1090,65 @@ async uploadCsvFileByName(formData) {
     }
   }
 
+  // Upload CSV file for review creation
+  async uploadReviewCsv(formData) {
+    const url = `${this.baseURL}${ENDPOINTS.REVIEW_UPLOAD_CSV}`;
+    
+    const config = {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header when using FormData, browser sets it automatically
+      headers: {
+        'accept': '*/*',
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+      },
+      timeout: this.timeout,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            // Handle different error response formats - prioritize "message" field
+            errorDetails = errorData.message || errorData.error || errorData.title || 
+                          (errorData.errors && Object.values(errorData.errors)[0]?.[0]) ||
+                          JSON.stringify(errorData);
+          } else {
+            const textData = await response.text();
+            errorDetails = textData || response.statusText || 'Unknown error';
+          }
+        } catch (parseError) {
+          errorDetails = response.statusText || 'Unknown error';
+        }
+        
+        const error = new Error(`HTTP error! status: ${response.status} - ${errorDetails}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorDetails
+        };
+        throw error;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        return data;
+      } else {
+        const textData = await response.text();
+        return textData ? { success: true, message: textData } : { success: true };
+      }
+    } catch (error) {
+      console.error('Review CSV upload failed:', error);
+      throw error;
+    }
+  }
+
   // Remove course thumbnail
   async removeThumbnail(courseId) {
     const url = `${this.baseURL}${ENDPOINTS.COURSE_REMOVE_THUMBNAIL(courseId)}`;

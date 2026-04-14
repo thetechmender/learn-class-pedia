@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, X, Search, BookOpen, Trash2 } from 'lucide-react';
+import { Star, MessageSquare, Calendar, User, ChevronDown, Plus, Edit, X, Search, BookOpen, Trash2, Upload } from 'lucide-react';
 import { API_CONFIG, ENDPOINTS } from '../../../../config/api';
 import { isProduction } from '../../../../config/appSettings';
-import AdminPageLayout from '../../../../components/AdminPageLayout';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
 import { useCareerPath } from '../../../../hooks/api/useCareerPath';
 import { debugAuth } from '../../../../utils/authDebug';
+import AdminPageLayout from '../../../../components/AdminPageLayout';
+import CsvUploadModal from '../../../../components/CsvUploadModal';
 
 // Authentication wrapper component
 const withAuthCheck = (WrappedComponent) => {
@@ -75,6 +76,11 @@ const ReviewManagementPage = () => {
   const [mainCourseSearchTerm, setMainCourseSearchTerm] = useState('');
   const [mainCourseSearchResults, setMainCourseSearchResults] = useState([]);
   const [mainCourseSearchLoading, setMainCourseSearchLoading] = useState(false);
+  
+  // CSV Upload Modal State
+  const [csvModalOpen, setCsvModalOpen] = useState(false);
+  const [csvModalLoading, setCsvModalLoading] = useState(false);
+  const [csvModalError, setCsvModalError] = useState('');
   
   // CRUD states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -364,6 +370,25 @@ const ReviewManagementPage = () => {
     setCareerPathData(null);
     setCourseReviews([]);
     setError(null);
+  };
+
+  // Handle CSV upload
+  const handleCsvUpload = async (formData, isFormData = false) => {
+    try {
+      setCsvModalLoading(true);
+      setCsvModalError('');
+      
+      // Import ApiService dynamically to avoid circular dependency
+      const ApiService = (await import('../../../../services/ApiService')).default;
+      await ApiService.uploadReviewCsv(formData);
+      
+      setCsvModalOpen(false);
+      alert('Reviews uploaded successfully from CSV!');
+    } catch (error) {
+      setCsvModalError(error.response?.data || error.message || 'Failed to upload CSV file');
+    } finally {
+      setCsvModalLoading(false);
+    }
   };
 
   // Reset form to empty state for add modal
@@ -1150,6 +1175,13 @@ const ReviewManagementPage = () => {
                 Add Review
               </button>
               <button
+                onClick={() => setCsvModalOpen(true)}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+              >
+                <Upload className="w-4 h-4" />
+                CSV Upload
+              </button>
+              <button
                 onClick={handleReset}
                 className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
               >
@@ -1497,6 +1529,23 @@ const ReviewManagementPage = () => {
           </div>
         )}
       </div>
+
+      {/* CSV Upload Modal */}
+      <CsvUploadModal
+        isOpen={csvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        onSubmit={handleCsvUpload}
+        loading={csvModalLoading}
+        csvError={csvModalError}
+        onClearError={() => setCsvModalError('')}
+        sampleFileUrl="/Reviews_Template.xlsx"
+        title="Upload Reviews with Excel"
+        description="Upload an Excel file to bulk create reviews"
+        fileFieldName="ExcelFile"
+        acceptTypes=".xlsx,.xls"
+        fileTypeLabel="Excel"
+        validateFileType={(file) => file.name.endsWith('.xlsx') || file.name.endsWith('.xls')}
+      />
     </AdminPageLayout>
   );
 };

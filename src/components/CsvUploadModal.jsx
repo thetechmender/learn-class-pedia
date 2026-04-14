@@ -7,7 +7,14 @@ const CsvUploadModal = ({
   onSubmit,
   loading = false,
   csvError = null,
-  onClearError
+  onClearError,
+  sampleFileUrl = '/ShortCourseUploadSample.csv',
+  title = 'Create Short Course with CSV',
+  description = 'Upload a CSV file to create short courses',
+  fileFieldName = 'CsvFile',
+  acceptTypes = '.csv',
+  fileTypeLabel = 'CSV',
+  validateFileType = (file) => file.type === 'text/csv' || file.name.endsWith('.csv')
 }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -26,7 +33,7 @@ const CsvUploadModal = ({
 
   const handleFileSelect = (file) => {
     // Validate file type
-    if (file && file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    if (file && !validateFileType(file)) {
       onClearError?.();
       return;
     }
@@ -76,7 +83,7 @@ const CsvUploadModal = ({
     }
 
     const formData = new FormData();
-    formData.append('CsvFile', selectedFile);
+    formData.append(fileFieldName, selectedFile);
     
     await onSubmit(formData, true);
   };
@@ -106,7 +113,7 @@ const CsvUploadModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Create Short Course with CSV
+            {title}
           </h2>
           <button
             onClick={handleClose}
@@ -126,10 +133,10 @@ const CsvUploadModal = ({
                 <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
                   <p className="text-blue-800 dark:text-blue-200 font-medium mb-1">
-                    Upload a CSV file to create short courses
+                    {description}
                   </p>
                   <p className="text-blue-700 dark:text-blue-300">
-                    Make sure your CSV file contains the required columns for course creation.
+                    Make sure your CSV file contains the required columns.
                   </p>
                 </div>
               </div>
@@ -148,7 +155,7 @@ const CsvUploadModal = ({
                   </p>
                   
                   <button
-                    onClick={() => window.open('/ShortCourseUploadSample.csv', '_blank')}
+                    onClick={() => window.open(sampleFileUrl, '_blank')}
                     className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm"
                   >
                     <FileText className="w-4 h-4" />
@@ -173,7 +180,7 @@ const CsvUploadModal = ({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv"
+                accept={acceptTypes}
                 onChange={handleFileInputChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 disabled={loading}
@@ -204,13 +211,13 @@ const CsvUploadModal = ({
                   ) : (
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Drop your CSV file here, or{' '}
+                        Drop your {fileTypeLabel} file here, or{' '}
                         <span className="text-blue-600 dark:text-blue-400 hover:underline">
                           browse
                         </span>
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        CSV files only (max 10MB)
+                        {fileTypeLabel} files only (max 10MB)
                       </p>
                     </div>
                   )}
