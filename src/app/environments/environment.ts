@@ -2,18 +2,21 @@ export const ENVIRONMENTS = {
   development: {
     API_URL: 'https://localhost:7224/api',
     DEBUG: true,
-    ENV_NAME: 'development'
+    ENV_NAME: 'development',
+    HIDE_URL_PARAMS: false
   },
   staging: {
-    API_URL: 'https://staging-api.thetechmenders.com/api',
+    API_URL: 'https://class.thetechmenders.com/api',
     DEBUG: true,
-    ENV_NAME: 'staging'
+    ENV_NAME: 'staging',
+    HIDE_URL_PARAMS: false
   },
   production: {
     API_URL: 'https://class.thetechmenders.com/api',
     DEBUG: false,
-    ENV_NAME: 'production'
+    ENV_NAME: 'production',
+    HIDE_URL_PARAMS: true
   }
 };
 
-export const environment = ENVIRONMENTS.production;
+export const environment = ENVIRONMENTS.staging;

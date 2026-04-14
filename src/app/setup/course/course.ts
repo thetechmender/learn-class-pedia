@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { AssessmentService } from '../../services/assessment.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SpeechService } from '../../services/speech.service';
+import { environment } from '../../environments/environment';
 import { Overview } from './overview/overview';
 import { Notebook } from './notebook/notebook';
 import { Transcript } from './transcript/transcript';
@@ -344,13 +345,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         });
         this.existingSeasionCourseId.set(idToStore);
 
-        // Remove token from URL immediately after storing it
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: {},
-          queryParamsHandling: '',
-          replaceUrl: true
-        });
+        // Remove token from URL immediately after storing it (only in production/staging)
+        if (environment.HIDE_URL_PARAMS) {
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            queryParamsHandling: '',
+            replaceUrl: true
+          });
+        }
 
         this.loadCourseDataWithToken(idToStore, token);
       } else {
