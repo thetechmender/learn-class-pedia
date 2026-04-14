@@ -49,7 +49,7 @@ export class Chat {
     const question = (this.chatInput() || '').trim();
     if (!question || this.isChatSending()) return;
 
-    const tree = this.courseTree();
+    const tree = this.courseTree;
     const cpCourseDetailId = tree?.courseId;
     if (!cpCourseDetailId) {
       this.toastr.error('Course is not loaded yet. Please try again in a moment.', 'Error');
@@ -88,12 +88,7 @@ export class Chat {
   }
 
   handleChatMessageClick(event: Event) {
-    console.log('[Live Chat Debug] Chat message clicked:', event.target);
     const target = event.target as HTMLElement;
-    console.log('[Live Chat Debug] Target classes:', target.classList);
-    console.log('[Live Chat Debug] Target data-live-chat:', target.getAttribute('data-live-chat'));
-    console.log('[Live Chat Debug] Target closest .live-chat-link:', target.closest('.live-chat-link'));
-    console.log('[Live Chat Debug] Target closest [data-live-chat]:', target.closest('[data-live-chat]'));
     
     // Check if the clicked element or its parent is the live chat link
     if (target.classList.contains('live-chat-link') || 
@@ -105,27 +100,19 @@ export class Chat {
       event.stopPropagation();
       this.activateLiveChat();
     } else {
-      console.log('[Live Chat Debug] Clicked on non-live-chat element');
     }
   }
 
   activateLiveChat() {
-    console.log('[Live Chat Debug] activateLiveChat called - START');
-    console.log('[Live Chat Debug] isPlatformBrowser check:', isPlatformBrowser(this.platformId));
     
     if (isPlatformBrowser(this.platformId)) {
-      console.log('[Live Chat Debug] Inside isPlatformBrowser block');
-      console.log('[Live Chat Debug] Current isLiveChatActive value:', this.isLiveChatActive());
       
       // Set live chat as active - this will hide the sidebar via template conditions
-      this.isLiveChatActive.set(true);
-      console.log('[Live Chat Debug] isLiveChatActive set to true, new value:', this.isLiveChatActive());
-      
+      this.isLiveChatActive.set(true);      
       // Check if script already exists to avoid duplicate loading
       const existingScript = document.getElementById('cd360-snippet');
       console.log('[Live Chat Debug] Existing script check:', existingScript);
       if (existingScript) {
-        console.log('[Live Chat Debug] Chattrik script already loaded, opening chat');
         if (window.Chattrak?.openChat) {
           window.Chattrak.openChat();
         }
