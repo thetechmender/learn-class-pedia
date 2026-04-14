@@ -32,6 +32,7 @@ const StudentOrderManagement = () => {
     orders,
     selectedOrder,
     pagination,
+    loadingOrderDetails,
     getAllOrders,
     getOrderById,
     searchOrders,
@@ -301,28 +302,8 @@ const StudentOrderManagement = () => {
                   <option value="3">Cancelled</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={filters.startDate}
-                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  End Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={filters.endDate}
-                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-              </div>
+  
+            
             </div>
             <div className="flex items-center gap-3 mt-6">
               <button
@@ -722,7 +703,10 @@ const StudentOrderManagement = () => {
                                 <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                               </div>
                               <span className="text-xs font-medium px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full">
-                                {item.resourceType || 'Course'}
+                                Type: {item.resourceType || 'Course'}
+                              </span>
+                              <span className="text-xs font-medium px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full">
+                                Package: {item.packageName || 'N/A'}
                               </span>
                               {item.levelName && (
                                 <span className="text-xs font-medium px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">
@@ -739,7 +723,7 @@ const StudentOrderManagement = () => {
                               </p>
                             )}
                             <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                              <span>Resource ID: {item.resourceId}</span>
+                              
                               {item.levelId && <span>Level ID: {item.levelId}</span>}
                             </div>
                           </div>

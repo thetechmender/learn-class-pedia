@@ -52,6 +52,8 @@ const CourseModal = ({
     currencyCode: 'USD',
     thumbnailUrl: '',
     promoVideoUrl: '',
+    promoVideoDurationSeconds: 0,
+    promoVideoDurationText: '',
     badgeIds: [],
     mapExistingLectures: false,
     mappedLectures: [],
@@ -59,7 +61,38 @@ const CourseModal = ({
     thumbnailFile: null,
     promoVideoFile: null,
     instructionForCourseCreation: ''
-  });
+}, [course, mode]);
+
+  // Calculate video duration from existing URL when editing a short course
+  useEffect(() => {
+    const calculateDurationFromUrl = async () => {
+      if (
+        mode === 'edit' && 
+        course && 
+        Number(course.courseTypeId) === 3 && 
+        course.promoVideoUrl && 
+        !course.promoVideoDurationSeconds &&
+        formData.promoVideoUrl &&
+        !formData.promoVideoDurationSeconds
+      ) {
+        try {
+          const durationInSeconds = await getVideoDurationFromUrl(formData.promoVideoUrl);
+          const durationText = formatDuration(durationInSeconds);
+          
+          setFormData(prev => ({
+            ...prev,
+            promoVideoDurationSeconds: Math.round(durationInSeconds),
+            promoVideoDurationText: durationText
+          }));
+        } catch (error) {
+          console.error('Error calculating video duration from URL:', error);
+          // Don't update if calculation fails
+        }
+      }
+    };
+
+    calculateDurationFromUrl();
+  }, [mode, course, formData.promoVideoUrl]);
 
   const courseTypeIdNumber = Number(formData.courseTypeId);
   const shouldShowExistingCreationCheckbox = courseTypeIdNumber !== 1 && courseTypeIdNumber !== 2 && (mode === 'create' || course?.isNew === false);
@@ -300,6 +333,8 @@ const CourseModal = ({
         currencyCode: course.currencyCode || 'USD',
         thumbnailUrl: course.thumbnailUrl || '',
         promoVideoUrl: course.promoVideoUrl || '',
+        promoVideoDurationSeconds: course.promoVideoDurationSeconds || 0,
+        promoVideoDurationText: course.promoVideoDurationSeconds ? formatDuration(course.promoVideoDurationSeconds) : (course.promoVideoDurationText || ''),
         badgeIds: course.badgeIds || [],
         mapExistingLectures: Boolean(mappedLecturesResolved.length > 0) || course?.isNew === false,
         mappedLectures: mappedLecturesResolved,
@@ -326,6 +361,8 @@ const CourseModal = ({
         currencyCode: 'USD',
         thumbnailUrl: '',
         promoVideoUrl: '',
+        promoVideoDurationSeconds: 0,
+        promoVideoDurationText: '',
         badgeIds: [],
         mapExistingLectures: false,
         mappedLectures: [],
@@ -393,6 +430,70 @@ const CourseModal = ({
     sortOrder,
     lectures: []
   });
+
+  const getVideoDuration = (file) => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement("video");
+      const objectUrl = URL.createObjectURL(file);
+
+      video.preload = "metadata";
+      video.src = objectUrl;
+
+      video.onloadedmetadata = () => {
+        const durationInSeconds = video.duration;
+        URL.revokeObjectURL(objectUrl);
+
+        if (!Number.isFinite(durationInSeconds)) {
+          reject(new Error("Could not read video duration."));
+          return;
+        }
+
+        resolve(durationInSeconds);
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Invalid video file or failed to load metadata."));
+      };
+    });
+  };
+
+  const getVideoDurationFromUrl = (url) => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement("video");
+
+      video.preload = "metadata";
+      video.src = url;
+
+      video.onloadedmetadata = () => {
+        const durationInSeconds = video.duration;
+
+        if (!Number.isFinite(durationInSeconds)) {
+          reject(new Error("Could not read video duration from URL."));
+          return;
+        }
+
+        resolve(durationInSeconds);
+      };
+
+      video.onerror = () => {
+        reject(new Error("Invalid video URL or failed to load metadata."));
+      };
+    });
+  };
+
+  const formatDuration = (seconds) => {
+    const totalSeconds = Math.floor(seconds);
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (hrs > 0) {
+      return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
 
   const handleAddSection = () => {
     setFormData((prev) => {
@@ -659,6 +760,11 @@ const CourseModal = ({
     submitData.append('instructionForCourseCreation', formData.instructionForCourseCreation || '');
     submitData.append('IsThumbnailRemoved', String(!!formData.IsThumbnailRemoved));
     submitData.append('IsPromoVideoRemoved', String(!!formData.IsPromoVideoRemoved));
+    
+    // Add video duration only for short courses (courseTypeId 3)
+    if (Number(formData.courseTypeId) === 3) {
+      submitData.append('promoVideoDurationSeconds', String(formData.promoVideoDurationSeconds || 0));
+    }
 
     if (formData.badgeIds && formData.badgeIds.length > 0) {
       formData.badgeIds.forEach((badgeId, index) => {
@@ -1214,12 +1320,19 @@ const CourseModal = ({
                             className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
                             muted
                           />
+                          {formData.promoVideoDurationText && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded-b-xl text-center">
+                              {formData.promoVideoDurationText}
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({
   ...prev,
   promoVideoFile: null,
   promoVideoUrl: '',
+  promoVideoDurationSeconds: 0,
+  promoVideoDurationText: '',
   IsPromoVideoRemoved: true
 }))}
                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
@@ -1235,12 +1348,19 @@ const CourseModal = ({
                             className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
                             muted
                           />
+                          {formData.promoVideoDurationText && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded-b-xl text-center">
+                              {formData.promoVideoDurationText}
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({
                               ...prev,
                               promoVideoFile: null,
                               promoVideoUrl: '',
+                              promoVideoDurationSeconds: 0,
+                              promoVideoDurationText: '',
                               IsPromoVideoRemoved: true
                             }))}
                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
@@ -1266,10 +1386,37 @@ const CourseModal = ({
                           onChange={async (e) => {
                             const file = e.target.files[0];
                             if (file) {
-                              setFormData(prev => ({ 
-                                ...prev, 
-                                promoVideoFile: file
-                              }));
+                              try {
+                                // Only calculate duration for short courses (courseTypeId 3)
+                                if (Number(formData.courseTypeId) === 3) {
+                                  const durationInSeconds = await getVideoDuration(file);
+                                  const durationText = formatDuration(durationInSeconds);
+                                  
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    promoVideoFile: file,
+                                    promoVideoDurationSeconds: Math.round(durationInSeconds),
+                                    promoVideoDurationText: durationText
+                                  }));
+                                } else {
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    promoVideoFile: file,
+                                    promoVideoDurationSeconds: 0,
+                                    promoVideoDurationText: ''
+                                  }));
+                                }
+                              } catch (error) {
+                                console.error('Error calculating video duration:', error);
+                                // Still set the file even if duration calculation fails
+                                setFormData(prev => ({ 
+                                  ...prev, 
+                                  promoVideoFile: file,
+                                  promoVideoDurationSeconds: 0,
+                                  promoVideoDurationText: ''
+                                }));
+                              }
+                              
                               // Clear any existing errors
                               if (formErrors.promoVideoFile) {
                                 setFormErrors(prev => ({ ...prev, promoVideoFile: '' }));
@@ -1292,6 +1439,11 @@ const CourseModal = ({
                       <p className="mt-2 text-xs text-gray-500">
                         {formData.promoVideoUrl ? 'Current video from URL. Upload new file to replace.' : 'Upload a lecture video'}
                       </p>
+                      {formData.promoVideoDurationText && (
+                        <p className="mt-1 text-xs text-blue-600 font-medium">
+                          Duration: {formData.promoVideoDurationText}
+                        </p>
+                      )}
                       {formErrors.promoVideoFile && (
                         <p className="mt-1 text-sm text-red-600">{formErrors.promoVideoFile}</p>
                       )}

@@ -8,9 +8,12 @@ const useStudentOrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [paymentMethods, setPaymentMethods] = useState([]);
+  
+  // Separate loading state for order details to prevent list re-rendering
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
-    pageSize: 100,
+    pageSize: 20,
     totalCount: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -62,7 +65,7 @@ const useStudentOrderManagement = () => {
 
   // Get order by ID
   const getOrderById = useCallback(async (orderId) => {
-    setLoading(true);
+    setLoadingOrderDetails(true);
     setError(null);
     
     try {
@@ -80,7 +83,7 @@ const useStudentOrderManagement = () => {
       setError(errorMessage);
       throw err;
     } finally {
-      setLoading(false);
+      setLoadingOrderDetails(false);
     }
   }, []);
 
@@ -168,6 +171,7 @@ const useStudentOrderManagement = () => {
     selectedOrder,
     pagination,
     paymentMethods,
+    loadingOrderDetails,
     getAllOrders,
     getOrderById,
     searchOrders,

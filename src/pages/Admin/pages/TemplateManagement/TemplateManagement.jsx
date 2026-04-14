@@ -534,19 +534,31 @@ const TemplateManagement = () => {
                   )}
 
                   {/* Page Range */}
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    let pageNum;
+                  {(() => {
+                    const pageNumbers = [];
                     if (pagination.totalPages <= 5) {
-                      pageNum = i + 1;
+                      // Show all pages if total is 5 or less
+                      for (let i = 1; i <= pagination.totalPages; i++) {
+                        pageNumbers.push(i);
+                      }
                     } else if (pagination.page <= 3) {
-                      pageNum = i + 1;
+                      // Show pages 1-5 when current page is near start
+                      for (let i = 1; i <= 5; i++) {
+                        pageNumbers.push(i);
+                      }
                     } else if (pagination.page >= pagination.totalPages - 2) {
-                      pageNum = pagination.totalPages - 4 + i;
+                      // Show last 5 pages when current page is near end
+                      for (let i = pagination.totalPages - 4; i <= pagination.totalPages; i++) {
+                        pageNumbers.push(i);
+                      }
                     } else {
-                      pageNum = pagination.page - 2 + i;
+                      // Show 2 pages before and 2 pages after current page
+                      for (let i = pagination.page - 2; i <= pagination.page + 2; i++) {
+                        pageNumbers.push(i);
+                      }
                     }
                     
-                    return (
+                    return pageNumbers.map(pageNum => (
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
@@ -558,11 +570,11 @@ const TemplateManagement = () => {
                       >
                         {pageNum}
                       </button>
-                    );
-                  })}
+                    ));
+                  })()}
 
                   {/* Last Page */}
-                  {pagination.page < pagination.totalPages - 2 && (
+                  {pagination.page < pagination.totalPages - 2 && pagination.totalPages > 5 && (
                     <>
                       {pagination.page < pagination.totalPages - 3 && (
                         <span className="px-2 text-gray-400">...</span>

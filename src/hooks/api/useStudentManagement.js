@@ -7,6 +7,10 @@ export const useStudentManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  // Separate loading states for modal operations
+  const [loadingStudentDetails, setLoadingStudentDetails] = useState(false);
+  const [loadingStudentOrders, setLoadingStudentOrders] = useState(false);
+  
   // Students data state
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -72,7 +76,7 @@ export const useStudentManagement = () => {
 
   // Get student by ID
   const getStudentById = useCallback(async (studentId) => {
-    setLoading(true);
+    setLoadingStudentDetails(true);
     setError(null);
     
     try {
@@ -90,7 +94,7 @@ export const useStudentManagement = () => {
       setError(errorMessage);
       throw err;
     } finally {
-      setLoading(false);
+      setLoadingStudentDetails(false);
     }
   }, []);
 
@@ -168,7 +172,7 @@ export const useStudentManagement = () => {
 
   // Get student orders
   const getStudentOrders = useCallback(async (customerId) => {
-    setLoading(true);
+    setLoadingStudentOrders(true);
     setError(null);
     
     try {
@@ -185,7 +189,7 @@ export const useStudentManagement = () => {
       setError(errorMessage);
       throw err;
     } finally {
-      setLoading(false);
+      setLoadingStudentOrders(false);
     }
   }, []);
 
@@ -196,6 +200,8 @@ export const useStudentManagement = () => {
     students,
     selectedStudent,
     pagination,
+    loadingStudentDetails,
+    loadingStudentOrders,
     
     // Actions
     getAllStudents,
