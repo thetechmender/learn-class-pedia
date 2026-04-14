@@ -76,8 +76,12 @@
               <p class="text-xs text-gray-400 font-medium">Lecture {{ scIndex + 1 }}</p>
             </div>
             <div class="flex items-center justify-between gap-2">
-              <h4 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{
-                sc.title }}</h4>
+              <div class="flex flex-col gap-0.5 flex-1">
+                <h4 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{ sc.title }}</h4>
+                @if (sc.isCompleted && sc.assessmentScore !== null && sc.assessmentScore !== undefined) {
+                <p class="text-[10px] text-gray-500">Marks obtained: {{ sc.assessmentScore }}/5</p>
+                }
+              </div>
               @if (isActive) {
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -161,8 +165,12 @@
             <p class="text-xs text-gray-400 font-medium">Lecture {{ i + 1 }}</p>
           </div>
           <div class="flex items-center justify-between gap-2">
-            <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{
-              sc.title }}</h3>
+            <div class="flex flex-col gap-0.5 flex-1">
+              <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{ sc.title }}</h3>
+              @if (sc.isCompleted && sc.assessmentScore !== null && sc.assessmentScore !== undefined) {
+              <p class="text-[10px] text-gray-500">Marks obtained: {{ sc.assessmentScore }}/5</p>
+              }
+            </div>
             @if (isActive) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
               viewBox="0 0 24 24" stroke="currentColor">
@@ -242,8 +250,12 @@
             <p class="text-xs text-gray-400 font-medium">Lecture</p>
           </div>
           <div class="flex items-center justify-between gap-2 mt-1">
-            <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="courseTree().isCompleted">{{
-              lec.title }}</h3>
+            <div class="flex flex-col gap-0.5 flex-1">
+              <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="courseTree().isCompleted">{{ lec.title }}</h3>
+              @if (courseTree().isCompleted && courseTree().assessmentScore !== null && courseTree().assessmentScore !== undefined) {
+              <p class="text-[10px] text-gray-500">Marks obtained: {{ courseTree().assessmentScore }}/5</p>
+              }
+            </div>
             @if (isActive) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary flex-shrink-0" fill="none"
               viewBox="0 0 24 24" stroke="currentColor">
