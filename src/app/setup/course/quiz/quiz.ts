@@ -220,4 +220,8 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
       }))
     );
   }
+
+  getOptionLetter(index: number): string {
+    return String.fromCharCode(65 + index);
+  }
 }
