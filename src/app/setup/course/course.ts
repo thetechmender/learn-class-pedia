@@ -1762,6 +1762,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               passingPercentage: data.passingPercentage,
               resultStatus: 'AlreadyPassed',
               pngPath: data.pngPath,
+              pdfPath:data?.pdfPath,
               publicCertificateLink: data.publicCertificateLink,
               htmlPath: data.htmlPath
             });
@@ -1814,6 +1815,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         score: result.score,
         scorePercentage: result.scorePercentage,
         resultStatus: result.isPassed ? 'Passed' : 'Failed',
+        pdfPath: result?.pdfPath,
         pngPath: result.pngPath || existingCertificateUrl, // Use existing URL if new one is null
         // Include additional fields from coursewiseresult
         totalQuestions: result.totalQuestions,
@@ -1920,6 +1922,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             passingPercentage: data.passingPercentage,
             resultStatus: 'AlreadyPassed',
             pngPath: data.pngPath,
+             pdfPath:data?.pdfPath,
             htmlPath: data.htmlPath,
             publicCertificateLink: data.publicCertificateLink
           });

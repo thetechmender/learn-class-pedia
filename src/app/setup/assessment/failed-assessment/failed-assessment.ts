@@ -75,5 +75,5 @@ export class FailedAssessment implements OnChanges {
 
   back() {
     this.goBack.emit();
-  }
+  };
 }

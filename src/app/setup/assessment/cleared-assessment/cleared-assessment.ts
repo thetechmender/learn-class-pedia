@@ -82,6 +82,11 @@ export class ClearedAssessment implements OnChanges {
     return this.resultData?.pngPath ?? '';
   }
 
+    get pdfPath(): string {
+    // Use original thumbnail URL since full version doesn't exist on server
+    return this.resultData?.pdfPath ?? '';
+  }
+
   get htmlPath(): string {
     return this.resultData?.htmlPath ?? '';
   }
@@ -98,11 +103,51 @@ export class ClearedAssessment implements OnChanges {
     this.goBack.emit();
   }
 
+  showFullCertificate = signal(false);
+
+  openFullPreview() {
+    this.showFullCertificate.set(true);
+  }
+
+  closeFullPreview() {
+    this.showFullCertificate.set(false);
+  }
+
+  downloadCertificate() {
+    console.log('[Certificate Debug] Downloading certificate:', this.pdfPath);
+    if (!this.pdfPath) {
+      console.error('[Certificate Debug] No certificate path available');
+      return;
+    }
+    
+    const link = document.createElement('a');
+    link.href = this.pdfPath;
+    link.download = `certificate-${Date.now()}.pdf`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    console.log('[Certificate Debug] Download initiated');
+  }
+
   openShareModal() {
     this.showShareModal.set(true);
   }
 
   closeShareModal() {
     this.showShareModal.set(false);
+  };
+
+    onShareLinkedin() {
+    console.log('[Certificate Debug] Sharing on LinkedIn:', this.htmlPath);
+    if (!this.htmlPath) {
+      console.error('[Certificate Debug] No HTML certificate path available for sharing');
+      return;
+    }
+    
+    const encodedUrl = encodeURIComponent(this.htmlPath);
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+    console.log('[Certificate Debug] Opening LinkedIn share:', linkedInUrl);
+    window.open(linkedInUrl, '_blank');
   }
 }

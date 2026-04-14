@@ -49,7 +49,7 @@
           <input type="radio" [name]="'question-' + currentQuestion().id"
             class="w-4 h-4 min-w-4 min-h-4 text-primary border-gray-300 focus:ring-primary mt-0.5" (change)="onOptionChange(option)" />
           <span class="text-sm text-gray-700">
-            {{ option.optionLetter }}. {{ option.optionText }}
+            {{getOptionLetter(index)}}. {{ option.optionText }}
           </span>
         </label>
         }

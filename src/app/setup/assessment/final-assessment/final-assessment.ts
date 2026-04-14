@@ -23,10 +23,10 @@ export class FinalAssessment implements OnInit {
   questions = signal<any[]>([]);
   currentQuestionIndex = signal(0);
   isQuestionLoading = signal(false);
-  
+
   private timerInterval: any = null;
   remainingSeconds = signal(0);
-  
+
   totalMinutes = computed(() => (this.questions().length || 15) * 3);
 
   formattedTime = computed(() => {
@@ -34,7 +34,7 @@ export class FinalAssessment implements OnInit {
     const hours = Math.floor(total / 3600);
     const mins = Math.floor((total % 3600) / 60);
     const secs = total % 60;
-    
+
     if (total >= 3600) {
       // >= 60 minutes: show hh:mm:ss
       return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -108,7 +108,7 @@ export class FinalAssessment implements OnInit {
       });
   };
 
-_fetchCareerPathAssessment() {
+  _fetchCareerPathAssessment() {
     if (!this.orderPayload?.careerPathLevelMapId) return;
     this.isQuestionLoading.set(true);
     const token = this.authService.getToken();
@@ -197,7 +197,7 @@ _fetchCareerPathAssessment() {
 
   _autoSubmit() {
     this.isCompleting.set(true);
-    
+
     // Build payload based on career path or regular course
     const payload: any = {
       shortCourseId: this.orderPayload?.shortCourseId || null,
@@ -220,7 +220,7 @@ _fetchCareerPathAssessment() {
     const submitApi = this.orderPayload?.careerPathLevelMapId
       ? this.assessmentService.submitCareerPathAssessment(payload, token)
       : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token);
-    
+
     submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
@@ -242,7 +242,7 @@ _fetchCareerPathAssessment() {
     }
     this.stopTimer();
     this.isCompleting.set(true);
-    
+
     // Build payload based on career path or regular course
     const payload: any = {
       shortCourseId: this.orderPayload?.shortCourseId || null,
@@ -267,7 +267,7 @@ _fetchCareerPathAssessment() {
     const submitApi = this.orderPayload?.careerPathLevelMapId
       ? this.assessmentService.submitCareerPathAssessment(payload, token)
       : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token);
-    
+
     submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
@@ -333,7 +333,7 @@ _fetchCareerPathAssessment() {
     // Close modal and show loading state
     this.showGenerateCertificateModal.set(false);
     this.isGeneratingCertificate.set(true);
-    
+
     // Wait 20 seconds for certificate generation, then call API again
     setTimeout(() => {
       this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
@@ -356,5 +356,8 @@ _fetchCareerPathAssessment() {
     this.showGenerateCertificateModal.set(false);
   }
 
+  getOptionLetter(index: number): string {
+    return String.fromCharCode(65 + index);
+  }
 
 }
