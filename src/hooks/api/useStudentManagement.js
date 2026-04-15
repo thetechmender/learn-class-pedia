@@ -18,7 +18,7 @@ export const useStudentManagement = () => {
   // Pagination state
   const [pagination, setPagination] = useState({
     currentPage: 1,
-    pageSize: 10,
+    pageSize: 100,
     totalCount: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -31,7 +31,7 @@ export const useStudentManagement = () => {
   }, []);
 
   // Get all students with pagination and filters
-  const getAllStudents = useCallback(async (pageNumber = 1, pageSize = 10, filters = {}) => {
+  const getAllStudents = useCallback(async (pageNumber = 1, pageSize = 100, filters = {}) => {
     setLoading(true);
     setError(null);
     
@@ -99,7 +99,7 @@ export const useStudentManagement = () => {
   }, []);
 
   // Search students (wrapper for getAllStudents with search filters)
-  const searchStudents = useCallback(async (searchTerm, pageNumber = 1, pageSize = 10) => {
+  const searchStudents = useCallback(async (searchTerm, pageNumber = 1, pageSize = 100) => {
     const filters = {};
     
     // Try to determine search type based on input pattern
@@ -117,7 +117,7 @@ export const useStudentManagement = () => {
   }, [getAllStudents]);
 
   // Filter students
-  const filterStudents = useCallback(async (filters, pageNumber = 1, pageSize = 10) => {
+  const filterStudents = useCallback(async (filters, pageNumber = 1, pageSize = 100) => {
     return getAllStudents(pageNumber, pageSize, filters);
   }, [getAllStudents]);
 
@@ -127,7 +127,7 @@ export const useStudentManagement = () => {
     setSelectedStudent(null);
     setPagination({
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 100,
       totalCount: 0,
       totalPages: 0,
       hasNextPage: false,

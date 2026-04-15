@@ -13,7 +13,7 @@ const useStudentOrderManagement = () => {
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
-    pageSize: 20,
+    pageSize: 100,
     totalCount: 0,
     totalPages: 0,
     hasNextPage: false,

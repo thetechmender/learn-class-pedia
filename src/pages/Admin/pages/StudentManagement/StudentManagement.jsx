@@ -82,7 +82,7 @@ const StudentManagement = () => {
 
 
   // Load students function
-  const loadStudents = useCallback(async (page = 1, pageSize = 10) => {
+  const loadStudents = useCallback(async (page = 1, pageSize = 100) => {
     try {
       await getAllStudents(page, pageSize, filters);
     } catch (err) {
@@ -105,7 +105,7 @@ const StudentManagement = () => {
 
   // Load initial data on mount
   useEffect(() => {
-    getAllStudents(1, 10, {});
+    getAllStudents(1, 100, {});
   }, [getAllStudents]);
 
   const handleFilter = useCallback(async () => {
@@ -194,6 +194,30 @@ const StudentManagement = () => {
       second: '2-digit',
       hour12: false
     });
+  };
+
+  // Helper function to get initials from name
+  const getInitials = (fullName, firstName, lastName) => {
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    if (fullName) {
+      const names = fullName.trim().split(' ');
+      if (names.length >= 2) {
+        return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
+      }
+      return fullName.substring(0, 2).toUpperCase();
+    }
+    return 'NA';
+  };
+
+  // Helper function to check if we should use initials instead of image
+  const shouldUseInitials = (imageUrl) => {
+    if (!imageUrl) return true;
+    // Check if it's a Google profile image or similar service
+    return imageUrl.includes('googleusercontent.com') || 
+           imageUrl.includes('graph.facebook.com') ||
+           imageUrl.includes('platform-lookaside.fbsbx.com');
   };
 
   return (
@@ -357,25 +381,28 @@ const StudentManagement = () => {
           <table className="w-full table-fixed">
             <thead className="bg-gray-50 dark:bgGeo Location Country-gray-700 border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[200px]">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
                   Student
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
+                {/* <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
                   Contact
-                </th>
+                </th> */}
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Email Status
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Enrollments
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Signup through
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[150px]">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+                  Advertising Medium
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Landing Page
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[150px]">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Referral URL
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
@@ -389,7 +416,7 @@ const StudentManagement = () => {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center">
+                  <td colSpan="10" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-gray-500 dark:text-gray-400 font-medium">Loading students...</span>
@@ -398,7 +425,7 @@ const StudentManagement = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center">
+                  <td colSpan="10" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-gray-400" />
                       <span className="text-gray-500 dark:text-gray-400 font-medium text-lg">No students found</span>
@@ -412,17 +439,23 @@ const StudentManagement = () => {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-12 w-12 flex-shrink-0">
-                          {student.profileImageUrl ? (
+                          {student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? (
                             <img
                               className="h-12 w-12 rounded-full object-cover border border-gray-300"
                               src={student.profileImageUrl}
                               alt={student.fullName}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                              <User className="h-6 w-6 text-gray-600" />
-                            </div>
-                          )}
+                          ) : null}
+                          <div 
+                            className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm"
+                            style={{ display: student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? 'none' : 'flex' }}
+                          >
+                            {getInitials(student.fullName, student.firstName, student.lastName)}
+                          </div>
                         </div>
                         <div className="ml-3 min-w-0">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -437,14 +470,14 @@ const StudentManagement = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    {/* <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Mail className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
                           {student.email}
                         </span>
                       </div>
-                    </td>
+                    </td> */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="inline-flex items-center gap-2 text-sm">
                         {student.isEmailVerified ? (
@@ -490,6 +523,22 @@ const StudentManagement = () => {
                       }`}>
                         {student.signupTypeName || 'N/A'}
                       </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {student.advertisingMedium ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-medium border border-indigo-200 dark:border-indigo-800">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                            </svg>
+                            <span className="truncate max-w-[90px]">{student.advertisingMedium}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
+                            N/A
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
@@ -636,17 +685,23 @@ const StudentManagement = () => {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 flex-shrink-0">
-                          {student.profileImageUrl ? (
+                          {student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? (
                             <img
                               className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-100 dark:ring-blue-900/50"
                               src={student.profileImageUrl}
                               alt={student.fullName}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center">
-                              <User className="h-5 w-5 text-white" />
-                            </div>
-                          )}
+                          ) : null}
+                          <div 
+                            className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs"
+                            style={{ display: student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? 'none' : 'flex' }}
+                          >
+                            {getInitials(student.fullName, student.firstName, student.lastName)}
+                          </div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
@@ -758,17 +813,23 @@ const StudentManagement = () => {
                 {/* Student Header */}
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 flex-shrink-0">
-                    {student.profileImageUrl ? (
+                    {student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? (
                       <img
                         className="w-16 h-16 rounded-full object-cover ring-3 ring-blue-100 dark:ring-blue-900/50 shadow-lg"
                         src={student.profileImageUrl}
                         alt={student.fullName}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                        <User className="h-8 w-8 text-white" />
-                      </div>
-                    )}
+                    ) : null}
+                    <div 
+                      className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg"
+                      style={{ display: student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? 'none' : 'flex' }}
+                    >
+                      {getInitials(student.fullName, student.firstName, student.lastName)}
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
@@ -800,7 +861,10 @@ const StudentManagement = () => {
                         <Phone className="w-4 h-4 text-white" />
                       </div>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {student.phoneCountryCode && `${student.phoneCountryCode} `}{student.phoneNumber}
+                        {student.phoneNumberWithCountryCode || 
+                         (student.phoneCountryCode && student.phoneNumber 
+                           ? `${student.phoneCountryCode} ${student.phoneNumber}` 
+                           : student.phoneNumber)}
                       </span>
                     </div>
                   )}
@@ -835,7 +899,11 @@ const StudentManagement = () => {
                   </button>
 
                   <div className="text-xs text-gray-700 dark:text-gray-300">
-                    {student.signupTypeName || 'N/A'}
+                    <span className="font-semibold">Signup:</span> {student.signupTypeName || 'N/A'}
+                  </div>
+
+                  <div className="text-xs text-gray-700 dark:text-gray-300">
+                    <span className="font-semibold">Ad Medium:</span> {student.advertisingMedium || 'N/A'}
                   </div>
 
                   {student.landingPageUrl ? (
@@ -1027,17 +1095,23 @@ const StudentManagement = () => {
                 <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
                   {/* Profile Image */}
                   <div className="relative">
-                    {selectedStudent.profileImageUrl ? (
+                    {selectedStudent.profileImageUrl && !shouldUseInitials(selectedStudent.profileImageUrl) ? (
                       <img
                         className="h-24 w-24 rounded-3xl object-cover ring-4 ring-white dark:ring-gray-700 shadow-2xl"
                         src={selectedStudent.profileImageUrl}
                         alt={selectedStudent.fullName}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl">
-                        <User className="h-12 w-12 text-white" />
-                      </div>
-                    )}
+                    ) : null}
+                    <div 
+                      className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-2xl"
+                      style={{ display: selectedStudent.profileImageUrl && !shouldUseInitials(selectedStudent.profileImageUrl) ? 'none' : 'flex' }}
+                    >
+                      {getInitials(selectedStudent.fullName, selectedStudent.firstName, selectedStudent.lastName)}
+                    </div>
                     {/* Status Badge */}
                     <div className="absolute -bottom-2 -right-2">
                       {selectedStudent.isEmailVerified ? (
@@ -1074,7 +1148,10 @@ const StudentManagement = () => {
                         <div className="flex items-center justify-center lg:justify-start gap-2">
                           <Phone className="w-4 h-4 text-gray-500" />
                           <span className="text-gray-700 dark:text-gray-300">
-                            {selectedStudent.phoneCountryCode && `${selectedStudent.phoneCountryCode} `}{selectedStudent.phoneNumber}
+                            {selectedStudent.phoneNumberWithCountryCode || 
+                             (selectedStudent.phoneCountryCode && selectedStudent.phoneNumber 
+                               ? `${selectedStudent.phoneCountryCode} ${selectedStudent.phoneNumber}` 
+                               : selectedStudent.phoneNumber)}
                           </span>
                         </div>
                       )}
@@ -1120,6 +1197,26 @@ const StudentManagement = () => {
                     <h4 className="font-semibold text-gray-900 dark:text-white text-xs">GeoLocation Country</h4>
                   </div>
                   <p className="text-gray-700 dark:text-gray-300 font-medium text-sm truncate">{selectedStudent.geoLocationCountryName || 'N/A'}</p>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 p-3 rounded-xl border border-indigo-200/50 dark:border-indigo-800/30 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-indigo-500 rounded-lg">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Advertising Medium</h4>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium text-sm truncate">{selectedStudent.advertisingMedium || 'N/A'}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 p-3 rounded-xl border border-green-200/50 dark:border-green-800/30 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-green-500 rounded-lg">
+                      <Phone className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Phone (Full)</h4>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium text-sm truncate">{selectedStudent.phoneNumberWithCountryCode || 'N/A'}</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 p-3 rounded-xl border border-purple-200/50 dark:border-purple-800/30 hover:shadow-md transition-all duration-200">
                   <div className="flex items-center gap-2 mb-1">
@@ -1180,6 +1277,24 @@ const StudentManagement = () => {
                   </div>
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 p-6 rounded-2xl border border-gray-200/50 dark:border-gray-600/50">
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-base">{selectedStudent.bio}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Temporary Password Section - Only show if exists */}
+              {selectedStudent.plainPassword && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-yellow-500 rounded-xl">
+                      <AlertCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <h4 className="font-bold text-gray-900 dark:text-white text-lg">Password</h4>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30 p-6 rounded-2xl border border-yellow-200/50 dark:border-yellow-800/30">
+                    <div className="flex items-center gap-3">
+                      <code className="text-lg font-mono font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-700 px-4 py-2 rounded-lg">{selectedStudent.plainPassword}</code>
+                      <span className="text-sm text-yellow-700 dark:text-yellow-400 font-medium">Password</span>
+                    </div>
                   </div>
                 </div>
               )}
