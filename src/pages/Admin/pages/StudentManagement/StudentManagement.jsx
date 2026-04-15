@@ -18,6 +18,8 @@ import {
   AlertCircle,
   ShoppingBag,
   Clock,
+  Globe,
+  GlobeIcon,
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import GenericDropdown from '../../../../components/GenericDropdown/GenericDropdown';
@@ -54,7 +56,7 @@ const StudentManagement = () => {
   const [studentEnrollments, setStudentEnrollments] = useState(null);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // Dropdown data state
   const [signupTypes, setSignupTypes] = useState([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(false);
@@ -63,10 +65,10 @@ const StudentManagement = () => {
   const loadDropdownData = useCallback(async () => {
     setLoadingDropdowns(true);
     try {
-      const [ signupTypesData] = await Promise.all([
+      const [signupTypesData] = await Promise.all([
         getSignupTypesDropdown()
       ]);
-      
+
       setSignupTypes(signupTypesData || []);
     } catch (err) {
       console.error('Failed to load dropdown data:', err);
@@ -215,9 +217,9 @@ const StudentManagement = () => {
   const shouldUseInitials = (imageUrl) => {
     if (!imageUrl) return true;
     // Check if it's a Google profile image or similar service
-    return imageUrl.includes('googleusercontent.com') || 
-           imageUrl.includes('graph.facebook.com') ||
-           imageUrl.includes('platform-lookaside.fbsbx.com');
+    return imageUrl.includes('googleusercontent.com') ||
+      imageUrl.includes('graph.facebook.com') ||
+      imageUrl.includes('platform-lookaside.fbsbx.com');
   };
 
   return (
@@ -261,11 +263,10 @@ const StudentManagement = () => {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
-              showFilters
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${showFilters
+              ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
           >
             <Filter className="w-4 h-4" />
             <span>Filters</span>
@@ -316,7 +317,7 @@ const StudentManagement = () => {
                 value={filters.isEmailVerified}
                 onChange={(value) => handleFilterChange('isEmailVerified', value)}
                 options={[
-                  
+
                   { id: 'true', title: 'Verified' },
                   { id: 'false', title: 'Not Verified' }
                 ]}
@@ -324,7 +325,7 @@ const StudentManagement = () => {
                 emptyOptionText="All"
               />
             </div>
-       
+
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signup Type</label>
               <GenericDropdown
@@ -365,8 +366,8 @@ const StudentManagement = () => {
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span className="font-medium">{error}</span>
           </div>
-          <button 
-            onClick={clearError} 
+          <button
+            onClick={clearError}
             className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
           >
             <X className="w-5 h-5" />
@@ -384,12 +385,12 @@ const StudentManagement = () => {
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
                   Student
                 </th>
-                {/* <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
-                  Contact
-                </th> */}
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
-                  Email Status
+                  Country
                 </th>
+                {/* <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+                  Email Status
+                </th> */}
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Enrollments
                 </th>
@@ -437,48 +438,92 @@ const StudentManagement = () => {
                 students.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-12 w-12 flex-shrink-0">
+                      <div className="flex items-center gap-3">
+
+                        {/* Avatar */}
+                        <div className="relative h-12 w-12 flex-shrink-0">
                           {student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? (
                             <img
                               className="h-12 w-12 rounded-full object-cover border border-gray-300"
                               src={student.profileImageUrl}
                               alt={student.fullName}
                               onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
+                                e.currentTarget.style.display = "none";
                               }}
                             />
                           ) : null}
-                          <div 
-                            className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm"
-                            style={{ display: student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? 'none' : 'flex' }}
+
+                          {/* Initials fallback */}
+                          <div
+                            className={`absolute inset-0 h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ${student.profileImageUrl && !shouldUseInitials(student.profileImageUrl)
+                              ? "hidden"
+                              : "flex"
+                              }`}
                           >
                             {getInitials(student.fullName, student.firstName, student.lastName)}
                           </div>
                         </div>
-                        <div className="ml-3 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {student.firstName && student.lastName 
+
+                        {/* Info */}
+                        <div className="min-w-0">
+
+                          {/* Name */}
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {student.firstName && student.lastName
                               ? `${student.firstName} ${student.lastName}`
-                              : student.fullName || 'N/A'
-                            }
+                              : student.fullName || "N/A"}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+
+                          {/* Email */}
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                             {student.email}
                           </div>
+
+
+                          {/* Verification Status */}
+                          <div className="flex items-center gap-1 mt-1">
+                            {student.isEmailVerified ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <span className="text-xs text-green-600">Verified</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-4 h-4 text-red-500" />
+                                <span className="text-xs text-red-500">Unverified</span>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Password */}
+                          {student.plainPassword && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <AlertCircle className="w-3 h-3 text-yellow-500" />
+                              <span className="text-xs text-gray-600 dark:text-gray-400">
+                                Pass: <code className="px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded font-mono text-[10px] font-semibold">{student.plainPassword}</code>
+                              </span>
+                            </div>
+                          )}
+
                         </div>
                       </div>
                     </td>
-                    {/* <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
-                          {student.email}
-                        </span>
-                      </div>
-                    </td> */}
                     <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <GlobeIcon className="w-4 h-4 text-gray-400" />
+
+                        {student.geoLocationCountryName ? (
+                          <span className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
+                            {student.geoLocationCountryName}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md text-xs font-medium border border-gray-200 dark:border-gray-600">
+                            N/A
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    {/* <td className="px-4 py-4 whitespace-nowrap">
                       <div className="inline-flex items-center gap-2 text-sm">
                         {student.isEmailVerified ? (
                           <>
@@ -492,7 +537,7 @@ const StudentManagement = () => {
                           </>
                         )}
                       </div>
-                    </td>
+                    </td> */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       <button
                         onClick={(e) => {
@@ -500,11 +545,10 @@ const StudentManagement = () => {
                           handleViewEnrollments(student.id);
                         }}
                         disabled={!student.enrollmentCount}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                          student.enrollmentCount
-                            ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
-                            : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
+                          ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
+                          : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                          }`}
                       >
                         <div className={`p-1 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
                           <BookOpen className="w-3.5 h-3.5" />
@@ -513,14 +557,13 @@ const StudentManagement = () => {
                       </button>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`text-sm font-medium ${
-                        student.signupTypeName === 'Email' ? 'text-blue-600' :
+                      <span className={`text-sm font-medium ${student.signupTypeName === 'Email' ? 'text-blue-600' :
                         student.signupTypeName === 'Google' ? 'text-red-600' :
-                        student.signupTypeName === 'Facebook' ? 'text-indigo-600' :
-                        student.signupTypeName === 'LinkedIn' ? 'text-cyan-600' :
-                        student.signupTypeName === 'Apple' ? 'text-gray-600' :
-                        'text-purple-600'
-                      }`}>
+                          student.signupTypeName === 'Facebook' ? 'text-indigo-600' :
+                            student.signupTypeName === 'LinkedIn' ? 'text-cyan-600' :
+                              student.signupTypeName === 'Apple' ? 'text-gray-600' :
+                                'text-purple-600'
+                        }`}>
                         {student.signupTypeName || 'N/A'}
                       </span>
                     </td>
@@ -543,9 +586,9 @@ const StudentManagement = () => {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.landingPageUrl ? (
-                          <a 
-                            href={student.landingPageUrl} 
-                            target="_blank" 
+                          <a
+                            href={student.landingPageUrl}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-medium hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors border border-teal-200 dark:border-teal-800"
                             title={student.landingPageUrl}
@@ -568,9 +611,9 @@ const StudentManagement = () => {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.signupTypeUrl ? (
-                          <a 
-                            href={student.signupTypeUrl} 
-                            target="_blank" 
+                          <a
+                            href={student.signupTypeUrl}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-medium hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors border border-purple-200 dark:border-purple-800"
                             title={student.signupTypeUrl}
@@ -696,7 +739,7 @@ const StudentManagement = () => {
                               }}
                             />
                           ) : null}
-                          <div 
+                          <div
                             className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs"
                             style={{ display: student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? 'none' : 'flex' }}
                           >
@@ -705,7 +748,7 @@ const StudentManagement = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {student.firstName && student.lastName 
+                            {student.firstName && student.lastName
                               ? `${student.firstName} ${student.lastName}`
                               : student.fullName || 'N/A'
                             }
@@ -737,11 +780,10 @@ const StudentManagement = () => {
                           handleViewEnrollments(student.id);
                         }}
                         disabled={!student.enrollmentCount}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                          student.enrollmentCount
-                            ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
-                            : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
+                          ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
+                          : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                          }`}
                       >
                         <div className={`p-1 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
                           <BookOpen className="w-3.5 h-3.5" />
@@ -824,7 +866,7 @@ const StudentManagement = () => {
                         }}
                       />
                     ) : null}
-                    <div 
+                    <div
                       className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg"
                       style={{ display: student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? 'none' : 'flex' }}
                     >
@@ -833,7 +875,7 @@ const StudentManagement = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 truncate">
-                      {student.firstName && student.lastName 
+                      {student.firstName && student.lastName
                         ? `${student.firstName} ${student.lastName}`
                         : student.fullName || 'N/A'
                       }
@@ -861,11 +903,22 @@ const StudentManagement = () => {
                         <Phone className="w-4 h-4 text-white" />
                       </div>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {student.phoneNumberWithCountryCode || 
-                         (student.phoneCountryCode && student.phoneNumber 
-                           ? `${student.phoneCountryCode} ${student.phoneNumber}` 
-                           : student.phoneNumber)}
+                        {student.phoneNumberWithCountryCode ||
+                          (student.phoneCountryCode && student.phoneNumber
+                            ? `${student.phoneCountryCode} ${student.phoneNumber}`
+                            : student.phoneNumber)}
                       </span>
+                    </div>
+                  )}
+                  {student.plainPassword && (
+                    <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <div className="p-2 bg-yellow-500 rounded-lg">
+                        <AlertCircle className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Password</span>
+                        <code className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{student.plainPassword}</code>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -886,11 +939,10 @@ const StudentManagement = () => {
                   <button
                     onClick={() => student.enrollmentCount && handleViewEnrollments(student.id)}
                     disabled={!student.enrollmentCount}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                      student.enrollmentCount
-                        ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
-                        : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
+                      ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
+                      : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                      }`}
                   >
                     <div className={`p-1.5 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
                       <BookOpen className="w-4 h-4" />
@@ -907,9 +959,9 @@ const StudentManagement = () => {
                   </div>
 
                   {student.landingPageUrl ? (
-                    <a 
-                      href={student.landingPageUrl} 
-                      target="_blank" 
+                    <a
+                      href={student.landingPageUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-2 py-1 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-medium hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors border border-teal-200 dark:border-teal-800"
                       title={student.landingPageUrl}
@@ -929,9 +981,9 @@ const StudentManagement = () => {
                   )}
 
                   {student.signupTypeUrl ? (
-                    <a 
-                      href={student.signupTypeUrl} 
-                      target="_blank" 
+                    <a
+                      href={student.signupTypeUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-2 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-medium hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors border border-purple-200 dark:border-purple-800"
                       title={student.signupTypeUrl}
@@ -982,11 +1034,10 @@ const StudentManagement = () => {
                   <button
                     onClick={() => student.enrollmentCount && handleViewEnrollments(student.id)}
                     disabled={!student.enrollmentCount}
-                    className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
-                      student.enrollmentCount
-                        ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
-                        : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                    }`}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
+                      ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
+                      : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                      }`}
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>Enroll {student.enrollmentCount || 0}</span>
@@ -1015,7 +1066,7 @@ const StudentManagement = () => {
                   <ChevronLeft className="w-4 h-4" />
                   <span>Previous</span>
                 </button>
-                
+
                 <div className="flex items-center gap-1">
                   {/* Page numbers */}
                   {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
@@ -1029,23 +1080,22 @@ const StudentManagement = () => {
                     } else {
                       pageNum = pagination.currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-200 ${
-                          pageNum === pagination.currentPage
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                            : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500'
-                        }`}
+                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-200 ${pageNum === pagination.currentPage
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                          : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500'
+                          }`}
                       >
                         {pageNum}
                       </button>
                     );
                   })}
                 </div>
-                
+
                 <button
                   onClick={() => handlePageChange(pagination.currentPage + 1)}
                   disabled={!pagination.hasNextPage}
@@ -1106,7 +1156,7 @@ const StudentManagement = () => {
                         }}
                       />
                     ) : null}
-                    <div 
+                    <div
                       className="h-24 w-24 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-2xl"
                       style={{ display: selectedStudent.profileImageUrl && !shouldUseInitials(selectedStudent.profileImageUrl) ? 'none' : 'flex' }}
                     >
@@ -1137,7 +1187,7 @@ const StudentManagement = () => {
                       <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium">
                         {selectedStudent.signupTypeName}
                       </span>
-                      
+
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-center lg:justify-start gap-2">
@@ -1148,10 +1198,18 @@ const StudentManagement = () => {
                         <div className="flex items-center justify-center lg:justify-start gap-2">
                           <Phone className="w-4 h-4 text-gray-500" />
                           <span className="text-gray-700 dark:text-gray-300">
-                            {selectedStudent.phoneNumberWithCountryCode || 
-                             (selectedStudent.phoneCountryCode && selectedStudent.phoneNumber 
-                               ? `${selectedStudent.phoneCountryCode} ${selectedStudent.phoneNumber}` 
-                               : selectedStudent.phoneNumber)}
+                            {selectedStudent.phoneNumberWithCountryCode ||
+                              (selectedStudent.phoneCountryCode && selectedStudent.phoneNumber
+                                ? `${selectedStudent.phoneCountryCode} ${selectedStudent.phoneNumber}`
+                                : selectedStudent.phoneNumber)}
+                          </span>
+                        </div>
+                      )}
+                      {selectedStudent.plainPassword && (
+                        <div className="flex items-center justify-center lg:justify-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-yellow-500" />
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Password: <code className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded font-mono text-sm font-semibold">{selectedStudent.plainPassword}</code>
                           </span>
                         </div>
                       )}
@@ -1228,9 +1286,9 @@ const StudentManagement = () => {
                     <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Referral URL</h4>
                   </div>
                   {selectedStudent.signupTypeUrl ? (
-                    <a 
-                      href={selectedStudent.signupTypeUrl} 
-                      target="_blank" 
+                    <a
+                      href={selectedStudent.signupTypeUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:underline text-sm font-medium block break-all"
                       title={selectedStudent.signupTypeUrl}
@@ -1251,9 +1309,9 @@ const StudentManagement = () => {
                     <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Landing Page URL</h4>
                   </div>
                   {selectedStudent.landingPageUrl ? (
-                    <a 
-                      href={selectedStudent.landingPageUrl} 
-                      target="_blank" 
+                    <a
+                      href={selectedStudent.landingPageUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline text-sm font-medium block break-all"
                       title={selectedStudent.landingPageUrl}
@@ -1317,11 +1375,10 @@ const StudentManagement = () => {
                               <h5 className="font-bold text-gray-900 dark:text-white text-lg">
                                 {enrollment.resourceTitle}
                               </h5>
-                              <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${
-                                enrollment.resourceType === 'Career Path'
-                                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                                  : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                              }`}>
+                              <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${enrollment.resourceType === 'Career Path'
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                                : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+                                }`}>
                                 {enrollment.resourceType}
                               </span>
                               {enrollment.levelName && (
@@ -1448,13 +1505,12 @@ const StudentManagement = () => {
                               Order #{order.orderNo}
                             </h3>
                             <div className="flex items-center gap-3 mt-1">
-                              <span className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md ${
-                                order.statusName === 'Paid' 
-                                  ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
-                                  : order.statusName === 'Pending'
+                              <span className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md ${order.statusName === 'Paid'
+                                ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
+                                : order.statusName === 'Pending'
                                   ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-400'
                                   : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 dark:from-red-900/30 dark:to-red-800/30 dark:text-red-400'
-                              }`}>
+                                }`}>
                                 {order.statusName}
                               </span>
                               <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -1495,23 +1551,21 @@ const StudentManagement = () => {
                                       Package: {item.packageName}
                                     </span>
                                     {item.courseTypeId && (
-                                      <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${
-                                        item.courseTypeId === 1
-                                          ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white'
-                                          : item.courseTypeId === 2
+                                      <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${item.courseTypeId === 1
+                                        ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white'
+                                        : item.courseTypeId === 2
                                           ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white'
                                           : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                                      }`}>
+                                        }`}>
                                         {item.courseTypeId === 1 ? 'Professional Certificate' : item.courseTypeId === 2 ? 'Course Certificate' : item.courseTypeId === 3 ? 'Short Course' : 'Course'}
                                       </span>
                                     )}
                                   </div>
                                   {item.levelName && (
-                                    <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${
-                                      item.levelId === 1
-                                        ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white'
-                                        : 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white'
-                                    }`}>
+                                    <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${item.levelId === 1
+                                      ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white'
+                                      : 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white'
+                                      }`}>
                                       {item.levelName}
                                     </span>
                                   )}
@@ -1549,11 +1603,10 @@ const StudentManagement = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                               <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Status</div>
-                              <div className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md inline-block ${
-                                order.paymentStatusName === 'Captured'
-                                  ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
-                                  : 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-400'
-                              }`}>
+                              <div className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md inline-block ${order.paymentStatusName === 'Captured'
+                                ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
+                                : 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-400'
+                                }`}>
                                 {order.paymentStatusName}
                               </div>
                             </div>
@@ -1646,7 +1699,7 @@ const StudentManagement = () => {
                       Enrolled Courses
                     </h2>
                     <p className="text-blue-100 mt-1">
-                      {studentEnrollments.firstName && studentEnrollments.lastName 
+                      {studentEnrollments.firstName && studentEnrollments.lastName
                         ? `${studentEnrollments.firstName} ${studentEnrollments.lastName}`
                         : studentEnrollments.fullName || 'Student'
                       }
@@ -1682,7 +1735,7 @@ const StudentManagement = () => {
                       Enrollments ({studentEnrollments.enrollments.length})
                     </h3>
                   </div>
-                  
+
                   {/* Enrollment Cards */}
                   {studentEnrollments.enrollments.map((enrollment, index) => (
                     <div key={enrollment.id || index} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-blue-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
@@ -1697,18 +1750,17 @@ const StudentManagement = () => {
                           </span>
                         )}
                         {enrollment.courseTypeId && (
-                          <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                            enrollment.courseTypeId === 1
-                              ? 'bg-blue-500 text-white'
-                              : enrollment.courseTypeId === 2
+                          <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${enrollment.courseTypeId === 1
+                            ? 'bg-blue-500 text-white'
+                            : enrollment.courseTypeId === 2
                               ? 'bg-orange-500 text-white'
                               : 'bg-green-500 text-white'
-                          }`}>
+                            }`}>
                             {enrollment.courseTypeId === 1 ? 'Professional Certificate' : enrollment.courseTypeId === 2 ? 'Course Certificate' : enrollment.courseTypeId === 3 ? 'Short Course' : 'Course'}
                           </span>
                         )}
                       </div>
-                      
+
                       {/* Level and Date Row */}
                       <div className="flex items-center gap-3 flex-wrap">
                         {enrollment.levelName && (
