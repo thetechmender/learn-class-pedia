@@ -136,11 +136,11 @@ export class Chat {
         // Wait for widget to render, then attach event listener to minimize button
         setTimeout(() => {
           // Check if on assessment screen
-          const isAssessmentScreen = this.assessmentStep === 'start' || 
-                                      this.assessmentStep === 'final' || 
-                                      this.assessmentStep === 'cleared' || 
-                                      this.assessmentStep === 'failed' || 
-                                      this.assessmentStep === 'maxattempts';
+          const isAssessmentScreen = this.assessmentStep === 'start' ||
+            this.assessmentStep === 'final' ||
+            this.assessmentStep === 'cleared' ||
+            this.assessmentStep === 'failed' ||
+            this.assessmentStep === 'maxattempts';
 
           // Directly modify the launcher iframe position
           const launcherIframe = document.querySelector('iframe#launcher') as HTMLElement;
@@ -163,6 +163,17 @@ export class Chat {
             // Hide on assessment screens
             if (isAssessmentScreen) {
               webWidgetIframe.style.display = 'none';
+            }
+          }
+
+          const badgeIframe = document.querySelector('iframe#badge') as HTMLElement;
+          if (badgeIframe) {
+            badgeIframe.style.left = '0px';
+            badgeIframe.style.right = 'auto';
+            badgeIframe.style.display = 'block';
+            // Hide on assessment screens
+            if (isAssessmentScreen) {
+              badgeIframe.style.display = 'none';
             }
           }
 
