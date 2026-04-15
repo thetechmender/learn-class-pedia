@@ -41,7 +41,7 @@ export class Chat {
   chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string | SafeHtml }>>([
     {
       role: 'bot',
-      text: this.sanitizer.bypassSecurityTrustHtml("Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics. If you're looking for live support, please start our <a href='javascript:void(0)' class='text-white underline live-chat-link' data-live-chat='true'>live chat</a>.")
+      text: this.sanitizer.bypassSecurityTrustHtml("Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics.")
     }
   ]);
 
@@ -89,12 +89,12 @@ export class Chat {
 
   handleChatMessageClick(event: Event) {
     const target = event.target as HTMLElement;
-    
+
     // Check if the clicked element or its parent is the live chat link
-    if (target.classList.contains('live-chat-link') || 
-        target.closest('.live-chat-link') ||
-        target.getAttribute('data-live-chat') === 'true' ||
-        target.closest('[data-live-chat]')) {
+    if (target.classList.contains('live-chat-link') ||
+      target.closest('.live-chat-link') ||
+      target.getAttribute('data-live-chat') === 'true' ||
+      target.closest('[data-live-chat]')) {
       console.log('[Live Chat Debug] Live chat link clicked, calling activateLiveChat');
       event.preventDefault();
       event.stopPropagation();
@@ -104,11 +104,9 @@ export class Chat {
   }
 
   activateLiveChat() {
-    
+
     if (isPlatformBrowser(this.platformId)) {
-      
-      // Set live chat as active - this will hide the sidebar via template conditions
-      this.isLiveChatActive.set(true);      
+
       // Check if script already exists to avoid duplicate loading
       const existingScript = document.getElementById('cd360-snippet');
       console.log('[Live Chat Debug] Existing script check:', existingScript);
@@ -118,26 +116,44 @@ export class Chat {
         }
         return;
       }
-      
+
       // Dynamically load the chattrik script
       console.log('[Live Chat Debug] Loading chattrik script dynamically');
       const script = document.createElement('script');
       script.id = 'cd360-snippet';
-      script.src = 'https://app.chattrik.com/assets/scripts/snippet.js?key=69dd2f99b2f813411fe1e011';
+      script.src = 'https://app.chattrik.com/assets/scripts/snippet.js?key=69dd2f99b2f813411fe1e011&position=left';
       script.async = true;
-      
+      script.setAttribute('data-position', 'left');
+
       console.log('[Live Chat Debug] Script element created:', script);
-      
+
       script.onload = () => {
         console.log('[Live Chat Debug] Chattrik script loaded');
-        
+
         // Add CSS to hide launcher button
         this.addLauncherButtonHidingCSS();
-        
+
         // Wait for widget to render, then attach event listener to minimize button
         setTimeout(() => {
+          // Directly modify the launcher iframe position
+          const launcherIframe = document.querySelector('iframe#launcher') as HTMLElement;
+          if (launcherIframe) {
+            console.log('[Live Chat Debug] Found launcher iframe, positioning on left');
+            launcherIframe.style.left = '0px';
+            launcherIframe.style.right = 'auto';
+          }
+
+          // Directly modify the webWidget iframe position
+          const webWidgetIframe = document.querySelector('iframe#webWidget') as HTMLElement;
+          if (webWidgetIframe) {
+            console.log('[Live Chat Debug] Found webWidget iframe, positioning on left');
+            webWidgetIframe.style.left = '0px';
+            webWidgetIframe.style.right = 'auto';
+            webWidgetIframe.style.display = 'block';
+          }
+
           this.attachMinimizeButtonListener();
-          
+
           // Open live chat
           if (window.Chattrak?.openChat) {
             console.log('[Live Chat Debug] Calling Chattrak.openChat()');
@@ -147,13 +163,13 @@ export class Chat {
           }
         }, 2000); // Wait 2 seconds for widget to render
       };
-      
+
       script.onerror = () => {
         console.error('[Live Chat Debug] Failed to load chattrik script');
         // Reset if script fails to load
         this.isLiveChatActive.set(false);
       };
-      
+
       console.log('[Live Chat Debug] Appending script to body');
       document.body.appendChild(script);
       console.log('[Live Chat Debug] Script appended to body');
@@ -164,16 +180,35 @@ export class Chat {
 
   private addLauncherButtonHidingCSS() {
     if (isPlatformBrowser(this.platformId)) {
-      // Add CSS rule to hide launcher button
+      // Add CSS rule to hide launcher button and position widget on left
       const style = document.createElement('style');
       style.id = 'launcher-button-hider';
       style.textContent = `
         #launcher_btn {
           display: none !important;
         }
+        /* Position Chattrik launcher button on left side */
+        iframe#launcher {
+          left: 0px !important;
+          right: auto !important;
+        }
+        /* Position Chattrik webWidget on left side */
+        iframe#webWidget {
+          left: 0px !important;
+          right: auto !important;
+        }
+        /* Position Chattrik widget on left side */
+        app-root div.content_body {
+          left: 20px !important;
+          right: auto !important;
+        }
+        app-root {
+          left: 20px !important;
+          right: auto !important;
+        }
       `;
       document.head.appendChild(style);
-      console.log('[Live Chat Debug] Added CSS to hide launcher button');
+      console.log('[Live Chat Debug] Added CSS to hide launcher button and position widget on left');
     }
   }
 
@@ -182,42 +217,42 @@ export class Chat {
       const style = document.getElementById('launcher-button-hider');
       if (style) {
         style.remove();
-        console.log('[Live Chat Debug] Removed CSS to hide launcher button');
+        console.log('[Live Chat Debug] Removed CSS styling');
       }
     }
   }
 
   private attachMinimizeButtonListener() {
     console.log('[Live Chat Debug] Using polling to detect widget minimization');
-    
+
     // Remove any existing listener to avoid duplicates
     if ((window as any).liveChatMinimizeHandler) {
       document.removeEventListener('click', (window as any).liveChatMinimizeHandler);
     }
-    
+
     // Use polling to check if widget is visible
     let widgetWasVisible = false;
     let pollCount = 0;
     const maxPolls = 30; // Poll for 30 seconds
-    
+
     const pollInterval = setInterval(() => {
       pollCount++;
       const chatWidget = document.querySelector('app-root div.content_body');
       const isVisible = chatWidget && (chatWidget as HTMLElement).offsetParent !== null;
-      
+
       console.log('[Live Chat Debug] Poll ' + pollCount + ': Widget visibility check:', isVisible);
-      
+
       if (isVisible) {
         widgetWasVisible = true;
       }
-      
+
       // If widget was visible and now is not, it was minimized
       if (widgetWasVisible && !isVisible) {
         console.log('[Live Chat Debug] Widget was minimized!');
         clearInterval(pollInterval);
         this.deactivateLiveChat();
       }
-      
+
       if (pollCount >= maxPolls) {
         clearInterval(pollInterval);
         console.log('[Live Chat Debug] Polling stopped after max polls');
@@ -228,15 +263,10 @@ export class Chat {
   deactivateLiveChat() {
     if (isPlatformBrowser(this.platformId)) {
       console.log('[Live Chat Debug] deactivateLiveChat called');
-      console.log('[Live Chat Debug] Current isLiveChatActive value:', this.isLiveChatActive());
-      
-      // Set live chat as inactive - this will show the sidebar again via template conditions
-      this.isLiveChatActive.set(false);
-      console.log('[Live Chat Debug] isLiveChatActive set to false, new value:', this.isLiveChatActive());
-      
+
       // Remove CSS hiding rule so launcher button can show again
       this.removeLauncherButtonHidingCSS();
-      
+
       // Remove the chattrik script
       const script = document.getElementById('cd360-snippet');
       console.log('[Live Chat Debug] Found script element:', script);
@@ -247,7 +277,7 @@ export class Chat {
       } else {
         console.log('[Live Chat Debug] Script element not found');
       }
-      
+
       // Remove the chattrik widget HTML (app-root with content_body)
       const chatWidget = document.querySelector('app-root div.content_body');
       console.log('[Live Chat Debug] Found chat widget:', chatWidget);
@@ -272,7 +302,7 @@ export class Chat {
           }
         });
       }
-      
+
       // Remove the launcher button if it exists
       const launcherBtn = document.getElementById('launcher_btn');
       console.log('[Live Chat Debug] Found launcher button:', launcherBtn);
@@ -281,18 +311,7 @@ export class Chat {
         launcherBtn.remove();
         console.log('[Live Chat Debug] Launcher button removed successfully');
       }
-      
-      // Ensure your own chatbot is open
-      console.log('[Live Chat Debug] Ensuring course companion chat is open');
-      console.log('[Live Chat Debug] Current chat state:', this.courseService.isChatOpen());
-      if (!this.courseService.isChatOpen()) {
-        console.log('[Live Chat Debug] Chat is closed, opening it');
-        this.courseService.toggleChat();
-        console.log('[Live Chat Debug] Course companion chat opened');
-      } else {
-        console.log('[Live Chat Debug] Chat is already open');
-      }
-      
+
       console.log('[Live Chat Debug] deactivateLiveChat completed');
     }
   }

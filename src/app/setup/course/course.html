@@ -643,7 +643,7 @@
   <!-- Ask Course Companion Button -->
   <button (click)="courseService.toggleChat()"
     class="fixed bottom-6 chat-widget right-6 z-40 flex items-center gap-2 px-3 py-3 bg-thirdly text-gray-600 rounded-full shadow-lg hover:bg-[#00c494] transition-all duration-300 font-medium text-sm"
-    [class.hidden]="courseService.isChatOpen() || assessmentStep() === 'start' || assessmentStep() === 'final'">
+    [class.hidden]="assessmentStep() === 'start' || assessmentStep() === 'final'">
     <img src="assets/icons/chat-black-icon.svg" alt="Chat" class="">
     Ask Course Companion
   </button>

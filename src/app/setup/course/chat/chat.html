@@ -1,8 +1,8 @@
 <!-- Chat Sidebar -->
   <div
     class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-72 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
-    [class.translate-x-full]="!courseService.isChatOpen() || assessmentStep === 'start' || assessmentStep === 'final' || isLiveChatActive()"
-    [class.translate-x-0]="courseService.isChatOpen() && assessmentStep !== 'start' && assessmentStep !== 'final' && !isLiveChatActive()">
+    [class.translate-x-full]="!courseService.isChatOpen() || assessmentStep === 'start' || assessmentStep === 'final'"
+    [class.translate-x-0]="courseService.isChatOpen() && assessmentStep !== 'start' && assessmentStep !== 'final'">
 
     <!-- Chat Header - Optional background with centered content -->
     <div class="bg-optional text-center py-2 px-2 relative border-b border-gray-300 chat-top">
@@ -72,8 +72,8 @@
           </svg>
         </button>
       </div>
-      <p class="text-xs text-gray-400 text-center mt-3 chat-note">If you are confused about any course material,
+      <p class="text-xs text-gray-400 text-center mt-3 chat-note" >If you are confused about any course material,
         assessment, or
-        experiencing any difficulty, feel free to use this chatbox.</p>
+        experiencing any difficulty, feel free to use this chatbox. If you're looking for live support, please start our <a href='javascript:void(0)' class='text-primary underline live-chat-link' data-live-chat='true' (click)="handleChatMessageClick($event)">live chat</a></p>
     </div>
   </div>
