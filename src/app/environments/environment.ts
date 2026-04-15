@@ -6,13 +6,13 @@ export const ENVIRONMENTS = {
     HIDE_URL_PARAMS: false
   },
   staging: {
-    API_URL: 'https://class.thetechmenders.com/api',
+    API_URL: 'https://api.classpedia.ai/api',
     DEBUG: true,
     ENV_NAME: 'staging',
     HIDE_URL_PARAMS: false
   },
   production: {
-    API_URL: 'https://class.thetechmenders.com/api',
+    API_URL: 'https://api.classpedia.ai/api',
     DEBUG: false,
     ENV_NAME: 'production',
     HIDE_URL_PARAMS: true

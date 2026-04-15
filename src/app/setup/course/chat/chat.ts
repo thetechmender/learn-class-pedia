@@ -135,21 +135,35 @@ export class Chat {
 
         // Wait for widget to render, then attach event listener to minimize button
         setTimeout(() => {
+          // Check if on assessment screen
+          const isAssessmentScreen = this.assessmentStep === 'start' || 
+                                      this.assessmentStep === 'final' || 
+                                      this.assessmentStep === 'cleared' || 
+                                      this.assessmentStep === 'failed' || 
+                                      this.assessmentStep === 'maxattempts';
+
           // Directly modify the launcher iframe position
           const launcherIframe = document.querySelector('iframe#launcher') as HTMLElement;
           if (launcherIframe) {
             console.log('[Live Chat Debug] Found launcher iframe, positioning on left');
             launcherIframe.style.left = '0px';
             launcherIframe.style.right = 'auto';
+            // Hide on assessment screens
+            if (isAssessmentScreen) {
+              launcherIframe.style.display = 'none';
+            }
           }
 
           // Directly modify the webWidget iframe position
           const webWidgetIframe = document.querySelector('iframe#webWidget') as HTMLElement;
           if (webWidgetIframe) {
-            console.log('[Live Chat Debug] Found webWidget iframe, positioning on left');
             webWidgetIframe.style.left = '0px';
             webWidgetIframe.style.right = 'auto';
             webWidgetIframe.style.display = 'block';
+            // Hide on assessment screens
+            if (isAssessmentScreen) {
+              webWidgetIframe.style.display = 'none';
+            }
           }
 
           this.attachMinimizeButtonListener();

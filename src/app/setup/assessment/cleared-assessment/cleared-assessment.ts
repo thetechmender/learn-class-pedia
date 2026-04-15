@@ -1,10 +1,12 @@
 import { Component, Output, EventEmitter, Input, OnChanges, signal } from '@angular/core';
 import { DecimalPipe, CommonModule } from '@angular/common';
-import { ShareYourAccomplishment } from '../share-your-accomplishment/share-your-accomplishment';
+// import { ShareYourAccomplishment } from '../share-your-accomplishment/share-your-accomplishment';
 
 @Component({
   selector: 'app-cleared-assessment',
-  imports: [DecimalPipe, CommonModule, ShareYourAccomplishment],
+  imports: [DecimalPipe, CommonModule,
+    //  ShareYourAccomplishment
+    ],
   templateUrl: './cleared-assessment.html',
   styleUrl: './cleared-assessment.sass',
 })
@@ -32,7 +34,8 @@ export class ClearedAssessment implements OnChanges {
         }, 20000);
       } else {
       }
-    }
+    };
+    console.log(this.resultData)
   }
 
   onImageError(event: any) {

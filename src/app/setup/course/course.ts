@@ -219,7 +219,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (isPlatformBrowser(this.platformId)) {
       this.checkScreenSize();
       window.addEventListener('resize', () => this.checkScreenSize());
-      
+
       // Set up global reference for onclick handler
       (window as any).angularComponentRef = this;
     }
@@ -1699,9 +1699,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               passingPercentage: data.passingPercentage,
               resultStatus: 'AlreadyPassed',
               pngPath: data.pngPath,
-              pdfPath:data?.pdfPath,
+              pdfPath: data?.pdfPath,
               publicCertificateLink: data.publicCertificateLink,
-              htmlPath: data.htmlPath
+              htmlPath: data.htmlPath,
+              correctAnswers: data.correctAnswers,
             });
             this.assessmentStep.set('cleared');
           } else {
@@ -1743,7 +1744,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       // Map coursewiseresult API response to assessment result format
       // Preserve certificate URL from previous assessment result if coursewiseresult returns null
       const existingCertificateUrl = this.assessmentResult()?.pngPath;
-
       const mappedResult = {
         attemptsUsed: result.attemptsUsed,
         attemptsRemaining: result.attemptsRemaining,
@@ -1761,7 +1761,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         passingPercentage: result.passingPercentage,
         isPassed: result.isPassed,
         courseId: result.courseId,
-        courseTitle: result.courseTitle
+        courseTitle: result.courseTitle,
       };
 
       this.assessmentResult.set({
@@ -1846,9 +1846,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     getAttemptStatusObservable.pipe(takeUntil(this.destroy$)).subscribe({
       next: (res: any) => {
         const data = res?.isSuccess !== undefined ? res.data : res;
-        // Only set AlreadyPassed if assessment is completed AND user hasn't started a new assessment
         if (data?.canTakeAssessment === false && data?.isAssessmentCompleted === true && this.assessmentStep() === 'none') {
           // Execute the same logic as line 1507
+
           this.assessmentResult.set({
             attemptsUsed: data.attemptsUsed,
             attemptsRemaining: data.attemptsRemaining,
@@ -1859,9 +1859,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             passingPercentage: data.passingPercentage,
             resultStatus: 'AlreadyPassed',
             pngPath: data.pngPath,
-             pdfPath:data?.pdfPath,
+            pdfPath: data?.pdfPath,
             htmlPath: data.htmlPath,
-            publicCertificateLink: data.publicCertificateLink
+            publicCertificateLink: data.publicCertificateLink,
+            correctAnswers: data.correctAnswers,
+            totalQuestions: data.totalQuestions
           });
           this.assessmentStep.set('cleared');
 
@@ -1885,7 +1887,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.progressInterval) {
       clearInterval(this.progressInterval);
     }
-    
+
     // Clean up global reference
     if (isPlatformBrowser(this.platformId)) {
       delete (window as any).angularComponentRef;

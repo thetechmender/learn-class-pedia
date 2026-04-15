@@ -1,8 +1,8 @@
 <!-- Chat Sidebar -->
   <div
     class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-72 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
-    [class.translate-x-full]="!courseService.isChatOpen() || assessmentStep === 'start' || assessmentStep === 'final'"
-    [class.translate-x-0]="courseService.isChatOpen() && assessmentStep !== 'start' && assessmentStep !== 'final'">
+    [class.translate-x-full]="!courseService.isChatOpen() || assessmentStep === 'start' || assessmentStep === 'final' || assessmentStep === 'cleared' || assessmentStep === 'failed' || assessmentStep === 'maxattempts'"
+    [class.translate-x-0]="courseService.isChatOpen() && assessmentStep !== 'start' && assessmentStep !== 'final' && assessmentStep !== 'cleared' && assessmentStep !== 'failed' && assessmentStep !== 'maxattempts'">
 
     <!-- Chat Header - Optional background with centered content -->
     <div class="bg-optional text-center py-2 px-2 relative border-b border-gray-300 chat-top">

@@ -90,7 +90,7 @@
     }
 
     <!-- Generate Certificate Modal -->
-    @if (showGenerateCertificateModal()) {
+    @if (showGenerateCertificateModal() && courseTypeId !== 3) {
     <app-generate-certificate-modal 
       [resultData]="assessmentResultData()" 
       [courseTypeId]="courseTypeId"
@@ -100,7 +100,7 @@
     }
 
     <!-- Certificate Generation Loading Overlay -->
-    @if (isGeneratingCertificate()) {
+    @if (isGeneratingCertificate() && courseTypeId !== 3) {
     <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center">
         <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">

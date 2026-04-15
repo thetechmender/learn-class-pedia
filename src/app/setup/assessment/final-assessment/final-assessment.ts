@@ -306,12 +306,20 @@ export class FinalAssessment implements OnInit {
       .subscribe({
         next: (details: any) => {
           if (details?.isSuccess && details?.data?.isPassed === true) {
-            // Show modal first with score details
-            this.assessmentResultData.set(details.data);
-            this.showGenerateCertificateModal.set(true);
+            // For short courses (courseTypeId === 3), emit directly without showing modals
+            if (this.courseTypeId === 3) {
+              this.next.emit('cleared');
+            } else {
+              // For other course types, show modal first with score details
+              this.assessmentResultData.set(details.data);
+              this.showGenerateCertificateModal.set(true);
+            }
+          } else if (details?.isSuccess && details?.data?.isPassed === false) {
+            // For failed assessments, emit the data object directly
+            this.next.emit(details.data);
           } else {
-            // For failed assessments, emit directly
-            this.next.emit(details?.data?.isPassed === true ? 'cleared' : 'failed');
+            // Fallback for unexpected cases
+            this.next.emit('failed');
           }
         },
         error: (err: any) => {
