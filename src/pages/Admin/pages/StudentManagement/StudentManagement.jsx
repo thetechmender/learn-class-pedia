@@ -1071,6 +1071,29 @@ const StudentManagement = () => {
                   </div>
                   <p className="text-gray-700 dark:text-gray-300 font-medium text-sm truncate">{selectedStudent.geoLocationCountryName || 'N/A'}</p>
                 </div>
+                <div className="bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 p-3 rounded-xl border border-purple-200/50 dark:border-purple-800/30 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-purple-500 rounded-lg">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Signup URL</h4>
+                  </div>
+                  {selectedStudent.signupTypeUrl ? (
+                    <a 
+                      href={selectedStudent.signupTypeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:underline text-sm font-medium block break-all"
+                      title={selectedStudent.signupTypeUrl}
+                    >
+                      {selectedStudent.signupTypeUrl}
+                    </a>
+                  ) : (
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">N/A</p>
+                  )}
+                </div>
               </div>
 
               {/* Bio Section */}
@@ -1147,6 +1170,16 @@ const StudentManagement = () => {
                                 <Clock className="w-4 h-4 text-blue-500" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Active: {enrollment.lastActivityDate ? formatDate(enrollment.lastActivityDate) : 'N/A'}</span>
                               </div>
+                              {enrollment.completionPercentage !== undefined && enrollment.completionPercentage !== null && (
+                                <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
+                                  <div className="w-4 h-4 rounded-full border-2 border-indigo-500 flex items-center justify-center">
+                                    <span className="text-[8px] font-bold text-indigo-500">%</span>
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {enrollment.completionPercentage}% Complete
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1492,6 +1525,16 @@ const StudentManagement = () => {
                             Last Active: {enrollment.lastActivityDate ? formatDate(enrollment.lastActivityDate) : 'N/A'}
                           </span>
                         </div>
+                        {enrollment.completionPercentage !== undefined && enrollment.completionPercentage !== null && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
+                            <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-500 flex items-center justify-center">
+                              <span className="text-[6px] font-bold text-indigo-500">%</span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {enrollment.completionPercentage}% Complete
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
