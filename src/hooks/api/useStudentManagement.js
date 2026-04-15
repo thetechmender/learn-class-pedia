@@ -68,7 +68,7 @@ export const useStudentManagement = () => {
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch students';
       setError(errorMessage);
-      throw err;
+      console.error('getAllStudents error:', err);
     } finally {
       setLoading(false);
     }

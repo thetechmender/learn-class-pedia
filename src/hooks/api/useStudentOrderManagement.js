@@ -151,16 +151,27 @@ const useStudentOrderManagement = () => {
     }
   }, []);
 
-  // Filter orders
+  // Filter orders with exact DTO payload format
   const filterOrders = useCallback(async (filters, pageNumber = 1, pageSize = 100) => {
     const activeFilters = {};
-    
-    Object.keys(filters).forEach(key => {
-      if (filters[key] && filters[key] !== '') {
-        activeFilters[key] = filters[key];
-      }
-    });
-    
+
+    // Map filters to exact DTO property names (PascalCase)
+    if (filters.orderNo && filters.orderNo !== '') {
+      activeFilters.OrderNo = filters.orderNo;
+    }
+    if (filters.customerName && filters.customerName !== '') {
+      activeFilters.CustomerName = filters.customerName;
+    }
+    if (filters.statusId && filters.statusId !== '') {
+      activeFilters.StatusId = parseInt(filters.statusId);
+    }
+    if (filters.startDate && filters.startDate !== '') {
+      activeFilters.StartDate = filters.startDate;
+    }
+    if (filters.endDate && filters.endDate !== '') {
+      activeFilters.EndDate = filters.endDate;
+    }
+
     return getAllOrders(pageNumber, pageSize, activeFilters);
   }, [getAllOrders]);
 

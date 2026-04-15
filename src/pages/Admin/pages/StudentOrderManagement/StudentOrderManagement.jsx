@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users,
-  Search,
   Filter,
   X,
   ChevronDown,
@@ -41,50 +40,30 @@ const StudentOrderManagement = () => {
   } = useStudentOrderManagement();
 
   // Component state
-  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     orderNo: '',
-    customerFullName: '',
+    customerName: '',
     statusId: '',
     startDate: '',
     endDate: ''
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   // Load orders function
   const loadOrders = useCallback(async (page = 1) => {
     try {
-      if (debouncedSearchTerm) {
-        await searchOrders(debouncedSearchTerm, page, pagination.pageSize);
-      } else {
-        await getAllOrders(page, pagination.pageSize);
-      }
+      await getAllOrders(page, pagination.pageSize);
     } catch (err) {
       console.error('Failed to load orders:', err);
     }
-  }, [debouncedSearchTerm, searchOrders, getAllOrders, pagination.pageSize]);
+  }, [getAllOrders, pagination.pageSize]);
 
-  // Load orders on component mount and when page/filters change
+  // Load orders on component mount
   useEffect(() => {
     loadOrders();
-  }, [debouncedSearchTerm, loadOrders]);
-
-  // Handle search
-  const handleSearch = useCallback((term) => {
-    setSearchTerm(term);
-  }, []);
+  }, [loadOrders]);
 
   // Handle filter
   const handleFilter = useCallback(async () => {
@@ -99,14 +78,13 @@ const StudentOrderManagement = () => {
   const clearFilters = useCallback(() => {
     setFilters({
       orderNo: '',
-      customerFullName: '',
+      customerName: '',
       statusId: '',
       startDate: '',
       endDate: ''
     });
-    setSearchTerm('');
-    loadOrders(1);
-  }, [loadOrders]);
+    getAllOrders(1, pagination.pageSize);
+  }, [getAllOrders, pagination.pageSize]);
 
   // Handle page change
   const handlePageChange = useCallback((newPage) => {
@@ -221,25 +199,7 @@ const StudentOrderManagement = () => {
 
       {/* Search and Filter Section */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search by order number, customer name..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => handleSearch('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+        <div className="flex flex-col lg:flex-row gap-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 ${
@@ -282,8 +242,8 @@ const StudentOrderManagement = () => {
                 <input
                   type="text"
                   placeholder="e.g., John Doe"
-                  value={filters.customerFullName}
-                  onChange={(e) => setFilters({ ...filters, customerFullName: e.target.value })}
+                  value={filters.customerName}
+                  onChange={(e) => setFilters({ ...filters, customerName: e.target.value })}
                   className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
