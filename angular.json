@@ -35,7 +35,7 @@
               }
             ],
             "styles": [
-              "src/custom-theme.scss",
+              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.sass",
               "node_modules/ngx-toastr/toastr.css",
               "src/icons.css"
