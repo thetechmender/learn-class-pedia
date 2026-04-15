@@ -373,7 +373,10 @@ const StudentManagement = () => {
                   Signup through
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[150px]">
-                  Signup Type
+                  Landing Page
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[150px]">
+                  Referral URL
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Signup Date
@@ -386,7 +389,7 @@ const StudentManagement = () => {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center">
+                  <td colSpan="9" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-gray-500 dark:text-gray-400 font-medium">Loading students...</span>
@@ -395,7 +398,7 @@ const StudentManagement = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center">
+                  <td colSpan="9" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-gray-400" />
                       <span className="text-gray-500 dark:text-gray-400 font-medium text-lg">No students found</span>
@@ -490,6 +493,31 @@ const StudentManagement = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
+                        {student.landingPageUrl ? (
+                          <a 
+                            href={student.landingPageUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-medium hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors border border-teal-200 dark:border-teal-800"
+                            title={student.landingPageUrl}
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 009-9m-9 9h18" />
+                            </svg>
+                            <span className="truncate max-w-[80px]">Open Link</span>
+                          </a>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                            N/A
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
                         {student.signupTypeUrl ? (
                           <a 
                             href={student.signupTypeUrl} 
@@ -501,7 +529,7 @@ const StudentManagement = () => {
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
-                            <span className="truncate max-w-[80px]">Landing Page</span>
+                            <span className="truncate max-w-[80px]">Referral</span>
                           </a>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
@@ -810,6 +838,28 @@ const StudentManagement = () => {
                     {student.signupTypeName || 'N/A'}
                   </div>
 
+                  {student.landingPageUrl ? (
+                    <a 
+                      href={student.landingPageUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-2 py-1 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-medium hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors border border-teal-200 dark:border-teal-800"
+                      title={student.landingPageUrl}
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 009-9m-9 9h18" />
+                      </svg>
+                      Landing Page
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      N/A
+                    </span>
+                  )}
+
                   {student.signupTypeUrl ? (
                     <a 
                       href={student.signupTypeUrl} 
@@ -821,7 +871,7 @@ const StudentManagement = () => {
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
-                      Landing Page
+                      Referral
                     </a>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
@@ -1042,7 +1092,7 @@ const StudentManagement = () => {
                     </div>
                     <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Member Since</h4>
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300 font-medium text-sm">{formatDate(selectedStudent.createdAt)}</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium text-sm">{formatDateTime(selectedStudent.createdAt)}</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 p-3 rounded-xl border border-purple-200/50 dark:border-purple-800/30 hover:shadow-md transition-all duration-200">
                   <div className="flex items-center gap-2 mb-1">
@@ -1078,7 +1128,7 @@ const StudentManagement = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Signup URL</h4>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Referral URL</h4>
                   </div>
                   {selectedStudent.signupTypeUrl ? (
                     <a 
@@ -1089,6 +1139,29 @@ const StudentManagement = () => {
                       title={selectedStudent.signupTypeUrl}
                     >
                       {selectedStudent.signupTypeUrl}
+                    </a>
+                  ) : (
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">N/A</p>
+                  )}
+                </div>
+                <div className="bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 p-3 rounded-xl border border-teal-200/50 dark:border-teal-800/30 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-teal-500 rounded-lg">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 009-9m-9 9h18" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Landing Page URL</h4>
+                  </div>
+                  {selectedStudent.landingPageUrl ? (
+                    <a 
+                      href={selectedStudent.landingPageUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline text-sm font-medium block break-all"
+                      title={selectedStudent.landingPageUrl}
+                    >
+                      {selectedStudent.landingPageUrl}
                     </a>
                   ) : (
                     <p className="text-gray-400 dark:text-gray-500 text-sm">N/A</p>
@@ -1164,11 +1237,11 @@ const StudentManagement = () => {
                               )}
                               <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
                                 <Calendar className="w-4 h-4 text-green-500" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Joined: {formatDate(enrollment.createdAt)}</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Joined: {formatDateTime(enrollment.createdAt)}</span>
                               </div>
                               <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
                                 <Clock className="w-4 h-4 text-blue-500" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Active: {enrollment.lastActivityDate ? formatDate(enrollment.lastActivityDate) : 'N/A'}</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Active: {enrollment.lastActivityDate ? formatDateTime(enrollment.lastActivityDate) : 'N/A'}</span>
                               </div>
                               {enrollment.completionPercentage !== undefined && enrollment.completionPercentage !== null && (
                                 <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
@@ -1177,6 +1250,26 @@ const StudentManagement = () => {
                                   </div>
                                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {enrollment.completionPercentage}% Complete
+                                  </span>
+                                </div>
+                              )}
+                              {enrollment.completedCount !== undefined && enrollment.completedCount !== null && (
+                                <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
+                                  <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                                    <CheckCircle className="w-3 h-3 text-white" />
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {enrollment.completedCount} Lectures Completed
+                                  </span>
+                                </div>
+                              )}
+                              {enrollment.incompleteCount !== undefined && enrollment.incompleteCount !== null && (
+                                <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
+                                  <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center">
+                                    <XCircle className="w-3 h-3 text-white" />
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {enrollment.incompleteCount} Lectures Incomplete
                                   </span>
                                 </div>
                               )}
@@ -1516,13 +1609,13 @@ const StudentManagement = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Joined: {formatDate(enrollment.createdAt)}
+                            Joined: {formatDateTime(enrollment.createdAt)}
                           </span>
                         </div>
                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
                           <Clock className="w-3.5 h-3.5 text-blue-500" />
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Last Active: {enrollment.lastActivityDate ? formatDate(enrollment.lastActivityDate) : 'N/A'}
+                            Last Active: {enrollment.lastActivityDate ? formatDateTime(enrollment.lastActivityDate) : 'N/A'}
                           </span>
                         </div>
                         {enrollment.completionPercentage !== undefined && enrollment.completionPercentage !== null && (
@@ -1532,6 +1625,22 @@ const StudentManagement = () => {
                             </div>
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                               {enrollment.completionPercentage}% Complete
+                            </span>
+                          </div>
+                        )}
+                        {enrollment.completedCount !== undefined && enrollment.completedCount !== null && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800">
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {enrollment.completedCount} Lectures Completed
+                            </span>
+                          </div>
+                        )}
+                        {enrollment.incompleteCount !== undefined && enrollment.incompleteCount !== null && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800">
+                            <XCircle className="w-3.5 h-3.5 text-orange-500" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {enrollment.incompleteCount} Lectures Incomplete
                             </span>
                           </div>
                         )}
