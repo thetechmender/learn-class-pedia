@@ -42,10 +42,14 @@ export const useStudentManagement = () => {
         ...(filters.fullName && { FullName: filters.fullName }),
         ...(filters.email && { Email: filters.email }),
         ...(filters.phoneNumber && { PhoneNumber: filters.phoneNumber }),
-        ...(filters.isEmailVerified !== undefined && { IsEmailVerified: filters.isEmailVerified }),
+        ...(filters.isEmailVerified !== undefined && filters.isEmailVerified !== '' && { IsEmailVerified: filters.isEmailVerified }),
         ...(filters.signupTypeId && { SignupTypeId: filters.signupTypeId }),
         ...(filters.genderId && { GenderId: filters.genderId }),
-        ...(filters.qualificationId && { QualificationId: filters.qualificationId })
+        ...(filters.qualificationId && { QualificationId: filters.qualificationId }),
+        ...(filters.signupDateFrom && { SignupDateFrom: filters.signupDateFrom }),
+        ...(filters.signupDateTo && { SignupDateTo: filters.signupDateTo }),
+        ...(filters.courseId && { CourseId: filters.courseId }),
+        ...(filters.geoLocationCountry && { GeoLocationCountry: filters.geoLocationCountry })
       });
 
       const response = await ApiService.get(`${ENDPOINTS.STUDENT_MANAGEMENT_ALL}?${queryParams}`);
@@ -170,6 +174,17 @@ export const useStudentManagement = () => {
     }
   }, []);
 
+  const getCountriesDropdown = useCallback(async () => {
+    try {
+      const response = await ApiService.get(ENDPOINTS.STUDENT_MANAGEMENT_DROPDOWN_COUNTRIES);
+      return response.data || response;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch countries';
+      setError(errorMessage);
+      throw err;
+    }
+  }, []);
+
   // Get student orders
   const getStudentOrders = useCallback(async (customerId) => {
     setLoadingStudentOrders(true);
@@ -215,6 +230,7 @@ export const useStudentManagement = () => {
     getGendersDropdown,
     getSignupTypesDropdown,
     getQualificationsDropdown,
+    getCountriesDropdown,
     
     // Orders
     getStudentOrders,

@@ -22,7 +22,8 @@ import {
   GlobeIcon,
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
-import GenericDropdown from '../../../../components/GenericDropdown/GenericDropdown';
+import { useAdmin } from '../../../../hooks/api/useAdmin';
+import GenericDropdown from '../../../../components/GenericDropdown';
 
 const StudentManagement = () => {
   const {
@@ -37,8 +38,13 @@ const StudentManagement = () => {
     clearError,
     setSelectedStudent,
     getSignupTypesDropdown,
+    getCountriesDropdown,
     getStudentOrders,
   } = useStudentManagement();
+
+  const {
+    getAllCoursesAdmin,
+  } = useAdmin();
 
   // Component state
   const [filters, setFilters] = useState({
@@ -46,7 +52,11 @@ const StudentManagement = () => {
     email: '',
     phoneNumber: '',
     isEmailVerified: '',
+    geoLocationCountry: '',
     signupTypeId: '',
+    signupDateFrom: '',
+    signupDateTo: '',
+    courseId: '',
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
@@ -59,23 +69,44 @@ const StudentManagement = () => {
 
   // Dropdown data state
   const [signupTypes, setSignupTypes] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(false);
 
   // Load dropdown data
   const loadDropdownData = useCallback(async () => {
     setLoadingDropdowns(true);
     try {
-      const [signupTypesData] = await Promise.all([
-        getSignupTypesDropdown()
+      const [signupTypesData, coursesData, countriesData] = await Promise.all([
+        getSignupTypesDropdown(),
+        fetchCourses(),
+        getCountriesDropdown()
       ]);
 
       setSignupTypes(signupTypesData || []);
+      setCourses(coursesData || []);
+      setCountries(countriesData || []);
     } catch (err) {
       console.error('Failed to load dropdown data:', err);
     } finally {
       setLoadingDropdowns(false);
     }
-  }, [getSignupTypesDropdown]);
+  }, [getSignupTypesDropdown, getCountriesDropdown]);
+
+  // Fetch courses for dropdown using getAllCoursesAdmin
+  const fetchCourses = useCallback(async () => {
+    try {
+      const response = await getAllCoursesAdmin({ page: 1, pageSize: 1000 });
+      const coursesData = response?.items || response?.data || response || [];
+      return coursesData.map(course => ({
+        id: course.id.toString(),
+        title: course.title || course.name || 'Untitled Course'
+      }));
+    } catch (err) {
+      console.error('Failed to fetch courses:', err);
+      return [];
+    }
+  }, [getAllCoursesAdmin]);
 
   // Load dropdown data on component mount
   useEffect(() => {
@@ -172,7 +203,11 @@ const StudentManagement = () => {
         email: '',
         phoneNumber: '',
         isEmailVerified: '',
+        geoLocationCountry: '',
         signupTypeId: '',
+        signupDateFrom: '',
+        signupDateTo: '',
+        courseId: '',
       };
       setFilters(emptyFilters);
       await getAllStudents(1, pagination.pageSize, emptyFilters);
@@ -313,32 +348,84 @@ const StudentManagement = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Verified</label>
-              <GenericDropdown
+              <select
                 value={filters.isEmailVerified}
-                onChange={(value) => handleFilterChange('isEmailVerified', value)}
-                options={[
-
-                  { id: 'true', title: 'Verified' },
-                  { id: 'false', title: 'Not Verified' }
-                ]}
-                placeholder="All"
-                emptyOptionText="All"
-              />
+                onChange={(e) => handleFilterChange('isEmailVerified', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              >
+                <option value="">All</option>
+                <option value="true">Verified</option>
+                <option value="false">Not Verified</option>
+              </select>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signup Type</label>
-              <GenericDropdown
+              <select
                 value={filters.signupTypeId}
-                onChange={(value) => handleFilterChange('signupTypeId', value)}
-                options={signupTypes}
-                placeholder="All Signup Types"
+                onChange={(e) => handleFilterChange('signupTypeId', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              >
+                <option value="">All Signup Types</option>
+                {signupTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.typeName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Country</label>
+              <GenericDropdown
+                value={filters.geoLocationCountry}
+                onChange={(value) => handleFilterChange('geoLocationCountry', value)}
+                items={countries}
+                placeholder="All Countries"
                 disabled={loadingDropdowns}
                 loading={loadingDropdowns}
-                emptyOptionText="All Signup Types"
-                labelKey="typeName"
+                allowClear={true}
+                displayField="name"
+                valueField="name"
               />
             </div>
+
+            {/* Signup Date Range */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signup Date From</label>
+              <input
+                type="date"
+                value={filters.signupDateFrom}
+                onChange={(e) => handleFilterChange('signupDateFrom', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signup Date To</label>
+              <input
+                type="date"
+                value={filters.signupDateTo}
+                onChange={(e) => handleFilterChange('signupDateTo', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              />
+            </div>
+
+            {/* Course Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Course</label>
+              <GenericDropdown
+                value={filters.courseId}
+                onChange={(value) => handleFilterChange('courseId', value)}
+                items={courses}
+                placeholder="All Courses"
+                disabled={loadingDropdowns}
+                loading={loadingDropdowns}
+                allowClear={true}
+                displayField="title"
+                valueField="id"
+              />
+            </div>
+
             <div className="flex gap-3 lg:col-span-4">
               <button
                 onClick={handleFilter}
@@ -1290,13 +1377,13 @@ const StudentManagement = () => {
                       href={selectedStudent.signupTypeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:underline text-sm font-medium block break-all"
+                      className="text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:underline text-xs font-medium block truncate"
                       title={selectedStudent.signupTypeUrl}
                     >
-                      {selectedStudent.signupTypeUrl}
+                      {selectedStudent.signupTypeUrl.length > 35 ? selectedStudent.signupTypeUrl.substring(0, 35) + '...' : selectedStudent.signupTypeUrl}
                     </a>
                   ) : (
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">N/A</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs">N/A</p>
                   )}
                 </div>
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 p-3 rounded-xl border border-teal-200/50 dark:border-teal-800/30 hover:shadow-md transition-all duration-200">
@@ -1313,13 +1400,13 @@ const StudentManagement = () => {
                       href={selectedStudent.landingPageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline text-sm font-medium block break-all"
+                      className="text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline text-xs font-medium block truncate"
                       title={selectedStudent.landingPageUrl}
                     >
-                      {selectedStudent.landingPageUrl}
+                      {selectedStudent.landingPageUrl.length > 35 ? selectedStudent.landingPageUrl.substring(0, 35) + '...' : selectedStudent.landingPageUrl}
                     </a>
                   ) : (
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">N/A</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs">N/A</p>
                   )}
                 </div>
               </div>
@@ -1368,7 +1455,7 @@ const StudentManagement = () => {
                   </div>
                   <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
                     {selectedStudent.enrollments.map((enrollment, index) => (
-                      <div key={enrollment.id} className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20 p-5 rounded-2xl border border-blue-200/50 dark:border-blue-800/30 hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
+                      <div key={enrollment.id} className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20 p-5 rounded-2xl border border-blue-200/50 dark:border-blue-800/30">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-3">
