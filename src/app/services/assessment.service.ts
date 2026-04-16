@@ -116,7 +116,7 @@ export class AssessmentService {
     if (modifiedPayload.careerPathLevelMapId) {
       modifiedPayload.professionalCertificateId = null;
     }
-    
+
     return this.http.post<any>(
       `${this.apiUrl}/assessment/career-path/final-assessment/submit`,
       modifiedPayload,
@@ -136,7 +136,7 @@ export class AssessmentService {
 
   getAttemptStatus(courseId: number, token: string | null, careerPathLevelMapId?: number): Observable<any> {
     let url: string;
-    
+
     if (careerPathLevelMapId) {
       // Career path: use query parameter
       url = `${this.apiUrl}/assessment/attempt-status?careerPathLevelMapId=${careerPathLevelMapId}`;
@@ -144,7 +144,7 @@ export class AssessmentService {
       // Regular course: use query parameter
       url = `${this.apiUrl}/assessment/attempt-status?courseId=${courseId}`;
     }
-    
+
     return this.http.get<any>(url, { headers: this.getHeaders(token) }).pipe(
       map(response => {
         if (response.isSuccess && response.data) {
@@ -162,5 +162,11 @@ export class AssessmentService {
     this.isAttemptLimitReached.set(data.isAttemptLimitReached || false);
     this.isAssessmentCompleted.set(data.isAssessmentCompleted || false);
     this.canTakeAssessment.set(data.canTakeAssessment !== false);
+  };
+
+  updateAssessmentActivity(payload: any = {}, token: string | null) {
+    return this.http.post(`${this.apiUrl}/CustomerProfile/UpdateEnrollmentActivity`, payload, {
+      headers: this.getHeaders(token)
+    })
   }
 }

@@ -24,6 +24,8 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   showCompletionScreen = signal(false);
   showAnswers = signal(false);
   quizResult = signal<any>(null);
+  isMovingToNext = signal(false);
+  isStartingAssessment = signal(false);
   @Output() moveToNextTopic = new EventEmitter<void>();
   @Output() refreshTree = new EventEmitter<void>();
   @Output() startAssessment = new EventEmitter<void>();
@@ -34,52 +36,32 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('[Quiz Debug] ngOnChanges triggered', changes);
     
     if (changes['orderPayload']) {
-      console.log('[Quiz Debug] orderPayload changed');
-      console.log('[Quiz Debug] firstChange:', changes['orderPayload'].firstChange);
-      console.log('[Quiz Debug] previousValue:', changes['orderPayload'].previousValue);
-      console.log('[Quiz Debug] currentValue:', changes['orderPayload'].currentValue);
+
     }
     
     if (changes['isLectureCompleted']) {
-      console.log('[Quiz Debug] isLectureCompleted changed');
-      console.log('[Quiz Debug] previousValue:', changes['isLectureCompleted'].previousValue);
-      console.log('[Quiz Debug] currentValue:', changes['isLectureCompleted'].currentValue);
     }
     
     if (changes['orderPayload'] && !changes['orderPayload'].firstChange) {
       const previousShortCourseId = changes['orderPayload'].previousValue?.shortCourseId;
       const currentShortCourseId = changes['orderPayload'].currentValue?.shortCourseId;
       
-      console.log('[Quiz Debug] previousShortCourseId:', previousShortCourseId);
-      console.log('[Quiz Debug] currentShortCourseId:', currentShortCourseId);
-      console.log('[Quiz Debug] Are they different?', previousShortCourseId !== currentShortCourseId);
-      
       // Only reset if the shortCourseId actually changed
       if (previousShortCourseId !== currentShortCourseId) {
-        console.log('[Quiz Debug] Resetting quiz state and fetching new quiz');
         this.resetQuizState();
         this._fetchQuizes();
       } else {
-        console.log('[Quiz Debug] Same shortCourseId, NOT resetting');
-      }
+              }
     }
   }
 
   resetQuizState() {
-    console.log('[Quiz Debug] resetQuizState called');
-    console.log('[Quiz Debug] Before reset - isSubmitted:', this.isSubmitted());
-    console.log('[Quiz Debug] Before reset - showCompletionScreen:', this.showCompletionScreen());
-    console.log('[Quiz Debug] Before reset - showAnswers:', this.showAnswers());
-    
     this.isSubmitted.set(false);
     this.showCompletionScreen.set(false);
     this.showAnswers.set(false);
     this.quizResult.set(null);
-    
-    console.log('[Quiz Debug] After reset - all states set to false/null');
   }
   _fetchQuizes() {
     if (!this.orderPayload?.shortCourseId) return;
@@ -93,7 +75,6 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
             selectedOption: '',
             ...q,
           })) || []);
-          console.log(this.questions())
           this.isQuestionLoading.set(false);
         },
         error: (err: any) => {
@@ -199,6 +180,8 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
             if (details?.isSuccess) {
               this.quizResult.set(details.data);
               this.isSubmitted.set(true);
+              // Map correct answers to questions
+              this.mapCorrectAnswers(details.data?.questionResults || []);
               // Merge selected options from API results into questions
               const results = details.data?.questionResults || [];
               const updated = this.questions().map((q: any) => {
@@ -218,17 +201,24 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
     } else {
       this.showCompletionScreen.set(false);
       this.showAnswers.set(true);
-      // Refresh tree to update isCompleted status in sidebar
-      this.refreshTree.emit();
     }
   }
 
   onMoveToNextTopic() {
+    // Set loading state
+    this.isMovingToNext.set(true);
+    
     // This will refresh tree and select next incomplete shortCourse
+    // Parent component will reset isMovingToNext after tree loads
     this.selectIncomplete.emit();
   }
 
+  resetMovingState() {
+    this.isMovingToNext.set(false);
+  }
+
   onStartAssessment() {
+    this.isStartingAssessment.set(true);
     this.startAssessment.emit();
   }
 

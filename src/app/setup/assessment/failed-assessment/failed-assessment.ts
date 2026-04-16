@@ -23,12 +23,10 @@ export class FailedAssessment implements OnChanges {
     if (this.resultData) {
       this.assessmentService.updateAttemptStatus(this.resultData);
     }
-    console.log('[Failed Assessment] ngOnInit resultData:', this.resultData);
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['resultData'] && changes['resultData'].currentValue) {
-      console.log('[Failed Assessment] ngOnChanges resultData:', changes['resultData'].currentValue);
       this.assessmentService.updateAttemptStatus(changes['resultData'].currentValue);
     }
   }

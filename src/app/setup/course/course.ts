@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed, PLATFORM_ID, effect, AfterViewChecked, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, PLATFORM_ID, effect, AfterViewChecked, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../services/course.service';
@@ -33,6 +33,9 @@ import { map, Subject, switchMap, takeUntil } from 'rxjs';
   encapsulation: ViewEncapsulation.None
 })
 export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild(Quiz) quizComponent?: Quiz;
+  @ViewChild('tabContainer') tabContainer?: ElementRef;
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   public courseService = inject(CourseService);
@@ -76,6 +79,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   videoDuration = signal<number>(0)
   assessmentStep = signal<'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts'>('none');
   assessmentResult = signal<any>(null);
+  isStartingAssessment = signal(false);
   completeOrderPayload = signal<any>({
     shortCourseId: null,
     courseCertificateId: null,
@@ -108,6 +112,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   isSidebarOpen = signal<boolean>(false);
+
+  // Reset assessment loading state when assessmentStep changes
+  resetAssessmentLoading = effect(() => {
+    const step = this.assessmentStep();
+    if (step === 'start' || step === 'final' || step === 'cleared' || step === 'maxattempts') {
+      this.isStartingAssessment.set(false);
+    }
+  });
 
   // Check if device is large screen (desktop)
   private isLargeScreen = signal<boolean>(false);
@@ -1573,11 +1585,29 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       });
   }
 
+  selectIncompleteWithoutRefresh() {
+    // Select next incomplete lecture WITHOUT calling tree API
+    this.selectIncompleteShortCourse(() => {
+      // Switch to lecture content tab after lecture is selected
+      this.activeTab.set('transcript');
+
+      // Reset quiz component loading state
+      if (this.quizComponent) {
+        this.quizComponent.resetMovingState();
+      }
+    });
+  }
+
   refreshTreeAndSelectIncomplete() {
     this.refreshCourseTree(() => {
       this.selectIncompleteShortCourse(() => {
         // Switch to lecture content tab after everything is loaded
         this.activeTab.set('transcript');
+
+        // Reset quiz component loading state after tree is refreshed and next lecture is selected
+        if (this.quizComponent) {
+          this.quizComponent.resetMovingState();
+        }
       });
     });
   }
@@ -1668,6 +1698,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   startAssessment() {
+    this.isStartingAssessment.set(true);
+
     const token = this.authService.getToken();
     const courseId = this.existingSeasionCourseId();
     if (!courseId) {
@@ -1703,6 +1735,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               publicCertificateLink: data.publicCertificateLink,
               htmlPath: data.htmlPath,
               correctAnswers: data.correctAnswers,
+              customerEnrollmentId: data.customerEnrollmentId
             });
             this.assessmentStep.set('cleared');
           } else {
@@ -1713,7 +1746,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               requiresRepurchase: data.requiresRepurchase,
               resultStatus: 'MaxAttemptsExceeded',
               publicCertificateLink: data.publicCertificateLink,
-              htmlPath: data.htmlPath
+              htmlPath: data.htmlPath,
+              customerEnrollmentId: data.customerEnrollmentId
             });
             this.assessmentStep.set('maxattempts');
           }
@@ -1863,7 +1897,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             htmlPath: data.htmlPath,
             publicCertificateLink: data.publicCertificateLink,
             correctAnswers: data.correctAnswers,
-            totalQuestions: data.totalQuestions
+            totalQuestions: data.totalQuestions,
+            customerEnrollmentId: data.customerEnrollmentId
           });
           this.assessmentStep.set('cleared');
 
@@ -2255,35 +2290,38 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (tree.courseTypeId === 1 && tree.professionalCourse?.courseCertificates) {
       const certs = tree.professionalCourse.courseCertificates;
       const currentCertIndex = certs.findIndex((c: any) => c.courseCertificateId === currentCertId);
-      if (currentCertIndex === -1) return false;
-
       const currentCert = certs[currentCertIndex];
       const currentScIndex = currentCert.shortCourses?.findIndex((sc: any) => sc.shortCourseId === currentScId) ?? -1;
-      const currentSc = currentCert.shortCourses?.[currentScIndex];
 
-      // If current shortCourse is already completed, allow navigation
-      // If not completed, block if lecture hasn't been played yet (progress is 0)
-      if (!currentSc?.isCompleted) {
-        if (this.currentTime() === 0) return false;
-        return false; // Quiz not completed yet
+      // Check if there are more short courses in current certificate
+      if (currentScIndex < (currentCert.shortCourses?.length || 0) - 1) {
+        return true;
       }
-
-      return currentScIndex < (currentCert.shortCourses?.length || 0) - 1 || currentCertIndex < certs.length - 1;
+      // Check if there are more certificates
+      if (currentCertIndex < certs.length - 1) {
+        return true;
+      }
     } else if (tree.courseTypeId === 2 && tree.certificateCourse?.shortCourses) {
-      const shortCourses = tree.certificateCourse.shortCourses;
-      const currentScIndex = shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
-      const currentSc = shortCourses[currentScIndex];
-
-      // If current shortCourse is already completed, allow navigation
-      // If not completed, block if lecture hasn't been played yet (progress is 0)
-      if (!currentSc?.isCompleted) {
-        if (this.currentTime() === 0) return false;
-        return false; // Quiz not completed yet
-      }
-
-      return currentScIndex < shortCourses.length - 1;
+      const currentScIndex = tree.certificateCourse.shortCourses.findIndex((sc: any) => sc.shortCourseId === currentScId);
+      return currentScIndex < tree.certificateCourse.shortCourses.length - 1;
     }
     return false;
   }
 
+  scrollTabs(direction: 'left' | 'right') {
+    if (!this.tabContainer) return;
+
+    const scrollAmount = 200;
+    const element = this.tabContainer.nativeElement;
+
+    if (direction === 'left') {
+      element.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+      element.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  }
+
+  isMobile(): boolean {
+    return window.innerWidth < 730;
+  }
 }

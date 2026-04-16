@@ -593,3 +593,9 @@
 .font-sm
   @media (max-width: 767px) 
     font-size: 20px
+
+.no-scrollbar
+  -ms-overflow-style: none
+  scrollbar-width: none
+  &::-webkit-scrollbar
+    display: none

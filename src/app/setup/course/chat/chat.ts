@@ -95,7 +95,6 @@ export class Chat {
       target.closest('.live-chat-link') ||
       target.getAttribute('data-live-chat') === 'true' ||
       target.closest('[data-live-chat]')) {
-      console.log('[Live Chat Debug] Live chat link clicked, calling activateLiveChat');
       event.preventDefault();
       event.stopPropagation();
       this.activateLiveChat();
@@ -109,7 +108,6 @@ export class Chat {
 
       // Check if script already exists to avoid duplicate loading
       const existingScript = document.getElementById('cd360-snippet');
-      console.log('[Live Chat Debug] Existing script check:', existingScript);
       if (existingScript) {
         if (window.Chattrak?.openChat) {
           window.Chattrak.openChat();
@@ -118,17 +116,14 @@ export class Chat {
       }
 
       // Dynamically load the chattrik script
-      console.log('[Live Chat Debug] Loading chattrik script dynamically');
       const script = document.createElement('script');
       script.id = 'cd360-snippet';
       script.src = 'https://app.chattrik.com/assets/scripts/snippet.js?key=69dd2f99b2f813411fe1e011&position=left';
       script.async = true;
       script.setAttribute('data-position', 'left');
 
-      console.log('[Live Chat Debug] Script element created:', script);
 
       script.onload = () => {
-        console.log('[Live Chat Debug] Chattrik script loaded');
 
         // Add CSS to hide launcher button
         this.addLauncherButtonHidingCSS();
@@ -145,7 +140,6 @@ export class Chat {
           // Directly modify the launcher iframe position
           const launcherIframe = document.querySelector('iframe#launcher') as HTMLElement;
           if (launcherIframe) {
-            console.log('[Live Chat Debug] Found launcher iframe, positioning on left');
             launcherIframe.style.left = '0px';
             launcherIframe.style.right = 'auto';
             // Hide on assessment screens
@@ -181,10 +175,8 @@ export class Chat {
 
           // Open live chat
           if (window.Chattrak?.openChat) {
-            console.log('[Live Chat Debug] Calling Chattrak.openChat()');
             window.Chattrak.openChat();
           } else {
-            console.log('[Live Chat Debug] Chattrak.openChat not available, widget might auto-open');
           }
         }, 2000); // Wait 2 seconds for widget to render
       };
@@ -195,11 +187,8 @@ export class Chat {
         this.isLiveChatActive.set(false);
       };
 
-      console.log('[Live Chat Debug] Appending script to body');
       document.body.appendChild(script);
-      console.log('[Live Chat Debug] Script appended to body');
     } else {
-      console.log('[Live Chat Debug] NOT in browser platform - skipping');
     }
   }
 
@@ -233,7 +222,6 @@ export class Chat {
         }
       `;
       document.head.appendChild(style);
-      console.log('[Live Chat Debug] Added CSS to hide launcher button and position widget on left');
     }
   }
 
@@ -242,13 +230,11 @@ export class Chat {
       const style = document.getElementById('launcher-button-hider');
       if (style) {
         style.remove();
-        console.log('[Live Chat Debug] Removed CSS styling');
       }
     }
   }
 
   private attachMinimizeButtonListener() {
-    console.log('[Live Chat Debug] Using polling to detect widget minimization');
 
     // Remove any existing listener to avoid duplicates
     if ((window as any).liveChatMinimizeHandler) {
@@ -265,7 +251,6 @@ export class Chat {
       const chatWidget = document.querySelector('app-root div.content_body');
       const isVisible = chatWidget && (chatWidget as HTMLElement).offsetParent !== null;
 
-      console.log('[Live Chat Debug] Poll ' + pollCount + ': Widget visibility check:', isVisible);
 
       if (isVisible) {
         widgetWasVisible = true;
@@ -273,56 +258,41 @@ export class Chat {
 
       // If widget was visible and now is not, it was minimized
       if (widgetWasVisible && !isVisible) {
-        console.log('[Live Chat Debug] Widget was minimized!');
         clearInterval(pollInterval);
         this.deactivateLiveChat();
       }
 
       if (pollCount >= maxPolls) {
         clearInterval(pollInterval);
-        console.log('[Live Chat Debug] Polling stopped after max polls');
       }
     }, 1000); // Check every second
   }
 
   deactivateLiveChat() {
     if (isPlatformBrowser(this.platformId)) {
-      console.log('[Live Chat Debug] deactivateLiveChat called');
 
       // Remove CSS hiding rule so launcher button can show again
       this.removeLauncherButtonHidingCSS();
 
       // Remove the chattrik script
       const script = document.getElementById('cd360-snippet');
-      console.log('[Live Chat Debug] Found script element:', script);
       if (script) {
-        console.log('[Live Chat Debug] Removing chattrik script');
         script.remove();
-        console.log('[Live Chat Debug] Script removed');
       } else {
-        console.log('[Live Chat Debug] Script element not found');
       }
 
       // Remove the chattrik widget HTML (app-root with content_body)
       const chatWidget = document.querySelector('app-root div.content_body');
-      console.log('[Live Chat Debug] Found chat widget:', chatWidget);
       if (chatWidget) {
         const appRoot = chatWidget.closest('app-root');
-        console.log('[Live Chat Debug] Found app-root:', appRoot);
         if (appRoot) {
-          console.log('[Live Chat Debug] Removing app-root element');
           appRoot.remove();
-          console.log('[Live Chat Debug] App-root removed successfully');
         }
       } else {
-        console.log('[Live Chat Debug] Chat widget not found, trying alternative selectors');
         // Try alternative selectors
         const allAppRoots = document.querySelectorAll('app-root');
-        console.log('[Live Chat Debug] Found app-root elements:', allAppRoots.length);
         allAppRoots.forEach((root, index) => {
-          console.log('[Live Chat Debug] App-root', index, ':', root);
           if (root.querySelector('.content_body')) {
-            console.log('[Live Chat Debug] Found app-root with content_body, removing');
             root.remove();
           }
         });
@@ -330,14 +300,10 @@ export class Chat {
 
       // Remove the launcher button if it exists
       const launcherBtn = document.getElementById('launcher_btn');
-      console.log('[Live Chat Debug] Found launcher button:', launcherBtn);
       if (launcherBtn) {
-        console.log('[Live Chat Debug] Removing launcher button');
         launcherBtn.remove();
-        console.log('[Live Chat Debug] Launcher button removed successfully');
       }
 
-      console.log('[Live Chat Debug] deactivateLiveChat completed');
     }
   }
 

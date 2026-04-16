@@ -77,7 +77,8 @@
             </div>
             <div class="flex items-center justify-between gap-2">
               <div class="flex flex-col gap-0.5 flex-1">
-                <h4 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{ sc.title }}</h4>
+                <h4 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{ sc.title }}
+                </h4>
                 @if (sc.isCompleted && sc.assessmentScore !== null && sc.assessmentScore !== undefined) {
                 <p class="text-[10px] text-gray-500">Marks obtained: {{ sc.assessmentScore }}</p>
                 }
@@ -251,8 +252,10 @@
           </div>
           <div class="flex items-center justify-between gap-2 mt-1">
             <div class="flex flex-col gap-0.5 flex-1">
-              <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="courseTree().isCompleted">{{ lec.title }}</h3>
-              @if (courseTree().isCompleted && courseTree().assessmentScore !== null && courseTree().assessmentScore !== undefined) {
+              <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="courseTree().isCompleted">{{
+                lec.title }}</h3>
+              @if (courseTree().isCompleted && courseTree().assessmentScore !== null && courseTree().assessmentScore !==
+              undefined) {
               <p class="text-[10px] text-gray-500">Marks obtained: {{ courseTree().assessmentScore }}</p>
               }
             </div>
@@ -324,16 +327,26 @@
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
       @if(courseTree()?.courseTypeId == 3 &&
       assessmentStep() === 'none') {
-      <button (click)="startAssessment()"
-        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+      <button (click)="startAssessment()" [disabled]="isStartingAssessment()"
+        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm disabled:opacity-50">
+        @if (isStartingAssessment()) {
+        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Moving to Assessment...
+        } @else {
         Move to Assessment
+        }
       </button>
       }
       @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) &&
       assessmentStep() === 'none') {
-      <button (click)="startAssessment()"
-        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+      <button (click)="startAssessment()" [disabled]="isStartingAssessment()"
+        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm disabled:opacity-50">
+        @if (isStartingAssessment()) {
+        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Moving to Final Assessment...
+        } @else {
         Final Assessment
+        }
       </button>
       }
       @if(assessmentStep() === 'cleared' || assessmentStep() === 'maxattempts') {
@@ -349,6 +362,7 @@
   <!-- Main Content -->
   <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 46px);">
     <!-- Assessment Flow -->
+     @if (courseTree(); as tree) {
     @if (assessmentStep() === 'none' && !courseTree()?.videoUrl) {
     <!-- Progress Bar Above Content (hidden for video courses) -->
     <div class="bg-white px-6 py-3  flex items-center justify-center">
@@ -363,6 +377,7 @@
       </div>
     </div>
     }
+  }
     @if (assessmentStep() !== 'none') {
     @if (assessmentStep() === 'start') {
     <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')"
@@ -391,7 +406,8 @@
       @if (courseTree()?.videoUrl) {
       <!-- Video Player for courses with videoUrl -->
       <app-simple-video-player [videoUrl]="courseTree()?.videoUrl" [showControls]="true"
-        (ended)="onLastLectureComplete()" (durationChange)="onVideoDurationChange($event)" (timeupdate)="onVideoTimeUpdate($event)">
+        (ended)="onLastLectureComplete()" (durationChange)="onVideoDurationChange($event)"
+        (timeupdate)="onVideoTimeUpdate($event)">
       </app-simple-video-player>
       } @else {
       <!-- Text/Audio Content Display -->
@@ -511,63 +527,82 @@
     }
 
     <!-- Tabs Section -->
-    <div class="bg-white border-t border-gray-200">
-      <!-- Tab Headers -->
-      <div class="flex justify-left border-b border-gray-200 screen-tab">
-        <button (click)="activeTab.set('overview')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'overview'" [class.border-primary]="activeTab() === 'overview'"
-          [class.text-gray-500]="activeTab() !== 'overview'" [class.border-transparent]="activeTab() !== 'overview'">
-          <img src="/assets/icons/overview.svg" class="w-4 h-4" />
-          Overview
-        </button>
-        <button (click)="activeTab.set('transcript')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'transcript'" [class.border-primary]="activeTab() === 'transcript'"
-          [class.text-gray-500]="activeTab() !== 'transcript'"
-          [class.border-transparent]="activeTab() !== 'transcript'">
-          <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg> -->
-          <img src="/assets/icons/transcript.svg" class="w-4 h-4" />
-          Lecture Content
-        </button>
-        <button (click)="activeTab.set('keyPoints')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'keyPoints'" [class.border-primary]="activeTab() === 'keyPoints'"
-          [class.text-gray-500]="activeTab() !== 'keyPoints'" [class.border-transparent]="activeTab() !== 'keyPoints'">
-          <i class="ic-84 cl-iPrimary text-xl"></i>
-          <!-- <img src="/assets/icons/overview.svg" class="w-4 h-4" /> -->
-          Key Points
-        </button>
-        <button (click)="activeTab.set('download')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'download'" [class.border-primary]="activeTab() === 'download'"
-          [class.text-gray-500]="activeTab() !== 'download'" [class.border-transparent]="activeTab() !== 'download'">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    <div class="bg-white border-t border-gray-200 relative">
+      <div class="flex items-center border-b border-gray-200 justify-left screen-tab">
+        <button (click)="scrollTabs('left')"
+          class=" w-8 h-8 bg-white shadow-lg border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all"
+          [class.hidden]="!isMobile()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 stroke-gray-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" [class.stroke-primary]="tabContainer && tabContainer.scrollLeft > 0">
+            <path d="M15 19l-7-7 7-7" />
           </svg>
-          Resources
         </button>
-        <button (click)="activeTab.set('notebook')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'notebook'" [class.border-primary]="activeTab() === 'notebook'"
-          [class.text-gray-500]="activeTab() !== 'notebook'" [class.border-transparent]="activeTab() !== 'notebook'">
-          <img src="/assets/icons/notebook.svg" class="w-4 h-4" alt="Notebook icon" />
-          Notebook
+        <div #tabContainer class="flex justify-left overflow-x-auto scroll-smooth no-scrollbar"
+          [class.px-4]="isMobile()">
+          <button (click)="activeTab.set('overview')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'overview'" [class.border-primary]="activeTab() === 'overview'"
+            [class.text-gray-500]="activeTab() !== 'overview'" [class.border-transparent]="activeTab() !== 'overview'">
+            <img src="/assets/icons/overview.svg" class="w-4 h-4" />
+            Overview
+          </button>
+          <button (click)="activeTab.set('transcript')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'transcript'" [class.border-primary]="activeTab() === 'transcript'"
+            [class.text-gray-500]="activeTab() !== 'transcript'"
+            [class.border-transparent]="activeTab() !== 'transcript'">
+            <img src="/assets/icons/transcript.svg" class="w-4 h-4" />
+            Lecture Content
+          </button>
+          <button (click)="activeTab.set('keyPoints')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'keyPoints'" [class.border-primary]="activeTab() === 'keyPoints'"
+            [class.text-gray-500]="activeTab() !== 'keyPoints'"
+            [class.border-transparent]="activeTab() !== 'keyPoints'">
+            <i class="ic-84 cl-iPrimary text-xl"></i>
+            Key Points
+          </button>
+          <button (click)="activeTab.set('download')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'download'" [class.border-primary]="activeTab() === 'download'"
+            [class.text-gray-500]="activeTab() !== 'download'" [class.border-transparent]="activeTab() !== 'download'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Resources
+          </button>
+          <button (click)="activeTab.set('notebook')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'notebook'" [class.border-primary]="activeTab() === 'notebook'"
+            [class.text-gray-500]="activeTab() !== 'notebook'" [class.border-transparent]="activeTab() !== 'notebook'">
+            <img src="/assets/icons/notebook.svg" class="w-4 h-4" alt="Notebook icon" />
+            Notebook
+          </button>
+          @if (courseTree()?.courseTypeId !== 3) {
+          <button (click)="activeTab.set('quiz')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'quiz'" [class.border-primary]="activeTab() === 'quiz'"
+            [class.text-gray-500]="activeTab() !== 'quiz'" [class.border-transparent]="activeTab() !== 'quiz'">
+            <i class="ic-85 cl-iPrimary text-xl"></i>
+            Quiz
+          </button>
+          }
+        </div>
+
+        <!-- Right Scroll Button (Small Devices Only) -->
+        <button (click)="scrollTabs('right')"
+          class="w-8 h-8 bg-white shadow-lg border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all"
+          [class.hidden]="!isMobile()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" [class.text-primary]="
+       tabContainer &&
+       tabContainer.scrollLeft + tabContainer.clientWidth < tabContainer.scrollWidth
+     ">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         </button>
-        @if (courseTree()?.courseTypeId !== 3) {
-        <button (click)="activeTab.set('quiz')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'quiz'" [class.border-primary]="activeTab() === 'quiz'"
-          [class.text-gray-500]="activeTab() !== 'quiz'" [class.border-transparent]="activeTab() !== 'quiz'">
-          <i class="ic-85 cl-iPrimary text-xl"></i>
-          Quiz
-        </button>
-        }
       </div>
       <!-- Tab Content -->
       <div class="flex gap-6 p-4 detailsec">
@@ -596,15 +631,10 @@
           @if (activeTab() === 'download') {
           <app-download></app-download>
           }
-          <app-quiz 
-            [class.hidden]="activeTab() !== 'quiz'"
-            [orderPayload]="completeOrderPayload()" 
-            [isCourseCompleted]="courseTree()?.isCompleted"
-            [isLectureCompleted]="currentShortCourse()?.isCompleted" 
-            (refreshTree)="refreshCourseTree()"
-            (startAssessment)="startAssessment()" 
-            (goToDashboard)="goToDashboard()"
-            (selectIncomplete)="refreshTreeAndSelectIncomplete()">
+          <app-quiz [class.hidden]="activeTab() !== 'quiz'" [orderPayload]="completeOrderPayload()"
+            [isCourseCompleted]="courseTree()?.isCompleted" [isLectureCompleted]="currentShortCourse()?.isCompleted"
+            (refreshTree)="refreshCourseTree()" (startAssessment)="startAssessment()" (goToDashboard)="goToDashboard()"
+            (selectIncomplete)="selectIncompleteWithoutRefresh()">
           </app-quiz>
         </div>
         @if (activeTab() === 'overview' || activeTab() === 'transcript' || activeTab() === 'keyPoints' || activeTab()
@@ -649,9 +679,7 @@
   </button>
 
   <!-- Chat Component -->
-  <app-chat 
-    [assessmentStep]="assessmentStep()" 
-    [courseTree]="courseTree()">
+  <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()">
   </app-chat>
 
   <!-- Completion Modal -->

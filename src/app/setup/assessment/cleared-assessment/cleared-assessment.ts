@@ -1,12 +1,15 @@
-import { Component, Output, EventEmitter, Input, OnChanges, signal } from '@angular/core';
+import { Component, Output, EventEmitter, Input, OnChanges, signal, inject } from '@angular/core';
 import { DecimalPipe, CommonModule } from '@angular/common';
+import { AssessmentService } from '../../../services/assessment.service';
+import { AuthService } from '../../../services/auth.service';
+import { Subject, takeUntil } from 'rxjs';
 // import { ShareYourAccomplishment } from '../share-your-accomplishment/share-your-accomplishment';
 
 @Component({
   selector: 'app-cleared-assessment',
   imports: [DecimalPipe, CommonModule,
     //  ShareYourAccomplishment
-    ],
+  ],
   templateUrl: './cleared-assessment.html',
   styleUrl: './cleared-assessment.sass',
 })
@@ -15,13 +18,17 @@ export class ClearedAssessment implements OnChanges {
   @Input() courseTypeId: number = 3;
   @Output() finish = new EventEmitter<void>();
   @Output() goBack = new EventEmitter<void>();
-
+  private authService = inject(AuthService);
+  private assessmentService = inject(AssessmentService);
+  isLinkedinLoading = signal(false);
+  isDownloadingCertificateLoading = signal(false)
+  private destroy$ = new Subject<void>();
   isGeneratingCertificate = signal(false); // Add loading state
   loaderAlreadyActivated = false; // Prevent multiple activations
   showShareModal = signal(false);
 
   ngOnChanges() {
-    
+
     // Check if certificate is being generated for courseTypeId 1 & 2
     if ((this.courseTypeId === 1 || this.courseTypeId === 2) && this.resultData) {
       // Show loading ONLY if assessment is PASSED, certificate URL is null, and loader not already activated
@@ -35,7 +42,6 @@ export class ClearedAssessment implements OnChanges {
       } else {
       }
     };
-    console.log(this.resultData)
   }
 
   onImageError(event: any) {
@@ -56,6 +62,10 @@ export class ClearedAssessment implements OnChanges {
 
   get totalQuestions(): number {
     return this.resultData?.totalQuestions ?? 0;
+  }
+
+  get customerEnrollmentId(): number {
+    return this.resultData?.customerEnrollmentId ?? 0;
   }
 
   get correctAnswers(): number {
@@ -85,7 +95,7 @@ export class ClearedAssessment implements OnChanges {
     return this.resultData?.pngPath ?? '';
   }
 
-    get pdfPath(): string {
+  get pdfPath(): string {
     // Use original thumbnail URL since full version doesn't exist on server
     return this.resultData?.pdfPath ?? '';
   }
@@ -117,12 +127,11 @@ export class ClearedAssessment implements OnChanges {
   }
 
   downloadCertificate() {
-    console.log('[Certificate Debug] Downloading certificate:', this.pdfPath);
     if (!this.pdfPath) {
       console.error('[Certificate Debug] No certificate path available');
       return;
     }
-    
+
     const link = document.createElement('a');
     link.href = this.pdfPath;
     link.download = `certificate-${Date.now()}.pdf`;
@@ -130,7 +139,6 @@ export class ClearedAssessment implements OnChanges {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    console.log('[Certificate Debug] Download initiated');
   }
 
   openShareModal() {
@@ -141,16 +149,63 @@ export class ClearedAssessment implements OnChanges {
     this.showShareModal.set(false);
   };
 
-    onShareLinkedin() {
-    console.log('[Certificate Debug] Sharing on LinkedIn:', this.htmlPath);
+  onShareLinkedin() {
     if (!this.htmlPath) {
       console.error('[Certificate Debug] No HTML certificate path available for sharing');
       return;
     }
-    
+
     const encodedUrl = encodeURIComponent(this.htmlPath);
     const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-    console.log('[Certificate Debug] Opening LinkedIn share:', linkedInUrl);
     window.open(linkedInUrl, '_blank');
+  };
+
+  startLoading(activityType: string) {
+    if (activityType === 'download') {
+      this.isDownloadingCertificateLoading.set(true);
+    }
+    else {
+      this.isLinkedinLoading.set(true);
+    }
+  }
+
+  stopLoading(activityType: string) {
+    if (activityType === 'download') {
+      this.isDownloadingCertificateLoading.set(false);
+    }
+    else {
+      this.isLinkedinLoading.set(false);
+    }
+  }
+
+  updateEnrollmentActivity(activityType: string) {
+    const token = this.authService.getToken();
+    const payload = { customerEnrollmentId: this.customerEnrollmentId, activityType };
+    this.startLoading(activityType);
+    setTimeout(() => {
+      this.assessmentService.updateAssessmentActivity(payload, token).pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response: any) => {
+            this.stopLoading(activityType);
+            if (response?.isSuccess) {
+              if (activityType === 'download') {
+                this.downloadCertificate();
+              }
+              else {
+                this.onShareLinkedin();
+              }
+
+            }
+          },
+          error: () => {
+            this.stopLoading(activityType);
+          }
+        });
+    }, 1000)
+  };
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -28,54 +28,43 @@
       <p class="text-sm font-medium text-red-600 mb-2 correct">✗ Wrong Answer</p>
       }
       }
-      <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}</h3>
+      <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}
+      </h3>
       <div class="grid grid-cols-2 gap-3 blckresp">
-@for (option of question.options; track option.id; let optIndex = $index) {
-<label class="flex items-start gap-3 py-1 pointer-events-none">
+        @for (option of question.options; track option.id; let optIndex = $index) {
+        <label class="flex items-start gap-3 py-1 pointer-events-none relative" style="margin-bottom:5px;">
+          <input type="radio" [name]="'question-answer-' + question.id" [value]="option.optionLetter"
+            [checked]="question.selectedOption === option.optionLetter" disabled
+            class="mt-1 w-4 h-4 text-primary border-gray-300 focus:ring-primary" />
 
-  <input
-    type="radio"
-    [name]="'question-answer-' + question.id"
-    [value]="option.optionLetter"
-    [checked]="question.selectedOption === option.optionLetter"
-    disabled
-    class="mt-1 w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-  />
+          <div class="flex flex-col">
 
-  <div class="flex flex-col">
+            <div class="flex items-center" style="position: absolute;top:-12px;left: 0;">
 
-    <div class="flex items-center">
-      
-      @if (
-        isSubmitted() &&
-        !getQuestionResult(question.id)?.isCorrect &&
-        question.correctAnswer === option.optionLetter
-      ) {
-        <svg xmlns="http://www.w3.org/2000/svg"
-             class="h-4 w-4 text-green-500 flex-shrink-0"
-             fill="none"
-             viewBox="0 0 24 24"
-             stroke="currentColor">
-          <path stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 13l4 4L19 7" />
-        </svg>
+              @if (
+              isSubmitted() &&
+              !getQuestionResult(question.id)?.isCorrect &&
+              question.correctAnswer === option.optionLetter
+              ) {
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 flex-shrink-0" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
 
-        <span class="font-semibold text-green-600 rounded-full" style="font-size: 14px;">
-          That's right
-        </span>
-      }
+              <span class="font-semibold text-green-600 rounded-full" style="font-size: 12px;font-weight: 600;">
+                That's right
+              </span>
+              }
 
-    </div>
+            </div>
 
-    <span class="text-sm text-gray-700 leading-snug">
-      {{ getOptionLetter(optIndex) }}. {{ option.optionText }}
-    </span>
+            <span class="text-sm text-gray-700 leading-snug" style="margin-top: 2px;">
+              {{ getOptionLetter(optIndex) }}. {{ option.optionText }}
+            </span>
 
-  </div>
-</label>
-}
+          </div>
+        </label>
+        }
       </div>
     </div>
     }
@@ -100,22 +89,32 @@
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
         Check Answers
       </button>
-      <button (click)="onStartAssessment()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+      <button (click)="onStartAssessment()" [disabled]="isStartingAssessment()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        @if (isStartingAssessment()) {
+        <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Starting Assessment...
+        } @else {
         Start Assessment
+        }
       </button>
     </div>
     } @else {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
       course.</p>
     <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
-      <button (click)="onCheckAnswers()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+      <button (click)="onCheckAnswers()" [disabled]="isMovingToNext()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50">
         Check Answers
       </button>
-      <button (click)="onMoveToNextTopic()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+      <button (click)="onMoveToNextTopic()" [disabled]="isMovingToNext()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        @if (isMovingToNext()) {
+        <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Moving to next lecture...
+        } @else {
         Move To Next Topic
+        }
       </button>
     </div>
     }
@@ -142,22 +141,32 @@
         class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
         Check Answers
       </button>
-      <button (click)="onStartAssessment()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+      <button (click)="onStartAssessment()" [disabled]="isStartingAssessment()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        @if (isStartingAssessment()) {
+        <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Starting Assessment...
+        } @else {
         Start Assessment
+        }
       </button>
     </div>
     } @else {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
       course.</p>
     <div class="flex items-center gap-4 comp-btn">
-      <button (click)="onCheckAnswers()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+      <button (click)="onCheckAnswers()" [disabled]="isMovingToNext()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50">
         Check Answers
       </button>
-      <button (click)="onMoveToNextTopic()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+      <button (click)="onMoveToNextTopic()" [disabled]="isMovingToNext()"
+        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        @if (isMovingToNext()) {
+        <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Moving to next lecture...
+        } @else {
         Move To Next Topic
+        }
       </button>
     </div>
     }
@@ -170,11 +179,11 @@
       <h3 class="text-base font-semibold text-gray-900 mb-4">Q{{ i + 1 }}. {{ question.question }}</h3>
       <div class="grid grid-cols-2 gap-3 blckresp">
         @for (option of question.options; track option.id; let optIndex = $index) {
-        <label class="flex items-center gap-2 cursor-pointer">
+        <label class="flex items-start gap-2 cursor-pointer" style="margin-bottom:5px;">
           <input type="radio" [name]="'question-' + question.id" [value]="option.optionLetter"
             (change)="onOptionChange(question, option.optionLetter)"
-            class="w-4 h-4 text-primary border-gray-300 focus:ring-primary" />
-          <span class="text-sm text-gray-700">{{ getOptionLetter(optIndex) }}. {{ option.optionText }}</span>
+            class="mt-1 w-4 h-4 min-w-4 min-h-4 text-primary border-gray-300 focus:ring-primary" />
+          <span class="text-sm text-gray-700" style="margin-top: 2px;">{{ getOptionLetter(optIndex) }}. {{ option.optionText }}</span>
         </label>
         }
       </div>
