@@ -24,6 +24,7 @@ import {
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
 import GenericDropdown from '../../../../components/GenericDropdown';
+import './StudentManagement.css';
 
 const StudentManagement = () => {
   const {
@@ -279,13 +280,13 @@ const StudentManagement = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+              <span className="font-medium">Refresh</span>
             </button>
             <div className="px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Students</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Students</div>
               <div className="text-2xl font-bold text-gray-900 dark:text-white">{pagination.totalCount}</div>
             </div>
           </div>
@@ -298,7 +299,7 @@ const StudentManagement = () => {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${showFilters
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-colors duration-200 shadow-sm ${showFilters
               ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
               : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
@@ -315,7 +316,7 @@ const StudentManagement = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
               <input
@@ -323,7 +324,7 @@ const StudentManagement = () => {
                 placeholder="Enter full name"
                 value={filters.fullName}
                 onChange={(e) => handleFilterChange('fullName', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
               />
             </div>
             <div className="space-y-2">
@@ -333,7 +334,7 @@ const StudentManagement = () => {
                 placeholder="Enter email address"
                 value={filters.email}
                 onChange={(e) => handleFilterChange('email', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
               />
             </div>
             <div className="space-y-2">
@@ -343,7 +344,7 @@ const StudentManagement = () => {
                 placeholder="Enter phone number"
                 value={filters.phoneNumber}
                 onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
               />
             </div>
             <div className="space-y-2">
@@ -351,7 +352,7 @@ const StudentManagement = () => {
               <select
                 value={filters.isEmailVerified}
                 onChange={(e) => handleFilterChange('isEmailVerified', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
               >
                 <option value="">All</option>
                 <option value="true">Verified</option>
@@ -364,7 +365,7 @@ const StudentManagement = () => {
               <select
                 value={filters.signupTypeId}
                 onChange={(e) => handleFilterChange('signupTypeId', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
               >
                 <option value="">All Signup Types</option>
                 {signupTypes.map((type) => (
@@ -397,7 +398,7 @@ const StudentManagement = () => {
                 type="date"
                 value={filters.signupDateFrom}
                 onChange={(e) => handleFilterChange('signupDateFrom', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
               />
             </div>
             <div className="space-y-2">
@@ -406,7 +407,7 @@ const StudentManagement = () => {
                 type="date"
                 value={filters.signupDateTo}
                 onChange={(e) => handleFilterChange('signupDateTo', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
               />
             </div>
 
@@ -429,14 +430,14 @@ const StudentManagement = () => {
             <div className="flex gap-3 lg:col-span-4">
               <button
                 onClick={handleFilter}
-                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors duration-200 shadow-lg font-medium"
               >
                 <Filter className="w-4 h-4" />
                 Apply Filters
               </button>
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-2 px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
+                className="flex items-center gap-2 px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200 font-medium"
               >
                 <X className="w-4 h-4" />
                 Clear All
@@ -448,14 +449,14 @@ const StudentManagement = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-6 py-4 rounded-xl flex items-center justify-between shadow-lg">
+        <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-6 py-4 rounded-xl flex items-center justify-between shadow-lg my-4">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span className="font-medium">{error}</span>
           </div>
           <button
             onClick={clearError}
-            className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
+            className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-200 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -463,7 +464,7 @@ const StudentManagement = () => {
       )}
 
       {/* Students Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mt-6">
         {/* Desktop Table */}
         <div className="hidden xl:block overflow-x-auto">
           <table className="w-full table-fixed">
@@ -472,7 +473,7 @@ const StudentManagement = () => {
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
                   Student
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
                   Country
                 </th>
                 {/* <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
@@ -484,7 +485,7 @@ const StudentManagement = () => {
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Signup through
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
                   Advertising Medium
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
@@ -496,6 +497,15 @@ const StudentManagement = () => {
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Signup Date
                 </th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
+                  Last Course Completion
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
+                  Certificate Download Status
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
+                  Certificate Share Status
+                </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[150px]">
                   Actions
                 </th>
@@ -504,7 +514,7 @@ const StudentManagement = () => {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center">
+                  <td colSpan="13" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-gray-500 dark:text-gray-400 font-medium">Loading students...</span>
@@ -513,7 +523,7 @@ const StudentManagement = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center">
+                  <td colSpan="13" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-gray-400" />
                       <span className="text-gray-500 dark:text-gray-400 font-medium text-lg">No students found</span>
@@ -632,7 +642,7 @@ const StudentManagement = () => {
                           handleViewEnrollments(student.id);
                         }}
                         disabled={!student.enrollmentCount}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 ${student.enrollmentCount
                           ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
                           : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
                           }`}
@@ -736,13 +746,92 @@ const StudentManagement = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex gap-2">
+                      {student.completionPercentage !== undefined && student.completionPercentage !== null ? (
+                        <div className="flex items-center gap-2">
+                          <div className="relative w-12 h-12">
+                            <svg className="w-12 h-12 transform -rotate-90">
+                              <circle
+                                cx="24"
+                                cy="24"
+                                r="20"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                                className="text-gray-200 dark:text-gray-700"
+                              />
+                              <circle
+                                cx="24"
+                                cy="24"
+                                r="20"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                                strokeDasharray={`${2 * Math.PI * 20}`}
+                                strokeDashoffset={`${2 * Math.PI * 20 * (1 - student.completionPercentage / 100)}`}
+                                className={`${
+                                  student.completionPercentage >= 75 ? 'text-green-500' :
+                                  student.completionPercentage >= 50 ? 'text-blue-500' :
+                                  student.completionPercentage >= 25 ? 'text-yellow-500' :
+                                  'text-orange-500'
+                                } transition-all duration-300`}
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                {student.completionPercentage}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400 dark:text-gray-500">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex flex-col items-center gap-1">
+                        {student.isDownload ? (
+                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                        {student.downloadDate && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(student.downloadDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex flex-col items-center gap-1">
+                        {student.isShared ? (
+                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                        {student.sharedDate && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(student.sharedDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-2">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewStudent(student.id);
                           }}
-                          className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer w-[70px]"
+                          className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer w-[70px]"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>View</span>
@@ -753,7 +842,7 @@ const StudentManagement = () => {
                               e.stopPropagation();
                               handleViewOrders(student.id);
                             }}
-                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer w-[70px]"
+                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer w-[70px]"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
                             <span>Orders</span>
@@ -879,7 +968,7 @@ const StudentManagement = () => {
                       </button>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -916,17 +1005,17 @@ const StudentManagement = () => {
           {loading ? (
             // Mobile loading skeleton
             Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 animate-pulse">
+              <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-14 h-14 bg-gray-200 rounded-full"></div>
+                  <div className="w-14 h-14 bg-gray-200 dark:bg-gray-600 rounded-full animate-pulse"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded mb-2 animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-20 animate-pulse"></div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="h-3 bg-gray-200 rounded"></div>
-                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded animate-pulse"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded animate-pulse"></div>
                 </div>
               </div>
             ))
@@ -938,7 +1027,7 @@ const StudentManagement = () => {
             </div>
           ) : (
             students.map((student) => (
-              <div key={student.id} className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div key={student.id} className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow duration-200">
                 {/* Student Header */}
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 flex-shrink-0">
@@ -1113,7 +1202,7 @@ const StudentManagement = () => {
                       e.stopPropagation();
                       handleViewStudent(student.id);
                     }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors duration-200 bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>View</span>
@@ -1148,7 +1237,7 @@ const StudentManagement = () => {
                 <button
                   onClick={() => handlePageChange(pagination.currentPage - 1)}
                   disabled={!pagination.hasPreviousPage}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-500 transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-500 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 disabled:hover:scale-100 font-medium"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Previous</span>
@@ -1172,7 +1261,7 @@ const StudentManagement = () => {
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-200 ${pageNum === pagination.currentPage
+                        className={`w-10 h-10 rounded-lg font-bold transition-colors duration-200 ${pageNum === pagination.currentPage
                           ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
                           : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500'
                           }`}
@@ -1186,7 +1275,7 @@ const StudentManagement = () => {
                 <button
                   onClick={() => handlePageChange(pagination.currentPage + 1)}
                   disabled={!pagination.hasNextPage}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-500 transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-500 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 disabled:hover:scale-100 font-medium"
                 >
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
@@ -1218,7 +1307,7 @@ const StudentManagement = () => {
                     setShowStudentDetails(false);
                     setSelectedStudent(null);
                   }}
-                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-all duration-200 group"
+                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-colors duration-200 group"
                 >
                   <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
                 </button>
@@ -1324,6 +1413,116 @@ const StudentManagement = () => {
                     <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Enrollments</h4>
                   </div>
                   <p className="text-gray-700 dark:text-gray-300 font-medium text-sm">{selectedStudent.enrollments?.length || 0} Courses</p>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-50 to-violet-100 dark:from-indigo-900/30 dark:to-violet-900/30 p-3 rounded-xl border border-indigo-200/50 dark:border-indigo-800/30 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-indigo-500 rounded-lg">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Last Course Completion</h4>
+                  </div>
+                  {selectedStudent.completionPercentage !== undefined && selectedStudent.completionPercentage !== null ? (
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-14 h-14">
+                        <svg className="w-14 h-14 transform -rotate-90">
+                          <circle
+                            cx="28"
+                            cy="28"
+                            r="24"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            className="text-gray-200 dark:text-gray-700"
+                          />
+                          <circle
+                            cx="28"
+                            cy="28"
+                            r="24"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            strokeDasharray={`${2 * Math.PI * 24}`}
+                            strokeDashoffset={`${2 * Math.PI * 24 * (1 - selectedStudent.completionPercentage / 100)}`}
+                            className={`${
+                              selectedStudent.completionPercentage >= 75 ? 'text-green-500' :
+                              selectedStudent.completionPercentage >= 50 ? 'text-blue-500' :
+                              selectedStudent.completionPercentage >= 25 ? 'text-yellow-500' :
+                              'text-orange-500'
+                            } transition-all duration-300`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {selectedStudent.completionPercentage}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">
+                          {selectedStudent.completionPercentage}%
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {selectedStudent.completionPercentage >= 75 ? 'Excellent Progress' :
+                           selectedStudent.completionPercentage >= 50 ? 'Good Progress' :
+                           selectedStudent.completionPercentage >= 25 ? 'In Progress' :
+                           'Just Started'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-700 dark:text-gray-300 font-medium text-sm">N/A</p>
+                  )}
+                </div>
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 p-3 rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-emerald-500 rounded-lg">
+                      {selectedStudent.enrollments?.[0]?.isDownload ? (
+                        <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Certificate Download Status</h4>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+                    {selectedStudent.enrollments?.[0]?.isDownload ? 'Downloaded' : 'Not Downloaded'}
+                  </p>
+                  {selectedStudent.enrollments?.[0]?.downloadDate && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {new Date(selectedStudent.enrollments[0].downloadDate).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+                <div className="bg-gradient-to-br from-sky-50 to-blue-100 dark:from-sky-900/30 dark:to-blue-900/30 p-3 rounded-xl border border-sky-200/50 dark:border-sky-800/30 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-sky-500 rounded-lg">
+                      {selectedStudent.enrollments?.[0]?.isShared ? (
+                        <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-xs">Certificate Share Status</h4>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium text-sm">
+                    {selectedStudent.enrollments?.[0]?.isShared ? 'Shared' : 'Not Shared'}
+                  </p>
+                  {selectedStudent.enrollments?.[0]?.sharedDate && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {new Date(selectedStudent.enrollments[0].sharedDate).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 p-3 rounded-xl border border-blue-200/50 dark:border-blue-800/30 hover:shadow-md transition-all duration-200">
                   <div className="flex items-center gap-2 mb-1">
@@ -1532,6 +1731,36 @@ const StudentManagement = () => {
                                   </span>
                                 </div>
                               )}
+                              <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
+                                {enrollment.isDownload ? (
+                                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                )}
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {enrollment.isDownload ? 'Downloaded' : 'Not Downloaded'}
+                                  {enrollment.downloadDate && ` (${new Date(enrollment.downloadDate).toLocaleDateString()})`}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-xl shadow-sm">
+                                {enrollment.isShared ? (
+                                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                )}
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {enrollment.isShared ? 'Shared' : 'Not Shared'}
+                                  {enrollment.sharedDate && ` (${new Date(enrollment.sharedDate).toLocaleDateString()})`}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1568,7 +1797,7 @@ const StudentManagement = () => {
                     setShowOrdersModal(false);
                     setStudentOrders(null);
                   }}
-                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-all duration-200 group"
+                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-colors duration-200 group"
                 >
                   <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
                 </button>
@@ -1798,7 +2027,7 @@ const StudentManagement = () => {
                     setShowEnrollmentsModal(false);
                     setStudentEnrollments(null);
                   }}
-                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-all duration-200 group"
+                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-colors duration-200 group"
                 >
                   <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
                 </button>
