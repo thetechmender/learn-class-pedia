@@ -1744,9 +1744,19 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               attemptsRemaining: data.attemptsRemaining,
               maxAttempts: data.maxAttempts,
               requiresRepurchase: data.requiresRepurchase,
+              score: data.score,
+              scorePercentage: data.score,
+              correctAnswers: data.correctAnswers,
+              totalQuestions: data.totalQuestions,
+              wrongAnswers: data.wrongAnswers || (data.totalQuestions - data.correctAnswers),
+              passingPercentage: data.passingPercentage || 70,
               resultStatus: 'MaxAttemptsExceeded',
               publicCertificateLink: data.publicCertificateLink,
               htmlPath: data.htmlPath,
+              pngPath: data.pngPath,
+              pdfPath: data.pdfPath,
+              courseId: data.courseId,
+              courseTitle: data.courseTitle || data.title,
               customerEnrollmentId: data.customerEnrollmentId
             });
             this.assessmentStep.set('maxattempts');
@@ -1775,8 +1785,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else if (result === 'cleared') {
       this._fetchAssessmentResultAndSetStep('cleared');
     } else if (typeof result === 'object') {
-      // Map coursewiseresult API response to assessment result format
-      // Preserve certificate URL from previous assessment result if coursewiseresult returns null
+      // Map attempt-status API response to assessment result format
+      // Preserve certificate URL from previous assessment result if attempt-status returns null
       const existingCertificateUrl = this.assessmentResult()?.pngPath;
       const mappedResult = {
         attemptsUsed: result.attemptsUsed,
@@ -1784,18 +1794,19 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         maxAttempts: result.maxAttempts,
         requiresRepurchase: result.requiresRepurchase,
         score: result.score,
-        scorePercentage: result.scorePercentage,
+        scorePercentage: result.score, // Use score as scorePercentage
         resultStatus: result.isPassed ? 'Passed' : 'Failed',
         pdfPath: result?.pdfPath,
         pngPath: result.pngPath || existingCertificateUrl, // Use existing URL if new one is null
-        // Include additional fields from coursewiseresult
+        // Include additional fields from attempt-status
         totalQuestions: result.totalQuestions,
         correctAnswers: result.correctAnswers,
-        wrongAnswers: result.wrongAnswers,
-        passingPercentage: result.passingPercentage,
-        isPassed: result.isPassed,
+        wrongAnswers: result.wrongAnswers || (result.totalQuestions - result.correctAnswers),
+        passingPercentage: result.passingPercentage || 70, // Default to 70 if not provided
+        isPassed: result.isPassed || result.isAssessmentCompleted,
         courseId: result.courseId,
-        courseTitle: result.courseTitle,
+        courseTitle: result.courseTitle || result.title,
+        customerEnrollmentId: result.customerEnrollmentId
       };
 
       this.assessmentResult.set({
@@ -1803,7 +1814,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         publicCertificateLink: result.publicCertificateLink,
         htmlPath: result.htmlPath
       });
-      if (result?.isPassed) {
+      if (result?.isPassed || result?.isAssessmentCompleted) {
         this.assessmentStep.set('cleared');
       } else if (result?.attemptsRemaining === 0) {
         this.assessmentStep.set('maxattempts');
@@ -1827,20 +1838,38 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   _fetchAssessmentResultAndSetStep(defaultStep: 'failed' | 'cleared' | 'maxattempts') {
     const token = this.authService.getToken();
-    const payload = {
-      courseId: this.completeOrderPayload()?.shortCourseId || null,
-      courseCertificateId: this.completeOrderPayload()?.courseCertificateId || null,
-      professionalCertificateId: this.completeOrderPayload()?.professionalCertificateId || null,
-      assessmentTypeId: 2
-    };
+    const courseId = this.existingSeasionCourseId();
+    const careerPathLevelMapId = this.courseTree()?.careerPathLevel?.careerPathLevelMapId;
 
-    this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getAttemptStatus(courseId, token, careerPathLevelMapId).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           if (details?.isSuccess && details?.data) {
-            this.assessmentResult.set(details.data);
             const data = details.data;
-            if (data?.isPassed) {
+            // Map attempt-status data properly
+            this.assessmentResult.set({
+              attemptsUsed: data.attemptsUsed,
+              attemptsRemaining: data.attemptsRemaining,
+              maxAttempts: data.maxAttempts,
+              requiresRepurchase: data.requiresRepurchase,
+              score: data.score,
+              scorePercentage: data.score,
+              totalQuestions: data.totalQuestions,
+              correctAnswers: data.correctAnswers,
+              wrongAnswers: data.wrongAnswers || (data.totalQuestions - data.correctAnswers),
+              passingPercentage: data.passingPercentage || 70,
+              isPassed: data.isPassed || data.isAssessmentCompleted,
+              pngPath: data.pngPath,
+              pdfPath: data.pdfPath,
+              htmlPath: data.htmlPath,
+              publicCertificateLink: data.publicCertificateLink,
+              courseId: data.courseId,
+              courseTitle: data.courseTitle || data.title,
+              customerEnrollmentId: data.customerEnrollmentId,
+              resultStatus: (data.isPassed || data.isAssessmentCompleted) ? 'Passed' : 'Failed'
+            });
+            
+            if (data?.isPassed || data?.isAssessmentCompleted) {
               this.assessmentStep.set('cleared');
             } else if (data?.attemptsRemaining === 0) {
               this.assessmentStep.set('maxattempts');
@@ -1880,32 +1909,61 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     getAttemptStatusObservable.pipe(takeUntil(this.destroy$)).subscribe({
       next: (res: any) => {
         const data = res?.isSuccess !== undefined ? res.data : res;
-        if (data?.canTakeAssessment === false && data?.isAssessmentCompleted === true && this.assessmentStep() === 'none') {
-          // Execute the same logic as line 1507
+        if (data?.canTakeAssessment === false && this.assessmentStep() === 'none') {
+          if (data?.isAssessmentCompleted === true) {
+            // Assessment passed - show cleared screen
+            this.assessmentResult.set({
+              attemptsUsed: data.attemptsUsed,
+              attemptsRemaining: data.attemptsRemaining,
+              maxAttempts: data.maxAttempts,
+              requiresRepurchase: data.requiresRepurchase,
+              score: data.score,
+              scorePercentage: data.scorePercentage,
+              passingPercentage: data.passingPercentage,
+              resultStatus: 'AlreadyPassed',
+              pngPath: data.pngPath,
+              pdfPath: data?.pdfPath,
+              htmlPath: data.htmlPath,
+              publicCertificateLink: data.publicCertificateLink,
+              correctAnswers: data.correctAnswers,
+              totalQuestions: data.totalQuestions,
+              customerEnrollmentId: data.customerEnrollmentId
+            });
+            this.assessmentStep.set('cleared');
 
-          this.assessmentResult.set({
-            attemptsUsed: data.attemptsUsed,
-            attemptsRemaining: data.attemptsRemaining,
-            maxAttempts: data.maxAttempts,
-            requiresRepurchase: data.requiresRepurchase,
-            score: data.score,
-            scorePercentage: data.scorePercentage,
-            passingPercentage: data.passingPercentage,
-            resultStatus: 'AlreadyPassed',
-            pngPath: data.pngPath,
-            pdfPath: data?.pdfPath,
-            htmlPath: data.htmlPath,
-            publicCertificateLink: data.publicCertificateLink,
-            correctAnswers: data.correctAnswers,
-            totalQuestions: data.totalQuestions,
-            customerEnrollmentId: data.customerEnrollmentId
-          });
-          this.assessmentStep.set('cleared');
+            // Unselect lectures when assessment is completed
+            this.activeShortCourseId.set(null);
+            this.activeCertificateId.set(null);
+            this.expandedShortCourses.set(new Set());
+          } else {
+            // Max attempts exceeded - show repurchase screen
+            this.assessmentResult.set({
+              attemptsUsed: data.attemptsUsed,
+              attemptsRemaining: data.attemptsRemaining,
+              maxAttempts: data.maxAttempts,
+              requiresRepurchase: data.requiresRepurchase,
+              score: data.score,
+              scorePercentage: data.score,
+              correctAnswers: data.correctAnswers,
+              totalQuestions: data.totalQuestions,
+              wrongAnswers: data.wrongAnswers || (data.totalQuestions - data.correctAnswers),
+              passingPercentage: data.passingPercentage || 70,
+              resultStatus: 'MaxAttemptsExceeded',
+              publicCertificateLink: data.publicCertificateLink,
+              htmlPath: data.htmlPath,
+              pngPath: data.pngPath,
+              pdfPath: data.pdfPath,
+              courseId: data.courseId,
+              courseTitle: data.courseTitle || data.title,
+              customerEnrollmentId: data.customerEnrollmentId
+            });
+            this.assessmentStep.set('maxattempts');
 
-          // Unselect lectures when assessment is completed
-          this.activeShortCourseId.set(null);
-          this.activeCertificateId.set(null);
-          this.expandedShortCourses.set(new Set());
+            // Unselect lectures when max attempts reached
+            this.activeShortCourseId.set(null);
+            this.activeCertificateId.set(null);
+            this.expandedShortCourses.set(new Set());
+          }
         }
       },
       error: () => {
