@@ -1427,7 +1427,7 @@ const StudentManagement = () => {
               )}
 
               {/* Temporary Password Section - Only show if exists */}
-              {selectedStudent.plainPassword && (
+              {/* {selectedStudent.plainPassword && (
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-yellow-500 rounded-xl">
@@ -1442,7 +1442,7 @@ const StudentManagement = () => {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Enrollments Section */}
               {selectedStudent.enrollments && selectedStudent.enrollments.length > 0 && (
