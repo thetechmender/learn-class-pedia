@@ -41,6 +41,7 @@ const StudentManagement = () => {
     getSignupTypesDropdown,
     getCountriesDropdown,
     getStudentOrders,
+    generateDashboardUrl,
   } = useStudentManagement();
 
   const {
@@ -67,6 +68,7 @@ const StudentManagement = () => {
   const [studentEnrollments, setStudentEnrollments] = useState(null);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadingDashboardUrl, setLoadingDashboardUrl] = useState(null); // Store enrollment ID being processed
 
   // Dropdown data state
   const [signupTypes, setSignupTypes] = useState([]);
@@ -294,7 +296,7 @@ const StudentManagement = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 relative z-[200]">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 relative">
         <div className="flex flex-col xl:flex-row xl:justify-end gap-4">
           {/* Filter Toggle */}
           <button
@@ -316,7 +318,7 @@ const StudentManagement = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn relative z-[100]">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
               <input
@@ -1761,6 +1763,46 @@ const StudentManagement = () => {
                                   {enrollment.sharedDate && ` (${new Date(enrollment.sharedDate).toLocaleDateString()})`}
                                 </span>
                               </div>
+
+                              {/* Enter Classroom Button */}
+                              <button
+                                onClick={async () => {
+                                  setLoadingDashboardUrl(enrollment.id);
+                                  try {
+                                    const customerId = selectedStudent?.id;
+                                    const resourceId = enrollment.courseId || enrollment.resourceId;
+                                    const resourceTypeId = enrollment.resourceType === 'Career Path' ? 2 : 1;
+
+                                    if (!customerId || !resourceId) {
+                                      console.error('Missing required parameters for dashboard URL');
+                                      return;
+                                    }
+
+                                    const result = await generateDashboardUrl(customerId, resourceId, resourceTypeId);
+                                    if (result?.dashboardUrl) {
+                                      window.open(result.dashboardUrl, '_blank');
+                                    }
+                                  } catch (err) {
+                                    console.error('Failed to generate dashboard URL:', err);
+                                  } finally {
+                                    setLoadingDashboardUrl(null);
+                                  }
+                                }}
+                                disabled={loadingDashboardUrl === enrollment.id}
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {loadingDashboardUrl === enrollment.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                    <span>Loading...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <BookOpen className="w-4 h-4" />
+                                    <span>Enter Classroom</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -2127,6 +2169,48 @@ const StudentManagement = () => {
                             </span>
                           </div>
                         )}
+                      </div>
+
+                      {/* Enter Classroom Button */}
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          onClick={async () => {
+                            setLoadingDashboardUrl(enrollment.id);
+                            try {
+                              const customerId = studentEnrollments?.id;
+                              const resourceId = enrollment.courseId || enrollment.resourceId;
+                              const resourceTypeId = enrollment.resourceType === 'Career Path' ? 2 : 1;
+
+                              if (!customerId || !resourceId) {
+                                console.error('Missing required parameters for dashboard URL');
+                                return;
+                              }
+
+                              const result = await generateDashboardUrl(customerId, resourceId, resourceTypeId);
+                              if (result?.dashboardUrl) {
+                                window.open(result.dashboardUrl, '_blank');
+                              }
+                            } catch (err) {
+                              console.error('Failed to generate dashboard URL:', err);
+                            } finally {
+                              setLoadingDashboardUrl(null);
+                            }
+                          }}
+                          disabled={loadingDashboardUrl === enrollment.id}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {loadingDashboardUrl === enrollment.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                              <span>Loading...</span>
+                            </>
+                          ) : (
+                            <>
+                              <BookOpen className="w-4 h-4" />
+                              <span>Enter Classroom</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   ))}

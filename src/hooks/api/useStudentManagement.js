@@ -189,10 +189,10 @@ export const useStudentManagement = () => {
   const getStudentOrders = useCallback(async (customerId) => {
     setLoadingStudentOrders(true);
     setError(null);
-    
+
     try {
       const response = await ApiService.getStudentOrders(customerId);
-      
+
       // Handle response format - data is directly in response
       if (response && (response.customerId || response.data?.customerId)) {
         const responseData = response.data || response;
@@ -205,6 +205,32 @@ export const useStudentManagement = () => {
       throw err;
     } finally {
       setLoadingStudentOrders(false);
+    }
+  }, []);
+
+  // Generate dashboard URL for classroom access
+  const generateDashboardUrl = useCallback(async (customerId, resourceId, resourceTypeId) => {
+    setError(null);
+
+    try {
+      const payload = {
+        customerId: customerId,
+        resourceId: resourceId,
+        resourceTypeId: resourceTypeId
+      };
+
+      const response = await ApiService.post(ENDPOINTS.STUDENT_MANAGEMENT_GENERATE_DASHBOARD_URL, payload);
+
+      // Handle response format - data is directly in response
+      if (response && (response.dashboardUrl || response.data?.dashboardUrl)) {
+        const responseData = response.data || response;
+        return responseData;
+      }
+      throw new Error('Invalid response format');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to generate dashboard URL';
+      setError(errorMessage);
+      throw err;
     }
   }, []);
 
@@ -234,6 +260,9 @@ export const useStudentManagement = () => {
     
     // Orders
     getStudentOrders,
+
+    // Dashboard URL
+    generateDashboardUrl,
   };
 };
 
