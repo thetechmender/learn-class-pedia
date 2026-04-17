@@ -27,7 +27,7 @@ const DiscountRates = () => {
     updateDiscountRate,
     deleteDiscountRate,
     setPage
-  } = useDiscountRates(1, 10);
+  } = useDiscountRates(1, 100);
   
   // Component state
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,7 +50,7 @@ const DiscountRates = () => {
       if (page !== 1) {
         setPage(1);
       } else {
-        fetchDiscountRates(1, 10, '');
+        fetchDiscountRates(1, 100, '');
       }
       return;
     }
@@ -65,7 +65,7 @@ const DiscountRates = () => {
       if (page !== 1) {
         setPage(1); // Reset to first page when searching
       } else {
-        fetchDiscountRates(1, 10, searchTerm);
+        fetchDiscountRates(1, 100, searchTerm);
       }
     }, 800); // 800ms delay - only triggers when user stops typing
 
@@ -153,7 +153,7 @@ const DiscountRates = () => {
 
   // Initial fetch
   useEffect(() => {
-    fetchDiscountRates(1, 10, '');
+    fetchDiscountRates(1, 100, '');
   }, [fetchDiscountRates]);
 
   return (
@@ -279,11 +279,11 @@ const DiscountRates = () => {
             </div>
 
             {/* Pagination */}
-            {totalCount > 10 && (
+            {totalCount > 100 && (
               <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between bg-gray-50">
                 <div className="text-sm text-gray-700">
-                  Showing {((page - 1) * 10) + 1} to{' '}
-                  {Math.min(page * 10, totalCount)} of{' '}
+                  Showing {((page - 1) * 100) + 1} to{' '}
+                  {Math.min(page * 100, totalCount)} of{' '}
                   {totalCount} results
                 </div>
                 <div className="flex items-center space-x-2">

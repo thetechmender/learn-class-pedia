@@ -199,7 +199,7 @@ const StudentOrderManagement = () => {
 
       {/* Search and Filter Section */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row lg:justify-end gap-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 ${

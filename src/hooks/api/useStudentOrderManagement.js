@@ -99,7 +99,7 @@ const useStudentOrderManagement = () => {
   }, [getAllOrders]);
 
   // Get payment methods
-  const getPaymentMethods = useCallback(async (pageNumber = 1, pageSize = 10) => {
+  const getPaymentMethods = useCallback(async (pageNumber = 1, pageSize = 100) => {
     setLoading(true);
     setError(null);
     

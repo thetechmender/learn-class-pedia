@@ -294,7 +294,7 @@ const StudentManagement = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 relative z-[200]">
         <div className="flex flex-col xl:flex-row xl:justify-end gap-4">
           {/* Filter Toggle */}
           <button
@@ -316,7 +316,7 @@ const StudentManagement = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn relative z-[100]">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
               <input
@@ -412,7 +412,7 @@ const StudentManagement = () => {
             </div>
 
             {/* Course Filter */}
-            <div className="space-y-2">
+            <div className="space-y-2 relative z-50">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Course</label>
               <GenericDropdown
                 value={filters.courseId}

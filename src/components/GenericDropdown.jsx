@@ -68,10 +68,8 @@ const GenericDropdown = ({
 
   // Handle item selection
   const handleSelect = (itemValue) => {
-    
-    
-    // Ensure itemValue is not undefined
-    if (itemValue === undefined || itemValue === null) {
+    // Ensure itemValue is not undefined (null is allowed for clearing)
+    if (itemValue === undefined) {
       console.error('itemValue is undefined, skipping selection');
       return;
     }

@@ -42,9 +42,12 @@ const TemplateManagement = () => {
     handlePageSizeChange,
   } = useTemplateManagement();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTemplateType, setSelectedTemplateType] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [filters, setFilters] = useState({
+    title: '',
+    templateTypeId: '',
+    isActive: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -172,10 +175,18 @@ const TemplateManagement = () => {
     setSelectedTemplate(null);
   }, []);
 
-  // Handle search
-  const handleSearch = useCallback((e) => {
-    setSearchTerm(e.target.value);
+  // Handle filter change
+  const handleFilterChange = useCallback((name, value) => {
+    setFilters(prev => ({ ...prev, [name]: value }));
   }, []);
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    const clearedFilters = { title: '', templateTypeId: '', isActive: '' };
+    setFilters(clearedFilters);
+    handlePageChange(1);
+    fetchTemplates({ page: 1, pageSize: pagination.pageSize });
+  }, [pagination.pageSize, fetchTemplates, handlePageChange]);
 
   // Apply filters
   const applyFilters = useCallback(() => {
@@ -184,27 +195,26 @@ const TemplateManagement = () => {
       pageSize: pagination.pageSize,
     };
     
-    if (selectedTemplateType) {
-      params.templateTypeId = parseInt(selectedTemplateType);
+    if (filters.templateTypeId) {
+      params.templateTypeId = parseInt(filters.templateTypeId);
     }
     
-    if (selectedStatus) {
-      params.isActive = selectedStatus === 'true';
+    if (filters.isActive) {
+      params.isActive = filters.isActive === 'true';
     }
     
-    if (searchTerm) {
-      params.title = searchTerm;
+    if (filters.title) {
+      params.title = filters.title;
     }
     
     fetchTemplates(params);
-  }, [selectedTemplateType, selectedStatus, searchTerm, pagination.pageSize, fetchTemplates]);
+    setShowFilters(false);
+  }, [filters, pagination.pageSize, fetchTemplates]);
 
-  // Filter templates based on search
-  const filteredTemplates = templates.filter(template =>
-    template.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.templateKey?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.subject?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get active filters count
+  const getActiveFiltersCount = useCallback(() => {
+    return Object.values(filters).filter(value => value && value.trim?.() !== '').length;
+  }, [filters]);
 
   // Prepare template types for dropdown
   const templateTypesForDropdown = [
@@ -222,6 +232,8 @@ const TemplateManagement = () => {
     { id: 'false', name: 'Inactive' }
   ];
 
+  const hasActiveFilters = getActiveFiltersCount() > 0 || showFilters;
+
   if (loading && templates.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -236,7 +248,7 @@ const TemplateManagement = () => {
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center">
                 <FileText className="w-8 h-8 text-blue-600 mr-3" />
@@ -244,16 +256,34 @@ const TemplateManagement = () => {
               </h1>
               <p className="text-gray-600 mt-2">Manage and organize all templates in one place</p>
             </div>
-            <button
-              onClick={() => {
-                resetForm();
-                setShowCreateModal(true);
-              }}
-              className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Create Template
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center justify-center px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm ${
+                  hasActiveFilters
+                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
+                    : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filters
+                {hasActiveFilters && (
+                  <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                    {getActiveFiltersCount()}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setShowCreateModal(true);
+                }}
+                className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Create Template
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -318,51 +348,109 @@ const TemplateManagement = () => {
           </div>
         </div>
 
-        {/* Search and Filter Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search templates by title, key, or subject..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <GenericDropdown
-                items={templateTypesForDropdown}
-                value={selectedTemplateType}
-                onChange={setSelectedTemplateType}
-                placeholder="Select Type"
-                className="min-w-[150px]"
-              />
-              
-              <GenericDropdown
-                items={statusOptions}
-                value={selectedStatus}
-                onChange={setSelectedStatus}
-                placeholder="Select Status"
-                className="min-w-[150px]"
-              />
-              
-              <button
-                onClick={applyFilters}
-                className="flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>{filteredTemplates.length} of {templates.length} templates</span>
+        {/* Filters Section */}
+        {showFilters && (
+          <div className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl mb-8 relative z-20">
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+                <h3 className="text-lg font-semibold text-gray-900">Filter Options</h3>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Clear All
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      value={filters.title}
+                      onChange={(e) => handleFilterChange('title', e.target.value)}
+                      placeholder="Search by title..."
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Template Type</label>
+                  <GenericDropdown
+                    items={templateTypesForDropdown}
+                    value={filters.templateTypeId}
+                    onChange={(value) => handleFilterChange('templateTypeId', value)}
+                    placeholder="All Types"
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <GenericDropdown
+                    items={statusOptions}
+                    value={filters.isActive}
+                    onChange={(value) => handleFilterChange('isActive', value)}
+                    placeholder="All Status"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    clearFilters();
+                    setShowFilters(false);
+                  }}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium text-sm"
+                >
+                  Clear Filters
+                </button>
+                <button
+                  onClick={applyFilters}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Active Filters Indicator */}
+        {getActiveFiltersCount() > 0 && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-blue-800 font-medium">Active filters:</span>
+                {filters.title && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">
+                    Title: {filters.title}
+                  </span>
+                )}
+                {filters.templateTypeId && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">
+                    Type: {templateTypes.find(t => t.id.toString() === filters.templateTypeId)?.title || 'Unknown'}
+                  </span>
+                )}
+                {filters.isActive && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">
+                    Status: {filters.isActive === 'true' ? 'Active' : 'Inactive'}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={clearFilters}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -373,14 +461,14 @@ const TemplateManagement = () => {
         )}
 
         {/* Templates Grid */}
-        {filteredTemplates.length === 0 ? (
+        {templates.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="w-10 h-10 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No templates found</h3>
             <p className="text-gray-600 mb-6">
-              {searchTerm || selectedTemplateType || selectedStatus ? 'Try adjusting your filters' : 'Get started by creating your first template'}
+              {filters.title || filters.templateTypeId || filters.isActive ? 'Try adjusting your filters' : 'Get started by creating your first template'}
             </p>
             <button
               onClick={() => {
@@ -395,7 +483,7 @@ const TemplateManagement = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredTemplates.map((template) => (
+            {templates.map((template) => (
               <div
                 key={template.id}
                 className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden group"

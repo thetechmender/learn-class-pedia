@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { CreditCard, Users, RefreshCw, AlertCircle, Shield, Calendar, Mail, MapPin, Star, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import useStudentOrderManagement from '../../../../hooks/api/useStudentOrderManagement';
-import AdminPageLayout from '../../../../components/AdminPageLayout';
-
 const PaymentMethodManagement = () => {
   const {
     loading,
@@ -33,7 +31,7 @@ const PaymentMethodManagement = () => {
 
   // Load payment methods on component mount
   useEffect(() => {
-    getPaymentMethods();
+    getPaymentMethods(1, 100);
   }, [getPaymentMethods]);
 
   // Handle refresh
@@ -256,13 +254,28 @@ const PaymentMethodManagement = () => {
 
         {/* Pagination Controls */}
         {!loading && !error && paymentMethods.length > 0 && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-xl">
-            <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
-              <span>
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-xl gap-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
                 Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to{' '}
                 {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalCount)} of{' '}
                 {pagination.totalCount} payment methods
               </span>
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Per page:</span>
+                <select
+                  value={pagination.pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  disabled={loading}
+                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">

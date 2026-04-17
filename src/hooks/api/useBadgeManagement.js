@@ -9,7 +9,7 @@ export const useBadgeManagement = () => {
   // Pagination state
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 10,
+    pageSize: 100,
     totalCount: 0,
     totalPages: 0
   });
@@ -37,7 +37,7 @@ export const useBadgeManagement = () => {
   });
 
   // Fetch all badges with pagination
-  const fetchBadges = useCallback(async (page = 1, pageSize = 10) => {
+  const fetchBadges = useCallback(async (page = 1, pageSize = 100) => {
     try {
       setLoading(true);
       setError(null);

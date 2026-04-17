@@ -91,7 +91,7 @@ const AssignDiscountRate = () => {
   const [bulkAssigning, setBulkAssigning] = useState(false);
 
   // Fetch career paths with discount rates
-  const fetchCareerPaths = useCallback(async (page = 1, pageSize = 20, title = '') => {
+  const fetchCareerPaths = useCallback(async (page = 1, pageSize = 100, title = '') => {
     setLoading(true);
     try {
       const params = {
@@ -134,7 +134,7 @@ const AssignDiscountRate = () => {
   }, [getAllCareerPaths, showToast]);
 
   // Fetch courses with discount rates
-  const fetchCourses = useCallback(async (page = 1, pageSize = 20, title = '') => {
+  const fetchCourses = useCallback(async (page = 1, pageSize = 100, title = '') => {
     setLoading(true);
     try {
       const params = {

@@ -16,7 +16,7 @@ export const useDiscountRateMapping = () => {
   // Pagination state for discount rates
   const [discountRatesPagination, setDiscountRatesPagination] = useState({
     currentPage: 1,
-    pageSize: 8,
+    pageSize: 100,
     totalItems: 0,
     totalPages: 0
   });
