@@ -2062,6 +2062,84 @@ async uploadCsvFileByName(formData) {
       method: 'GET',
     });
   }
+
+  // ==================== PAYMENT PROVIDERS ====================
+
+  // GET all payment providers
+  async getAllPaymentProviders() {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDERS, {
+      method: 'GET',
+    });
+  }
+
+  // GET payment provider by ID
+  async getPaymentProviderById(id) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_BY_ID(id), {
+      method: 'GET',
+    });
+  }
+
+  // CREATE new payment provider
+  async createPaymentProvider(providerData) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDERS, {
+      method: 'POST',
+      body: JSON.stringify(providerData),
+    });
+  }
+
+  // UPDATE payment provider
+  async updatePaymentProvider(id, providerData) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_BY_ID(id), {
+      method: 'PUT',
+      body: JSON.stringify(providerData),
+    });
+  }
+
+  // DELETE payment provider
+  async deletePaymentProvider(id) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_BY_ID(id), {
+      method: 'DELETE',
+    });
+  }
+
+  // ==================== PAYMENT PROVIDER ACCOUNTS ====================
+
+  // GET all payment provider accounts
+  async getAllPaymentProviderAccounts() {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_ACCOUNTS, {
+      method: 'GET',
+    });
+  }
+
+  // GET payment provider account by ID
+  async getPaymentProviderAccountById(id) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_ACCOUNT_BY_ID(id), {
+      method: 'GET',
+    });
+  }
+
+  // CREATE new payment provider account
+  async createPaymentProviderAccount(accountData) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_ACCOUNTS, {
+      method: 'POST',
+      body: JSON.stringify(accountData),
+    });
+  }
+
+  // UPDATE payment provider account
+  async updatePaymentProviderAccount(id, accountData) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_ACCOUNT_BY_ID(id), {
+      method: 'PUT',
+      body: JSON.stringify(accountData),
+    });
+  }
+
+  // DELETE payment provider account
+  async deletePaymentProviderAccount(id) {
+    return this.request(ENDPOINTS.PAYMENT_PROVIDER_ACCOUNT_BY_ID(id), {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default new ApiService();

@@ -158,6 +158,14 @@ export const ENDPOINTS = {
   // Course Lecture Content endpoints
   COURSE_LECTURE_CONTENT: (lectureId) => `/courses/lecture-content/${lectureId}`,
   COURSE_GENERATE_CONTENT: '/courses/generate-content',
+
+  // Payment Provider endpoints
+  PAYMENT_PROVIDERS: '/payment-providers',
+  PAYMENT_PROVIDER_BY_ID: (id) => `/payment-providers/${id}`,
+
+  // Payment Provider Account endpoints
+  PAYMENT_PROVIDER_ACCOUNTS: '/payment-provider-accounts',
+  PAYMENT_PROVIDER_ACCOUNT_BY_ID: (id) => `/payment-provider-accounts/${id}`,
 };
 
 // HTTP Status Codes

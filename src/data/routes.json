@@ -134,6 +134,24 @@
       "icon": "CreditCard",
       "category": "management",
       "order": 14
+    },
+    {
+      "id": "payment-providers",
+      "path": "/admin/payment-providers",
+      "component": "PaymentProviders",
+      "label": "Payment Providers",
+      "icon": "CreditCard",
+      "category": "management",
+      "order": 15
+    },
+    {
+      "id": "payment-provider-accounts",
+      "path": "/admin/payment-provider-accounts",
+      "component": "PaymentProviderAccounts",
+      "label": "Payment Provider Accounts",
+      "icon": "Wallet",
+      "category": "management",
+      "order": 16
     }
   ],
   "roles": [

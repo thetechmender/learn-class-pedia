@@ -21,6 +21,8 @@ import SlugManagement from '../pages/SlugManagement/SlugManagement';
 import StudentManagement from '../pages/StudentManagement/StudentManagement';
 import StudentOrderManagement from '../pages/StudentOrderManagement/StudentOrderManagement';
 import PaymentMethodManagement from '../pages/PaymentMethodManagement/PaymentMethodManagement';
+import PaymentProviders from '../pages/PaymentProviders/PaymentProviders';
+import PaymentProviderAccounts from '../pages/PaymentProviderAccounts/PaymentProviderAccounts';
 import CourseContent from '../pages/CourseContent/CourseContent';
 
 // Component mapping
@@ -44,6 +46,8 @@ const componentMap = {
   StudentManagement,
   StudentOrderManagement,
   PaymentMethodManagement,
+  PaymentProviders,
+  PaymentProviderAccounts,
   CourseContent,
 };
 
