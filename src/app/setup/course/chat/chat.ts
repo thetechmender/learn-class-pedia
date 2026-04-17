@@ -211,6 +211,10 @@ export class Chat {
           left: 0px !important;
           right: auto !important;
         }
+        iframe#badge {
+          left: 0px !important;
+          right: auto !important;
+        }
         /* Position Chattrik widget on left side */
         app-root div.content_body {
           left: 20px !important;

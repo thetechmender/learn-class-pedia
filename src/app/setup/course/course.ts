@@ -11,7 +11,6 @@ import { Overview } from './overview/overview';
 import { Notebook } from './notebook/notebook';
 import { Transcript } from './transcript/transcript';
 import { Quiz } from './quiz/quiz';
-import { Download } from './download/download';
 import { KeyPoints } from './key-points/key-points';
 import { CompletionModal } from '../../shared/completion-modal/completion-modal';
 import { StartAssessment } from '../assessment/start-assessment/start-assessment';
@@ -27,7 +26,7 @@ import { map, Subject, switchMap, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, Download, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent, Chat],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent, Chat],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -62,7 +61,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   expandedCertificates = signal<Set<number>>(new Set());
   activeCertificateId = signal<number | null>(null);
   expandedShortCourses = signal<Set<number>>(new Set());
-  activeTab = signal<'overview' | 'keyPoints' | 'notebook' | 'transcript' | 'download' | 'quiz'>('overview');
+  activeTab = signal<'overview' | 'keyPoints' | 'notebook' | 'transcript' | 'quiz'>('overview');
   activeLectureTitle = signal<string | null>(null);
   activeLectureIndex = signal<number>(0);
   lectureStartTimes: number[] = [];
@@ -1868,7 +1867,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               customerEnrollmentId: data.customerEnrollmentId,
               resultStatus: (data.isPassed || data.isAssessmentCompleted) ? 'Passed' : 'Failed'
             });
-            
+
             if (data?.isPassed || data?.isAssessmentCompleted) {
               this.assessmentStep.set('cleared');
             } else if (data?.attemptsRemaining === 0) {
