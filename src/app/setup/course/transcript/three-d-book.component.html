@@ -44,13 +44,22 @@
       <div class="book__shadow"></div>
       <div class="book__spine"></div>
 
-      <div class="book__pages">
+      <div
+        class="book__pages"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerCancel($event)"
+        [class.book__pages--dragging]="dragging"
+      >
         @for (sheet of sheets; track sheet.index; let i = $index) {
           <div
             class="sheet"
             [class.sheet--flipped]="i < currentIndex"
             [class.sheet--flipping]="i === flippingIndex"
+            [class.sheet--dragging]="i === dragSheetIdx && dragging"
             [style.z-index]="getZIndex(i)"
+            [style.transform]="i === dragSheetIdx && dragging ? 'rotateY(' + dragRotation + 'deg)' : null"
           >
             <div class="sheet__face sheet__face--front">
               <ng-container [ngTemplateOutlet]="pageTpl" [ngTemplateOutletContext]="{ $implicit: sheet.front, side: 'right' }"></ng-container>

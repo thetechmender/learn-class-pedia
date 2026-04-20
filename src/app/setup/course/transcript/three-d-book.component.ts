@@ -55,7 +55,17 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
   currentIndex = 0;
   flippingIndex: number | null = null;
 
+  // Drag state
+  dragSheetIdx: number | null = null;
+  dragRotation = 0;
+  dragging = false;
+  private dragDirection: 'forward' | 'backward' = 'forward';
+  private dragStartX = 0;
+  private dragHalfWidth = 1;
+  private dragPointerId: number | null = null;
+
   private readonly flipDurationMs = 850;
+  private readonly dragCommitThreshold = 90; // degrees
   private isAnimating = false;
   private completedOnce = false;
 
@@ -135,6 +145,108 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     this.emitPageChanged();
     this.checkCompletion();
     this.cdr.markForCheck();
+  }
+
+  onPointerDown(ev: PointerEvent): void {
+    if (this.isAnimating || this.dragging) return;
+    if (ev.button !== undefined && ev.button !== 0) return;
+
+    const container = ev.currentTarget as HTMLElement;
+    const rect = container.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const isRightSide = ev.clientX >= centerX;
+
+    let targetIdx: number;
+    if (isRightSide) {
+      if (this.currentIndex >= this.sheets.length) return;
+      targetIdx = this.currentIndex;
+      this.dragDirection = 'forward';
+      this.dragRotation = 0;
+    } else {
+      if (this.currentIndex <= 0) return;
+      targetIdx = this.currentIndex - 1;
+      this.dragDirection = 'backward';
+      this.dragRotation = -180;
+    }
+
+    this.dragSheetIdx = targetIdx;
+    this.dragging = true;
+    this.dragStartX = ev.clientX;
+    this.dragHalfWidth = Math.max(1, rect.width / 2);
+    this.dragPointerId = ev.pointerId;
+
+    try { container.setPointerCapture(ev.pointerId); } catch {}
+    ev.preventDefault();
+    this.cdr.markForCheck();
+  }
+
+  onPointerMove(ev: PointerEvent): void {
+    if (!this.dragging || this.dragPointerId !== ev.pointerId) return;
+
+    const deltaX = ev.clientX - this.dragStartX;
+    const ratio = Math.max(-1, Math.min(1, deltaX / this.dragHalfWidth));
+    const sweep = ratio * 180;
+
+    if (this.dragDirection === 'forward') {
+      // 0 -> -180, only leftward motion counts
+      this.dragRotation = Math.max(-180, Math.min(0, sweep));
+    } else {
+      // -180 -> 0, only rightward motion counts
+      this.dragRotation = Math.max(-180, Math.min(0, -180 + sweep));
+    }
+    this.cdr.markForCheck();
+  }
+
+  onPointerUp(ev: PointerEvent): void {
+    if (!this.dragging || this.dragPointerId !== ev.pointerId) return;
+
+    const container = ev.currentTarget as HTMLElement;
+    try { container.releasePointerCapture(ev.pointerId); } catch {}
+
+    const commit = Math.abs(this.dragRotation) >= this.dragCommitThreshold
+      && Math.abs(this.dragRotation) <= 180 - this.dragCommitThreshold + 180; // always true upper
+    const shouldCommit =
+      this.dragDirection === 'forward'
+        ? this.dragRotation <= -this.dragCommitThreshold
+        : this.dragRotation >= -180 + this.dragCommitThreshold;
+
+    // Release drag visuals; let CSS transition animate to final state
+    this.dragging = false;
+    this.dragPointerId = null;
+    this.cdr.markForCheck();
+
+    if (shouldCommit) {
+      // Move currentIndex so class-based final state matches; clear inline transform next frame
+      if (this.dragDirection === 'forward') {
+        this.currentIndex = Math.min(this.sheets.length, this.currentIndex + 1);
+      } else {
+        this.currentIndex = Math.max(0, this.currentIndex - 1);
+      }
+      this.flippingIndex = this.dragSheetIdx;
+      this.emitPageChanged();
+    } else {
+      // Revert: keep flippingIndex to get shadow, then clear
+      this.flippingIndex = this.dragSheetIdx;
+    }
+
+    // Clear inline transform so CSS class takes over with transition
+    const idx = this.dragSheetIdx;
+    this.dragSheetIdx = null;
+    this.cdr.markForCheck();
+
+    setTimeout(() => {
+      this.flippingIndex = null;
+      this.checkCompletion();
+      this.cdr.markForCheck();
+    }, this.flipDurationMs);
+
+    // Suppress unused var lint
+    void idx; void commit;
+  }
+
+  onPointerCancel(ev: PointerEvent): void {
+    if (!this.dragging) return;
+    this.onPointerUp(ev);
   }
 
   private animateTo(target: number): void {

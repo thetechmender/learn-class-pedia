@@ -209,6 +209,11 @@
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+
+  &--dragging { cursor: grabbing; }
 }
 
 .sheet {
@@ -224,6 +229,12 @@
 
   &--flipped { transform: rotateY(-180deg); }
   &--flipping { box-shadow: 0 30px 50px -10px rgba(0, 0, 0, 0.55); }
+
+  &--dragging {
+    transition: none;
+    box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.6);
+    z-index: 999 !important;
+  }
 }
 
 .sheet__face {
