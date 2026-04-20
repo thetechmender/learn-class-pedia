@@ -3,6 +3,19 @@ import { Eye, Edit2, Trash2, Award, Folder, FolderOpen, Users, Star, BookOpen, R
 // Course table configuration
 export const courseTableColumns = [
   {
+    key: 'id',
+    title: 'ID',
+    width: '80px',
+    minWidth: '80px',
+    type: 'text',
+    align: 'center',
+    render: (value) => (
+      <div className="text-sm font-mono text-gray-700 dark:text-gray-300">
+        {value}
+      </div>
+    )
+  },
+  {
     key: 'title',
     title: 'Course',
     width: '35%',
