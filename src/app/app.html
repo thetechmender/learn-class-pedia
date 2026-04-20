@@ -1,5 +1,12 @@
+
 <app-header></app-header>
 
-<main class="min-h-screen bg-gray-50">
+<main class="min-h-screen bg-gray-50" [class.screen-blur]="isPaused">
   <router-outlet />
 </main>
+<style>
+  .screen-blur {
+    filter: blur(20px);
+    pointer-events: none;
+  }
+</style>

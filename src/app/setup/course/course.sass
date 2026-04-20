@@ -485,7 +485,8 @@
 .chat-widget
   color: #000
   font-weight: 400
-  background-color: #D4E8FF
+  background: transparent !important
+  box-shadow: none !important
   font-size: 15px
   @media (max-width:767px)
     font-size: 14px
@@ -593,3 +594,19 @@
 .font-sm
   @media (max-width: 767px) 
     font-size: 20px
+
+.no-scrollbar
+  -ms-overflow-style: none
+  scrollbar-width: none
+  &::-webkit-scrollbar
+    display: none
+
+.svg-responsive 
+  width: 96px
+  height: 96px
+
+  @media (max-width: 767px) 
+    width: 80px
+    height: 80px
+
+    
