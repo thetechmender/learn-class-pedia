@@ -224,9 +224,11 @@ export class FinalAssessment implements OnInit {
     submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
+          console.log('[DEBUG] Auto-submit API response:', response);
           this.isCompleting.set(false);
-          if (response?.statusCode == 200) {
-            this._fetchQuizesResult();
+          if (response?.statusCode == 200 && response?.data) {
+            // Use submit response data directly - it already has isPassed and all other fields
+            this._handleAssessmentResult(response.data);
           }
         },
         error: () => {
@@ -271,9 +273,11 @@ export class FinalAssessment implements OnInit {
     submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
+          console.log('[DEBUG] Submit API response:', response);
           this.isCompleting.set(false);
-          if (response?.statusCode == 200) {
-            this._fetchQuizesResult();
+          if (response?.statusCode == 200 && response?.data) {
+            // Use submit response data directly - it already has isPassed and all other fields
+            this._handleAssessmentResult(response.data);
           }
         },
         error: (err: any) => {
@@ -292,72 +296,76 @@ export class FinalAssessment implements OnInit {
     return this.orderPayload?.professionalCertificateId || null;
   }
 
-  _fetchQuizesResult() {
-    const token = this.authService.getToken();
-    const payload = {
-      courseId: this.getCourseId() || null,
-      courseCertificateId: this.getCourseId() || null,
-      professionalCertificateId: this.getCourseId() || null,
-      assessmentTypeId: 2
-    };
-
-    // Call API immediately to check if assessment is passed
-    this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (details: any) => {
-          if (details?.isSuccess && details?.data?.isPassed === true) {
-            // For short courses (courseTypeId === 3), emit directly without showing modals
-            if (this.courseTypeId === 3) {
-              this.next.emit('cleared');
-            } else {
-              // For other course types, show modal first with score details
-              this.assessmentResultData.set(details.data);
-              this.showGenerateCertificateModal.set(true);
-            }
-          } else if (details?.isSuccess && details?.data?.isPassed === false) {
-            // For failed assessments, emit the data object directly
-            this.next.emit(details.data);
-          } else {
-            // Fallback for unexpected cases
-            this.next.emit('failed');
-          }
-        },
-        error: (err: any) => {
-          console.error('Fetch Quiz Result Error:', err);
-          this.next.emit('failed');
-        }
-      });
+_handleAssessmentResult(data: any) {
+    console.log('[DEBUG] _handleAssessmentResult called');
+    console.log('[DEBUG] Result data:', data);
+    console.log('[DEBUG] isPassed:', data.isPassed);
+    console.log('[DEBUG] courseTypeId:', this.courseTypeId);
+    
+    const isPassed = data.isPassed;
+    
+    if (isPassed === false) {
+      console.log('[DEBUG] Assessment FAILED - emitting data immediately');
+      // If failed, emit data immediately to route to failed-assessment
+      this.next.emit(data);
+    } else if (isPassed === true) {
+      console.log('[DEBUG] Assessment PASSED');
+      // If passed, show modal and DON'T emit yet (wait for user to click Generate Certificate)
+      if (this.courseTypeId !== 3) {
+        console.log('[DEBUG] NOT short course - showing modal immediately');
+        // For other courses, show modal immediately and WAIT for user to click Generate Certificate
+        this.assessmentResultData.set(data);
+        this.showGenerateCertificateModal.set(true);
+        console.log('[DEBUG] Modal state:', this.showGenerateCertificateModal());
+        console.log('[DEBUG] Result data set:', this.assessmentResultData());
+      } else {
+        console.log('[DEBUG] Short course (courseTypeId === 3) - waiting 30 seconds then emitting');
+        // For short courses, show loading and wait 30 seconds then emit
+        this.isGeneratingCertificate.set(true);
+        setTimeout(() => {
+          console.log('[DEBUG] 30 seconds completed - emitting data');
+          this.isGeneratingCertificate.set(false);
+          this.next.emit(data);
+        }, 30000);
+      }
+    } else {
+      console.log('[DEBUG] Unexpected isPassed value:', isPassed);
+      // Fallback for unexpected cases
+      this.next.emit('failed');
+    }
   }
 
   onGenerateCertificate() {
+    console.log('[DEBUG] onGenerateCertificate called - user clicked Generate Certificate button');
+    
     const token = this.authService.getToken();
-    const payload = {
-      courseId: this.getCourseId() || null,
-      courseCertificateId: this.getCourseId() || null,
-      professionalCertificateId: this.getCourseId() || null,
-      assessmentTypeId: 2
-    };
+    const courseId = Number(this.getCourseId());
+    const careerPathLevelMapId = this.orderPayload?.careerPathLevelMapId;
 
     // Close modal and show loading state
     this.showGenerateCertificateModal.set(false);
     this.isGeneratingCertificate.set(true);
+    console.log('[DEBUG] Modal closed, loading started');
+    console.log('[DEBUG] Waiting 30 seconds for certificate generation...');
 
-    // Wait 20 seconds for certificate generation, then call API again
+    // Wait 30 seconds for certificate generation, then call getAttemptStatus API again
     setTimeout(() => {
-      this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+      console.log('[DEBUG] 30 seconds completed - calling getAttemptStatus again');
+      this.assessmentService.getAttemptStatus(courseId, token, careerPathLevelMapId).pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (finalDetails: any) => {
+            console.log('[DEBUG] Final getAttemptStatus response:', finalDetails);
             this.isGeneratingCertificate.set(false);
             if (finalDetails?.isSuccess) {
+              console.log('[DEBUG] Emitting final data to course component');
               this.next.emit(finalDetails['data']);
             }
           },
           error: (err: any) => {
             this.isGeneratingCertificate.set(false);
-            console.error('Fetch Quiz Result Error:', err);
           }
         });
-    }, 20000);
+    }, 30000);
   }
 
   onCloseModal() {

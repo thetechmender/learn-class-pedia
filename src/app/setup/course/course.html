@@ -77,7 +77,8 @@
             </div>
             <div class="flex items-center justify-between gap-2">
               <div class="flex flex-col gap-0.5 flex-1">
-                <h4 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{ sc.title }}</h4>
+                <h4 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="sc.isCompleted">{{ sc.title }}
+                </h4>
                 @if (sc.isCompleted && sc.assessmentScore !== null && sc.assessmentScore !== undefined) {
                 <p class="text-[10px] text-gray-500">Marks obtained: {{ sc.assessmentScore }}</p>
                 }
@@ -117,14 +118,14 @@
               Video
             </span>
             <!-- (click)="downloadShortCoursePdf(sc, $event)" -->
-            <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
+            <!-- <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
               PDF
-            </span>
+            </span> -->
             <span class="flex items-center gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
@@ -204,14 +205,14 @@
             </svg>
             Video
           </span>
-          <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
+          <!-- <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
             PDF
-          </span>
+          </span> -->
           <span class="flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
@@ -251,8 +252,10 @@
           </div>
           <div class="flex items-center justify-between gap-2 mt-1">
             <div class="flex flex-col gap-0.5 flex-1">
-              <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="courseTree().isCompleted">{{ lec.title }}</h3>
-              @if (courseTree().isCompleted && courseTree().assessmentScore !== null && courseTree().assessmentScore !== undefined) {
+              <h3 class="text-xs text-gray-600 leading-snug" [class.text-green-600]="courseTree().isCompleted">{{
+                lec.title }}</h3>
+              @if (courseTree().isCompleted && courseTree().assessmentScore !== null && courseTree().assessmentScore !==
+              undefined) {
               <p class="text-[10px] text-gray-500">Marks obtained: {{ courseTree().assessmentScore }}</p>
               }
             </div>
@@ -294,14 +297,14 @@
             </svg>
             Video
           </span>
-          <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
+          <!-- <span class="flex items-center gap-1 hover:text-primary" title="Download PDF">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
             PDF
-          </span>
+          </span> -->
           <span class="flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
@@ -324,16 +327,26 @@
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
       @if(courseTree()?.courseTypeId == 3 &&
       assessmentStep() === 'none') {
-      <button (click)="startAssessment()"
-        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+      <button (click)="startAssessment()" [disabled]="isStartingAssessment()"
+        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm disabled:opacity-50">
+        @if (isStartingAssessment()) {
+        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Moving to Assessment...
+        } @else {
         Move to Assessment
+        }
       </button>
       }
       @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) &&
       assessmentStep() === 'none') {
-      <button (click)="startAssessment()"
-        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm">
+      <button (click)="startAssessment()" [disabled]="isStartingAssessment()"
+        class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm disabled:opacity-50">
+        @if (isStartingAssessment()) {
+        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        Moving to Final Assessment...
+        } @else {
         Final Assessment
+        }
       </button>
       }
       @if(assessmentStep() === 'cleared' || assessmentStep() === 'maxattempts') {
@@ -349,6 +362,7 @@
   <!-- Main Content -->
   <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 46px);">
     <!-- Assessment Flow -->
+    @if (courseTree(); as tree) {
     @if (assessmentStep() === 'none' && !courseTree()?.videoUrl) {
     <!-- Progress Bar Above Content (hidden for video courses) -->
     <div class="bg-white px-6 py-3  flex items-center justify-center">
@@ -362,6 +376,7 @@
         <span class="text-sm text-primary">{{ completionPercentage() | number:'1.0-1' }}%</span>
       </div>
     </div>
+    }
     }
     @if (assessmentStep() !== 'none') {
     @if (assessmentStep() === 'start') {
@@ -391,7 +406,8 @@
       @if (courseTree()?.videoUrl) {
       <!-- Video Player for courses with videoUrl -->
       <app-simple-video-player [videoUrl]="courseTree()?.videoUrl" [showControls]="true"
-        (ended)="onLastLectureComplete()" (durationChange)="onVideoDurationChange($event)" (timeupdate)="onVideoTimeUpdate($event)">
+        (ended)="onLastLectureComplete()" (durationChange)="onVideoDurationChange($event)"
+        (timeupdate)="onVideoTimeUpdate($event)">
       </app-simple-video-player>
       } @else {
       <!-- Text/Audio Content Display -->
@@ -511,63 +527,82 @@
     }
 
     <!-- Tabs Section -->
-    <div class="bg-white border-t border-gray-200">
-      <!-- Tab Headers -->
-      <div class="flex justify-left border-b border-gray-200 screen-tab">
-        <button (click)="activeTab.set('overview')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'overview'" [class.border-primary]="activeTab() === 'overview'"
-          [class.text-gray-500]="activeTab() !== 'overview'" [class.border-transparent]="activeTab() !== 'overview'">
-          <img src="/assets/icons/overview.svg" class="w-4 h-4" />
-          Overview
-        </button>
-        <button (click)="activeTab.set('transcript')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'transcript'" [class.border-primary]="activeTab() === 'transcript'"
-          [class.text-gray-500]="activeTab() !== 'transcript'"
-          [class.border-transparent]="activeTab() !== 'transcript'">
-          <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg> -->
-          <img src="/assets/icons/transcript.svg" class="w-4 h-4" />
-          Lecture Content
-        </button>
-        <button (click)="activeTab.set('keyPoints')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'keyPoints'" [class.border-primary]="activeTab() === 'keyPoints'"
-          [class.text-gray-500]="activeTab() !== 'keyPoints'" [class.border-transparent]="activeTab() !== 'keyPoints'">
-          <i class="ic-84 cl-iPrimary text-xl"></i>
-          <!-- <img src="/assets/icons/overview.svg" class="w-4 h-4" /> -->
-          Key Points
-        </button>
-        <button (click)="activeTab.set('download')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'download'" [class.border-primary]="activeTab() === 'download'"
-          [class.text-gray-500]="activeTab() !== 'download'" [class.border-transparent]="activeTab() !== 'download'">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    <div class="bg-white border-t border-gray-200 relative">
+      <div class="flex items-center border-b border-gray-200 justify-left screen-tab">
+        <button (click)="scrollTabs('left')"
+          class=" w-8 h-8 bg-white shadow-lg border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all"
+          [class.hidden]="!isMobile()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 stroke-gray-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" [class.stroke-primary]="tabContainer && tabContainer.scrollLeft > 0">
+            <path d="M15 19l-7-7 7-7" />
           </svg>
-          Resources
         </button>
-        <button (click)="activeTab.set('notebook')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'notebook'" [class.border-primary]="activeTab() === 'notebook'"
-          [class.text-gray-500]="activeTab() !== 'notebook'" [class.border-transparent]="activeTab() !== 'notebook'">
-          <img src="/assets/icons/notebook.svg" class="w-4 h-4" alt="Notebook icon" />
-          Notebook
+        <div #tabContainer class="flex justify-left overflow-x-auto scroll-smooth no-scrollbar"
+          [class.px-4]="isMobile()">
+          <button (click)="activeTab.set('overview')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'overview'" [class.border-primary]="activeTab() === 'overview'"
+            [class.text-gray-500]="activeTab() !== 'overview'" [class.border-transparent]="activeTab() !== 'overview'">
+            <img src="/assets/icons/overview.svg" class="w-4 h-4" />
+            Overview
+          </button>
+          <button (click)="activeTab.set('transcript')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'transcript'" [class.border-primary]="activeTab() === 'transcript'"
+            [class.text-gray-500]="activeTab() !== 'transcript'"
+            [class.border-transparent]="activeTab() !== 'transcript'">
+            <img src="/assets/icons/transcript.svg" class="w-4 h-4" />
+            Lecture Content
+          </button>
+          <button (click)="activeTab.set('keyPoints')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'keyPoints'" [class.border-primary]="activeTab() === 'keyPoints'"
+            [class.text-gray-500]="activeTab() !== 'keyPoints'"
+            [class.border-transparent]="activeTab() !== 'keyPoints'">
+            <i class="ic-84 cl-iPrimary text-xl"></i>
+            Key Points
+          </button>
+          <!-- <button (click)="activeTab.set('download')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'download'" [class.border-primary]="activeTab() === 'download'"
+            [class.text-gray-500]="activeTab() !== 'download'" [class.border-transparent]="activeTab() !== 'download'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Resources
+          </button> -->
+          <button (click)="activeTab.set('notebook')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'notebook'" [class.border-primary]="activeTab() === 'notebook'"
+            [class.text-gray-500]="activeTab() !== 'notebook'" [class.border-transparent]="activeTab() !== 'notebook'">
+            <img src="/assets/icons/notebook.svg" class="w-4 h-4" alt="Notebook icon" />
+            Notebook
+          </button>
+          @if (courseTree()?.courseTypeId !== 3) {
+          <button (click)="activeTab.set('quiz')"
+            class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px flex-shrink-0"
+            [class.text-primary]="activeTab() === 'quiz'" [class.border-primary]="activeTab() === 'quiz'"
+            [class.text-gray-500]="activeTab() !== 'quiz'" [class.border-transparent]="activeTab() !== 'quiz'">
+            <i class="ic-85 cl-iPrimary text-xl"></i>
+            Quiz
+          </button>
+          }
+        </div>
+
+        <!-- Right Scroll Button (Small Devices Only) -->
+        <button (click)="scrollTabs('right')"
+          class="w-8 h-8 bg-white shadow-lg border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all"
+          [class.hidden]="!isMobile()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" [class.text-primary]="
+       tabContainer &&
+       tabContainer.scrollLeft + tabContainer.clientWidth < tabContainer.scrollWidth
+     ">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         </button>
-        @if (courseTree()?.courseTypeId !== 3) {
-        <button (click)="activeTab.set('quiz')"
-          class="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px"
-          [class.text-primary]="activeTab() === 'quiz'" [class.border-primary]="activeTab() === 'quiz'"
-          [class.text-gray-500]="activeTab() !== 'quiz'" [class.border-transparent]="activeTab() !== 'quiz'">
-          <i class="ic-85 cl-iPrimary text-xl"></i>
-          Quiz
-        </button>
-        }
       </div>
       <!-- Tab Content -->
       <div class="flex gap-6 p-4 detailsec">
@@ -593,18 +628,13 @@
           <app-transcript [currentShortCourse]="currentShortCourse()" [courseTypeId]="courseTree()?.courseTypeId"
             (startAssessment)="startAssessment()" (moveToQuiz)="activeTab.set('quiz')"></app-transcript>
           }
-          @if (activeTab() === 'download') {
+          <!-- @if (activeTab() === 'download') {
           <app-download></app-download>
-          }
-          <app-quiz 
-            [class.hidden]="activeTab() !== 'quiz'"
-            [orderPayload]="completeOrderPayload()" 
-            [isCourseCompleted]="courseTree()?.isCompleted"
-            [isLectureCompleted]="currentShortCourse()?.isCompleted" 
-            (refreshTree)="refreshCourseTree()"
-            (startAssessment)="startAssessment()" 
-            (goToDashboard)="goToDashboard()"
-            (selectIncomplete)="refreshTreeAndSelectIncomplete()">
+          } -->
+          <app-quiz [class.hidden]="activeTab() !== 'quiz'" [orderPayload]="completeOrderPayload()"
+            [isCourseCompleted]="courseTree()?.isCompleted" [isLectureCompleted]="currentShortCourse()?.isCompleted"
+            (refreshTree)="refreshCourseTree()" (startAssessment)="startAssessment()" (goToDashboard)="goToDashboard()"
+            (selectIncomplete)="selectIncompleteWithoutRefresh()">
           </app-quiz>
         </div>
         @if (activeTab() === 'overview' || activeTab() === 'transcript' || activeTab() === 'keyPoints' || activeTab()
@@ -642,16 +672,67 @@
 
   <!-- Ask Course Companion Button -->
   <button (click)="courseService.toggleChat()"
-    class="fixed bottom-6 chat-widget right-6 z-40 flex items-center gap-2 px-3 py-3 bg-thirdly text-gray-600 rounded-full shadow-lg hover:bg-[#00c494] transition-all duration-300 font-medium text-sm"
+    class="fixed bottom-2 chat-widget right-6 z-40 flex items-center text-gray-600 rounded-full shadow-lg transition-all duration-300 font-medium text-sm"
     [class.hidden]="assessmentStep() === 'start' || assessmentStep() === 'final' || assessmentStep() === 'cleared' || assessmentStep() === 'failed' || assessmentStep() === 'maxattempts'">
-    <img src="assets/icons/chat-black-icon.svg" alt="Chat" class="">
-    Ask Course Companion
+    <!-- <img src="assets/icons/chat-black-icon.svg" alt="Chat" class=""> -->
+<svg class="svg-responsive" width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="robotGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0062CC" />
+          <stop offset="100%" stop-color="#0052AD" />
+        </linearGradient>
+      </defs>
+
+      <!-- Floating animation -->
+      <g>
+        <animateTransform attributeName="transform" type="translate" from="0 0" to="0 -3" dur="1.5s"
+          repeatCount="indefinite" direction="alternate" />
+
+        <!-- Antenna -->
+        <line x1="48" y1="8" x2="48" y2="16" stroke="#0062CC" stroke-width="3" />
+        <circle cx="48" cy="6" r="4" fill="#0062CC" />
+
+        <!-- Head -->
+        <rect x="20" y="16" rx="20" ry="20" width="56" height="44" fill="url(#robotGrad)" />
+
+        <!-- Side ears -->
+        <rect x="14" y="30" width="6" height="20" rx="3" fill="#0062CC" />
+        <rect x="76" y="30" width="6" height="20" rx="3" fill="#0062CC" />
+
+        <!-- Face panel -->
+        <rect x="30" y="26" width="36" height="24" rx="12" fill="#ffffff" />
+
+        <!-- Eyes (blink) -->
+        <rect x="38" y="32" width="6" height="12" rx="3" fill="#0062CC">
+          <animate attributeName="height" values="12;4;12" dur="3s" repeatCount="indefinite" />
+        </rect>
+        <rect x="52" y="32" width="6" height="12" rx="3" fill="#0062CC">
+          <animate attributeName="height" values="12;4;12" dur="3s" begin="0.2s" repeatCount="indefinite" />
+        </rect>
+
+        <!-- Speech bubble -->
+        <g>
+          <rect x="58" y="6" width="30" height="18" rx="6" fill="#0062CC" />
+          <path d="M64 24 L60 30 L70 24 Z" fill="#0062CC" />
+
+          <!-- Typing dots -->
+          <circle cx="66" cy="15" r="2" fill="#ffffff">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="72" cy="15" r="2" fill="#ffffff">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" begin="0.2s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="78" cy="15" r="2" fill="#ffffff">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" begin="0.4s" repeatCount="indefinite" />
+          </circle>
+        </g>
+      </g>
+    </svg>
   </button>
 
+
   <!-- Chat Component -->
-  <app-chat 
-    [assessmentStep]="assessmentStep()" 
-    [courseTree]="courseTree()">
+  <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()">
   </app-chat>
 
   <!-- Completion Modal -->
