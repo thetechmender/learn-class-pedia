@@ -115,6 +115,38 @@
         </div>
       </div>
     }
+    @case ('index') {
+      <div class="page page--index">
+        <div class="page--index__header">
+          <div class="page--index__kicker">{{ page.subtitle }}</div>
+          <h2 class="page--index__title">{{ page.title }}</h2>
+          <div class="page--index__rule"></div>
+        </div>
+        <ol class="page--index__list">
+          @for (entry of page.entries; track entry.chapter) {
+            <li class="page--index__item">
+              <button
+                type="button"
+                class="page--index__entry"
+                data-nodrag
+                (click)="goTo(entry.targetIndex)"
+              >
+                <span class="page--index__num">{{ entry.chapter < 10 ? '0' + entry.chapter : entry.chapter }}</span>
+                <span class="page--index__body">
+                  <span class="page--index__entry-title">{{ entry.title }}</span>
+                  @if (entry.subtitle) {
+                    <span class="page--index__entry-sub">{{ entry.subtitle }}</span>
+                  }
+                </span>
+                <span class="page--index__dots" aria-hidden="true"></span>
+                <span class="page--index__page">{{ entry.chapter }}</span>
+              </button>
+            </li>
+          }
+        </ol>
+        <div class="page__folio page__folio--left">— Contents —</div>
+      </div>
+    }
     @case ('heading') {
       <div class="page page--heading">
         <div class="page--heading__inner">

@@ -20,7 +20,14 @@ interface Lecture {
   contentSectionOrder?: number;
 }
 
-type PageKind = 'cover' | 'heading' | 'content' | 'end' | 'blank';
+type PageKind = 'cover' | 'index' | 'heading' | 'content' | 'end' | 'blank';
+
+export interface IndexEntry {
+  chapter: number;
+  title: string;
+  subtitle?: string;
+  targetIndex: number;
+}
 
 interface BookPage {
   kind: PageKind;
@@ -28,6 +35,7 @@ interface BookPage {
   subtitle?: string;
   content?: string;
   pageNumber?: number;
+  entries?: IndexEntry[];
 }
 
 interface Sheet {
@@ -147,9 +155,21 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     this.cdr.markForCheck();
   }
 
+  goTo(target: number): void {
+    const clamped = Math.max(0, Math.min(this.sheets.length, target));
+    if (this.isAnimating || clamped === this.currentIndex) return;
+    this.currentIndex = clamped;
+    this.emitPageChanged();
+    this.checkCompletion();
+    this.cdr.markForCheck();
+  }
+
   onPointerDown(ev: PointerEvent): void {
     if (this.isAnimating || this.dragging) return;
     if (ev.button !== undefined && ev.button !== 0) return;
+
+    const tgt = ev.target as HTMLElement | null;
+    if (tgt && tgt.closest('[data-nodrag], button, a, input, textarea')) return;
 
     const container = ev.currentTarget as HTMLElement;
     const rect = container.getBoundingClientRect();
@@ -317,17 +337,43 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     const end: BookPage = { kind: 'end' };
     const blank: BookPage = { kind: 'blank' };
 
-    const sheets: Sheet[] = [];
-
-    sheets.push({
-      index: 0,
-      front: cover,
-      back: headings[0] ?? end,
+    // Index entries: chapter k (1-indexed) is reached when currentIndex = k + 1
+    // given the sheet layout below.
+    const entries: IndexEntry[] = sorted.map((lec, i) => {
+      const { title } = this.extractTitleAndContent(lec);
+      return {
+        chapter: i + 1,
+        title,
+        subtitle: lec.sectionType,
+        targetIndex: i + 2,
+      };
     });
 
+    const indexPage: BookPage = {
+      kind: 'index',
+      title: 'Table of Contents',
+      subtitle: this.bookTitle,
+      entries,
+    };
+
+    const sheets: Sheet[] = [];
+
+    // Sheet 0: cover (right)  |  index (back, shown as left after first flip)
+    sheets.push({ index: 0, front: cover, back: indexPage });
+
+    if (sorted.length === 0) {
+      sheets.push({ index: 1, front: blank, back: end });
+      this.sheets = sheets;
+      return;
+    }
+
+    // Sheet 1: blank right page (after index spread) | heading[0] on back
+    sheets.push({ index: 1, front: blank, back: headings[0] });
+
+    // Sheets 2..N: content[k-1] (right) | heading[k] (back) or end
     for (let k = 0; k < sorted.length; k++) {
       sheets.push({
-        index: k + 1,
+        index: k + 2,
         front: contents[k],
         back: headings[k + 1] ?? end,
       });
