@@ -19,4 +19,4 @@ export const ENVIRONMENTS = {
   }
 };
 
-export const environment = ENVIRONMENTS.production;
+export const environment = ENVIRONMENTS.staging;
