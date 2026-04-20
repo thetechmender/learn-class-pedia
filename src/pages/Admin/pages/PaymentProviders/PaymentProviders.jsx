@@ -33,8 +33,7 @@ const PaymentProviders = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProvider, setEditingProvider] = useState(null);
   const [formData, setFormData] = useState({
-    title: '',
-    isActive: true
+    title: ''
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -60,8 +59,7 @@ const PaymentProviders = () => {
   const handleCreate = useCallback(() => {
     setEditingProvider(null);
     setFormData({
-      title: '',
-      isActive: true
+      title: ''
     });
     setShowModal(true);
   }, []);
@@ -69,8 +67,7 @@ const PaymentProviders = () => {
   const handleEdit = useCallback((provider) => {
     setEditingProvider(provider);
     setFormData({
-      title: provider.title,
-      isActive: provider.isActive
+      title: provider.title
     });
     setShowModal(true);
   }, []);
@@ -102,7 +99,6 @@ const PaymentProviders = () => {
       
       const payload = {
         title: formData.title,
-        isActive: formData.isActive,
         createdBy: userId
       };
 
@@ -120,8 +116,7 @@ const PaymentProviders = () => {
       setShowModal(false);
       setEditingProvider(null);
       setFormData({
-        title: '',
-        isActive: true
+        title: ''
       });
     } catch (error) {
       console.error('Error saving payment provider:', error);
@@ -306,18 +301,6 @@ const PaymentProviders = () => {
                   />
                 </div>
 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-                    Active
-                  </label>
-                </div>
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">

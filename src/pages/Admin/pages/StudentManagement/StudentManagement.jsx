@@ -20,6 +20,11 @@ import {
   Clock,
   Globe,
   GlobeIcon,
+  LinkIcon,
+  Award,
+  Settings,
+  FileText,
+  Share2
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
@@ -41,6 +46,8 @@ const StudentManagement = () => {
     getSignupTypesDropdown,
     getCountriesDropdown,
     getStudentOrders,
+    getStudentCart,
+    loadingStudentCart,
     generateDashboardUrl,
   } = useStudentManagement();
 
@@ -59,14 +66,20 @@ const StudentManagement = () => {
     signupDateFrom: '',
     signupDateTo: '',
     courseId: '',
+    isDownloaded: false,
+    isShared: false,
+    isCart: false,
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
   const [showOrdersModal, setShowOrdersModal] = useState(false);
   const [showEnrollmentsModal, setShowEnrollmentsModal] = useState(false);
+  const [showCartModal, setShowCartModal] = useState(false);
   const [studentOrders, setStudentOrders] = useState(null);
   const [studentEnrollments, setStudentEnrollments] = useState(null);
+  const [studentCart, setStudentCart] = useState(null);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+  const [loadingCart, setLoadingCart] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadingDashboardUrl, setLoadingDashboardUrl] = useState(null); // Store enrollment ID being processed
 
@@ -192,6 +205,19 @@ const StudentManagement = () => {
     }
   }, [getStudentById]);
 
+  const handleViewCart = useCallback(async (studentId) => {
+    setLoadingCart(true);
+    try {
+      const cartData = await getStudentCart(studentId);
+      setStudentCart(cartData);
+      setShowCartModal(true);
+    } catch (err) {
+      console.error('Failed to fetch student cart:', err);
+    } finally {
+      setLoadingCart(false);
+    }
+  }, [getStudentCart]);
+
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({
       ...prev,
@@ -211,6 +237,9 @@ const StudentManagement = () => {
         signupDateFrom: '',
         signupDateTo: '',
         courseId: '',
+        isDownloaded: false,
+        isShared: false,
+        isCart: false,
       };
       setFilters(emptyFilters);
       await getAllStudents(1, pagination.pageSize, emptyFilters);
@@ -269,11 +298,11 @@ const StudentManagement = () => {
             <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg">
               <Users className="w-8 h-8 text-white" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+            <div className="min-h-[4.5rem] flex flex-col justify-center">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight pb-1">
                 Student Management
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
                 Manage and monitor student information and enrollment details
               </p>
             </div>
@@ -429,6 +458,51 @@ const StudentManagement = () => {
               />
             </div>
 
+            {/* Certificate Status Filters */}
+            <div className="space-y-3 lg:col-span-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Certificate Status
+              </label>
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.isDownloaded}
+                    onChange={(e) => handleFilterChange('isDownloaded', e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Downloaded</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.isShared}
+                    onChange={(e) => handleFilterChange('isShared', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Shared</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Cart Filter */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4" />
+                Cart Status
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.isCart}
+                  onChange={(e) => handleFilterChange('isCart', e.target.checked)}
+                  className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Has Items in Cart</span>
+              </label>
+            </div>
+
             <div className="flex gap-3 lg:col-span-4">
               <button
                 onClick={handleFilter}
@@ -466,57 +540,52 @@ const StudentManagement = () => {
       )}
 
       {/* Students Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mt-6">
-        {/* Desktop Table */}
-        <div className="hidden xl:block overflow-x-auto">
-          <table className="w-full table-fixed">
-            <thead className="bg-gray-50 dark:bgGeo Location Country-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <tr>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[250px]">
-                  Student
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
-                  Country
-                </th>
-                {/* <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
-                  Email Status
-                </th> */}
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
-                  Enrollments
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
-                  Signup through
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
-                  Advertising Medium
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
-                  Landing Page
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
-                  Referral URL
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
-                  Signup Date
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
-                  Last Course Completion
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
-                  Certificate Download Status
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
-                  Certificate Share Status
-                </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[150px]">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 mt-6">
+        {/* Desktop Table - Scrollable Container */}
+        {/* Desktop Table - Scrollable Container */}
+<div className="hidden md:block overflow-x-auto max-h-[600px] w-full" style={{ scrollbarWidth: 'auto' }}>
+  <table className="w-full border-collapse" style={{ minWidth: '1400px' }}>
+    <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+      <tr>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[240px]">
+          Student
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+          Country
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+          Enrollments
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
+          Cart
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
+          Signup through
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+          Advertising Medium
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+          Landing Page
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+          Referral URL
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+          Signup Date
+        </th>
+        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[160px]">
+          Course Detail
+        </th>
+        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[140px]">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="13" className="px-6 py-12 text-center">
+                  <td colSpan="11" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-gray-500 dark:text-gray-400 font-medium">Loading students...</span>
@@ -525,7 +594,7 @@ const StudentManagement = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan="13" className="px-6 py-12 text-center">
+                  <td colSpan="11" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-gray-400" />
                       <span className="text-gray-500 dark:text-gray-400 font-medium text-lg">No students found</span>
@@ -536,7 +605,7 @@ const StudentManagement = () => {
               ) : (
                 students.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-3">
 
                         {/* Avatar */}
@@ -607,7 +676,7 @@ const StudentManagement = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <GlobeIcon className="w-4 h-4 text-gray-400" />
 
@@ -622,7 +691,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td>
-                    {/* <td className="px-4 py-4 whitespace-nowrap">
+                    {/* <td className="px-6 py-5 whitespace-nowrap">
                       <div className="inline-flex items-center gap-2 text-sm">
                         {student.isEmailVerified ? (
                           <>
@@ -637,7 +706,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td> */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -655,7 +724,24 @@ const StudentManagement = () => {
                         <span>Enroll {student.enrollmentCount || 0}</span>
                       </button>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewCart(student.id);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 ${student.cartCount
+                          ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
+                          : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
+                          }`}
+                      >
+                        <div className={`p-1 rounded-lg ${student.cartCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                        </div>
+                        <span>Cart {student.cartCount || 0}</span>
+                      </button>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <span className={`text-sm font-medium ${student.signupTypeName === 'Email' ? 'text-blue-600' :
                         student.signupTypeName === 'Google' ? 'text-red-600' :
                           student.signupTypeName === 'Facebook' ? 'text-indigo-600' :
@@ -666,7 +752,7 @@ const StudentManagement = () => {
                         {student.signupTypeName || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.advertisingMedium ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-medium border border-indigo-200 dark:border-indigo-800">
@@ -682,7 +768,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.landingPageUrl ? (
                           <a
@@ -707,7 +793,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.signupTypeUrl ? (
                           <a
@@ -732,7 +818,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                           <Calendar className="w-4 h-4 text-blue-500" />
@@ -747,86 +833,62 @@ const StudentManagement = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       {student.completionPercentage !== undefined && student.completionPercentage !== null ? (
-                        <div className="flex items-center gap-2">
-                          <div className="relative w-12 h-12">
-                            <svg className="w-12 h-12 transform -rotate-90">
-                              <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                                fill="none"
-                                className="text-gray-200 dark:text-gray-700"
+                        <div className="flex flex-col gap-2">
+                          {/* Progress Bar with Percentage */}
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  student.completionPercentage === 100 ? 'bg-emerald-500' :
+                                  student.completionPercentage >= 75 ? 'bg-blue-500' :
+                                  student.completionPercentage >= 50 ? 'bg-amber-400' :
+                                  student.completionPercentage >= 25 ? 'bg-orange-400' :
+                                  'bg-rose-400'
+                                }`}
+                                style={{ width: `${student.completionPercentage}%` }}
                               />
-                              <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                                fill="none"
-                                strokeDasharray={`${2 * Math.PI * 20}`}
-                                strokeDashoffset={`${2 * Math.PI * 20 * (1 - student.completionPercentage / 100)}`}
-                                className={`${
-                                  student.completionPercentage >= 75 ? 'text-green-500' :
-                                  student.completionPercentage >= 50 ? 'text-blue-500' :
-                                  student.completionPercentage >= 25 ? 'text-yellow-500' :
-                                  'text-orange-500'
-                                } transition-all duration-300`}
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-xs font-bold text-gray-900 dark:text-white">
-                                {student.completionPercentage}%
-                              </span>
+                            </div>
+                            <span className={`text-xs font-bold min-w-[32px] ${
+                              student.completionPercentage === 100 ? 'text-emerald-600' :
+                              student.completionPercentage >= 50 ? 'text-blue-600' :
+                              'text-amber-600'
+                            }`}>
+                              {student.completionPercentage}%
+                            </span>
+                          </div>
+
+                          {/* Status Row - Compact */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Certificate */}
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                              student.isDownload 
+                                ? 'bg-emerald-100 text-emerald-700' 
+                                : 'bg-gray-100 text-gray-500'
+                            }`}>
+                              <FileText className="w-3 h-3" />
+                              <span className="font-medium">{student.isDownload ? 'Downloaded' : 'Not Downloaded'}</span>
+                            </div>
+
+                            {/* Shared */}
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                              student.isShared 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : 'bg-gray-100 text-gray-500'
+                            }`}>
+                              <Share2 className="w-3 h-3" />
+                              <span className="font-medium">{student.isShared ? 'Shared' : 'Not Shared'}</span>
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400 dark:text-gray-500">N/A</span>
+                        <span className="px-3 py-1 bg-gray-100 text-gray-400 text-xs rounded-full">
+                          No Course
+                        </span>
                       )}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex flex-col items-center gap-1">
-                        {student.isDownload ? (
-                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )}
-                        {student.downloadDate && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(student.downloadDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex flex-col items-center gap-1">
-                        {student.isShared ? (
-                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )}
-                        {student.sharedDate && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(student.sharedDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex flex-col gap-2">
                         <button
                           onClick={(e) => {
@@ -876,6 +938,9 @@ const StudentManagement = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Enrollments
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
+                  Cart
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Actions
                 </th>
@@ -884,7 +949,7 @@ const StudentManagement = () => {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center">
+                  <td colSpan="6" className="px-4 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">Loading students...</span>
@@ -893,7 +958,7 @@ const StudentManagement = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center">
+                  <td colSpan="6" className="px-4 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-gray-400" />
                       <span className="text-gray-500 dark:text-gray-400 font-medium">No students found</span>
@@ -967,6 +1032,23 @@ const StudentManagement = () => {
                           <BookOpen className="w-3.5 h-3.5" />
                         </div>
                         <span>Enroll {student.enrollmentCount || 0}</span>
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewCart(student.id);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.cartCount
+                          ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
+                          : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
+                          }`}
+                      >
+                        <div className={`p-1 rounded-lg ${student.cartCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                        </div>
+                        <span>Cart {student.cartCount || 0}</span>
                       </button>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -1128,6 +1210,19 @@ const StudentManagement = () => {
                     <span>Enroll {student.enrollmentCount || 0}</span>
                   </button>
 
+                  <button
+                    onClick={() => handleViewCart(student.id)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.cartCount
+                      ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
+                      : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
+                      }`}
+                  >
+                    <div className={`p-1.5 rounded-lg ${student.cartCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                      <ShoppingBag className="w-4 h-4" />
+                    </div>
+                    <span>Cart {student.cartCount || 0}</span>
+                  </button>
+
                   <div className="text-xs text-gray-700 dark:text-gray-300">
                     <span className="font-semibold">Signup:</span> {student.signupTypeName || 'N/A'}
                   </div>
@@ -1219,6 +1314,16 @@ const StudentManagement = () => {
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>Enroll {student.enrollmentCount || 0}</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewCart(student.id)}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${student.cartCount
+                      ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
+                      : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
+                      }`}
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Cart {student.cartCount || 0}</span>
                   </button>
                 </div>
               </div>
@@ -2221,6 +2326,117 @@ const StudentManagement = () => {
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Enrollments Found</h3>
                   <p className="text-gray-500 dark:text-gray-400">
                     This student hasn't enrolled in any courses yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cart Modal */}
+      {showCartModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-slideUp">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-amber-600 px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                    <ShoppingBag className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                     Customer  Cart
+                    </h2>
+                    <p className="text-orange-100 mt-1">
+                      {studentCart?.length || 0} items in cart
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCartModal(false);
+                    setStudentCart(null);
+                  }}
+                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-colors duration-200 group"
+                >
+                  <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 lg:p-8 overflow-y-auto max-h-[calc(85vh-120px)] bg-gray-50 dark:bg-gray-900">
+              {loadingCart ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                </div>
+              ) : studentCart && studentCart.length > 0 ? (
+                <div className="space-y-4">
+                  {/* Header with count */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-orange-500 rounded-xl">
+                      <ShoppingBag className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      Cart Items ({studentCart.length})
+                    </h3>
+                  </div>
+
+                  {/* Cart Item Cards */}
+                  {studentCart.map((item, index) => (
+                    <div key={item.id || index} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-orange-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
+                      {/* Resource Name with Type Badge */}
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <h4 className="text-base font-bold text-gray-900 dark:text-white">
+                          {item.resourceName || 'Unknown Item'}
+                        </h4>
+                        {item.resourceTypeName && (
+                          <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white">
+                            {item.resourceTypeName}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Details Row */}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">ID:</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {item.id}
+                          </span>
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Resource ID:</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {item.resourceId}
+                          </span>
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800">
+                          <Calendar className="w-3.5 h-3.5 text-green-500" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Added: {formatDateTime(item.createdAt)}
+                          </span>
+                        </div>
+                        {item.sessionId && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Session:</span>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
+                              {item.sessionId}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Cart is Empty</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    This student has no items in their cart.
                   </p>
                 </div>
               )}

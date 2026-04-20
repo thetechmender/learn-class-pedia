@@ -10,6 +10,7 @@ export const useStudentManagement = () => {
   // Separate loading states for modal operations
   const [loadingStudentDetails, setLoadingStudentDetails] = useState(false);
   const [loadingStudentOrders, setLoadingStudentOrders] = useState(false);
+  const [loadingStudentCart, setLoadingStudentCart] = useState(false);
   
   // Students data state
   const [students, setStudents] = useState([]);
@@ -49,7 +50,10 @@ export const useStudentManagement = () => {
         ...(filters.signupDateFrom && { SignupDateFrom: filters.signupDateFrom }),
         ...(filters.signupDateTo && { SignupDateTo: filters.signupDateTo }),
         ...(filters.courseId && { CourseId: filters.courseId }),
-        ...(filters.geoLocationCountry && { GeoLocationCountry: filters.geoLocationCountry })
+        ...(filters.geoLocationCountry && { GeoLocationCountry: filters.geoLocationCountry }),
+        ...(filters.isDownloaded && { IsDownloaded: filters.isDownloaded.toString() }),
+        ...(filters.isShared && { IsShared: filters.isShared.toString() }),
+        ...(filters.isCart && { IsCart: filters.isCart.toString() })
       });
 
       const response = await ApiService.get(`${ENDPOINTS.STUDENT_MANAGEMENT_ALL}?${queryParams}`);
@@ -208,6 +212,29 @@ export const useStudentManagement = () => {
     }
   }, []);
 
+  // Get student cart items
+  const getStudentCart = useCallback(async (customerId) => {
+    setLoadingStudentCart(true);
+    setError(null);
+
+    try {
+      const response = await ApiService.get(ENDPOINTS.STUDENT_MANAGEMENT_CART(customerId));
+
+      // Handle response format - returns array of cart items
+      if (response && Array.isArray(response.data || response)) {
+        const responseData = response.data || response;
+        return responseData;
+      }
+      throw new Error('Invalid response format');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch student cart';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoadingStudentCart(false);
+    }
+  }, []);
+
   // Generate dashboard URL for classroom access
   const generateDashboardUrl = useCallback(async (customerId, resourceId, resourceTypeId) => {
     setError(null);
@@ -243,7 +270,8 @@ export const useStudentManagement = () => {
     pagination,
     loadingStudentDetails,
     loadingStudentOrders,
-    
+    loadingStudentCart,
+
     // Actions
     getAllStudents,
     getStudentById,
@@ -251,15 +279,18 @@ export const useStudentManagement = () => {
     filterStudents,
     clearError,
     setSelectedStudent,
-    
+
     // Dropdown data
     getGendersDropdown,
     getSignupTypesDropdown,
     getQualificationsDropdown,
     getCountriesDropdown,
-    
+
     // Orders
     getStudentOrders,
+
+    // Cart
+    getStudentCart,
 
     // Dashboard URL
     generateDashboardUrl,
