@@ -3,14 +3,20 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   HostListener,
+  Inject,
   Input,
   OnInit,
   Output,
+  PLATFORM_ID,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { SafeHtmlPipe } from './safe-html.pipe';
+
+export type BookTheme = 'day' | 'sepia' | 'night';
+export type BookFontScale = 1 | 1.15 | 1.3;
 
 interface Lecture {
   id?: number;
@@ -27,6 +33,7 @@ export interface IndexEntry {
   title: string;
   subtitle?: string;
   targetIndex: number;
+  minutes: number;
 }
 
 interface BookPage {
@@ -71,16 +78,37 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
   private dragStartX = 0;
   private dragHalfWidth = 1;
   private dragPointerId: number | null = null;
+  private lastMoveX = 0;
+  private lastMoveTime = 0;
+  private dragVelocity = 0; // px per ms (positive = rightward)
+
+  // Reading preferences / state
+  soundEnabled = false;
+  theme: BookTheme = 'sepia';
+  fontScale: BookFontScale = 1;
+  bookmarks = new Set<number>();
+  visited = new Set<number>();
+  isFullscreen = false;
 
   private readonly flipDurationMs = 850;
   private readonly dragCommitThreshold = 90; // degrees
+  private readonly dragVelocityCommit = 0.55; // px/ms
   private isAnimating = false;
   private completedOnce = false;
+  private audioCtx: AudioContext | null = null;
+  private readonly isBrowser: boolean;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private hostEl: ElementRef<HTMLElement>,
+    @Inject(PLATFORM_ID) platformId: Object,
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit(): void {
     this.buildSheets();
+    this.restoreState();
   }
 
   ngAfterViewInit(): void {
@@ -90,8 +118,21 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
   get currentLabel(): string {
     const total = this.lectures.length;
     if (this.currentIndex === 0) return `Cover`;
-    if (this.currentIndex > total) return `The End`;
-    return `Lecture ${this.currentIndex} of ${total}`;
+    if (this.currentIndex === 1) return `Contents`;
+    if (this.currentIndex > this.sheets.length - 1 && this.sheets.length > 0) return `The End`;
+    const ch = this.currentIndex - 1; // chapter k at currentIndex=k+1
+    if (ch >= 1 && ch <= total) return `Chapter ${ch} of ${total}`;
+    return `Page ${this.currentIndex}`;
+  }
+
+  get currentChapter(): number {
+    // returns 0 if not on a chapter spread
+    const ch = this.currentIndex - 1;
+    return ch >= 1 && ch <= this.lectures.length ? ch : 0;
+  }
+
+  isBookmarked(): boolean {
+    return this.bookmarks.has(this.currentIndex);
   }
 
   get progressPercent(): number {
@@ -144,14 +185,17 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     if (this.isAnimating || this.currentIndex === 0) return;
     this.currentIndex = 0;
     this.emitPageChanged();
+    this.persistState();
     this.cdr.markForCheck();
   }
 
   goLast(): void {
     if (this.isAnimating || this.currentIndex >= this.sheets.length) return;
     this.currentIndex = this.sheets.length;
+    this.markVisited();
     this.emitPageChanged();
     this.checkCompletion();
+    this.persistState();
     this.cdr.markForCheck();
   }
 
@@ -159,9 +203,160 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     const clamped = Math.max(0, Math.min(this.sheets.length, target));
     if (this.isAnimating || clamped === this.currentIndex) return;
     this.currentIndex = clamped;
+    this.markVisited();
     this.emitPageChanged();
+    this.playFlipSound();
     this.checkCompletion();
+    this.persistState();
     this.cdr.markForCheck();
+  }
+
+  toggleBookmark(): void {
+    if (this.currentIndex === 0) return;
+    if (this.bookmarks.has(this.currentIndex)) this.bookmarks.delete(this.currentIndex);
+    else this.bookmarks.add(this.currentIndex);
+    this.persistState();
+    this.cdr.markForCheck();
+  }
+
+  setTheme(theme: BookTheme): void {
+    this.theme = theme;
+    this.persistState();
+    this.cdr.markForCheck();
+  }
+
+  cycleTheme(): void {
+    const order: BookTheme[] = ['day', 'sepia', 'night'];
+    const next = order[(order.indexOf(this.theme) + 1) % order.length];
+    this.setTheme(next);
+  }
+
+  setFontScale(scale: BookFontScale): void {
+    this.fontScale = scale;
+    this.persistState();
+    this.cdr.markForCheck();
+  }
+
+  increaseFont(): void {
+    const steps: BookFontScale[] = [1, 1.15, 1.3];
+    const next = steps[Math.min(steps.length - 1, steps.indexOf(this.fontScale) + 1)];
+    this.setFontScale(next);
+  }
+
+  decreaseFont(): void {
+    const steps: BookFontScale[] = [1, 1.15, 1.3];
+    const next = steps[Math.max(0, steps.indexOf(this.fontScale) - 1)];
+    this.setFontScale(next);
+  }
+
+  toggleSound(): void {
+    this.soundEnabled = !this.soundEnabled;
+    this.persistState();
+    this.cdr.markForCheck();
+  }
+
+  toggleFullscreen(): void {
+    if (!this.isBrowser) return;
+    const doc: any = document;
+    const el: any = this.hostEl.nativeElement;
+    const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
+    if (!fsEl) {
+      (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+    } else {
+      (doc.exitFullscreen || doc.webkitExitFullscreen)?.call(doc);
+    }
+  }
+
+  @HostListener('document:fullscreenchange')
+  @HostListener('document:webkitfullscreenchange')
+  onFullscreenChange(): void {
+    if (!this.isBrowser) return;
+    const doc: any = document;
+    this.isFullscreen = !!(doc.fullscreenElement || doc.webkitFullscreenElement);
+    this.cdr.markForCheck();
+  }
+
+  isChapterVisited(entry: IndexEntry): boolean {
+    return this.visited.has(entry.chapter);
+  }
+
+  isChapterCurrent(entry: IndexEntry): boolean {
+    return this.currentChapter === entry.chapter;
+  }
+
+  private markVisited(): void {
+    const ch = this.currentChapter;
+    if (ch > 0) this.visited.add(ch);
+  }
+
+  private playFlipSound(): void {
+    if (!this.soundEnabled || !this.isBrowser) return;
+    try {
+      const AC: typeof AudioContext =
+        (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AC) return;
+      if (!this.audioCtx) this.audioCtx = new AC();
+      const ctx = this.audioCtx;
+      const duration = 0.09;
+      const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        const t = i / data.length;
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3) * 0.35;
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 2400;
+      filter.Q.value = 0.8;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.6;
+      src.connect(filter).connect(gain).connect(ctx.destination);
+      src.start();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private storageKey(): string {
+    return `3d-book:${this.bookTitle}`;
+  }
+
+  private persistState(): void {
+    if (!this.isBrowser) return;
+    try {
+      const payload = {
+        currentIndex: this.currentIndex,
+        bookmarks: [...this.bookmarks],
+        visited: [...this.visited],
+        theme: this.theme,
+        fontScale: this.fontScale,
+        soundEnabled: this.soundEnabled,
+      };
+      localStorage.setItem(this.storageKey(), JSON.stringify(payload));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private restoreState(): void {
+    if (!this.isBrowser) return;
+    try {
+      const raw = localStorage.getItem(this.storageKey());
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (typeof data.currentIndex === 'number') {
+        this.currentIndex = Math.max(0, Math.min(this.sheets.length, data.currentIndex));
+      }
+      if (Array.isArray(data.bookmarks)) this.bookmarks = new Set(data.bookmarks);
+      if (Array.isArray(data.visited)) this.visited = new Set(data.visited);
+      if (data.theme === 'day' || data.theme === 'sepia' || data.theme === 'night') this.theme = data.theme;
+      if (data.fontScale === 1 || data.fontScale === 1.15 || data.fontScale === 1.3) this.fontScale = data.fontScale;
+      if (typeof data.soundEnabled === 'boolean') this.soundEnabled = data.soundEnabled;
+    } catch {
+      /* ignore */
+    }
   }
 
   onPointerDown(ev: PointerEvent): void {
@@ -194,6 +389,9 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     this.dragStartX = ev.clientX;
     this.dragHalfWidth = Math.max(1, rect.width / 2);
     this.dragPointerId = ev.pointerId;
+    this.lastMoveX = ev.clientX;
+    this.lastMoveTime = performance.now();
+    this.dragVelocity = 0;
 
     try { container.setPointerCapture(ev.pointerId); } catch {}
     ev.preventDefault();
@@ -203,15 +401,19 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
   onPointerMove(ev: PointerEvent): void {
     if (!this.dragging || this.dragPointerId !== ev.pointerId) return;
 
+    const now = performance.now();
+    const dt = Math.max(1, now - this.lastMoveTime);
+    this.dragVelocity = (ev.clientX - this.lastMoveX) / dt;
+    this.lastMoveX = ev.clientX;
+    this.lastMoveTime = now;
+
     const deltaX = ev.clientX - this.dragStartX;
     const ratio = Math.max(-1, Math.min(1, deltaX / this.dragHalfWidth));
     const sweep = ratio * 180;
 
     if (this.dragDirection === 'forward') {
-      // 0 -> -180, only leftward motion counts
       this.dragRotation = Math.max(-180, Math.min(0, sweep));
     } else {
-      // -180 -> 0, only rightward motion counts
       this.dragRotation = Math.max(-180, Math.min(0, -180 + sweep));
     }
     this.cdr.markForCheck();
@@ -223,34 +425,37 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     const container = ev.currentTarget as HTMLElement;
     try { container.releasePointerCapture(ev.pointerId); } catch {}
 
-    const commit = Math.abs(this.dragRotation) >= this.dragCommitThreshold
-      && Math.abs(this.dragRotation) <= 180 - this.dragCommitThreshold + 180; // always true upper
-    const shouldCommit =
+    const overThreshold =
       this.dragDirection === 'forward'
         ? this.dragRotation <= -this.dragCommitThreshold
         : this.dragRotation >= -180 + this.dragCommitThreshold;
 
-    // Release drag visuals; let CSS transition animate to final state
+    const flickCommit =
+      this.dragDirection === 'forward'
+        ? this.dragVelocity <= -this.dragVelocityCommit && this.dragRotation < 0
+        : this.dragVelocity >= this.dragVelocityCommit && this.dragRotation > -180;
+
+    const shouldCommit = overThreshold || flickCommit;
+
     this.dragging = false;
     this.dragPointerId = null;
     this.cdr.markForCheck();
 
     if (shouldCommit) {
-      // Move currentIndex so class-based final state matches; clear inline transform next frame
       if (this.dragDirection === 'forward') {
         this.currentIndex = Math.min(this.sheets.length, this.currentIndex + 1);
       } else {
         this.currentIndex = Math.max(0, this.currentIndex - 1);
       }
       this.flippingIndex = this.dragSheetIdx;
+      this.markVisited();
       this.emitPageChanged();
+      this.playFlipSound();
+      this.persistState();
     } else {
-      // Revert: keep flippingIndex to get shadow, then clear
       this.flippingIndex = this.dragSheetIdx;
     }
 
-    // Clear inline transform so CSS class takes over with transition
-    const idx = this.dragSheetIdx;
     this.dragSheetIdx = null;
     this.cdr.markForCheck();
 
@@ -259,9 +464,6 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
       this.checkCompletion();
       this.cdr.markForCheck();
     }, this.flipDurationMs);
-
-    // Suppress unused var lint
-    void idx; void commit;
   }
 
   onPointerCancel(ev: PointerEvent): void {
@@ -273,16 +475,19 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     const forward = target > this.currentIndex;
     this.flippingIndex = forward ? this.currentIndex : target;
     this.isAnimating = true;
+    this.playFlipSound();
     this.cdr.markForCheck();
 
     requestAnimationFrame(() => {
       this.currentIndex = target;
+      this.markVisited();
       this.cdr.markForCheck();
       setTimeout(() => {
         this.flippingIndex = null;
         this.isAnimating = false;
         this.emitPageChanged();
         this.checkCompletion();
+        this.persistState();
         this.cdr.markForCheck();
       }, this.flipDurationMs);
     });
@@ -340,12 +545,13 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     // Index entries: chapter k (1-indexed) is reached when currentIndex = k + 1
     // given the sheet layout below.
     const entries: IndexEntry[] = sorted.map((lec, i) => {
-      const { title } = this.extractTitleAndContent(lec);
+      const { title, content } = this.extractTitleAndContent(lec);
       return {
         chapter: i + 1,
         title,
         subtitle: lec.sectionType,
         targetIndex: i + 2,
+        minutes: this.estimateMinutes(content),
       };
     });
 
@@ -388,6 +594,20 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     }
 
     this.sheets = sheets;
+  }
+
+  private estimateMinutes(html: string): number {
+    if (!html) return 1;
+    let text = html;
+    if (typeof document !== 'undefined') {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      text = tmp.textContent || '';
+    } else {
+      text = html.replace(/<[^>]+>/g, ' ');
+    }
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.round(words / 200));
   }
 
   private extractTitleAndContent(lecture: Lecture): { title: string; content: string } {
