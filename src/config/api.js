@@ -166,6 +166,10 @@ export const ENDPOINTS = {
   // Payment Provider Account endpoints
   PAYMENT_PROVIDER_ACCOUNTS: '/payment-provider-accounts',
   PAYMENT_PROVIDER_ACCOUNT_BY_ID: (id) => `/payment-provider-accounts/${id}`,
+
+  // Contact Information endpoints
+  CONTACT_INFORMATION: '/contact-information',
+  INQUIRY_OPTIONS: '/inquiry-options',
 };
 
 // HTTP Status Codes

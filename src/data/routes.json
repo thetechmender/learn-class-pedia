@@ -152,6 +152,15 @@
       "icon": "Wallet",
       "category": "management",
       "order": 16
+    },
+    {
+      "id": "contact-us",
+      "path": "/admin/contact-us",
+      "component": "ContactUs",
+      "label": "Contact Us",
+      "icon": "MessageCircle",
+      "category": "management",
+      "order": 17
     }
   ],
   "roles": [

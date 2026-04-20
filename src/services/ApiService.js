@@ -2140,6 +2140,31 @@ async uploadCsvFileByName(formData) {
       method: 'DELETE',
     });
   }
+
+  // ==================== CONTACT INFORMATION ====================
+
+  // GET all contact information with optional filters
+  async getContactInformation(filters = {}) {
+    const queryParams = new URLSearchParams();
+    if (filters.fullName) queryParams.append('fullName', filters.fullName);
+    if (filters.emailAddress) queryParams.append('emailAddress', filters.emailAddress);
+    if (filters.phoneNumber) queryParams.append('phoneNumber', filters.phoneNumber);
+    if (filters.inquiryOptionId) queryParams.append('inquiryOptionId', filters.inquiryOptionId);
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${ENDPOINTS.CONTACT_INFORMATION}?${queryString}` : ENDPOINTS.CONTACT_INFORMATION;
+    
+    return this.request(url, {
+      method: 'GET',
+    });
+  }
+
+  // GET inquiry options for dropdown
+  async getInquiryOptions() {
+    return this.request(ENDPOINTS.INQUIRY_OPTIONS, {
+      method: 'GET',
+    });
+  }
 }
 
 export default new ApiService();

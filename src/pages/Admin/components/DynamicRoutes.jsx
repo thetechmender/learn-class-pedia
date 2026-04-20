@@ -23,6 +23,7 @@ import StudentOrderManagement from '../pages/StudentOrderManagement/StudentOrder
 import PaymentMethodManagement from '../pages/PaymentMethodManagement/PaymentMethodManagement';
 import PaymentProviders from '../pages/PaymentProviders/PaymentProviders';
 import PaymentProviderAccounts from '../pages/PaymentProviderAccounts/PaymentProviderAccounts';
+import ContactUs from '../pages/ContactUs/ContactUs';
 import CourseContent from '../pages/CourseContent/CourseContent';
 
 // Component mapping
@@ -48,6 +49,7 @@ const componentMap = {
   PaymentMethodManagement,
   PaymentProviders,
   PaymentProviderAccounts,
+  ContactUs,
   CourseContent,
 };
 
