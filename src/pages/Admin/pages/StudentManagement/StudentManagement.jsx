@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Users,
   Filter,
@@ -225,28 +225,93 @@ const StudentManagement = () => {
     }));
   };
 
+  const emptyFiltersRef = useMemo(() => ({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    isEmailVerified: '',
+    geoLocationCountry: '',
+    signupTypeId: '',
+    signupDateFrom: '',
+    signupDateTo: '',
+    courseId: '',
+    isDownloaded: false,
+    isShared: false,
+    isCart: false,
+  }), []);
+
   const clearFilters = useCallback(async () => {
     try {
-      const emptyFilters = {
-        fullName: '',
-        email: '',
-        phoneNumber: '',
-        isEmailVerified: '',
-        geoLocationCountry: '',
-        signupTypeId: '',
-        signupDateFrom: '',
-        signupDateTo: '',
-        courseId: '',
-        isDownloaded: false,
-        isShared: false,
-        isCart: false,
-      };
-      setFilters(emptyFilters);
-      await getAllStudents(1, pagination.pageSize, emptyFilters);
+      setFilters(emptyFiltersRef);
+      await getAllStudents(1, pagination.pageSize, emptyFiltersRef);
     } catch (err) {
       console.error('Failed to clear filters:', err);
     }
-  }, [getAllStudents, pagination.pageSize]);
+  }, [getAllStudents, pagination.pageSize, emptyFiltersRef]);
+
+  // Reset a single filter and re-fetch
+  const removeFilter = useCallback(async (key) => {
+    const resetValue = typeof filters[key] === 'boolean' ? false : '';
+    const next = { ...filters, [key]: resetValue };
+    setFilters(next);
+    try {
+      await getAllStudents(1, pagination.pageSize, next);
+    } catch (err) {
+      console.error('Failed to remove filter:', err);
+    }
+  }, [filters, getAllStudents, pagination.pageSize]);
+
+  // Build active-filter metadata (count + chips)
+  const { activeFilterCount, activeFilterChips } = useMemo(() => {
+    const labels = {
+      fullName: 'Name',
+      email: 'Email',
+      phoneNumber: 'Phone',
+      isEmailVerified: 'Email Verified',
+      geoLocationCountry: 'Country',
+      signupTypeId: 'Signup Type',
+      signupDateFrom: 'Signup From',
+      signupDateTo: 'Signup To',
+      courseId: 'Course',
+      isDownloaded: 'Certificate',
+      isShared: 'Certificate',
+      isCart: 'Cart',
+    };
+
+    const isActive = (k, v) => {
+      if (typeof v === 'boolean') return v === true;
+      return v !== '' && v !== null && v !== undefined;
+    };
+
+    const displayValue = (k, v) => {
+      switch (k) {
+        case 'isEmailVerified':
+          return v === 'true' ? 'Verified' : 'Not Verified';
+        case 'signupTypeId': {
+          const t = signupTypes.find((s) => String(s.id) === String(v));
+          return t?.typeName || v;
+        }
+        case 'courseId': {
+          const c = courses.find((x) => String(x.id) === String(v));
+          return c?.title || v;
+        }
+        case 'isDownloaded':
+          return 'Downloaded';
+        case 'isShared':
+          return 'Shared';
+        case 'isCart':
+          return 'Has Items';
+        default:
+          return String(v);
+      }
+    };
+
+    const chips = Object.entries(filters)
+      .filter(([k, v]) => isActive(k, v))
+      .map(([k, v]) => ({ key: k, label: labels[k] || k, value: displayValue(k, v) }));
+
+    return { activeFilterCount: chips.length, activeFilterChips: chips };
+  }, [filters, signupTypes, courses]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
@@ -326,28 +391,53 @@ const StudentManagement = () => {
 
       {/* Search and Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 relative">
-        <div className="flex flex-col xl:flex-row xl:justify-end gap-4">
-          {/* Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-colors duration-200 shadow-sm ${showFilters
-              ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filters</span>
-            {showFilters && (
-              <span className="ml-2 px-2 py-1 bg-white/20 rounded-full text-xs">
-                {Object.values(filters).filter(v => v !== '').length}
-              </span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+              <Filter className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Filters</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {activeFilterCount > 0
+                  ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`
+                  : 'Refine the student list'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {activeFilterCount > 0 && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+              >
+                <X className="w-4 h-4" />
+                <span>Clear All</span>
+              </button>
             )}
-          </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm ${showFilters
+                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+              {activeFilterCount > 0 && (
+                <span className={`ml-1 min-w-[20px] h-5 inline-flex items-center justify-center px-1.5 rounded-full text-xs font-semibold ${showFilters ? 'bg-white/20 text-white' : 'bg-blue-500 text-white'}`}>
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn">
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
               <input
@@ -458,13 +548,16 @@ const StudentManagement = () => {
               />
             </div>
 
-            {/* Certificate Status Filters */}
-            <div className="space-y-3 lg:col-span-2">
+          </div>
+
+          {/* Toggle Filters (checkboxes) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Certificate Status
               </label>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 pt-1">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -486,13 +579,12 @@ const StudentManagement = () => {
               </div>
             </div>
 
-            {/* Cart Filter */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4" />
                 Cart Status
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
                 <input
                   type="checkbox"
                   checked={filters.isCart}
@@ -502,26 +594,59 @@ const StudentManagement = () => {
                 <span className="text-sm text-gray-700 dark:text-gray-300">Has Items in Cart</span>
               </label>
             </div>
+          </div>
 
-            <div className="flex gap-3 lg:col-span-4">
-              <button
-                onClick={handleFilter}
-                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors duration-200 shadow-lg font-medium"
-              >
-                <Filter className="w-4 h-4" />
-                Apply Filters
-              </button>
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-2 px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200 font-medium"
-              >
-                <X className="w-4 h-4" />
-                Clear All
-              </button>
-            </div>
+          {/* Action bar */}
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <button
+              onClick={clearFilters}
+              className="flex items-center justify-center gap-2 px-5 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium"
+            >
+              <X className="w-4 h-4" />
+              Clear All
+            </button>
+            <button
+              onClick={handleFilter}
+              className="flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors duration-200 shadow-lg font-medium"
+            >
+              <Filter className="w-4 h-4" />
+              Apply Filters
+            </button>
+          </div>
           </div>
         )}
       </div>
+
+      {/* Active Filter Chips */}
+      {activeFilterChips.length > 0 && (
+        <div className="mt-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mr-1">
+            Active Filters:
+          </span>
+          {activeFilterChips.map((chip) => (
+            <span
+              key={chip.key}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+            >
+              <span className="text-blue-600/70 dark:text-blue-400/70">{chip.label}:</span>
+              <span className="font-semibold">{chip.value}</span>
+              <button
+                onClick={() => removeFilter(chip.key)}
+                className="ml-1 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                aria-label={`Remove ${chip.label} filter`}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={clearFilters}
+            className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (

@@ -35,7 +35,7 @@ const AdminLayout = ({ children }) => {
       />
 
       {/* Main area */}
-      <div className="flex-1 transition-all duration-300">
+      <div className="flex-1 min-w-0 transition-all duration-300">
         {/* Top Navbar - Fixed */}
         <div className={`fixed top-0 right-0 z-50 transition-all duration-300 ${
           isCollapsed ? 'lg:left-20' : 'lg:left-64'
