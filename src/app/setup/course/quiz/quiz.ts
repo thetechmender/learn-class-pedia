@@ -2,6 +2,7 @@ import { Component, inject, Input, Output, EventEmitter, OnInit, OnDestroy, OnCh
 import { AssessmentService } from '../../../services/assessment.service';
 import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
+import { SecurityService } from '../../../services/security.service';
 
 @Component({
   selector: 'app-quiz',
@@ -31,29 +32,31 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   @Output() startAssessment = new EventEmitter<void>();
   @Output() goToDashboard = new EventEmitter<void>();
   @Output() selectIncomplete = new EventEmitter<void>();
+  private securityService = inject(SecurityService);
+
   ngOnInit(): void {
     this._fetchQuizes()
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    
+
     if (changes['orderPayload']) {
 
     }
-    
+
     if (changes['isLectureCompleted']) {
     }
-    
+
     if (changes['orderPayload'] && !changes['orderPayload'].firstChange) {
       const previousShortCourseId = changes['orderPayload'].previousValue?.shortCourseId;
       const currentShortCourseId = changes['orderPayload'].currentValue?.shortCourseId;
-      
+
       // Only reset if the shortCourseId actually changed
       if (previousShortCourseId !== currentShortCourseId) {
         this.resetQuizState();
         this._fetchQuizes();
       } else {
-              }
+      }
     }
   }
 
@@ -124,7 +127,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (response: any) => {
           this.isCompleting.set(false);
-       this.mapCorrectAnswers(response?.data?.questionResults || []);
+          this.mapCorrectAnswers(response?.data?.questionResults || []);
           this._fetchQuizesResult();
         },
         error: (err: any) => {
@@ -207,7 +210,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   onMoveToNextTopic() {
     // Set loading state
     this.isMovingToNext.set(true);
-    
+
     // This will refresh tree and select next incomplete shortCourse
     // Parent component will reset isMovingToNext after tree loads
     this.selectIncomplete.emit();
@@ -217,13 +220,16 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
     this.isMovingToNext.set(false);
   }
 
-  onStartAssessment() {
-    this.isStartingAssessment.set(true);
-    this.startAssessment.emit();
+  async onStartAssessment() {
+    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
+    if (isDualDisplayActive) {
+      this.isStartingAssessment.set(true);
+      this.startAssessment.emit();
+    }
+    return;
   }
 
   onBack() {
-    // Hide answers and show completion screen again
     this.showAnswers.set(false);
     this.showCompletionScreen.set(true);
   }

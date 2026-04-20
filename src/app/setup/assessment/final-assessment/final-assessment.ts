@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, Input, OnInit, signal, computed } from '@angular/core';
+import { Component, Output, EventEmitter, inject, Input, OnInit, signal, computed, HostListener } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
 import { AssessmentService } from '../../../services/assessment.service';
@@ -23,6 +23,9 @@ export class FinalAssessment implements OnInit {
   questions = signal<any[]>([]);
   currentQuestionIndex = signal(0);
   isQuestionLoading = signal(false);
+  isMouseNearTopBar = signal(false); // Track if mouse is near URL bar area
+  showKeyboardBlockWarning = signal(false); // Show warning when keyboard shortcuts are blocked
+  private keyboardWarningTimeout: any = null;
 
   private timerInterval: any = null;
   remainingSeconds = signal(0);
@@ -62,7 +65,25 @@ export class FinalAssessment implements OnInit {
       this._fetchCertificateCourse();
     } else if (this.courseTypeId == 3) {
       this._fetchShoortCourseAssessment();
-    }
+    };
+this._initializeMouseTracking();
+  }
+
+  private _initializeMouseTracking(): void {
+    document.body.classList.add('exam-mode');
+    this._setupVisibilityChangeDetection();
+  }
+
+  private _setupVisibilityChangeDetection(): void {
+    // Detect when user switches tabs
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        console.warn('⚠️ User switched away from assessment tab!');
+        // You could log this to your backend for monitoring
+        this.showKeyboardBlockWarning.set(true);
+        setTimeout(() => this.showKeyboardBlockWarning.set(false), 3000);
+      }
+    });
   }
 
 
@@ -173,6 +194,7 @@ export class FinalAssessment implements OnInit {
     this.stopTimer();
     this.destroy$.next();
     this.destroy$.complete();
+    document.body.classList.remove('exam-mode');
   }
 
   startTimer() {
@@ -296,14 +318,9 @@ export class FinalAssessment implements OnInit {
     return this.orderPayload?.professionalCertificateId || null;
   }
 
-_handleAssessmentResult(data: any) {
-    console.log('[DEBUG] _handleAssessmentResult called');
-    console.log('[DEBUG] Result data:', data);
-    console.log('[DEBUG] isPassed:', data.isPassed);
-    console.log('[DEBUG] courseTypeId:', this.courseTypeId);
-    
+  _handleAssessmentResult(data: any) {
     const isPassed = data.isPassed;
-    
+
     if (isPassed === false) {
       console.log('[DEBUG] Assessment FAILED - emitting data immediately');
       // If failed, emit data immediately to route to failed-assessment
@@ -316,28 +333,23 @@ _handleAssessmentResult(data: any) {
         // For other courses, show modal immediately and WAIT for user to click Generate Certificate
         this.assessmentResultData.set(data);
         this.showGenerateCertificateModal.set(true);
-        console.log('[DEBUG] Modal state:', this.showGenerateCertificateModal());
-        console.log('[DEBUG] Result data set:', this.assessmentResultData());
       } else {
         console.log('[DEBUG] Short course (courseTypeId === 3) - waiting 30 seconds then emitting');
         // For short courses, show loading and wait 30 seconds then emit
         this.isGeneratingCertificate.set(true);
         setTimeout(() => {
-          console.log('[DEBUG] 30 seconds completed - emitting data');
           this.isGeneratingCertificate.set(false);
           this.next.emit(data);
         }, 30000);
       }
     } else {
-      console.log('[DEBUG] Unexpected isPassed value:', isPassed);
       // Fallback for unexpected cases
       this.next.emit('failed');
     }
   }
 
   onGenerateCertificate() {
-    console.log('[DEBUG] onGenerateCertificate called - user clicked Generate Certificate button');
-    
+
     const token = this.authService.getToken();
     const courseId = Number(this.getCourseId());
     const careerPathLevelMapId = this.orderPayload?.careerPathLevelMapId;
@@ -345,19 +357,14 @@ _handleAssessmentResult(data: any) {
     // Close modal and show loading state
     this.showGenerateCertificateModal.set(false);
     this.isGeneratingCertificate.set(true);
-    console.log('[DEBUG] Modal closed, loading started');
-    console.log('[DEBUG] Waiting 30 seconds for certificate generation...');
 
     // Wait 30 seconds for certificate generation, then call getAttemptStatus API again
     setTimeout(() => {
-      console.log('[DEBUG] 30 seconds completed - calling getAttemptStatus again');
       this.assessmentService.getAttemptStatus(courseId, token, careerPathLevelMapId).pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (finalDetails: any) => {
-            console.log('[DEBUG] Final getAttemptStatus response:', finalDetails);
             this.isGeneratingCertificate.set(false);
             if (finalDetails?.isSuccess) {
-              console.log('[DEBUG] Emitting final data to course component');
               this.next.emit(finalDetails['data']);
             }
           },
@@ -374,6 +381,165 @@ _handleAssessmentResult(data: any) {
 
   getOptionLetter(index: number): string {
     return String.fromCharCode(65 + index);
+  };
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent): void {
+    // Block F5 (Refresh)
+    if (event.key === 'F5') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + F5 (Hard Refresh)
+    if (event.ctrlKey && event.key === 'F5') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + R (Reload)
+    if (event.ctrlKey && event.key.toLowerCase() === 'r') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + W (Close Tab)
+    if (event.ctrlKey && event.key.toLowerCase() === 'w') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + Tab (Next Tab)
+    if (event.ctrlKey && event.key === 'Tab') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + Shift + Tab (Previous Tab)
+    if (event.ctrlKey && event.shiftKey && event.key === 'Tab') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + 1-9 (Switch to specific tab)
+    if (event.ctrlKey && event.key >= '1' && event.key <= '9') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + T (New Tab)
+    if (event.ctrlKey && event.key.toLowerCase() === 't') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + N (New Window)
+    if (event.ctrlKey && event.key.toLowerCase() === 'n') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Alt + Left/Right (Browser Back/Forward)
+    if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + H (History)
+    if (event.ctrlKey && event.key.toLowerCase() === 'h') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Ctrl + Shift + T (Reopen closed tab)
+    if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 't') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block F11 (Fullscreen toggle)
+    if (event.key === 'F11') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Block Escape (might exit fullscreen)
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Show warning for any blocked shortcut
+    if (event.ctrlKey || event.altKey || event.key === 'F5' || event.key === 'F11') {
+      this._showKeyboardBlockedWarning();
+    }
+  };
+
+  private _showKeyboardBlockedWarning(): void {
+    this.showKeyboardBlockWarning.set(true);
+    
+    // Clear existing timeout
+    if (this.keyboardWarningTimeout) {
+      clearTimeout(this.keyboardWarningTimeout);
+    }
+    
+    // Hide warning after 2 seconds
+    this.keyboardWarningTimeout = setTimeout(() => {
+      this.showKeyboardBlockWarning.set(false);
+    }, 2000);
   }
 
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: BeforeUnloadEvent) {
+    event.preventDefault();
+    event.returnValue = '';
+  };
+
+  @HostListener('window:mousemove', ['$event'])
+  handleMouseMove(event: MouseEvent): void {
+    const DANGER_ZONE_HEIGHT = 200; // pixels from top - covers browser tabs area
+    const mouseY = event.clientY;
+    
+    if (mouseY <= DANGER_ZONE_HEIGHT) {
+      this.isMouseNearTopBar.set(true);
+      // Hide cursor completely
+      document.body.style.cursor = 'none';
+      // Disable all pointer events on the entire page
+      document.body.style.pointerEvents = 'none';
+      // Add a class for additional styling
+      document.body.classList.add('cursor-blocked');
+      
+      // Prevent any mouse clicks in this area
+      event.preventDefault();
+      event.stopPropagation();
+    } else {
+      this.isMouseNearTopBar.set(false);
+      document.body.style.cursor = 'default';
+      document.body.style.pointerEvents = 'auto';
+      document.body.classList.remove('cursor-blocked');
+    }
+  }
+  
+  @HostListener('window:mousedown', ['$event'])
+  handleMouseDown(event: MouseEvent): void {
+    const DANGER_ZONE_HEIGHT = 200;
+    const mouseY = event.clientY;
+    
+    // Block all mouse clicks in the top area (tabs, URL bar, etc.)
+    if (mouseY <= DANGER_ZONE_HEIGHT) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      this._showKeyboardBlockedWarning();
+      return;
+    }
+  }
+  
+  
+  @HostListener('window:contextmenu', ['$event'])
+  handleContextMenu(event: MouseEvent): void {
+    // Block right-click completely
+    event.preventDefault();
+    event.stopPropagation();
+  }
 }

@@ -22,6 +22,7 @@ import { SimpleVideoPlayerComponent } from '../course/simple-video-player/simple
 import { Chat } from './chat/chat';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
+import { SecurityService } from '../../services/security.service';
 
 @Component({
   selector: 'app-course',
@@ -34,6 +35,7 @@ import { map, Subject, switchMap, takeUntil } from 'rxjs';
 export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild(Quiz) quizComponent?: Quiz;
   @ViewChild('tabContainer') tabContainer?: ElementRef;
+  @ViewChild(SimpleVideoPlayerComponent) videoPlayer?: SimpleVideoPlayerComponent;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -44,6 +46,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private platformId = inject(PLATFORM_ID);
   private toastr = inject(ToastrService);
   private assessmentService = inject(AssessmentService);
+  private securityService = inject(SecurityService);
 
   course = signal<any>(null);
   courseTree = signal<any>(null);
@@ -1264,6 +1267,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.isPlaying.set(false);
   }
 
+  stopAllMedia() {
+    // Stop video playback if video player exists and is playing
+    if (this.videoPlayer && this.videoPlayer.isVideoPlaying) {
+      this.videoPlayer.onPause();
+    }
+    
+    // Stop audio/speech playback
+    this.stopSpeech();
+  }
+
   pauseVideoFromNotebook() {
     if (this.isPlaying()) {
       this.speechService.pause();
@@ -1696,12 +1709,16 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return false;
   }
 
-  startAssessment() {
+  async startAssessment() {
     this.isStartingAssessment.set(true);
+
+    // Stop any playing video and audio before starting assessment
+    this.stopAllMedia();
 
     const token = this.authService.getToken();
     const courseId = this.existingSeasionCourseId();
-    if (!courseId) {
+    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
+    if (!courseId && isDualDisplayActive) {
       this.assessmentStep.set('start');
       return;
     }
@@ -1716,7 +1733,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     getAttemptStatusObservable.pipe(takeUntil(this.destroy$)).subscribe({
-      next: (res: any) => {
+      next: async (res: any) => {
         const data = res?.isSuccess !== undefined ? res.data : res;
         if (data?.canTakeAssessment === false) {
           if (data?.isAssessmentCompleted === true) {
@@ -1761,13 +1778,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.assessmentStep.set('maxattempts');
           }
         } else {
-          // Only start assessment, don't reset lectures yet
-          this.assessmentStep.set('start');
+
+          if (await this.securityService.isDualDisplayActive()) {
+            this.assessmentStep.set('start');
+          } else {
+            this.isStartingAssessment.set(false);
+            return;
+          }
         }
       },
-      error: () => {
-        this.assessmentStep.set('start');
-      }
     });
   }
 
