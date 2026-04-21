@@ -2522,36 +2522,35 @@ const StudentManagement = () => {
                             {item.resourceTypeName}
                           </span>
                         )}
+                        {/* Level badge for Career Path (resourceTypeId === 2) */}
+                        {item.resourceTypeId === 2 && item.careerPathLevelId > 0 && (
+                          <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                            item.careerPathLevelId === 1
+                              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                              : item.careerPathLevelId === 2
+                                ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                : 'bg-purple-100 text-purple-700 border border-purple-200'
+                          }`}>
+                            {item.careerPathLevelId === 1
+                              ? 'Beginner'
+                              : item.careerPathLevelId === 2
+                                ? 'Intermediate'
+                                : 'Advanced'}
+                          </span>
+                        )}
                       </div>
 
                       {/* Details Row */}
                       <div className="flex items-center gap-3 flex-wrap">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">ID:</span>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {item.id}
-                          </span>
-                        </div>
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">Resource ID:</span>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {item.resourceId}
-                          </span>
-                        </div>
+                     
+                     
                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800">
                           <Calendar className="w-3.5 h-3.5 text-green-500" />
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             Added: {formatDateTime(item.createdAt)}
                           </span>
                         </div>
-                        {item.sessionId && (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Session:</span>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
-                              {item.sessionId}
-                            </span>
-                          </div>
-                        )}
+                       
                       </div>
                     </div>
                   ))}
