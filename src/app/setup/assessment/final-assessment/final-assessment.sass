@@ -1,2 +1,20 @@
 .assessment::selection 
- background: transparent 
+ background: transparent
+
+// Exam mode styles - prevent interaction with top area
+body.exam-mode
+  user-select: none
+  -webkit-user-select: none
+  -moz-user-select: none
+  -ms-user-select: none
+
+// Cursor blocked state - completely hide cursor
+body.cursor-blocked
+  cursor: none !important
+  * 
+    cursor: none !important
+    pointer-events: none !important
+
+// Smooth cursor transition
+body
+  transition: cursor 0.05s ease

@@ -1,13 +1,14 @@
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Subject } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SecurityService {
-// Is subject se hum AppComponent ko batayenge ke screen block karni hai
   public securityTriggered = new Subject<boolean>();
+  private toastr = inject(ToastrService);
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
@@ -19,8 +20,46 @@ init() {
 
   // --- Pehle wale saare code (Ctrl+P, Right Click) yahan rahen ge ---
 
-  // Jab user Snipping Tool kholne ke liye bahar jaye
-  window.addEventListener('blur', () => {
+      // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
+      window.addEventListener('blur', () => {
+        this.enableProtection();
+      });
+
+      // 2. Detect jab user wapas aaye
+      window.addEventListener('focus', () => {
+        this.disableProtection();
+      });
+
+      // 3. Visibility Change detection (Tab switch ya minimize hone par)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          this.enableProtection();
+        }
+      });
+
+      // 4. Keyboard Shortcuts (Jo browser allow karta hai)
+      window.addEventListener('keydown', (event) => {
+        // Block Print Screen key
+        if (event.key === 'PrintScreen') {
+          this.enableProtection();
+          navigator.clipboard.writeText('');
+          this.toastr.error(
+            'Screenshots are prohibited.',
+            'Security Alert'
+          );
+        }
+
+        // Block Ctrl+P, Ctrl+S, Ctrl+U
+        const blockedKeys = ['p', 's', 'u'];
+        if (event.ctrlKey && blockedKeys.includes(event.key.toLowerCase())) {
+          event.preventDefault();
+          this.toastr.warning('This action is disabled.');
+        }
+      });
+    }
+  };
+
+  private enableProtection() {
     document.body.classList.add('screen-protected');
   });
 
@@ -42,3 +81,6 @@ init() {
   // });
 }
 }
+
+
+
