@@ -68,26 +68,32 @@ export class FinalAssessment implements OnInit {
     } else if (this.courseTypeId == 3) {
       this._fetchShoortCourseAssessment();
     };
+    this.startAssessment()
     this._initializeMouseTracking();
+    this._initializeSecurityTracking();
   }
 
   private _initializeMouseTracking(): void {
     document.body.classList.add('exam-mode');
-    this._setupVisibilityChangeDetection();
   }
 
-  private _setupVisibilityChangeDetection(): void {
-    // Detect when user switches tabs
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        console.warn('⚠️ User switched away from assessment tab!');
-        // You could log this to your backend for monitoring
-        this.showKeyboardBlockWarning.set(true);
-        setTimeout(() => this.showKeyboardBlockWarning.set(false), 3000);
-      }
+  private _initializeSecurityTracking(): void {
+    // Start assessment tracking in SecurityService
+    this.securityService.startAssessmentTracking();
+
+    // Subscribe to warning events
+    this.securityService.warningEvent.pipe(takeUntil(this.destroy$)).subscribe((event) => {
+      console.log('[Security] Warning event received:', event);
+      // Warning API is already called by SecurityService
+      // Warning count is tracked in SecurityService
+    });
+
+    // Subscribe to auto-submit trigger
+    this.securityService.autoSubmitTriggered.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      console.log('[Security] Auto-submit triggered due to warning limit');
+      this._autoSubmit();
     });
   }
-
 
   _fetchShoortCourseAssessment() {
     if (!this.orderPayload?.shortCourseId) return;
@@ -96,11 +102,13 @@ export class FinalAssessment implements OnInit {
     this.assessmentService.getShortCourseAssessment(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -117,11 +125,13 @@ export class FinalAssessment implements OnInit {
     this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -138,11 +148,13 @@ export class FinalAssessment implements OnInit {
     this.assessmentService.getCareerPathAssessment(this.orderPayload.careerPathLevelMapId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -159,11 +171,13 @@ export class FinalAssessment implements OnInit {
     this.assessmentService.getProfessionalCourseAssessment(this.orderPayload.professionalCertificateId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -177,11 +191,38 @@ export class FinalAssessment implements OnInit {
     const isDualDisplayActive = await this.securityService.isDualDisplayActive();
     if (isDualDisplayActive) {
       if (this.currentQuestion()?.isSelect) {
+        await this._saveCurrentQuestion();
         this.currentQuestionIndex.update(index => index + 1);
       };
       return
     }
     return;
+  }
+
+  private _saveCurrentQuestion() {
+    const current = this.currentQuestion();
+    if (!current) return;
+
+    const payload = {
+      questionId: current.id,
+      selectedAnswer: current.selectedOption,
+      courseId: this.orderPayload?.courseCertificateId ? null : this.orderPayload?.shortCourseId,
+      courseCertificateId: this.orderPayload?.courseCertificateId || null,
+      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null,
+      assessmentTypeId: 2
+    };
+
+    const token = this.authService.getToken();
+    return this.assessmentService.onNextSaveAssessment(payload, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          console.log('Question saved:', details);
+        },
+        error: (err: any) => {
+          console.error('Save Question Error:', err);
+        }
+      });
   }
 
   onOptionChange(option: any) {
@@ -201,6 +242,7 @@ export class FinalAssessment implements OnInit {
     this.destroy$.next();
     this.destroy$.complete();
     document.body.classList.remove('exam-mode');
+    this.securityService.stopAssessmentTracking();
   }
 
   startTimer() {
@@ -301,7 +343,6 @@ export class FinalAssessment implements OnInit {
     submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          console.log('[DEBUG] Submit API response:', response);
           this.isCompleting.set(false);
           if (response?.statusCode == 200 && response?.data) {
             // Use submit response data directly - it already has isPassed and all other fields
@@ -328,20 +369,15 @@ export class FinalAssessment implements OnInit {
     const isPassed = data.isPassed;
 
     if (isPassed === false) {
-      console.log('[DEBUG] Assessment FAILED - emitting data immediately');
       // If failed, emit data immediately to route to failed-assessment
       this.next.emit(data);
     } else if (isPassed === true) {
-      console.log('[DEBUG] Assessment PASSED');
       // If passed, show modal and DON'T emit yet (wait for user to click Generate Certificate)
       if (this.courseTypeId !== 3) {
-        console.log('[DEBUG] NOT short course - showing modal immediately');
         // For other courses, show modal immediately and WAIT for user to click Generate Certificate
         this.assessmentResultData.set(data);
         this.showGenerateCertificateModal.set(true);
       } else {
-        console.log('[DEBUG] Short course (courseTypeId === 3) - waiting 30 seconds then emitting');
-        // For short courses, show loading and wait 30 seconds then emit
         this.isGeneratingCertificate.set(true);
         setTimeout(() => {
           this.isGeneratingCertificate.set(false);
@@ -349,7 +385,6 @@ export class FinalAssessment implements OnInit {
         }, 30000);
       }
     } else {
-      // Fallback for unexpected cases
       this.next.emit('failed');
     }
   }
@@ -547,5 +582,25 @@ export class FinalAssessment implements OnInit {
     // Block right-click completely
     event.preventDefault();
     event.stopPropagation();
+  }
+
+  startAssessment() {
+    const payload = {
+      assessmentTypeId: 2,
+      shortCourseId: this.orderPayload?.courseCertificateId ? null : this.orderPayload?.shortCourseId,
+      courseCertificateId: this.orderPayload?.courseCertificateId || null,
+      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null
+    };
+    const token = this.authService.getToken();
+    this.assessmentService.startAssessmentTime(payload, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          console.log(details);
+        },
+        error: (err: any) => {
+          console.error('Start Assessment Time Error:', err);
+        }
+      });
   }
 }

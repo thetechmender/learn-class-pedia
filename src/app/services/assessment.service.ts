@@ -168,5 +168,18 @@ export class AssessmentService {
     return this.http.post(`${this.apiUrl}/CustomerProfile/UpdateEnrollmentActivity`, payload, {
       headers: this.getHeaders(token)
     })
+  };
+
+  startAssessmentTime(payload: any = {}, token: string | null): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/assessment/start`, payload, {
+      headers: this.getHeaders(token)
+    });
+  };
+
+  onNextSaveAssessment(payload: any = {}, token: string | null): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/assessment/question/save`, payload, {
+      headers: this.getHeaders(token)
+    });
   }
+
 }
