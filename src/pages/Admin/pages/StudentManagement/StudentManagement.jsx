@@ -24,7 +24,11 @@ import {
   Award,
   Settings,
   FileText,
-  Share2
+  Share2,
+  Search,
+  SlidersHorizontal,
+  ChevronDown,
+  RotateCcw
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
@@ -357,264 +361,268 @@ const StudentManagement = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-3 lg:p-4">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg">
-              <Users className="w-8 h-8 text-white" />
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 lg:p-5 mb-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg">
+              <Users className="w-6 h-6 text-white" />
             </div>
-            <div className="min-h-[4.5rem] flex flex-col justify-center">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight pb-1">
+            <div className="min-h-[3.5rem] flex flex-col justify-center">
+              <h1 className="text-2xl lg:text-[1.7rem] font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight">
                 Student Management
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 leading-snug">
                 Manage and monitor student information and enrollment details
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="font-medium">Refresh</span>
             </button>
-            <div className="px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Students</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{pagination.totalCount}</div>
+            <div className="px-3.5 py-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">Total Students</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{pagination.totalCount}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 relative">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-              <Filter className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Filters</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {activeFilterCount > 0
-                  ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`
-                  : 'Refine the student list'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {activeFilterCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-              >
-                <X className="w-4 h-4" />
-                <span>Clear All</span>
-              </button>
-            )}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm ${showFilters
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-            >
-              <Filter className="w-4 h-4" />
-              <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+      {/* Search and Filters - Modern Compact Design */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-visible">
+        {/* Filter Header Bar */}
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 rounded-t-xl">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+            {/* Left: Quick Search & Stats */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+             
               {activeFilterCount > 0 && (
-                <span className={`ml-1 min-w-[20px] h-5 inline-flex items-center justify-center px-1.5 rounded-full text-xs font-semibold ${showFilters ? 'bg-white/20 text-white' : 'bg-blue-500 text-white'}`}>
-                  {activeFilterCount}
+                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                  {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
                 </span>
               )}
-            </button>
+            </div>
+
+            {/* Right: Filter Actions */}
+            <div className="flex items-center gap-2">
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="hidden sm:inline">Reset</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  showFilters
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                aria-expanded={showFilters}
+                aria-controls="filter-panel"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span className="hidden sm:inline">Filters</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
+              </button>
+              <button
+                onClick={handleFilter}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg shadow-sm hover:shadow transition-all"
+              >
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Apply</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fadeIn space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
-              <input
-                type="text"
-                placeholder="Enter full name"
-                value={filters.fullName}
-                onChange={(e) => handleFilterChange('fullName', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-              <input
-                type="email"
-                placeholder="Enter email address"
-                value={filters.email}
-                onChange={(e) => handleFilterChange('email', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-              <input
-                type="tel"
-                placeholder="Enter phone number"
-                value={filters.phoneNumber}
-                onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Verified</label>
-              <select
-                value={filters.isEmailVerified}
-                onChange={(e) => handleFilterChange('isEmailVerified', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-              >
-                <option value="">All</option>
-                <option value="true">Verified</option>
-                <option value="false">Not Verified</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signup Type</label>
-              <select
-                value={filters.signupTypeId}
-                onChange={(e) => handleFilterChange('signupTypeId', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-              >
-                <option value="">All Signup Types</option>
-                {signupTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.typeName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Country</label>
-              <GenericDropdown
-                value={filters.geoLocationCountry}
-                onChange={(value) => handleFilterChange('geoLocationCountry', value)}
-                items={countries}
-                placeholder="All Countries"
-                disabled={loadingDropdowns}
-                loading={loadingDropdowns}
-                allowClear={true}
-                displayField="name"
-                valueField="name"
-              />
-            </div>
-
-            {/* Signup Date Range */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signup Date From</label>
-              <input
-                type="date"
-                value={filters.signupDateFrom}
-                onChange={(e) => handleFilterChange('signupDateFrom', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signup Date To</label>
-              <input
-                type="date"
-                value={filters.signupDateTo}
-                onChange={(e) => handleFilterChange('signupDateTo', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
-              />
-            </div>
-
-            {/* Course Filter */}
-            <div className="space-y-2 relative z-50">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Course</label>
-              <GenericDropdown
-                value={filters.courseId}
-                onChange={(value) => handleFilterChange('courseId', value)}
-                items={courses}
-                placeholder="All Courses"
-                disabled={loadingDropdowns}
-                loading={loadingDropdowns}
-                allowClear={true}
-                displayField="title"
-                valueField="id"
-              />
-            </div>
-
-          </div>
-
-          {/* Toggle Filters (checkboxes) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Certificate Status
-              </label>
-              <div className="flex flex-wrap gap-4 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
+        {/* Expandable Filter Panel */}
+        <div
+          id="filter-panel"
+          className={`transition-all duration-300 ease-in-out ${
+            showFilters ? 'max-h-[500px] opacity-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
+          }`}
+        >
+          <div className="p-4 space-y-4 bg-gray-50/60 dark:bg-gray-900/20 rounded-b-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+              <div className="relative xl:col-span-1">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name</label>
+                <div className="relative">
+                   <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
-                    type="checkbox"
-                    checked={filters.isDownloaded}
-                    onChange={(e) => handleFilterChange('isDownloaded', e.target.checked)}
-                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600"
+                    type="text"
+                    placeholder="Search by name..."
+                    value={filters.fullName}
+                    onChange={(e) => handleFilterChange('fullName', e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Downloaded</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                </div>
+              </div>
+              <div className="relative xl:col-span-1">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
-                    type="checkbox"
-                    checked={filters.isShared}
-                    onChange={(e) => handleFilterChange('isShared', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    type="email"
+                    placeholder="email@example.com"
+                    value={filters.email}
+                    onChange={(e) => handleFilterChange('email', e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Shared</span>
-                </label>
+                </div>
+              </div>
+              <div className="relative xl:col-span-1">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone</label>
+                <div className="relative">
+                  <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="tel"
+                    placeholder="+1 234 567 890"
+                    value={filters.phoneNumber}
+                    onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Verification</label>
+                <div className="relative">
+                  <CheckCircle className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    value={filters.isEmailVerified}
+                    onChange={(e) => handleFilterChange('isEmailVerified', e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                  >
+                    <option value="">All Status</option>
+                    <option value="true">✓ Verified</option>
+                    <option value="false">✗ Not Verified</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup Type</label>
+                <div className="relative">
+                  <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    value={filters.signupTypeId}
+                    onChange={(e) => handleFilterChange('signupTypeId', e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                  >
+                    <option value="">All Types</option>
+                    {signupTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.typeName}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+              <div className="sm:col-span-2 xl:col-span-1">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Country</label>
+                <div className="relative">
+                  <Globe className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                  <GenericDropdown
+                    value={filters.geoLocationCountry}
+                    onChange={(value) => handleFilterChange('geoLocationCountry', value)}
+                    items={countries}
+                    placeholder="All Countries"
+                    disabled={loadingDropdowns}
+                    loading={loadingDropdowns}
+                    allowClear={true}
+                    displayField="name"
+                    valueField="name"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4" />
-                Cart Status
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer pt-1">
-                <input
-                  type="checkbox"
-                  checked={filters.isCart}
-                  onChange={(e) => handleFilterChange('isCart', e.target.checked)}
-                  className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Has Items in Cart</span>
-              </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3 items-start">
+              <div className="sm:col-span-2 xl:col-span-3">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Course</label>
+                <div className="relative">
+                  <BookOpen className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                  <GenericDropdown
+                    value={filters.courseId}
+                    onChange={(value) => handleFilterChange('courseId', value)}
+                    items={courses}
+                    placeholder="All Courses"
+                    disabled={loadingDropdowns}
+                    loading={loadingDropdowns}
+                    allowClear={true}
+                    displayField="title"
+                    valueField="id"
+                  />
+                </div>
+              </div>
+              <div className="xl:col-span-2">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup From</label>
+                <div className="relative">
+                  <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="date"
+                    value={filters.signupDateFrom}
+                    onChange={(e) => handleFilterChange('signupDateFrom', e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                  />
+                </div>
+              </div>
+              <div className="xl:col-span-2">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup To</label>
+                <div className="relative">
+                  <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="date"
+                    value={filters.signupDateTo}
+                    onChange={(e) => handleFilterChange('signupDateTo', e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                  />
+                </div>
+              </div>
+              <div className="sm:col-span-2 xl:col-span-5 xl:self-end">
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-3 py-2.5 shadow-sm min-h-[44px]">
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={filters.isDownloaded}
+                        onChange={(e) => handleFilterChange('isDownloaded', e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                      />
+                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Downloaded</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={filters.isShared}
+                        onChange={(e) => handleFilterChange('isShared', e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                      />
+                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Shared</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-orange-300 dark:hover:border-orange-700 transition-colors whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={filters.isCart}
+                        onChange={(e) => handleFilterChange('isCart', e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                      />
+                      <ShoppingBag className="w-4 h-4 text-orange-500" />
+                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Has Cart Items</span>
+                    </label>
+                  </div>
+              </div>
             </div>
           </div>
-
-          {/* Action bar */}
-          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-            <button
-              onClick={clearFilters}
-              className="flex items-center justify-center gap-2 px-5 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 font-medium"
-            >
-              <X className="w-4 h-4" />
-              Clear All
-            </button>
-            <button
-              onClick={handleFilter}
-              className="flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-colors duration-200 shadow-lg font-medium"
-            >
-              <Filter className="w-4 h-4" />
-              Apply Filters
-            </button>
-          </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Active Filter Chips */}
@@ -665,44 +673,39 @@ const StudentManagement = () => {
       )}
 
       {/* Students Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 mt-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 mt-5 overflow-hidden">
         {/* Desktop Table - Scrollable Container */}
         {/* Desktop Table - Scrollable Container */}
 <div className="hidden md:block overflow-x-auto max-h-[600px] w-full" style={{ scrollbarWidth: 'auto' }}>
-  <table className="w-full border-collapse" style={{ minWidth: '1400px' }}>
+  <table className="w-full border-collapse" style={{ minWidth: '1000px' }}>
     <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
       <tr>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[240px]">
+        <th className="pl-[62px] pr-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[160px]">
           Student
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
-          Country
-        </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+       
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[80px]">
           Enrollments
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
-          Cart
-        </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[110px]">
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[95px]">
           Signup through
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[110px]">
           Advertising Medium
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[90px]">
           Landing Page
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[85px]">
           Referral URL
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[95px]">
           Signup Date
         </th>
-        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[160px]">
-          Course Detail
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[125px]">
+          Course Progress
         </th>
-        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[140px]">
+        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[90px]">
           Actions
         </th>
       </tr>
@@ -710,7 +713,7 @@ const StudentManagement = () => {
     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="11" className="px-6 py-12 text-center">
+                  <td colSpan="10" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-gray-500 dark:text-gray-400 font-medium">Loading students...</span>
@@ -719,7 +722,7 @@ const StudentManagement = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="px-6 py-12 text-center">
+                  <td colSpan="10" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-gray-400" />
                       <span className="text-gray-500 dark:text-gray-400 font-medium text-lg">No students found</span>
@@ -730,7 +733,7 @@ const StudentManagement = () => {
               ) : (
                 students.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center gap-3">
 
                         {/* Avatar */}
@@ -777,17 +780,29 @@ const StudentManagement = () => {
                           <div className="flex items-center gap-1 mt-1">
                             {student.isEmailVerified ? (
                               <>
-                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <CheckCircle className="w-3 h-3 text-green-500" />
                                 <span className="text-xs text-green-600">Verified</span>
                               </>
                             ) : (
                               <>
-                                <XCircle className="w-4 h-4 text-red-500" />
+                                <XCircle className="w-3 h-3 text-red-500" />
                                 <span className="text-xs text-red-500">Unverified</span>
                               </>
                             )}
                           </div>
+                           <div className="flex items-center gap-2">
+                        <GlobeIcon className="w-3 h-3 text-blue-600" />
 
+                        {student.geoLocationCountryName ? (
+                          <span className="text-xs text-blue-600 dark:text-white truncate">
+                            {student.geoLocationCountryName}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md text-xs font-medium border border-gray-200 dark:border-gray-600">
+                            N/A
+                          </span>
+                        )}
+                      </div>
                           {/* Password */}
                           {student.plainPassword && (
                             <div className="flex items-center gap-1 mt-1">
@@ -797,26 +812,13 @@ const StudentManagement = () => {
                               </span>
                             </div>
                           )}
+                             
 
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <GlobeIcon className="w-4 h-4 text-gray-400" />
-
-                        {student.geoLocationCountryName ? (
-                          <span className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
-                            {student.geoLocationCountryName}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md text-xs font-medium border border-gray-200 dark:border-gray-600">
-                            N/A
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    {/* <td className="px-6 py-5 whitespace-nowrap">
+                  
+                    {/* <td className="px-2 py-2 whitespace-nowrap">
                       <div className="inline-flex items-center gap-2 text-sm">
                         {student.isEmailVerified ? (
                           <>
@@ -831,7 +833,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td> */}
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -849,24 +851,7 @@ const StudentManagement = () => {
                         <span>Enroll {student.enrollmentCount || 0}</span>
                       </button>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewCart(student.id);
-                        }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 ${student.cartCount
-                          ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
-                          : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
-                          }`}
-                      >
-                        <div className={`p-1 rounded-lg ${student.cartCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                          <ShoppingBag className="w-3.5 h-3.5" />
-                        </div>
-                        <span>Cart {student.cartCount || 0}</span>
-                      </button>
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <span className={`text-sm font-medium ${student.signupTypeName === 'Email' ? 'text-blue-600' :
                         student.signupTypeName === 'Google' ? 'text-red-600' :
                           student.signupTypeName === 'Facebook' ? 'text-indigo-600' :
@@ -877,7 +862,7 @@ const StudentManagement = () => {
                         {student.signupTypeName || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.advertisingMedium ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-medium border border-indigo-200 dark:border-indigo-800">
@@ -893,7 +878,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.landingPageUrl ? (
                           <a
@@ -918,7 +903,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         {student.signupTypeUrl ? (
                           <a
@@ -943,7 +928,7 @@ const StudentManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                           <Calendar className="w-4 h-4 text-blue-500" />
@@ -958,9 +943,25 @@ const StudentManagement = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      {student.completionPercentage !== undefined && student.completionPercentage !== null ? (
-                        <div className="flex flex-col gap-2">
+                    <td className="px-2 py-2">
+                      <div className="flex flex-col gap-2">
+                          {/* Cart */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewCart(student.id);
+                            }}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 self-start ${student.cartCount
+                              ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
+                              : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
+                              }`}
+                          >
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            <span>Cart {student.cartCount || 0}</span>
+                          </button>
+
+                        {student.completionPercentage !== undefined && student.completionPercentage !== null ? (
+                          <>
                           {/* Progress Bar with Percentage */}
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -986,14 +987,22 @@ const StudentManagement = () => {
 
                           {/* Status Row - Compact */}
                           <div className="flex items-center gap-2 flex-wrap">
-                            {/* Certificate */}
+                            {/* Downloaded */}
                             <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
                               student.isDownload 
                                 ? 'bg-emerald-100 text-emerald-700' 
                                 : 'bg-gray-100 text-gray-500'
                             }`}>
-                              <FileText className="w-3 h-3" />
-                              <span className="font-medium">{student.isDownload ? 'Downloaded' : 'Not Downloaded'}</span>
+                              {student.isDownload ? (
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                              <span className="font-medium">Downloaded</span>
                             </div>
 
                             {/* Shared */}
@@ -1002,18 +1011,27 @@ const StudentManagement = () => {
                                 ? 'bg-blue-100 text-blue-700' 
                                 : 'bg-gray-100 text-gray-500'
                             }`}>
-                              <Share2 className="w-3 h-3" />
-                              <span className="font-medium">{student.isShared ? 'Shared' : 'Not Shared'}</span>
+                              {student.isShared ? (
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                              <span className="font-medium">Shared</span>
                             </div>
                           </div>
-                        </div>
-                      ) : (
-                        <span className="px-3 py-1 bg-gray-100 text-gray-400 text-xs rounded-full">
-                          No Course
-                        </span>
-                      )}
+                          </>
+                        ) : (
+                          <span className="px-3 py-1 bg-gray-100 text-gray-400 text-xs rounded-full self-start">
+                            No Course
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-2 py-2 whitespace-nowrap">
                       <div className="flex flex-col gap-2">
                         <button
                           onClick={(e) => {
@@ -1063,9 +1081,6 @@ const StudentManagement = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[100px]">
                   Enrollments
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[80px]">
-                  Cart
-                </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">
                   Actions
                 </th>
@@ -1074,7 +1089,7 @@ const StudentManagement = () => {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center">
+                  <td colSpan="5" className="px-4 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-gray-500 dark:text-gray-400 font-medium text-sm">Loading students...</span>
@@ -1083,7 +1098,7 @@ const StudentManagement = () => {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center">
+                  <td colSpan="5" className="px-4 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Users className="w-12 h-12 text-gray-400" />
                       <span className="text-gray-500 dark:text-gray-400 font-medium">No students found</span>
@@ -1157,23 +1172,6 @@ const StudentManagement = () => {
                           <BookOpen className="w-3.5 h-3.5" />
                         </div>
                         <span>Enroll {student.enrollmentCount || 0}</span>
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewCart(student.id);
-                        }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.cartCount
-                          ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
-                          : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
-                          }`}
-                      >
-                        <div className={`p-1 rounded-lg ${student.cartCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                          <ShoppingBag className="w-3.5 h-3.5" />
-                        </div>
-                        <span>Cart {student.cartCount || 0}</span>
                       </button>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -1335,19 +1333,6 @@ const StudentManagement = () => {
                     <span>Enroll {student.enrollmentCount || 0}</span>
                   </button>
 
-                  <button
-                    onClick={() => handleViewCart(student.id)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.cartCount
-                      ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
-                      : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
-                      }`}
-                  >
-                    <div className={`p-1.5 rounded-lg ${student.cartCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                      <ShoppingBag className="w-4 h-4" />
-                    </div>
-                    <span>Cart {student.cartCount || 0}</span>
-                  </button>
-
                   <div className="text-xs text-gray-700 dark:text-gray-300">
                     <span className="font-semibold">Signup:</span> {student.signupTypeName || 'N/A'}
                   </div>
@@ -1439,16 +1424,6 @@ const StudentManagement = () => {
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>Enroll {student.enrollmentCount || 0}</span>
-                  </button>
-                  <button
-                    onClick={() => handleViewCart(student.id)}
-                    className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${student.cartCount
-                      ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
-                      : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
-                      }`}
-                  >
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Cart {student.cartCount || 0}</span>
                   </button>
                 </div>
               </div>
