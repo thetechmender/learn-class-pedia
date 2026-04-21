@@ -1,10 +1,18 @@
+// NOTE: This file is currently not in use due to Angular Material v20+ removing Sass theming support.
+// The project now uses a prebuilt theme: @angular/material/prebuilt-themes/azure-blue.css
+// See angular.json for the current theme configuration.
+//
+// If you need custom theming in the future, consider:
+// 1. Using CSS variables to override the prebuilt theme
+// 2. Downgrading to Angular Material v15-19 which supports Sass theming
+// 3. Waiting for official custom theming support in future Angular Material versions
 
 // Include theming for Angular Material with `mat.theme()`.
 // This Sass mixin will define CSS variables that are used for styling Angular Material
 // components according to the Material 3 design spec.
 // Learn more about theming and how to use it for your application's
 // custom components at https://material.angular.dev/guide/theming
-@use '@angular/material' as mat;
+// @use '@angular/material' as mat;
 
 html {
   @include mat.theme((

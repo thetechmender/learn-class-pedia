@@ -1,4 +1,5 @@
-import { HostListener, inject, Injectable } from '@angular/core';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Subject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
@@ -9,10 +10,15 @@ export class SecurityService {
   public securityTriggered = new Subject<boolean>();
   private toastr = inject(ToastrService);
 
-  // SecurityService ke andar
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
-  init() {
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+// SecurityService ke andar
+
+init() {
+  // Skip on server (SSR) — no window/document available
+  if (!isPlatformBrowser(this.platformId)) return;
+
+  // --- Pehle wale saare code (Ctrl+P, Right Click) yahan rahen ge ---
 
       // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
       window.addEventListener('blur', () => {
@@ -55,45 +61,25 @@ export class SecurityService {
 
   private enableProtection() {
     document.body.classList.add('screen-protected');
-    // Screen protected class mein CSS filter: blur(50px) hona chahiye
-  }
+  });
 
-  private disableProtection() {
-    // 3 second wait taake agar screenshot liya gaya ho to blur area hi aaye
-    setTimeout(() => {
-      document.body.classList.remove('screen-protected');
-    }, 2000);
-  }
-
-  async isDualDisplayActive(): Promise<boolean> {
-    const dualDisplay = await this.isDual();
-
-    if (dualDisplay) {
-      this.toastr.error(
-        'Please turn off dual display to continue.',
-        'Dual Display Detected'
-      );
-      return false;
-    }
-
-    return true;
-  };
-
-
-  private async isDual(): Promise<boolean> {
-    // Check if running in browser environment
-    if (typeof window !== 'undefined' && 'getScreenDetails' in window) {
-      // @ts-ignore
-      const details = await window.getScreenDetails();
-      return details.screens.length > 1;
-    }
-    return false;
-  };
-
-  // .screen-protected
-  // filter: blur(80px) !important
-  // pointer-events: none !important
-  // user-select: none !important
+  // Jab user wapas browser par aaye
+  // window.addEventListener('focus', () => {
+  //   // 1. Check karein ke kya screen protected thi?
+  //   if (document.body.classList.contains('screen-protected')) {
+      
+  //     // 2. 3 seconds (3000ms) ka wait karein
+  //     setTimeout(() => {
+  //       // 3. Blur hata dein
+  //       document.body.classList.remove('screen-protected');
+        
+  //       // 4. Blur hatne ke baad alert dikhayein
+  //       alert('Warning: Screenshots and screen recording are strictly prohibited. Your activity is being monitored.');
+        
+  //     }, 3000); 
+  //   }
+  // });
+}
 }
 
 
