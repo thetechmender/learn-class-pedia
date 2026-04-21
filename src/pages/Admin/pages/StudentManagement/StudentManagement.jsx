@@ -590,7 +590,7 @@ const StudentManagement = () => {
               </div>
               <div className="sm:col-span-2 xl:col-span-5 xl:self-end">
                   <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-3 py-2.5 shadow-sm min-h-[44px]">
-                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors whitespace-nowrap">
+                    <label className="inline-flex items-center gap-2 px-1 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={filters.isDownloaded}
