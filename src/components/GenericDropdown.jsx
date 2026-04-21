@@ -107,7 +107,7 @@ const GenericDropdown = ({
         }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
-        <span className={`flex-1 truncate ${
+        <span className={`flex-1 px-4 truncate ${
           (multiple && (!value || value.length === 0)) || (!multiple && (value === null || value === '')) ? 'text-gray-400' : 'text-gray-900'
         }`}>
           {getSelectedDisplayName()}
