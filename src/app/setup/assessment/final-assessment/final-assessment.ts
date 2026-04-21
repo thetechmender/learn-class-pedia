@@ -3,6 +3,7 @@ import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
 import { AssessmentService } from '../../../services/assessment.service';
 import { GenerateCertificateModal } from '../generate-certificate-modal/generate-certificate-modal';
+import { SecurityService } from '../../../services/security.service';
 
 @Component({
   selector: 'app-final-assessment',
@@ -55,6 +56,7 @@ export class FinalAssessment implements OnInit {
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
   private assessmentService = inject(AssessmentService);
+  public securityService = inject(SecurityService);
 
   ngOnInit(): void {
     if (this.orderPayload?.careerPathLevelMapId) {
@@ -66,7 +68,7 @@ export class FinalAssessment implements OnInit {
     } else if (this.courseTypeId == 3) {
       this._fetchShoortCourseAssessment();
     };
-this._initializeMouseTracking();
+    this._initializeMouseTracking();
   }
 
   private _initializeMouseTracking(): void {
@@ -171,11 +173,15 @@ this._initializeMouseTracking();
       });
   };
 
-  onNext() {
-    if (this.currentQuestion()?.isSelect) {
-      this.currentQuestionIndex.update(index => index + 1);
-    };
-    return
+  async onNext() {
+    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
+    if (isDualDisplayActive) {
+      if (this.currentQuestion()?.isSelect) {
+        this.currentQuestionIndex.update(index => index + 1);
+      };
+      return
+    }
+    return;
   }
 
   onOptionChange(option: any) {
@@ -390,85 +396,85 @@ this._initializeMouseTracking();
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + F5 (Hard Refresh)
     if (event.ctrlKey && event.key === 'F5') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + R (Reload)
     if (event.ctrlKey && event.key.toLowerCase() === 'r') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + W (Close Tab)
     if (event.ctrlKey && event.key.toLowerCase() === 'w') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + Tab (Next Tab)
     if (event.ctrlKey && event.key === 'Tab') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + Shift + Tab (Previous Tab)
     if (event.ctrlKey && event.shiftKey && event.key === 'Tab') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + 1-9 (Switch to specific tab)
     if (event.ctrlKey && event.key >= '1' && event.key <= '9') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + T (New Tab)
     if (event.ctrlKey && event.key.toLowerCase() === 't') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + N (New Window)
     if (event.ctrlKey && event.key.toLowerCase() === 'n') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Alt + Left/Right (Browser Back/Forward)
     if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + H (History)
     if (event.ctrlKey && event.key.toLowerCase() === 'h') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + Shift + T (Reopen closed tab)
     if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 't') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block F11 (Fullscreen toggle)
     if (event.key === 'F11') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Escape (might exit fullscreen)
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Show warning for any blocked shortcut
     if (event.ctrlKey || event.altKey || event.key === 'F5' || event.key === 'F11') {
       this._showKeyboardBlockedWarning();
@@ -477,12 +483,12 @@ this._initializeMouseTracking();
 
   private _showKeyboardBlockedWarning(): void {
     this.showKeyboardBlockWarning.set(true);
-    
+
     // Clear existing timeout
     if (this.keyboardWarningTimeout) {
       clearTimeout(this.keyboardWarningTimeout);
     }
-    
+
     // Hide warning after 2 seconds
     this.keyboardWarningTimeout = setTimeout(() => {
       this.showKeyboardBlockWarning.set(false);
@@ -499,7 +505,7 @@ this._initializeMouseTracking();
   handleMouseMove(event: MouseEvent): void {
     const DANGER_ZONE_HEIGHT = 200; // pixels from top - covers browser tabs area
     const mouseY = event.clientY;
-    
+
     if (mouseY <= DANGER_ZONE_HEIGHT) {
       this.isMouseNearTopBar.set(true);
       // Hide cursor completely
@@ -508,7 +514,7 @@ this._initializeMouseTracking();
       document.body.style.pointerEvents = 'none';
       // Add a class for additional styling
       document.body.classList.add('cursor-blocked');
-      
+
       // Prevent any mouse clicks in this area
       event.preventDefault();
       event.stopPropagation();
@@ -519,12 +525,12 @@ this._initializeMouseTracking();
       document.body.classList.remove('cursor-blocked');
     }
   }
-  
+
   @HostListener('window:mousedown', ['$event'])
   handleMouseDown(event: MouseEvent): void {
     const DANGER_ZONE_HEIGHT = 200;
     const mouseY = event.clientY;
-    
+
     // Block all mouse clicks in the top area (tabs, URL bar, etc.)
     if (mouseY <= DANGER_ZONE_HEIGHT) {
       event.preventDefault();
@@ -534,8 +540,8 @@ this._initializeMouseTracking();
       return;
     }
   }
-  
-  
+
+
   @HostListener('window:contextmenu', ['$event'])
   handleContextMenu(event: MouseEvent): void {
     // Block right-click completely

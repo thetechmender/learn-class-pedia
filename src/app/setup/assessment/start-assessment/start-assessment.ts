@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, Input, OnInit, OnDestroy, inject, sign
 import { AuthService } from '../../../services/auth.service';
 import { AssessmentService } from '../../../services/assessment.service';
 import { Subject, takeUntil } from 'rxjs';
+import { SecurityService } from '../../../services/security.service';
 
 @Component({
   selector: 'app-start-assessment',
@@ -18,6 +19,7 @@ export class StartAssessment implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
   public assessmentService = inject(AssessmentService);
+  public securityService = inject(SecurityService);
 
   questions = signal<any[]>([]);
   isQuestionLoading = signal(false);
@@ -104,8 +106,12 @@ export class StartAssessment implements OnInit, OnDestroy {
       });
   }
 
-  onStartAssessment() {
-    this.next.emit('start');
+  async onStartAssessment() {
+    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
+    if (isDualDisplayActive) {
+      this.next.emit('start');
+      return;
+    }
   }
 
   back() {
