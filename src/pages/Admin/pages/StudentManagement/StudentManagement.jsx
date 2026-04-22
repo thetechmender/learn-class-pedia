@@ -589,7 +589,7 @@ const StudentManagement = () => {
                 </div>
               </div>
               <div className="sm:col-span-2 xl:col-span-5 xl:self-end">
-                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-3 py-2.5 shadow-sm min-h-[44px]">
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-2 py-2 shadow-sm ">
                     <label className="inline-flex items-center gap-2 px-1 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors whitespace-nowrap">
                       <input
                         type="checkbox"
@@ -948,12 +948,14 @@ const StudentManagement = () => {
                           {/* Cart */}
                           <button
                             onClick={(e) => {
+                              if ((student.cartCount || 0) === 0) return;
                               e.stopPropagation();
                               handleViewCart(student.id);
                             }}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 self-start ${student.cartCount
-                              ? 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
-                              : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 cursor-pointer'
+                            disabled={(student.cartCount || 0) === 0}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 self-start ${(student.cartCount || 0) === 0
+                              ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-600'
+                              : 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
                               }`}
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
@@ -1043,18 +1045,22 @@ const StudentManagement = () => {
                           <Eye className="w-3.5 h-3.5" />
                           <span>View</span>
                         </button>
-                        {(student.enrollmentCount || 0) > 0 && (
                           <button
                             onClick={(e) => {
+                              if ((student.orderCount || 0) === 0) return;
                               e.stopPropagation();
                               handleViewOrders(student.id);
                             }}
-                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer w-[70px]"
+                            disabled={(student.orderCount || 0) === 0}
+                            className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 w-[70px] ${
+                              (student.orderCount || 0) === 0
+                                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-600'
+                                : 'bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer'
+                            }`}
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
                             <span>Orders</span>
                           </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -1186,18 +1192,22 @@ const StudentManagement = () => {
                           <Eye className="w-3.5 h-3.5" />
                           <span>View</span>
                         </button>
-                        {(student.enrollmentCount || 0) > 0 && (
                           <button
                             onClick={(e) => {
+                              if ((student.orderCount || 0) === 0) return;
                               e.stopPropagation();
                               handleViewOrders(student.id);
                             }}
-                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer w-[60px]"
+                            disabled={(student.orderCount || 0) === 0}
+                            className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors w-[60px] ${
+                              (student.orderCount || 0) === 0
+                                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-600'
+                                : 'bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer'
+                            }`}
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
                             <span>Orders</span>
                           </button>
-                        )}
                       </div>
                     </td>
                   </tr>
