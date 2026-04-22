@@ -668,400 +668,502 @@ const StudentManagement = () => {
       {/* Students Table */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 mt-5 overflow-hidden">
         {/* Desktop Table - Scrollable Container */}
-        {/* Desktop Table - Scrollable Container */}
-<div className="hidden md:block overflow-x-auto max-h-[600px] w-full" style={{ scrollbarWidth: 'auto' }}>
-  <table className="w-full border-collapse" style={{ minWidth: '1000px' }}>
-    <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+<div className="hidden md:block w-full overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+  <table className="w-full min-w-[1220px] table-fixed border-collapse">
+    <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <tr>
-        <th className="pl-[62px] pr-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[160px]">
+        <th className="w-[200px] pl-4 pr-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Student
         </th>
-       
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[80px]">
+
+        <th className="w-[90px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Enrollments
         </th>
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[95px]">
-          Signup through
+
+        <th className="w-[90px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+          Signup Through
         </th>
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[110px]">
+
+        <th className="w-[90px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Advertising Medium
         </th>
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[90px]">
+
+        <th className="w-[100px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Landing Page
         </th>
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[85px]">
+
+        <th className="w-[90px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Referral URL
         </th>
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[95px]">
+
+        <th className="w-[100px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Signup Date
         </th>
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[125px]">
+
+        <th className="w-[110px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Course Progress
         </th>
-        <th className="px-2 py-2 text-left text-[12px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap align-middle w-[90px]">
+
+        <th className="w-[120px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
           Actions
         </th>
       </tr>
     </thead>
+
     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {loading ? (
-                <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-gray-500 dark:text-gray-400 font-medium">Loading students...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : students.length === 0 ? (
-                <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <Users className="w-12 h-12 text-gray-400" />
-                      <span className="text-gray-500 dark:text-gray-400 font-medium text-lg">No students found</span>
-                      <span className="text-gray-400 dark:text-gray-500 text-sm">Try adjusting your search or filters</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                students.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
+      {loading ? (
+        <tr>
+          <td colSpan="9" className="px-6 py-14 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+              <span className="font-medium text-gray-500 dark:text-gray-400">
+                Loading students...
+              </span>
+            </div>
+          </td>
+        </tr>
+      ) : students.length === 0 ? (
+        <tr>
+          <td colSpan="9" className="px-6 py-14 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <Users className="h-12 w-12 text-gray-400" />
+              <span className="text-lg font-medium text-gray-500 dark:text-gray-400">
+                No students found
+              </span>
+              <span className="text-sm text-gray-400 dark:text-gray-500">
+                Try adjusting your search or filters
+              </span>
+            </div>
+          </td>
+        </tr>
+      ) : (
+        students.map((student) => (
+          <tr
+            key={student.id}
+            className="transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/60"
+          >
+            {/* Student */}
+            <td className="pl-4 pr-2 py-3 align-top">
+              <div className="min-w-0 space-y-1.5">
+                <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                  {student.firstName && student.lastName
+                    ? `${student.firstName} ${student.lastName}`
+                    : student.fullName || "N/A"}
+                </div>
 
-                        {/* Avatar */}
-                        <div className="relative h-12 w-12 flex-shrink-0">
-                          {student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? (
-                            <img
-                              className="h-12 w-12 rounded-full object-cover border border-gray-300"
-                              src={student.profileImageUrl}
-                              alt={student.fullName}
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          ) : null}
+                <div className="truncate text-xs text-gray-500 dark:text-gray-400">
+                  {student.email || "N/A"}
+                </div>
 
-                          {/* Initials fallback */}
-                          <div
-                            className={`absolute inset-0 h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ${student.profileImageUrl && !shouldUseInitials(student.profileImageUrl)
-                              ? "hidden"
-                              : "flex"
-                              }`}
-                          >
-                            {getInitials(student.fullName, student.firstName, student.lastName)}
-                          </div>
-                        </div>
-
-                        {/* Info */}
-                        <div className="min-w-0">
-
-                          {/* Name */}
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {student.firstName && student.lastName
-                              ? `${student.firstName} ${student.lastName}`
-                              : student.fullName || "N/A"}
-                          </div>
-
-                          {/* Email */}
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {student.email}
-                          </div>
-
-
-                          {/* Verification Status */}
-                          <div className="flex items-center gap-1 mt-1">
-                            {student.isEmailVerified ? (
-                              <>
-                                <CheckCircle className="w-3 h-3 text-green-500" />
-                                <span className="text-xs text-green-600">Verified</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-3 h-3 text-red-500" />
-                                <span className="text-xs text-red-500">Unverified</span>
-                              </>
-                            )}
-                          </div>
-                           <div className="flex items-center gap-2">
-                        <GlobeIcon className="w-3 h-3 text-blue-600" />
-
-                        {student.geoLocationCountryName ? (
-                          <span className="text-xs text-blue-600 dark:text-white truncate">
-                            {student.geoLocationCountryName}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md text-xs font-medium border border-gray-200 dark:border-gray-600">
-                            N/A
-                          </span>
-                        )}
-                      </div>
-                          {/* Password */}
-                          {student.plainPassword && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <AlertCircle className="w-3 h-3 text-yellow-500" />
-                              <span className="text-xs text-gray-600 dark:text-gray-400">
-                                Pass: <code className="px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded font-mono text-[10px] font-semibold">{student.plainPassword}</code>
-                              </span>
-                            </div>
-                          )}
-                             
-
-                        </div>
-                      </div>
-                    </td>
-                  
-                    {/* <td className="px-2 py-2 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-2 text-sm">
-                        {student.isEmailVerified ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <span className="text-green-600 font-medium">Verified</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-4 h-4 text-red-500" />
-                            <span className="text-red-600 font-medium">Not Verified</span>
-                          </>
-                        )}
-                      </div>
-                    </td> */}
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewEnrollments(student.id);
-                        }}
-                        disabled={!student.enrollmentCount}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 ${student.enrollmentCount
-                          ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
-                          : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                          }`}
-                      >
-                        <div className={`p-1 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                          <BookOpen className="w-3.5 h-3.5" />
-                        </div>
-                        <span>Enroll {student.enrollmentCount || 0}</span>
-                      </button>
-                    </td>
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <span className={`text-sm font-medium ${student.signupTypeName === 'Email' ? 'text-blue-600' :
-                        student.signupTypeName === 'Google' ? 'text-red-600' :
-                          student.signupTypeName === 'Facebook' ? 'text-indigo-600' :
-                            student.signupTypeName === 'LinkedIn' ? 'text-cyan-600' :
-                              student.signupTypeName === 'Apple' ? 'text-gray-600' :
-                                'text-purple-600'
-                        }`}>
-                        {student.signupTypeName || 'N/A'}
+                <div className="flex items-center gap-1">
+                  {student.isEmailVerified ? (
+                    <>
+                      <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                        Verified
                       </span>
-                    </td>
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {student.advertisingMedium ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-medium border border-indigo-200 dark:border-indigo-800">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                            </svg>
-                            <span className="truncate max-w-[90px]">{student.advertisingMedium}</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
-                            N/A
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {student.landingPageUrl ? (
-                          <a
-                            href={student.landingPageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-lg text-xs font-medium hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors border border-teal-200 dark:border-teal-800"
-                            title={student.landingPageUrl}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 009-9m-9 9h18" />
-                            </svg>
-                            <span className="truncate max-w-[80px]">Open Link</span>
-                          </a>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                            </svg>
-                            N/A
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {student.signupTypeUrl ? (
-                          <a
-                            href={student.signupTypeUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-medium hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors border border-purple-200 dark:border-purple-800"
-                            title={student.signupTypeUrl}
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            <span className="truncate max-w-[80px]">Referral</span>
-                          </a>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                            </svg>
-                            N/A
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                          <Calendar className="w-4 h-4 text-blue-500" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {new Date(student.createdAt).toLocaleDateString()}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                            {new Date(student.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 py-2">
-                      <div className="flex flex-col gap-2">
-                          {/* Cart */}
-                          <button
-                            onClick={(e) => {
-                              if ((student.cartCount || 0) === 0) return;
-                              e.stopPropagation();
-                              handleViewCart(student.id);
-                            }}
-                            disabled={(student.cartCount || 0) === 0}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 self-start ${(student.cartCount || 0) === 0
-                              ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-600'
-                              : 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 hover:border-orange-300 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30 cursor-pointer'
-                              }`}
-                          >
-                            <ShoppingBag className="w-3.5 h-3.5" />
-                            <span>Cart {student.cartCount || 0}</span>
-                          </button>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-3.5 w-3.5 text-red-500" />
+                      <span className="text-xs font-medium text-red-500 dark:text-red-400">
+                        Unverified
+                      </span>
+                    </>
+                  )}
+                </div>
 
-                        {student.completionPercentage !== undefined && student.completionPercentage !== null ? (
-                          <>
-                          {/* Progress Bar with Percentage */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${
-                                  student.completionPercentage === 100 ? 'bg-emerald-500' :
-                                  student.completionPercentage >= 75 ? 'bg-blue-500' :
-                                  student.completionPercentage >= 50 ? 'bg-amber-400' :
-                                  student.completionPercentage >= 25 ? 'bg-orange-400' :
-                                  'bg-rose-400'
-                                }`}
-                                style={{ width: `${student.completionPercentage}%` }}
-                              />
-                            </div>
-                            <span className={`text-xs font-bold min-w-[32px] ${
-                              student.completionPercentage === 100 ? 'text-emerald-600' :
-                              student.completionPercentage >= 50 ? 'text-blue-600' :
-                              'text-amber-600'
-                            }`}>
-                              {student.completionPercentage}%
-                            </span>
-                          </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <GlobeIcon className="h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+                  {student.geoLocationCountryName ? (
+                    <span className="truncate text-xs text-blue-600 dark:text-blue-300">
+                      {student.geoLocationCountryName}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                      N/A
+                    </span>
+                  )}
+                </div>
 
-                          {/* Status Row - Compact */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {/* Downloaded */}
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                              student.isDownload 
-                                ? 'bg-emerald-100 text-emerald-700' 
-                                : 'bg-gray-100 text-gray-500'
-                            }`}>
-                              {student.isDownload ? (
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              ) : (
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                              <span className="font-medium">Downloaded</span>
-                            </div>
+                {student.plainPassword && (
+                  <div className="flex items-start gap-1">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-yellow-500" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      Pass:{" "}
+                      <code className="rounded bg-yellow-100 px-1 py-0.5 font-mono text-[10px] font-semibold text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                        {student.plainPassword}
+                      </code>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </td>
 
-                            {/* Shared */}
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                              student.isShared 
-                                ? 'bg-blue-100 text-blue-700' 
-                                : 'bg-gray-100 text-gray-500'
-                            }`}>
-                              {student.isShared ? (
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              ) : (
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                              <span className="font-medium">Shared</span>
-                            </div>
-                          </div>
-                          </>
-                        ) : (
-                          <span className="px-3 py-1 bg-gray-100 text-gray-400 text-xs rounded-full self-start">
-                            No Course
-                          </span>
-                        )}
+            {/* Enrollments */}
+            <td className="px-2 py-3 align-top">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewEnrollments(student.id);
+                }}
+                disabled={!student.enrollmentCount}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
+                  student.enrollmentCount
+                    ? "cursor-pointer border-blue-200 bg-blue-50 text-blue-600 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                    : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+                }`}
+              >
+                <div
+                  className={`rounded-lg p-1 ${
+                    student.enrollmentCount
+                      ? "bg-white/20"
+                      : "bg-gray-200 dark:bg-gray-700"
+                  }`}
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                </div>
+                <span>Enroll {student.enrollmentCount || 0}</span>
+              </button>
+            </td>
+
+            {/* Signup Through */}
+            <td className="px-2 py-3 align-top">
+              <span
+                className={`text-sm font-medium ${
+                  student.signupTypeName === "Email"
+                    ? "text-blue-600"
+                    : student.signupTypeName === "Google"
+                    ? "text-red-600"
+                    : student.signupTypeName === "Facebook"
+                    ? "text-indigo-600"
+                    : student.signupTypeName === "LinkedIn"
+                    ? "text-cyan-600"
+                    : student.signupTypeName === "Apple"
+                    ? "text-gray-600 dark:text-gray-300"
+                    : "text-purple-600"
+                }`}
+              >
+                {student.signupTypeName || "N/A"}
+              </span>
+            </td>
+
+            {/* Advertising Medium */}
+            <td className="px-2 py-3 align-top">
+              <div className="flex items-center gap-2">
+                {student.advertisingMedium ? (
+                  <span className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-medium text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                      />
+                    </svg>
+                    <span className="truncate">{student.advertisingMedium}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                    N/A
+                  </span>
+                )}
+              </div>
+            </td>
+
+            {/* Landing Page */}
+            <td className="px-2 py-3 align-top">
+              <div className="flex items-center gap-2">
+                {student.landingPageUrl ? (
+                  <a
+                    href={student.landingPageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={student.landingPageUrl}
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-medium text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-300 dark:hover:bg-teal-900/50"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 009-9m-9 9h18"
+                      />
+                    </svg>
+                    <span className="truncate">Open Link</span>
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                      />
+                    </svg>
+                    N/A
+                  </span>
+                )}
+              </div>
+            </td>
+
+            {/* Referral URL */}
+            <td className="px-2 py-3 align-top">
+              <div className="flex items-center gap-2">
+                {student.signupTypeUrl ? (
+                  <a
+                    href={student.signupTypeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={student.signupTypeUrl}
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-2.5 py-1.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                    <span className="truncate">Referral</span>
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                      />
+                    </svg>
+                    N/A
+                  </span>
+                )}
+              </div>
+            </td>
+
+            {/* Signup Date */}
+            <td className="px-2 py-3 align-top">
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-blue-50 p-1.5 dark:bg-blue-900/30">
+                  <Calendar className="h-4 w-4 text-blue-500" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {new Date(student.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(student.createdAt).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: false,
+                    })}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            {/* Course Progress */}
+            <td className="px-2 py-3 align-top">
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={(e) => {
+                    if ((student.cartCount || 0) === 0) return;
+                    e.stopPropagation();
+                    handleViewCart(student.id);
+                  }}
+                  disabled={(student.cartCount || 0) === 0}
+                  className={`inline-flex w-fit items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors duration-200 ${
+                    (student.cartCount || 0) === 0
+                      ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-600"
+                      : "cursor-pointer border-orange-200 bg-orange-50 text-orange-600 hover:border-orange-300 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30"
+                  }`}
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>Cart {student.cartCount || 0}</span>
+                </button>
+
+                {student.completionPercentage !== undefined &&
+                student.completionPercentage !== null ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            student.completionPercentage === 100
+                              ? "bg-emerald-500"
+                              : student.completionPercentage >= 75
+                              ? "bg-blue-500"
+                              : student.completionPercentage >= 50
+                              ? "bg-amber-400"
+                              : student.completionPercentage >= 25
+                              ? "bg-orange-400"
+                              : "bg-rose-400"
+                          }`}
+                          style={{ width: `${student.completionPercentage}%` }}
+                        />
                       </div>
-                    </td>
-                    <td className="px-2 py-2 whitespace-nowrap">
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewStudent(student.id);
-                          }}
-                          className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer w-[70px]"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>View</span>
-                        </button>
-                          <button
-                            onClick={(e) => {
-                              if ((student.orderCount || 0) === 0) return;
-                              e.stopPropagation();
-                              handleViewOrders(student.id);
-                            }}
-                            disabled={(student.orderCount || 0) === 0}
-                            className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors duration-200 w-[70px] ${
-                              (student.orderCount || 0) === 0
-                                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800/40 dark:border-gray-700 dark:text-gray-600'
-                                : 'bg-green-50 border-green-200 text-green-600 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer'
-                            }`}
+
+                      <span
+                        className={`min-w-[38px] text-xs font-bold ${
+                          student.completionPercentage === 100
+                            ? "text-emerald-600"
+                            : student.completionPercentage >= 50
+                            ? "text-blue-600"
+                            : "text-amber-600"
+                        }`}
+                      >
+                        {student.completionPercentage}%
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div
+                        className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${
+                          student.isDownload
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                        }`}
+                      >
+                        {student.isDownload ? (
+                          <svg
+                            className="h-3 w-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
                           >
-                            <ShoppingBag className="w-3.5 h-3.5" />
-                            <span>Orders</span>
-                          </button>
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="h-3 w-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                        <span className="font-medium">Downloaded</span>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+
+                      <div
+                        className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${
+                          student.isShared
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                        }`}
+                      >
+                        {student.isShared ? (
+                          <svg
+                            className="h-3 w-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="h-3 w-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                        <span className="font-medium">Shared</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-400 dark:bg-gray-800 dark:text-gray-500">
+                    No Course
+                  </span>
+                )}
+              </div>
+            </td>
+
+            {/* Actions */}
+            <td className="px-2 py-3 align-top">
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewStudent(student.id);
+                  }}
+                  className="inline-flex w-[76px] items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>View</span>
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    if ((student.orderCount || 0) === 0) return;
+                    e.stopPropagation();
+                    handleViewOrders(student.id);
+                  }}
+                  disabled={(student.orderCount || 0) === 0}
+                  className={`inline-flex w-[76px] items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors duration-200 ${
+                    (student.orderCount || 0) === 0
+                      ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-600"
+                      : "cursor-pointer border-green-200 bg-green-50 text-green-600 hover:border-green-300 hover:bg-green-100 dark:border-green-700 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+                  }`}
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>Orders</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
 
         {/* Medium Screen Compact Table */}
         <div className="hidden lg:block xl:hidden overflow-x-auto">
@@ -1109,25 +1211,6 @@ const StudentManagement = () => {
                   <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex-shrink-0">
-                          {student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? (
-                            <img
-                              className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-100 dark:ring-blue-900/50"
-                              src={student.profileImageUrl}
-                              alt={student.fullName}
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs"
-                            style={{ display: student.profileImageUrl && !shouldUseInitials(student.profileImageUrl) ? 'none' : 'flex' }}
-                          >
-                            {getInitials(student.fullName, student.firstName, student.lastName)}
-                          </div>
-                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                             {student.firstName && student.lastName
