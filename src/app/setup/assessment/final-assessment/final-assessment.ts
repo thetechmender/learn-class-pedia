@@ -442,7 +442,8 @@ export class FinalAssessment implements OnInit {
 
       selectedAnswer: current.selectedOption,
 
-      courseId: this.orderPayload?.shortCourseId || this.orderPayload?.courseCertificateId || this.orderPayload?.professionalCertificateId ||
+      courseId: this.courseTypeId === 3 ? this.orderPayload?.shortCourseId
+        : this.orderPayload?.courseCertificateId || this.orderPayload?.professionalCertificateId ||
         this.orderPayload?.careerPathLevelMapId,
 
       courseCertificateId: this.orderPayload?.courseCertificateId || null,
