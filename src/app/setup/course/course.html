@@ -380,12 +380,14 @@
     }
     @if (assessmentStep() !== 'none') {
     @if (assessmentStep() === 'start') {
-    <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')"
-      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"></app-start-assessment>
+    <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')" (deselectLectures)="deselectSidebarLectures()"
+      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId" 
+      [isAssessmentInProgress]="assessmentResult()?.isAssessmentInProgress"></app-start-assessment>
     }
     @if (assessmentStep() === 'final') {
     <app-final-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('start')"
-      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"></app-final-assessment>
+      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId" 
+      [isAssessmentInProgress]="assessmentResult()?.isAssessmentInProgress"></app-final-assessment>
     }
     @if (assessmentStep() === 'failed') {
     <app-failed-assessment [resultData]="assessmentResult()" (next)="onAssessmentNext('start')"

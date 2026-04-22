@@ -1272,7 +1272,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.videoPlayer && this.videoPlayer.isVideoPlaying) {
       this.videoPlayer.onPause();
     }
-    
+
     // Stop audio/speech playback
     this.stopSpeech();
   }
@@ -1780,6 +1780,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         } else {
 
           if (await this.securityService.isDualDisplayActive()) {
+            // Deselect lectures when starting assessment
+            this.deselectSidebarLectures();
             this.assessmentStep.set('start');
           } else {
             this.isStartingAssessment.set(false);
@@ -1793,10 +1795,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   onAssessmentNext(result: any) {
     if (result === 'start' || result === undefined) {
-      // Reset sidebar selections when user actually starts the assessment
-      this.activeShortCourseId.set(null);
-      this.activeCertificateId.set(null);
-      this.expandedShortCourses.set(new Set()); // Reset expanded short courses to collapse content
+      // Deselect lectures when moving to final assessment
+      this.deselectSidebarLectures();
       this.assessmentStep.set('final');
     } else if (result === 'failed') {
       this._fetchAssessmentResultAndSetStep('failed');
@@ -1945,7 +1945,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               publicCertificateLink: data.publicCertificateLink,
               correctAnswers: data.correctAnswers,
               totalQuestions: data.totalQuestions,
-              customerEnrollmentId: data.customerEnrollmentId
+              customerEnrollmentId: data.customerEnrollmentId,
             });
             this.assessmentStep.set('cleared');
 
@@ -1973,7 +1973,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               pdfPath: data.pdfPath,
               courseId: data.courseId,
               courseTitle: data.courseTitle || data.title,
-              customerEnrollmentId: data.customerEnrollmentId
+              customerEnrollmentId: data.customerEnrollmentId,
             });
             this.assessmentStep.set('maxattempts');
 
@@ -1982,6 +1982,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.activeCertificateId.set(null);
             this.expandedShortCourses.set(new Set());
           }
+        } else if (data?.isAssessmentInProgress === true && this.assessmentStep() === 'none') {
+          this.assessmentResult.set({
+            isAssessmentInProgress: data.isAssessmentInProgress
+          })
+          // Deselect lectures when routing directly to final assessment
+          this.deselectSidebarLectures();
+          this.assessmentStep.set('final');
         }
       },
       error: () => {
@@ -2003,6 +2010,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (isPlatformBrowser(this.platformId)) {
       delete (window as any).angularComponentRef;
     }
+  }
+
+  deselectSidebarLectures() {
+    // Reset sidebar selections when user lands on start assessment page
+    this.activeShortCourseId.set(null);
+    this.activeCertificateId.set(null);
+    this.expandedShortCourses.set(new Set()); // Reset expanded short courses to collapse content
   }
 
   isFinalAssessmentButton() {

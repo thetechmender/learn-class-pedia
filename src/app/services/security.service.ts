@@ -9,6 +9,12 @@ export interface WarningEvent {
   timestamp: number;
 }
 
+export interface WarningAPIResponse {
+  data: {
+    warningCount: number;
+  };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -22,6 +28,8 @@ export class SecurityService {
   private warningCount = 0;
   private readonly MAX_WARNINGS_PER_ATTEMPT = 3;
   private isAssessmentActive = false;
+  private currentQuestionId: number = 0;
+  private orderPayload: any = null;
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) { }
 
@@ -43,6 +51,14 @@ export class SecurityService {
 
   getWarningCount(): number {
     return this.warningCount;
+  }
+
+  setCurrentQuestionId(questionId: number) {
+    this.currentQuestionId = questionId;
+  }
+
+  setOrderPayload(payload: any) {
+    this.orderPayload = payload;
   }
 
   private async handleWarning(type: 'screenshot' | 'tab_switch') {
@@ -72,7 +88,7 @@ export class SecurityService {
     );
 
     // Call warning API
-    await this.callWarningAPI(type);
+    await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload);
 
     // Check if limit reached
     if (this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
@@ -81,11 +97,32 @@ export class SecurityService {
     }
   }
 
-  private async callWarningAPI(type: 'screenshot' | 'tab_switch') {
-    // TODO: Replace with actual API call
-    console.log(`[Warning API] Type: ${type}, Count: ${this.warningCount}`);
-    // Example API call structure:
-    // return this.http.post('/api/warnings', { type, count: this.warningCount }).toPromise();
+  private async callWarningAPI(type: 'screenshot' | 'tab_switch', questionId?: number, payload?: any) {
+    const warningPayload = {
+      questionId: questionId || 0,
+      warningReason: type === 'screenshot' ? 'Screen Shot' : 'Tab Switch',
+      warningDetails: '', // Empty string as requested
+      courseId: payload?.shortCourseId || payload?.courseCertificateId || payload?.professionalCertificateId || payload?.careerPathLevelMapId,
+      courseCertificateId: payload?.courseCertificateId || null,
+      professionalCertificateId: payload?.professionalCertificateId || null,
+      careerPathLevelMapId: payload?.careerPathLevelMapId || null,
+      assessmentTypeId: 2
+    };
+
+    try {
+      const response = await this.http.post<WarningAPIResponse>('/api/assessment/warning', warningPayload).toPromise();
+      console.log('[Warning API] Response:', response);
+      
+      // Update local warningCount with API response warningCount
+      if (response && response.data && response.data.warningCount !== undefined) {
+        this.warningCount = response.data.warningCount;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('[Warning API] Error:', error);
+      return null;
+    }
   }
 
   init() {
