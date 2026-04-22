@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Subject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../environments/environment';
 
 export interface WarningEvent {
   type: 'screenshot' | 'tab_switch';
@@ -24,7 +25,8 @@ export class SecurityService {
   public autoSubmitTriggered = new Subject<void>();
   private toastr = inject(ToastrService);
   private http = inject(HttpClient);
-  
+  private apiUrl = environment.API_URL;
+
   private warningCount = 0;
   private readonly MAX_WARNINGS_PER_ATTEMPT = 3;
   private isAssessmentActive = false;
@@ -110,14 +112,13 @@ export class SecurityService {
     };
 
     try {
-      const response = await this.http.post<WarningAPIResponse>('/api/assessment/warning', warningPayload).toPromise();
-      console.log('[Warning API] Response:', response);
-      
+      const response = await this.http.post<WarningAPIResponse>(`${this.apiUrl}/assessment/warning`, warningPayload).toPromise();
+
       // Update local warningCount with API response warningCount
       if (response && response.data && response.data.warningCount !== undefined) {
         this.warningCount = response.data.warningCount;
       }
-      
+
       return response;
     } catch (error) {
       console.error('[Warning API] Error:', error);
