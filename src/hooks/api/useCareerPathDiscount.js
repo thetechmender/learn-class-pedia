@@ -25,7 +25,7 @@ export const useCareerPathDiscount = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await ApiService.assignPriceToCourseType(courseTypeId, price);
+      const data = await ApiService.assignPrice(1, courseTypeId, price); // PriceType.CourseType = 1
       return data;
     } catch (err) {
       setError('Failed to assign price to course type');

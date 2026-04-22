@@ -36,6 +36,7 @@ const AssignDiscountRate = () => {
     courseTypes,
     error,
     fetchAllDiscountRates,
+    fetchCourseTypes,
     assignDiscountRateToCourseType,
     assignDiscountRateToCourse
   } = useDiscountRateMapping();
@@ -519,9 +520,9 @@ const AssignDiscountRate = () => {
     try {
       await assignPriceToCourseType(selectedCourseTypeForPrice.id, parseFloat(courseTypePrice));
       showToast('Price assigned to course type successfully', 'success');
-      
+
       // Refresh course types data
-      await fetchAllDiscountRates({});
+      await fetchCourseTypes();
       setShowPriceModal(false);
       setSelectedCourseTypeForPrice(null);
       setCourseTypePrice('');
