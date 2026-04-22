@@ -1,17 +1,4 @@
 <div class="min-h-screen bg-gray-50 flex items-start justify-left p-6 assessment">
-  <!-- Invisible Blocking Overlay for Top Bar Area -->
-  @if (isMouseNearTopBar()) {
-  <div class="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
-    <div class="bg-red-600 text-white py-6 px-8 rounded-xl shadow-2xl max-w-md text-center animate-pulse">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-      </svg>
-      <h3 class="text-2xl font-bold mb-2">Tab Switching Blocked</h3>
-      <p class="text-lg">Move your cursor back to continue the assessment</p>
-    </div>
-  </div>
-  }
-
   <!-- Keyboard Shortcut Blocked Warning -->
   @if (showKeyboardBlockWarning()) {
   <div class="fixed top-4 right-4 z-[9999] bg-red-600 text-white py-3 px-6 rounded-lg shadow-2xl flex items-center gap-3 animate-bounce">

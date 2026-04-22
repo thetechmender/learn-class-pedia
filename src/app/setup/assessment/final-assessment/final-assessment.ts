@@ -3,6 +3,7 @@ import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
 import { AssessmentService } from '../../../services/assessment.service';
 import { GenerateCertificateModal } from '../generate-certificate-modal/generate-certificate-modal';
+import { SecurityService } from '../../../services/security.service';
 
 @Component({
   selector: 'app-final-assessment',
@@ -55,6 +56,7 @@ export class FinalAssessment implements OnInit {
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
   private assessmentService = inject(AssessmentService);
+  public securityService = inject(SecurityService);
 
   ngOnInit(): void {
     if (this.orderPayload?.careerPathLevelMapId) {
@@ -66,26 +68,32 @@ export class FinalAssessment implements OnInit {
     } else if (this.courseTypeId == 3) {
       this._fetchShoortCourseAssessment();
     };
-this._initializeMouseTracking();
+    this.startAssessment()
+    this._initializeMouseTracking();
+    this._initializeSecurityTracking();
   }
 
   private _initializeMouseTracking(): void {
     document.body.classList.add('exam-mode');
-    this._setupVisibilityChangeDetection();
   }
 
-  private _setupVisibilityChangeDetection(): void {
-    // Detect when user switches tabs
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        console.warn('⚠️ User switched away from assessment tab!');
-        // You could log this to your backend for monitoring
-        this.showKeyboardBlockWarning.set(true);
-        setTimeout(() => this.showKeyboardBlockWarning.set(false), 3000);
-      }
+  private _initializeSecurityTracking(): void {
+    // Start assessment tracking in SecurityService
+    this.securityService.startAssessmentTracking();
+
+    // Subscribe to warning events
+    this.securityService.warningEvent.pipe(takeUntil(this.destroy$)).subscribe((event) => {
+      console.log('[Security] Warning event received:', event);
+      // Warning API is already called by SecurityService
+      // Warning count is tracked in SecurityService
+    });
+
+    // Subscribe to auto-submit trigger
+    this.securityService.autoSubmitTriggered.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      console.log('[Security] Auto-submit triggered due to warning limit');
+      this._autoSubmit();
     });
   }
-
 
   _fetchShoortCourseAssessment() {
     if (!this.orderPayload?.shortCourseId) return;
@@ -94,11 +102,13 @@ this._initializeMouseTracking();
     this.assessmentService.getShortCourseAssessment(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -115,11 +125,13 @@ this._initializeMouseTracking();
     this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -136,11 +148,13 @@ this._initializeMouseTracking();
     this.assessmentService.getCareerPathAssessment(this.orderPayload.careerPathLevelMapId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -157,11 +171,13 @@ this._initializeMouseTracking();
     this.assessmentService.getProfessionalCourseAssessment(this.orderPayload.professionalCertificateId, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          this.questions.set(details['data']['questions'].map((q: any) => ({
-            isSelect: false,
-            selectedOption: '',
-            ...q,
-          })) || []);
+          this.questions.set(details['data']?.questions
+            ?.filter((q: any) => q.isAnswered !== true)
+            .map((q: any) => ({
+              isSelect: false,
+              selectedOption: '',
+              ...q,
+            })) || []);
           this.isQuestionLoading.set(false);
           this.startTimer();
         },
@@ -171,11 +187,42 @@ this._initializeMouseTracking();
       });
   };
 
-  onNext() {
-    if (this.currentQuestion()?.isSelect) {
-      this.currentQuestionIndex.update(index => index + 1);
+  async onNext() {
+    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
+    if (isDualDisplayActive) {
+      if (this.currentQuestion()?.isSelect) {
+        await this._saveCurrentQuestion();
+        this.currentQuestionIndex.update(index => index + 1);
+      };
+      return
+    }
+    return;
+  }
+
+  private _saveCurrentQuestion() {
+    const current = this.currentQuestion();
+    if (!current) return;
+
+    const payload = {
+      questionId: current.id,
+      selectedAnswer: current.selectedOption,
+      courseId: this.orderPayload?.courseCertificateId ? null : this.orderPayload?.shortCourseId,
+      courseCertificateId: this.orderPayload?.courseCertificateId || null,
+      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null,
+      assessmentTypeId: 2
     };
-    return
+
+    const token = this.authService.getToken();
+    return this.assessmentService.onNextSaveAssessment(payload, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          console.log('Question saved:', details);
+        },
+        error: (err: any) => {
+          console.error('Save Question Error:', err);
+        }
+      });
   }
 
   onOptionChange(option: any) {
@@ -195,6 +242,7 @@ this._initializeMouseTracking();
     this.destroy$.next();
     this.destroy$.complete();
     document.body.classList.remove('exam-mode');
+    this.securityService.stopAssessmentTracking();
   }
 
   startTimer() {
@@ -295,7 +343,6 @@ this._initializeMouseTracking();
     submitApi.pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          console.log('[DEBUG] Submit API response:', response);
           this.isCompleting.set(false);
           if (response?.statusCode == 200 && response?.data) {
             // Use submit response data directly - it already has isPassed and all other fields
@@ -322,20 +369,15 @@ this._initializeMouseTracking();
     const isPassed = data.isPassed;
 
     if (isPassed === false) {
-      console.log('[DEBUG] Assessment FAILED - emitting data immediately');
       // If failed, emit data immediately to route to failed-assessment
       this.next.emit(data);
     } else if (isPassed === true) {
-      console.log('[DEBUG] Assessment PASSED');
       // If passed, show modal and DON'T emit yet (wait for user to click Generate Certificate)
       if (this.courseTypeId !== 3) {
-        console.log('[DEBUG] NOT short course - showing modal immediately');
         // For other courses, show modal immediately and WAIT for user to click Generate Certificate
         this.assessmentResultData.set(data);
         this.showGenerateCertificateModal.set(true);
       } else {
-        console.log('[DEBUG] Short course (courseTypeId === 3) - waiting 30 seconds then emitting');
-        // For short courses, show loading and wait 30 seconds then emit
         this.isGeneratingCertificate.set(true);
         setTimeout(() => {
           this.isGeneratingCertificate.set(false);
@@ -343,7 +385,6 @@ this._initializeMouseTracking();
         }, 30000);
       }
     } else {
-      // Fallback for unexpected cases
       this.next.emit('failed');
     }
   }
@@ -390,85 +431,85 @@ this._initializeMouseTracking();
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + F5 (Hard Refresh)
     if (event.ctrlKey && event.key === 'F5') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + R (Reload)
     if (event.ctrlKey && event.key.toLowerCase() === 'r') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + W (Close Tab)
     if (event.ctrlKey && event.key.toLowerCase() === 'w') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + Tab (Next Tab)
     if (event.ctrlKey && event.key === 'Tab') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + Shift + Tab (Previous Tab)
     if (event.ctrlKey && event.shiftKey && event.key === 'Tab') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + 1-9 (Switch to specific tab)
     if (event.ctrlKey && event.key >= '1' && event.key <= '9') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + T (New Tab)
     if (event.ctrlKey && event.key.toLowerCase() === 't') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + N (New Window)
     if (event.ctrlKey && event.key.toLowerCase() === 'n') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Alt + Left/Right (Browser Back/Forward)
     if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + H (History)
     if (event.ctrlKey && event.key.toLowerCase() === 'h') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Ctrl + Shift + T (Reopen closed tab)
     if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 't') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block F11 (Fullscreen toggle)
     if (event.key === 'F11') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Block Escape (might exit fullscreen)
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Show warning for any blocked shortcut
     if (event.ctrlKey || event.altKey || event.key === 'F5' || event.key === 'F11') {
       this._showKeyboardBlockedWarning();
@@ -477,12 +518,12 @@ this._initializeMouseTracking();
 
   private _showKeyboardBlockedWarning(): void {
     this.showKeyboardBlockWarning.set(true);
-    
+
     // Clear existing timeout
     if (this.keyboardWarningTimeout) {
       clearTimeout(this.keyboardWarningTimeout);
     }
-    
+
     // Hide warning after 2 seconds
     this.keyboardWarningTimeout = setTimeout(() => {
       this.showKeyboardBlockWarning.set(false);
@@ -499,7 +540,7 @@ this._initializeMouseTracking();
   handleMouseMove(event: MouseEvent): void {
     const DANGER_ZONE_HEIGHT = 200; // pixels from top - covers browser tabs area
     const mouseY = event.clientY;
-    
+
     if (mouseY <= DANGER_ZONE_HEIGHT) {
       this.isMouseNearTopBar.set(true);
       // Hide cursor completely
@@ -508,7 +549,7 @@ this._initializeMouseTracking();
       document.body.style.pointerEvents = 'none';
       // Add a class for additional styling
       document.body.classList.add('cursor-blocked');
-      
+
       // Prevent any mouse clicks in this area
       event.preventDefault();
       event.stopPropagation();
@@ -519,12 +560,12 @@ this._initializeMouseTracking();
       document.body.classList.remove('cursor-blocked');
     }
   }
-  
+
   @HostListener('window:mousedown', ['$event'])
   handleMouseDown(event: MouseEvent): void {
     const DANGER_ZONE_HEIGHT = 200;
     const mouseY = event.clientY;
-    
+
     // Block all mouse clicks in the top area (tabs, URL bar, etc.)
     if (mouseY <= DANGER_ZONE_HEIGHT) {
       event.preventDefault();
@@ -534,12 +575,32 @@ this._initializeMouseTracking();
       return;
     }
   }
-  
-  
+
+
   @HostListener('window:contextmenu', ['$event'])
   handleContextMenu(event: MouseEvent): void {
     // Block right-click completely
     event.preventDefault();
     event.stopPropagation();
+  }
+
+  startAssessment() {
+    const payload = {
+      assessmentTypeId: 2,
+      shortCourseId: this.orderPayload?.courseCertificateId ? null : this.orderPayload?.shortCourseId,
+      courseCertificateId: this.orderPayload?.courseCertificateId || null,
+      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null
+    };
+    const token = this.authService.getToken();
+    this.assessmentService.startAssessmentTime(payload, token).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details: any) => {
+          console.log(details);
+        },
+        error: (err: any) => {
+          console.error('Start Assessment Time Error:', err);
+        }
+      });
   }
 }
