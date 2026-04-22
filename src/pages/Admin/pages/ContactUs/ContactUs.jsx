@@ -10,13 +10,14 @@ const ContactUs = () => {
     contactList,
     inquiryOptions,
     loading,
-    error,
     filters,
+    pagination,
     fetchContactInformation,
     fetchInquiryOptions,
     updateFilters,
     clearFilters,
-    applyFilters,
+    handlePageChange,
+    handlePageSizeChange,
   } = useContactUs();
 
   const [showFilters, setShowFilters] = useState(false);
@@ -25,25 +26,19 @@ const ContactUs = () => {
 
   // Initial fetch
   useEffect(() => {
-    fetchContactInformation();
+    fetchContactInformation({}, pagination.page, pagination.pageSize);
     fetchInquiryOptions();
-  }, [fetchContactInformation, fetchInquiryOptions]);
+  }, []);
 
   // Handle filter input changes
   const handleFilterChange = useCallback((field, value) => {
     updateFilters({ [field]: value });
   }, [updateFilters]);
-
-  // Apply filters
-  const handleApplyFilters = useCallback(() => {
-    applyFilters();
-  }, [applyFilters]);
-
   // Clear all filters
   const handleClearFilters = useCallback(() => {
     clearFilters();
-    fetchContactInformation();
-  }, [clearFilters, fetchContactInformation]);
+    fetchContactInformation({}, 1, pagination.pageSize);
+  }, [clearFilters, fetchContactInformation, pagination.pageSize]);
 
   // Toggle row expansion
   const toggleRowExpand = (id) => {
@@ -299,6 +294,63 @@ const ContactUs = () => {
               Clear All Filters
             </button>
           )}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {pagination.totalPages > 1 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {(pagination.page - 1) * pagination.pageSize + 1} to {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of {pagination.totalCount} inquiries
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Previous */}
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={!pagination.hasPreviousPage}
+              className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            {/* Page numbers */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-9 h-9 text-sm rounded-lg transition-colors ${
+                    page === pagination.page
+                      ? 'bg-blue-600 text-white font-medium'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            {/* Next */}
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={!pagination.hasNextPage}
+              className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+
+            {/* Page size */}
+            <select
+              value={pagination.pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="ml-2 px-2 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white cursor-pointer"
+            >
+              <option value={5}>5 / page</option>
+              <option value={10}>10 / page</option>
+              <option value={20}>20 / page</option>
+              <option value={50}>50 / page</option>
+            </select>
+          </div>
         </div>
       )}
 

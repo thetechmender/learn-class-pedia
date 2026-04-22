@@ -8,6 +8,16 @@ export const useContactUs = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 100,
+    totalCount: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+
   // Filters state
   const [filters, setFilters] = useState({
     fullName: '',
@@ -16,23 +26,44 @@ export const useContactUs = () => {
     inquiryOptionId: ''
   });
 
-  // Fetch contact information with filters
-  const fetchContactInformation = useCallback(async (searchFilters = {}) => {
+  // Fetch contact information with filters and pagination
+  const fetchContactInformation = useCallback(async (searchFilters = {}, page = 1, pageSize = 10) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await ApiService.getContactInformation(searchFilters);
-      
+      const response = await ApiService.getContactInformation({
+        ...searchFilters,
+        page,
+        pageSize,
+      });
+
       // Handle response structure
-      if (response && response.success && response.data && Array.isArray(response.data.contactUsList)) {
-        setContactList(response.data.contactUsList);
+      if (response && response.success && response.data) {
+        const list = Array.isArray(response.data.contactUsList) ? response.data.contactUsList : [];
+        setContactList(list);
         // Also update inquiry options if they come with the response
         if (response.data.contactInquiryOptions) {
           setInquiryOptions(response.data.contactInquiryOptions);
         }
+        // Update pagination if present
+        setPagination({
+          page: response.data.page || page,
+          pageSize: response.data.pageSize || pageSize,
+          totalCount: response.data.totalCount || list.length,
+          totalPages: response.data.totalPages || 1,
+          hasNextPage: response.data.hasNextPage || false,
+          hasPreviousPage: response.data.hasPreviousPage || false,
+        });
       } else if (Array.isArray(response)) {
         setContactList(response);
+        setPagination(prev => ({
+          ...prev,
+          totalCount: response.length,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }));
       } else {
         console.warn('Unexpected response structure:', response);
         setContactList([]);
@@ -81,13 +112,31 @@ export const useContactUs = () => {
     });
   }, []);
 
-  // Apply current filters
+  // Apply current filters with pagination
   const applyFilters = useCallback(() => {
     // Remove empty filters
     const activeFilters = Object.fromEntries(
       Object.entries(filters).filter(([_, value]) => value && value.toString().trim() !== '')
     );
-    fetchContactInformation(activeFilters);
+    fetchContactInformation(activeFilters, pagination.page, pagination.pageSize);
+  }, [filters, pagination.page, pagination.pageSize, fetchContactInformation]);
+
+  // Handle page change
+  const handlePageChange = useCallback((newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+    const activeFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value && value.toString().trim() !== '')
+    );
+    fetchContactInformation(activeFilters, newPage, pagination.pageSize);
+  }, [filters, pagination.pageSize, fetchContactInformation]);
+
+  // Handle page size change
+  const handlePageSizeChange = useCallback((newPageSize) => {
+    setPagination(prev => ({ ...prev, pageSize: newPageSize, page: 1 }));
+    const activeFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value && value.toString().trim() !== '')
+    );
+    fetchContactInformation(activeFilters, 1, newPageSize);
   }, [filters, fetchContactInformation]);
 
   // Clear error
@@ -102,6 +151,7 @@ export const useContactUs = () => {
     loading,
     error,
     filters,
+    pagination,
 
     // Actions
     fetchContactInformation,
@@ -110,6 +160,8 @@ export const useContactUs = () => {
     clearFilters,
     applyFilters,
     clearError,
+    handlePageChange,
+    handlePageSizeChange,
   };
 };
 

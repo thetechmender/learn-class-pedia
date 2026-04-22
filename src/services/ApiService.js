@@ -2143,14 +2143,16 @@ async uploadCsvFileByName(formData) {
 
   // ==================== CONTACT INFORMATION ====================
 
-  // GET all contact information with optional filters
+  // GET all contact information with optional filters and pagination
   async getContactInformation(filters = {}) {
     const queryParams = new URLSearchParams();
     if (filters.fullName) queryParams.append('fullName', filters.fullName);
     if (filters.emailAddress) queryParams.append('emailAddress', filters.emailAddress);
     if (filters.phoneNumber) queryParams.append('phoneNumber', filters.phoneNumber);
     if (filters.inquiryOptionId) queryParams.append('inquiryOptionId', filters.inquiryOptionId);
-    
+    if (filters.page) queryParams.append('Page', filters.page);
+    if (filters.pageSize) queryParams.append('PageSize', filters.pageSize);
+
     const queryString = queryParams.toString();
     const url = queryString ? `${ENDPOINTS.CONTACT_INFORMATION}?${queryString}` : ENDPOINTS.CONTACT_INFORMATION;
     

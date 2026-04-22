@@ -20,12 +20,6 @@ import {
   Clock,
   Globe,
   GlobeIcon,
-  LinkIcon,
-  Award,
-  Settings,
-  FileText,
-  Share2,
-  Search,
   SlidersHorizontal,
   ChevronDown,
   RotateCcw
@@ -51,7 +45,6 @@ const StudentManagement = () => {
     getCountriesDropdown,
     getStudentOrders,
     getStudentCart,
-    loadingStudentCart,
     generateDashboardUrl,
   } = useStudentManagement();
 
