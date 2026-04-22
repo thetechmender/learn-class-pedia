@@ -1,10 +1,14 @@
-import { Component, inject, Input, Output, EventEmitter } from '@angular/core';
+import { Component, inject, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ThreeDBookComponent } from './three-d-book.component';
+import { ThreeDPPTComponent } from './three-d-ppt.component';
+
+export type ViewMode = 'book' | 'ppt';
 
 @Component({
   selector: 'app-transcript',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ThreeDBookComponent, ThreeDPPTComponent],
   templateUrl: './transcript.html',
   styleUrl: './transcript.sass',
 })
@@ -13,6 +17,8 @@ export class Transcript {
   @Input() courseTypeId: any = null;
   @Output() moveToQuiz = new EventEmitter<void>();
   @Output() startAssessment = new EventEmitter<void>();
+
+  viewMode = signal<ViewMode>('book');
 
   get lectures(): any[] {
     const sc = this.currentShortCourse;

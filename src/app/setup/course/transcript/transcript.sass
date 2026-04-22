@@ -1,4 +1,57 @@
-.lecture-cont::selection
-  background: transparent
+.lecture-cont
+  position: relative
+  min-height: 850px
+  
+  ::selection
+    background: transparent
+
+.view-mode-toggle
+  display: flex
+  gap: 12px
+  justify-content: center
+  margin-bottom: 24px
+  padding: 16px
+  background: #f9fafb
+  border-radius: 12px
+
+  .toggle-btn
+    display: flex
+    align-items: center
+    gap: 8px
+    padding: 12px 24px
+    border: 2px solid #e5e7eb
+    background: #ffffff
+    border-radius: 8px
+    cursor: pointer
+    transition: all 0.3s ease
+    font-size: 14px
+    font-weight: 500
+    color: #6b7280
+
+    svg
+      transition: all 0.3s ease
+
+    &:hover
+      border-color: #0062CC
+      color: #0062CC
+      transform: translateY(-2px)
+      box-shadow: 0 4px 12px rgba(0, 98, 204, 0.15)
+
+    &.active
+      border-color: #0062CC
+      background: linear-gradient(135deg, #6b8cff 0%, #0062CC 100%)
+      color: #ffffff
+      box-shadow: 0 4px 16px rgba(0, 98, 204, 0.3)
+
+      svg
+        stroke: #ffffff
+
+.movebtn
+  text-align: center
+  position: fixed
+  bottom: 20px
+  left: 50%
+  transform: translateX(-50%)
+  z-index: 100
 
 

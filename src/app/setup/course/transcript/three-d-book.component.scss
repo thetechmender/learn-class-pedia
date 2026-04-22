@@ -1,16 +1,17 @@
 :host {
   display: block;
   width: 100%;
-  --accent-1: #8b5cf6;
-  --accent-2: #ec4899;
-  --accent-3: #f59e0b;
+  font-family: 'Poppins', sans-serif;
+  --accent-1: #0062CC;
+  --accent-2: #00D9A5;
+  --accent-3: #6b8cff;
   --paper: #fdfcf8;
   --paper-soft: #faf9f5;
-  --ink: #1f2937;
+  --ink: #1a1a2e;
   --ink-soft: #374151;
   --muted: #9ca3af;
   --stage-bg-1: #0b1120;
-  --stage-bg-2: #1e1b4b;
+  --stage-bg-2: #0062CC;
   --reader-font-scale: 1;
 }
 
@@ -48,9 +49,9 @@
   color: #e2e8f0;
   position: relative;
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(139, 92, 246, 0.25), transparent 70%),
-    radial-gradient(ellipse 60% 60% at 20% 100%, rgba(236, 72, 153, 0.15), transparent 70%),
-    radial-gradient(ellipse 60% 60% at 90% 80%, rgba(59, 130, 246, 0.15), transparent 70%),
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0, 98, 204, 0.25), transparent 70%),
+    radial-gradient(ellipse 60% 60% at 20% 100%, rgba(0, 217, 165, 0.15), transparent 70%),
+    radial-gradient(ellipse 60% 60% at 90% 80%, rgba(107, 140, 255, 0.15), transparent 70%),
     linear-gradient(180deg, var(--stage-bg-2) 0%, var(--stage-bg-1) 100%);
   overflow: hidden;
 }
