@@ -1391,22 +1391,31 @@ const StudentManagement = () => {
                           </div>
                           <span>Enroll {student.enrollmentCount || 0}</span>
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewTestimonials(student.id);
-                          }}
-                          disabled={!student.testimonialCount}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.testimonialCount
-                            ? 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 hover:border-purple-300 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/30 cursor-pointer'
-                            : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                            }`}
-                        >
-                          <div className={`p-1 rounded-lg ${student.testimonialCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                            <MessageSquare className="w-3.5 h-3.5" />
-                          </div>
-                          <span>Testimonials {student.testimonialCount || 0}</span>
-                        </button>
+                     <button
+  onClick={(e) => {
+    e.stopPropagation();
+    handleViewTestimonials(student.id);
+  }}
+  disabled={!student.testimonialCount}
+  className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+    student.testimonialCount
+      ? "cursor-pointer border-purple-200 bg-purple-50 text-purple-600 hover:border-purple-300 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
+      : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+  }`}
+>
+  <div
+    className={`rounded-lg p-1.5 ${
+      student.testimonialCount
+        ? "bg-white/20"
+        : "bg-gray-200 dark:bg-gray-700"
+    }`}
+  >
+    <MessageSquare className="h-4 w-4 shrink-0" />
+  </div>
+  <span className="whitespace-nowrap">
+    Testimonials {student.testimonialCount || 0}
+  </span>
+</button>
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
