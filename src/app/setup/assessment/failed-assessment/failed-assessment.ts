@@ -56,7 +56,7 @@ export class FailedAssessment implements OnChanges {
   }
 
   get scorePercentage(): number {
-    return this.resultData?.score ?? this.resultData?.scorePercentage ?? 0;
+    return this.resultData?.scorePercentage || this.resultData?.score || 0;
   }
 
   get requiresRepurchase(): boolean {

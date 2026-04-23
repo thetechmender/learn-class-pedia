@@ -3,10 +3,17 @@ import { isPlatformBrowser } from '@angular/common';
 import { Subject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../environments/environment';
 
 export interface WarningEvent {
   type: 'screenshot' | 'tab_switch';
   timestamp: number;
+}
+
+export interface WarningAPIResponse {
+  data: {
+    warningCount: number;
+  };
 }
 
 @Injectable({
@@ -18,10 +25,13 @@ export class SecurityService {
   public autoSubmitTriggered = new Subject<void>();
   private toastr = inject(ToastrService);
   private http = inject(HttpClient);
-  
+  private apiUrl = environment.API_URL;
+
   private warningCount = 0;
   private readonly MAX_WARNINGS_PER_ATTEMPT = 3;
   private isAssessmentActive = false;
+  private currentQuestionId: number = 0;
+  private orderPayload: any = null;
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) { }
 
@@ -45,19 +55,19 @@ export class SecurityService {
     return this.warningCount;
   }
 
+  setCurrentQuestionId(questionId: number) {
+    this.currentQuestionId = questionId;
+  }
+
+  setOrderPayload(payload: any) {
+    this.orderPayload = payload;
+  }
+
   private async handleWarning(type: 'screenshot' | 'tab_switch') {
     if (!this.isAssessmentActive) {
-      // For entire classroom - just show toastr warning
-      this.toastr.warning(
-        type === 'screenshot' ? 'Screenshots are prohibited.' : 'Tab switching is not allowed during assessment.',
-        'Security Alert'
-      );
+      // Skip warning in classroom - no alert needed
       return;
     }
-
-    // During assessment - track warnings and call API
-    this.warningCount++;
-    const remainingWarnings = this.MAX_WARNINGS_PER_ATTEMPT - this.warningCount;
 
     // Emit warning event for component to handle
     this.warningEvent.next({
@@ -65,27 +75,50 @@ export class SecurityService {
       timestamp: Date.now()
     });
 
+    // Call warning API first to get the updated count
+    await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload);
+
+    // Calculate remaining warnings based on API response count
+    const remainingWarnings = this.MAX_WARNINGS_PER_ATTEMPT - this.warningCount;
+
     // Show warning with remaining attempts
     this.toastr.warning(
       `${type === 'screenshot' ? 'Screenshot' : 'Tab switch'} detected. Warnings remaining: ${remainingWarnings}`,
       'Security Warning'
     );
 
-    // Call warning API
-    await this.callWarningAPI(type);
-
-    // Check if limit reached
+    // Check if limit reached based on API response count
     if (this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
       console.log('Warning limit reached. Auto-submitting assessment.');
       this.autoSubmitTriggered.next();
     }
   }
 
-  private async callWarningAPI(type: 'screenshot' | 'tab_switch') {
-    // TODO: Replace with actual API call
-    console.log(`[Warning API] Type: ${type}, Count: ${this.warningCount}`);
-    // Example API call structure:
-    // return this.http.post('/api/warnings', { type, count: this.warningCount }).toPromise();
+  private async callWarningAPI(type: 'screenshot' | 'tab_switch', questionId?: number, payload?: any) {
+    const warningPayload = {
+      questionId: questionId || 0,
+      warningReason: type === 'screenshot' ? 'Screen Shot' : 'Tab Switch',
+      warningDetails: '', // Empty string as requested
+      courseId: payload?.shortCourseId || payload?.courseCertificateId || payload?.professionalCertificateId || payload?.careerPathLevelMapId,
+      courseCertificateId: payload?.courseCertificateId || null,
+      professionalCertificateId: payload?.professionalCertificateId || null,
+      careerPathLevelMapId: payload?.careerPathLevelMapId || null,
+      assessmentTypeId: 2
+    };
+
+    try {
+      const response = await this.http.post<WarningAPIResponse>(`${this.apiUrl}/assessment/warning`, warningPayload).toPromise();
+
+      // Update local warningCount with API response warningCount
+      if (response && response.data && response.data.warningCount !== undefined) {
+        this.warningCount = response.data.warningCount;
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[Warning API] Error:', error);
+      return null;
+    }
   }
 
   init() {
@@ -95,14 +128,22 @@ export class SecurityService {
     // --- Pehle wale saare code (Ctrl+P, Right Click) yahan rahen ge ---
 
     // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
+    let blurTimeout: any = null;
     window.addEventListener('blur', () => {
       this.enableProtection();
-      // Don't count as warning - only apply protection CSS
-      // Warning count only for PrintScreen key and visibilitychange
+      // If focus doesn't return within 500ms, it's likely a screenshot tool
+      blurTimeout = setTimeout(() => {
+        this.handleWarning('screenshot');
+      }, 500);
     });
 
     // 2. Detect jab user wapas aaye
     window.addEventListener('focus', () => {
+      // Clear the blur timeout if focus returns quickly (alt+tab, not snipping tool)
+      if (blurTimeout) {
+        clearTimeout(blurTimeout);
+        blurTimeout = null;
+      }
       this.disableProtection();
     });
 
@@ -166,7 +207,6 @@ export class SecurityService {
     } catch (error) {
       console.warn('Screen Details API not supported');
     }
-
     return true;
   }
 
