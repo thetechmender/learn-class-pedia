@@ -11,6 +11,7 @@ export const useStudentManagement = () => {
   const [loadingStudentDetails, setLoadingStudentDetails] = useState(false);
   const [loadingStudentOrders, setLoadingStudentOrders] = useState(false);
   const [loadingStudentCart, setLoadingStudentCart] = useState(false);
+  const [loadingStudentTestimonials, setLoadingStudentTestimonials] = useState(false);
   
   // Students data state
   const [students, setStudents] = useState([]);
@@ -244,6 +245,47 @@ export const useStudentManagement = () => {
     }
   }, []);
 
+  // Get student testimonials
+  const getStudentTestimonials = useCallback(async (customerId) => {
+    setLoadingStudentTestimonials(true);
+    setError(null);
+
+    try {
+      const response = await ApiService.get(ENDPOINTS.STUDENT_MANAGEMENT_TESTIMONIALS(customerId));
+
+      if (response && Array.isArray(response.data || response)) {
+        const responseData = response.data || response;
+        return responseData;
+      }
+      throw new Error('Invalid response format');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch student testimonials';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoadingStudentTestimonials(false);
+    }
+  }, []);
+
+  // Approve or deny a testimonial
+  const approveTestimonial = useCallback(async (customerId, isApproved) => {
+    setError(null);
+
+    try {
+      const payload = {
+        customerId: customerId,
+        isApproved: isApproved
+      };
+
+      const response = await ApiService.post(ENDPOINTS.STUDENT_MANAGEMENT_TESTIMONIALS_APPROVE, payload);
+      return response.data || response;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update testimonial status';
+      setError(errorMessage);
+      throw err;
+    }
+  }, []);
+
   // Generate dashboard URL for classroom access
   const generateDashboardUrl = useCallback(async (customerId, resourceId, resourceTypeId) => {
     setError(null);
@@ -280,6 +322,7 @@ export const useStudentManagement = () => {
     loadingStudentDetails,
     loadingStudentOrders,
     loadingStudentCart,
+    loadingStudentTestimonials,
 
     // Actions
     getAllStudents,
@@ -300,6 +343,10 @@ export const useStudentManagement = () => {
 
     // Cart
     getStudentCart,
+
+    // Testimonials
+    getStudentTestimonials,
+    approveTestimonial,
 
     // Dashboard URL
     generateDashboardUrl,

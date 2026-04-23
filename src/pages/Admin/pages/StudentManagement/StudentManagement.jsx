@@ -22,7 +22,8 @@ import {
   GlobeIcon,
   SlidersHorizontal,
   ChevronDown,
-  RotateCcw
+  RotateCcw,
+  MessageSquare
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
@@ -45,7 +46,10 @@ const StudentManagement = () => {
     getCountriesDropdown,
     getStudentOrders,
     getStudentCart,
+    getStudentTestimonials,
+    approveTestimonial,
     generateDashboardUrl,
+    loadingStudentTestimonials,
   } = useStudentManagement();
 
   const {
@@ -72,11 +76,15 @@ const StudentManagement = () => {
   const [showOrdersModal, setShowOrdersModal] = useState(false);
   const [showEnrollmentsModal, setShowEnrollmentsModal] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
+  const [showTestimonialsModal, setShowTestimonialsModal] = useState(false);
   const [studentOrders, setStudentOrders] = useState(null);
   const [studentEnrollments, setStudentEnrollments] = useState(null);
   const [studentCart, setStudentCart] = useState(null);
+  const [studentTestimonials, setStudentTestimonials] = useState(null);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [loadingCart, setLoadingCart] = useState(false);
+  const [loadingTestimonials, setLoadingTestimonials] = useState(false);
+  const [testimonialActionLoading, setTestimonialActionLoading] = useState({});
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadingDashboardUrl, setLoadingDashboardUrl] = useState(null); // Store enrollment ID being processed
 
@@ -214,6 +222,33 @@ const StudentManagement = () => {
       setLoadingCart(false);
     }
   }, [getStudentCart]);
+
+  const handleViewTestimonials = useCallback(async (studentId) => {
+    setLoadingTestimonials(true);
+    try {
+      const testimonialsData = await getStudentTestimonials(studentId);
+      setStudentTestimonials(testimonialsData);
+      setShowTestimonialsModal(true);
+    } catch (err) {
+      console.error('Failed to fetch student testimonials:', err);
+    } finally {
+      setLoadingTestimonials(false);
+    }
+  }, [getStudentTestimonials]);
+
+  const handleApproveTestimonial = useCallback(async (testimonialId, customerId, isApproved) => {
+    setTestimonialActionLoading(prev => ({ ...prev, [testimonialId]: true }));
+    try {
+      await approveTestimonial(customerId, isApproved);
+      // Refresh testimonials after approval/denial
+      const testimonialsData = await getStudentTestimonials(customerId);
+      setStudentTestimonials(testimonialsData);
+    } catch (err) {
+      console.error('Failed to update testimonial status:', err);
+    } finally {
+      setTestimonialActionLoading(prev => ({ ...prev, [testimonialId]: false }));
+    }
+  }, [approveTestimonial, getStudentTestimonials]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({
@@ -816,29 +851,54 @@ const StudentManagement = () => {
 
             {/* Enrollments */}
             <td className="px-2 py-3 align-top">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewEnrollments(student.id);
-                }}
-                disabled={!student.enrollmentCount}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
-                  student.enrollmentCount
-                    ? "cursor-pointer border-blue-200 bg-blue-50 text-blue-600 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-                    : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
-                }`}
-              >
-                <div
-                  className={`rounded-lg p-1 ${
+              <div className="flex flex-col gap-1.5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewEnrollments(student.id);
+                  }}
+                  disabled={!student.enrollmentCount}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
                     student.enrollmentCount
-                      ? "bg-white/20"
-                      : "bg-gray-200 dark:bg-gray-700"
+                      ? "cursor-pointer border-blue-200 bg-blue-50 text-blue-600 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                      : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
                   }`}
                 >
-                  <BookOpen className="h-3.5 w-3.5" />
-                </div>
-                <span>Enroll {student.enrollmentCount || 0}</span>
-              </button>
+                  <div
+                    className={`rounded-lg p-1 ${
+                      student.enrollmentCount
+                        ? "bg-white/20"
+                        : "bg-gray-200 dark:bg-gray-700"
+                    }`}
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                  </div>
+                  <span>Enroll {student.enrollmentCount || 0}</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewTestimonials(student.id);
+                  }}
+                  disabled={!student.testimonialCount}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
+                    student.testimonialCount
+                      ? "cursor-pointer border-purple-200 bg-purple-50 text-purple-600 hover:border-purple-300 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
+                      : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+                  }`}
+                >
+                  <div
+                    className={`rounded-lg p-1 ${
+                      student.testimonialCount
+                        ? "bg-white/20"
+                        : "bg-gray-200 dark:bg-gray-700"
+                    }`}
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </div>
+                  <span>Testimonials {student.testimonialCount || 0}</span>
+                </button>
+              </div>
             </td>
 
             {/* Signup Through */}
@@ -1253,22 +1313,40 @@ const StudentManagement = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewEnrollments(student.id);
-                        }}
-                        disabled={!student.enrollmentCount}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
-                          ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
-                          : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                          }`}
-                      >
-                        <div className={`p-1 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                          <BookOpen className="w-3.5 h-3.5" />
-                        </div>
-                        <span>Enroll {student.enrollmentCount || 0}</span>
-                      </button>
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewEnrollments(student.id);
+                          }}
+                          disabled={!student.enrollmentCount}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
+                            ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
+                            : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                            }`}
+                        >
+                          <div className={`p-1 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                            <BookOpen className="w-3.5 h-3.5" />
+                          </div>
+                          <span>Enroll {student.enrollmentCount || 0}</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewTestimonials(student.id);
+                          }}
+                          disabled={!student.testimonialCount}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.testimonialCount
+                            ? 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 hover:border-purple-300 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/30 cursor-pointer'
+                            : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                            }`}
+                        >
+                          <div className={`p-1 rounded-lg ${student.testimonialCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </div>
+                          <span>Testimonials {student.testimonialCount || 0}</span>
+                        </button>
+                      </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col gap-2">
@@ -1432,6 +1510,19 @@ const StudentManagement = () => {
                     </div>
                     <span>Enroll {student.enrollmentCount || 0}</span>
                   </button>
+                  <button
+                    onClick={() => student.testimonialCount && handleViewTestimonials(student.id)}
+                    disabled={!student.testimonialCount}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.testimonialCount
+                      ? 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 hover:border-purple-300 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/30 cursor-pointer'
+                      : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                      }`}
+                  >
+                    <div className={`p-1.5 rounded-lg ${student.testimonialCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <span>Testimonials {student.testimonialCount || 0}</span>
+                  </button>
 
                   <div className="text-xs text-gray-700 dark:text-gray-300">
                     <span className="font-semibold">Signup:</span> {student.signupTypeName || 'N/A'}
@@ -1524,6 +1615,17 @@ const StudentManagement = () => {
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>Enroll {student.enrollmentCount || 0}</span>
+                  </button>
+                  <button
+                    onClick={() => student.testimonialCount && handleViewTestimonials(student.id)}
+                    disabled={!student.testimonialCount}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${student.testimonialCount
+                      ? 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 hover:border-purple-300 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/30 cursor-pointer'
+                      : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                      }`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Testimonials {student.testimonialCount || 0}</span>
                   </button>
                 </div>
               </div>
@@ -2636,6 +2738,169 @@ const StudentManagement = () => {
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Cart is Empty</h3>
                   <p className="text-gray-500 dark:text-gray-400">
                     This student has no items in their cart.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Testimonials Modal */}
+      {showTestimonialsModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-slideUp">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                    <MessageSquare className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Testimonials
+                    </h2>
+                    <p className="text-purple-100 mt-1">
+                      {studentTestimonials?.length || 0} testimonials
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowTestimonialsModal(false);
+                    setStudentTestimonials(null);
+                  }}
+                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-colors duration-200 group"
+                >
+                  <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 lg:p-8 overflow-y-auto max-h-[calc(85vh-120px)] bg-gray-50 dark:bg-gray-900">
+              {loadingTestimonials || loadingStudentTestimonials ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                </div>
+              ) : studentTestimonials && studentTestimonials.length > 0 ? (
+                <div className="space-y-4">
+                  {/* Header with count */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-purple-500 rounded-xl">
+                      <MessageSquare className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      Testimonials ({studentTestimonials.length})
+                    </h3>
+                  </div>
+
+                  {/* Testimonial Cards */}
+                  {studentTestimonials.map((testimonial, index) => (
+                    <div key={testimonial.id || index} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-purple-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
+                      <div className="flex flex-col gap-4">
+                        {/* Testimonial Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                              <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div>
+                              <h4 className="text-base font-bold text-gray-900 dark:text-white">
+                                {testimonial.customerName || 'Unknown Customer'}
+                              </h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Customer ID: {testimonial.customerId}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {testimonial.isApproved ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                Approved
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
+                                <Clock className="w-3.5 h-3.5" />
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Testimonial Content */}
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                            {testimonial.testimonial || 'No testimonial text provided.'}
+                          </p>
+                        </div>
+
+                        {/* Video URL if exists */}
+                        {testimonial.testimonialVideoUrl && (
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={testimonial.testimonialVideoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Watch Video Testimonial
+                            </a>
+                          </div>
+                        )}
+
+                        {/* Date */}
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Submitted: {testimonial.createdAt ? formatDateTime(testimonial.createdAt) : 'N/A'}</span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                          {testimonial.isApproved ? (
+                            <button
+                              onClick={() => handleApproveTestimonial(testimonial.id, testimonial.customerId, false)}
+                              disabled={testimonialActionLoading[testimonial.id]}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 text-sm font-medium rounded-xl border border-red-200 dark:border-red-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {testimonialActionLoading[testimonial.id] ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
+                              ) : (
+                                <XCircle className="w-4 h-4" />
+                              )}
+                              <span>Deny</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleApproveTestimonial(testimonial.id, testimonial.customerId, true)}
+                              disabled={testimonialActionLoading[testimonial.id]}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 text-sm font-medium rounded-xl border border-green-200 dark:border-green-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {testimonialActionLoading[testimonial.id] ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent"></div>
+                              ) : (
+                                <CheckCircle className="w-4 h-4" />
+                              )}
+                              <span>Approve</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Testimonials Found</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    This student has not submitted any testimonials yet.
                   </p>
                 </div>
               )}

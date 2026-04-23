@@ -153,6 +153,8 @@ export const ENDPOINTS = {
   STUDENT_MANAGEMENT_DROPDOWN_COUNTRIES: '/StudentManagement/dropdown/countries',
   STUDENT_MANAGEMENT_GENERATE_DASHBOARD_URL: '/StudentManagement/generate-dashboard-url',
   STUDENT_MANAGEMENT_CART: (customerId) => `/StudentManagement/${customerId}/cart`,
+  STUDENT_MANAGEMENT_TESTIMONIALS: (customerId) => `/StudentManagement/testimonials?customerId=${customerId}`,
+  STUDENT_MANAGEMENT_TESTIMONIALS_APPROVE: '/StudentManagement/testimonials/approve',
   STUDENT_ORDER_ALL: '/StudentOrder',
   STUDENT_ORDER_BY_ID: (id) => `/StudentOrder/${id}`,
   PAYMENT_METHOD: '/PaymentMethod',
