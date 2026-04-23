@@ -26,7 +26,8 @@
           </span>
           Total Questions •
           <span class="font-medium text-gray-900">
-            {{ (totalQuestionLength() - questions().length) === 0 ? currentQuestionIndex() : totalQuestionLength() - questions().length }}
+            {{ (totalQuestionLength() - questions().length) === 0 ? currentQuestionIndex() : totalQuestionLength() -
+            questions().length }}
           </span>
           Completed •
           <span class="font-medium text-gray-900">
@@ -65,7 +66,8 @@
 
     <div class="bg-thirdly rounded-xl p-6 mb-6 qestion">
       <h2 class="text-base font-bold text-gray-900 mb-6">
-        Q {{ (totalQuestionLength() - questions().length) + (currentQuestionIndex() === 0 ? 1 : currentQuestionIndex() + 1) }}. {{ currentQuestion().question }}
+        Q{{ (totalQuestionLength() - questions().length) + (currentQuestionIndex() === 0 ? 1 : currentQuestionIndex() +
+        1) }}. {{ currentQuestion().question }}
       </h2>
 
       <div class="grid grid-cols-2 gap-4 dbcksec">

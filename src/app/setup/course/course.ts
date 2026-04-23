@@ -1798,6 +1798,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       // Deselect lectures when moving to final assessment
       this.deselectSidebarLectures();
       this.assessmentStep.set('final');
+    } else if (typeof result === 'object' && result?.isPassed === false) {
+      // Handle failed assessment object from final-assessment component
+      this.assessmentResult.set(result);
+      this.assessmentStep.set('failed');
+    } else if (typeof result === 'object' && result?.isPassed === true) {
+      // Handle passed assessment object from final-assessment component
+      this.assessmentResult.set(result);
+      this.assessmentStep.set('cleared');
     } else if (result === 'failed') {
       this._fetchAssessmentResultAndSetStep('failed');
     } else if (result === 'cleared') {

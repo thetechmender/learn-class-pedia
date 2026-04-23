@@ -645,13 +645,15 @@ export class FinalAssessment implements OnInit {
 
 
 
-  onCheckResult() {
+  async onCheckResult() {
 
     if (!this.currentQuestion()?.isSelect) {
 
       return;
 
     }
+
+    await this._saveCurrentQuestion();
 
     this.stopTimer();
 
@@ -768,7 +770,7 @@ export class FinalAssessment implements OnInit {
     if (isPassed === false) {
 
       // If failed, emit data immediately to route to failed-assessment
-
+      console.log(data);
       this.next.emit(data);
 
     } else if (isPassed === true) {
