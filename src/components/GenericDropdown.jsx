@@ -13,6 +13,7 @@ const GenericDropdown = ({
   valueField = 'id',
   searchable = true,
   multiple = false,
+  showSelectAll = false,
   onSearch,
   loading = false
 }) => {
@@ -65,6 +66,20 @@ const GenericDropdown = ({
     return selected ? selected[displayField] : placeholder;
   };
 
+
+  // Handle select all / deselect all
+  const handleSelectAll = () => {
+    if (!multiple) return;
+    const currentValue = Array.isArray(value) ? value : [];
+    const allItemValues = items.map(item => item[valueField] || item.courseId || item.id);
+    const allSelected = allItemValues.length > 0 && allItemValues.every(v => currentValue.includes(v));
+
+    if (allSelected) {
+      onChange([]);
+    } else {
+      onChange(allItemValues);
+    }
+  };
 
   // Handle item selection
   const handleSelect = (itemValue) => {
@@ -161,6 +176,32 @@ const GenericDropdown = ({
             </div>
           )}
 
+          {/* Select All */}
+          {multiple && showSelectAll && items.length > 0 && (
+            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
+              <button
+                className="flex items-center w-full text-left cursor-pointer hover:bg-gray-100 rounded px-1 py-1 transition-colors"
+                onClick={handleSelectAll}
+              >
+                <input
+                  type="checkbox"
+                  readOnly
+                  checked={items.length > 0 && items.every(item => {
+                    const itemValue = item[valueField] || item.courseId || item.id;
+                    return Array.isArray(value) && value.includes(itemValue);
+                  })}
+                  className="w-4 h-4 mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {items.length > 0 && items.every(item => {
+                    const itemValue = item[valueField] || item.courseId || item.id;
+                    return Array.isArray(value) && value.includes(itemValue);
+                  }) ? 'Deselect All' : 'Select All'}
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* Items List */}
           <div className="overflow-y-auto max-h-60">
             {filteredItems.length > 0 ? (
@@ -185,9 +226,18 @@ const GenericDropdown = ({
                       handleSelect(itemValue);
                     }}
                   >
-                    <span className={`w-2 h-2 rounded-full mr-2 ${
-                      isSelected ? 'bg-blue-500' : 'bg-gray-400'
-                    }`} />
+                    {multiple ? (
+                      <input
+                        type="checkbox"
+                        readOnly
+                        checked={isSelected}
+                        className="w-4 h-4 mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    ) : (
+                      <span className={`w-2 h-2 rounded-full mr-2 ${
+                        isSelected ? 'bg-blue-500' : 'bg-gray-400'
+                      }`} />
+                    )}
                     <div className="flex-1">
                       <div className="font-medium text-sm">{item[displayField]}</div>
                       {item?.description ? (

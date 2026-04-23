@@ -50,11 +50,20 @@ export const useStudentManagement = () => {
         ...(filters.signupDateFrom && { SignupDateFrom: filters.signupDateFrom }),
         ...(filters.signupDateTo && { SignupDateTo: filters.signupDateTo }),
         ...(filters.courseId && { CourseId: filters.courseId }),
-        ...(filters.geoLocationCountry && { GeoLocationCountry: filters.geoLocationCountry }),
         ...(filters.isDownloaded && { IsDownloaded: filters.isDownloaded.toString() }),
         ...(filters.isShared && { IsShared: filters.isShared.toString() }),
         ...(filters.isCart && { IsCart: filters.isCart.toString() })
       });
+
+      if (filters.geoLocationCountry) {
+        if (Array.isArray(filters.geoLocationCountry) && filters.geoLocationCountry.length > 0) {
+          filters.geoLocationCountry.forEach(country => {
+            queryParams.append('GeoLocationCountry', country);
+          });
+        } else if (typeof filters.geoLocationCountry === 'string' && filters.geoLocationCountry.trim() !== '') {
+          queryParams.append('GeoLocationCountry', filters.geoLocationCountry);
+        }
+      }
 
       const response = await ApiService.get(`${ENDPOINTS.STUDENT_MANAGEMENT_ALL}?${queryParams}`);
       

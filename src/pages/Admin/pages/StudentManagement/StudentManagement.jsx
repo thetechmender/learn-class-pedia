@@ -58,7 +58,7 @@ const StudentManagement = () => {
     email: '',
     phoneNumber: '',
     isEmailVerified: '',
-    geoLocationCountry: '',
+    geoLocationCountry: [],
     signupTypeId: '',
     signupDateFrom: '',
     signupDateTo: '',
@@ -227,7 +227,7 @@ const StudentManagement = () => {
     email: '',
     phoneNumber: '',
     isEmailVerified: '',
-    geoLocationCountry: '',
+    geoLocationCountry: [],
     signupTypeId: '',
     signupDateFrom: '',
     signupDateTo: '',
@@ -248,7 +248,11 @@ const StudentManagement = () => {
 
   // Reset a single filter and re-fetch
   const removeFilter = useCallback(async (key) => {
-    const resetValue = typeof filters[key] === 'boolean' ? false : '';
+    const resetValue = typeof filters[key] === 'boolean'
+      ? false
+      : Array.isArray(filters[key])
+        ? []
+        : '';
     const next = { ...filters, [key]: resetValue };
     setFilters(next);
     try {
@@ -277,6 +281,7 @@ const StudentManagement = () => {
 
     const isActive = (k, v) => {
       if (typeof v === 'boolean') return v === true;
+      if (Array.isArray(v)) return v.length > 0;
       return v !== '' && v !== null && v !== undefined;
     };
 
@@ -298,6 +303,13 @@ const StudentManagement = () => {
           return 'Shared';
         case 'isCart':
           return 'Has Items';
+        case 'geoLocationCountry': {
+          if (!Array.isArray(v) || v.length === 0) return String(v);
+          if (countries.length > 0 && v.length >= countries.length) return 'All Countries';
+          if (v.length === 1) return v[0];
+          if (v.length === 2) return `${v[0]}, ${v[1]}`;
+          return `${v[0]}, ${v[1]} and ${v.length - 2} more`;
+        }
         default:
           return String(v);
       }
@@ -534,6 +546,8 @@ const StudentManagement = () => {
                     allowClear={true}
                     displayField="name"
                     valueField="name"
+                    multiple={true}
+                    showSelectAll={true}
                   />
                 </div>
               </div>
