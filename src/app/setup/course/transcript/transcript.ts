@@ -15,10 +15,12 @@ export type ViewMode = 'book' | 'ppt';
 export class Transcript {
   @Input() currentShortCourse: any = null;
   @Input() courseTypeId: any = null;
+  @Input() allCoursesCompleted: boolean = false;
   @Output() moveToQuiz = new EventEmitter<void>();
   @Output() startAssessment = new EventEmitter<void>();
 
   viewMode = signal<ViewMode>('book');
+  contentCompleted = signal<boolean>(false);
 
   get lectures(): any[] {
     const sc = this.currentShortCourse;
@@ -63,5 +65,17 @@ export class Transcript {
     } else {
       this.moveToQuiz.emit();
     }
+  }
+
+  onBookCompleted() {
+    this.contentCompleted.set(true);
+  }
+
+  onPresentationCompleted() {
+    this.contentCompleted.set(true);
+  }
+
+  showQuizButton(): boolean {
+    return this.contentCompleted() && !this.allCoursesCompleted;
   }
 }
