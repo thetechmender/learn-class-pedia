@@ -26,12 +26,12 @@
           </span>
           Total Questions •
           <span class="font-medium text-gray-900">
-            {{ (totalQuestionLength() - questions().length) === 0 ? currentQuestionIndex() : totalQuestionLength() -
-            questions().length }}
+            {{ (totalQuestionLength() - questions().length) === 0 ? currentQuestionIndex() : (totalQuestionLength() -
+            questions().length) + newQuestionsCount() }}
           </span>
           Completed •
           <span class="font-medium text-gray-900">
-            {{ questions().length }}
+            {{ questions().length - newQuestionsCount() }}
           </span>
           Remaining
         </p>

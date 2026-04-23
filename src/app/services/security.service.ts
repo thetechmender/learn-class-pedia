@@ -128,14 +128,22 @@ export class SecurityService {
     // --- Pehle wale saare code (Ctrl+P, Right Click) yahan rahen ge ---
 
     // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
+    let blurTimeout: any = null;
     window.addEventListener('blur', () => {
       this.enableProtection();
-      // Don't count as warning - only apply protection CSS
-      // Warning count only for PrintScreen key and visibilitychange
+      // If focus doesn't return within 500ms, it's likely a screenshot tool
+      blurTimeout = setTimeout(() => {
+        this.handleWarning('screenshot');
+      }, 500);
     });
 
     // 2. Detect jab user wapas aaye
     window.addEventListener('focus', () => {
+      // Clear the blur timeout if focus returns quickly (alt+tab, not snipping tool)
+      if (blurTimeout) {
+        clearTimeout(blurTimeout);
+        blurTimeout = null;
+      }
       this.disableProtection();
     });
 
@@ -143,7 +151,7 @@ export class SecurityService {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         this.enableProtection();
-        // this.handleWarning('tab_switch');
+        this.handleWarning('tab_switch');
       }
     });
 
@@ -156,7 +164,7 @@ export class SecurityService {
       if (event.key === 'PrintScreen') {
         this.enableProtection();
         navigator.clipboard.writeText('');
-        // this.handleWarning('screenshot');
+        this.handleWarning('screenshot');
       }
 
       // Block Ctrl+P, Ctrl+S, Ctrl+U
@@ -187,8 +195,18 @@ export class SecurityService {
   async isDualDisplayActive(): Promise<boolean> {
     if (!isPlatformBrowser(this.platformId)) return true;
 
-    // Skip dual display detection to avoid browser permission prompts
-    // The getScreenDetails() API requires "Manage windows on all your displays" permission
+    try {
+      const screenDetails = await (window as any).getScreenDetails?.();
+      if (screenDetails && screenDetails.screens.length > 1) {
+        this.toastr.error(
+          'Multiple displays detected. Please use a single display.',
+          'Security Alert'
+        );
+        return false;
+      }
+    } catch (error) {
+      console.warn('Screen Details API not supported');
+    }
     return true;
   }
 

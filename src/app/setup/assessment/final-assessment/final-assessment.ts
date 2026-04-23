@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, Input, OnInit, signal, computed, HostListener } from '@angular/core';
+import { Component, Output, EventEmitter, inject, Input, OnInit, signal, computed, HostListener, Signal } from '@angular/core';
 
 import { AuthService } from '../../../services/auth.service';
 
@@ -36,7 +36,7 @@ export class FinalAssessment implements OnInit {
 
   @Input() isAssessmentInProgress: boolean = false;
 
-
+  newQuestionsCount = signal(0);  
 
   isCompleting = signal(false);
 
@@ -134,8 +134,8 @@ export class FinalAssessment implements OnInit {
   ngOnInit(): void {
     this.startAssessment();
     // Initialize security service with order payload
-    // this.securityService.setOrderPayload(this.orderPayload);
-    // this.securityService.startAssessmentTracking();
+    this.securityService.setOrderPayload(this.orderPayload);
+    this.securityService.startAssessmentTracking();
 
     if (this.orderPayload?.careerPathLevelMapId) {
 
@@ -157,9 +157,9 @@ export class FinalAssessment implements OnInit {
 
 
 
-    // this._initializeMouseTracking();
+    this._initializeMouseTracking();
 
-    // this._initializeSecurityTracking();
+    this._initializeSecurityTracking();
 
   }
 
@@ -415,7 +415,7 @@ export class FinalAssessment implements OnInit {
         await this._saveCurrentQuestion();
 
         this.currentQuestionIndex.update(index => index + 1);
-
+        this.newQuestionsCount.update(count => count + 1);
       };
 
       return
@@ -535,7 +535,7 @@ export class FinalAssessment implements OnInit {
 
         this.stopTimer();
 
-        // this._autoSubmit();
+        this._autoSubmit();
 
       } else {
 
