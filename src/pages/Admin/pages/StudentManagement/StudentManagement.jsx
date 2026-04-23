@@ -416,47 +416,26 @@ const StudentManagement = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-3 lg:p-4">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 lg:p-5 mb-5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div className="min-h-[3.5rem] flex flex-col justify-center">
-              <h1 className="text-2xl lg:text-[1.7rem] font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent leading-tight">
-                Student Management
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 leading-snug">
-                Manage and monitor student information and enrollment details
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="font-medium">Refresh</span>
-            </button>
-            <div className="px-3.5 py-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">Total Students</div>
-              <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{pagination.totalCount}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Search and Filters - Modern Compact Design */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-visible">
         {/* Filter Header Bar */}
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 rounded-t-xl">
           <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-            {/* Left: Quick Search & Stats */}
+            {/* Left: Title & Stats */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
-             
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-md">
+                  <Users className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+                    Student Management
+                  </h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
+                    {pagination.totalCount} students
+                  </p>
+                </div>
+              </div>
               {activeFilterCount > 0 && (
                 <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                   {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
@@ -466,6 +445,18 @@ const StudentManagement = () => {
 
             {/* Right: Filter Actions */}
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <div className="px-2.5 py-1 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400 font-medium uppercase tracking-wide">Total</div>
+                <div className="text-sm font-bold text-gray-900 dark:text-white leading-none">{pagination.totalCount}</div>
+              </div>
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
@@ -508,220 +499,228 @@ const StudentManagement = () => {
           }`}
         >
           <div className="p-4 space-y-4 bg-gray-50/60 dark:bg-gray-900/20 rounded-b-2xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-              <div className="relative xl:col-span-1">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name</label>
+            {/* Text Inputs Group */}
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                 <div className="relative">
-                   <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by name..."
-                    value={filters.fullName}
-                    onChange={(e) => handleFilterChange('fullName', e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
-                  />
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name</label>
+                  <div className="relative">
+                    <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by name..."
+                      value={filters.fullName}
+                      onChange={(e) => handleFilterChange('fullName', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="relative xl:col-span-1">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="email"
-                    placeholder="email@example.com"
-                    value={filters.email}
-                    onChange={(e) => handleFilterChange('email', e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
-                  />
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={filters.email}
+                      onChange={(e) => handleFilterChange('email', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="relative xl:col-span-1">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone</label>
                 <div className="relative">
-                  <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="tel"
-                    placeholder="+1 234 567 890"
-                    value={filters.phoneNumber}
-                    onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
-                  />
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone</label>
+                  <div className="relative">
+                    <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="tel"
+                      placeholder="+1 234 567 890"
+                      value={filters.phoneNumber}
+                      onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Verification</label>
-                <div className="relative">
-                  <CheckCircle className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select
-                    value={filters.isEmailVerified}
-                    onChange={(e) => handleFilterChange('isEmailVerified', e.target.value)}
-                    className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
-                  >
-                    <option value="">All Status</option>
-                    <option value="true">✓ Verified</option>
-                    <option value="false">✗ Not Verified</option>
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup From</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="date"
+                      value={filters.signupDateFrom}
+                      onChange={(e) => handleFilterChange('signupDateFrom', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup Type</label>
-                <div className="relative">
-                  <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select
-                    value={filters.signupTypeId}
-                    onChange={(e) => handleFilterChange('signupTypeId', e.target.value)}
-                    className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
-                  >
-                    <option value="">All Types</option>
-                    {signupTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.typeName}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-              <div className="sm:col-span-2 xl:col-span-1">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Country</label>
-                <div className="relative">
-                  <Globe className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
-                  <GenericDropdown
-                    value={filters.geoLocationCountry}
-                    onChange={(value) => handleFilterChange('geoLocationCountry', value)}
-                    items={countries}
-                    placeholder="All Countries"
-                    disabled={loadingDropdowns}
-                    loading={loadingDropdowns}
-                    allowClear={true}
-                    displayField="name"
-                    valueField="name"
-                    multiple={true}
-                    showSelectAll={true}
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup To</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="date"
+                      value={filters.signupDateTo}
+                      onChange={(e) => handleFilterChange('signupDateTo', e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3 items-start">
-              <div className="sm:col-span-2 xl:col-span-3">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Course</label>
-                <div className="relative">
-                  <BookOpen className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
-                  <GenericDropdown
-                    value={filters.courseId}
-                    onChange={(value) => handleFilterChange('courseId', value)}
-                    items={courses}
-                    placeholder="All Courses"
-                    disabled={loadingDropdowns}
-                    loading={loadingDropdowns}
-                    allowClear={true}
-                    displayField="title"
-                    valueField="id"
-                  />
-                </div>
-              </div>
-              <div className="xl:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup From</label>
-                <div className="relative">
-                  <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="date"
-                    value={filters.signupDateFrom}
-                    onChange={(e) => handleFilterChange('signupDateFrom', e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-              <div className="xl:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup To</label>
-                <div className="relative">
-                  <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="date"
-                    value={filters.signupDateTo}
-                    onChange={(e) => handleFilterChange('signupDateTo', e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-              <div className="sm:col-span-2 xl:col-span-5 xl:self-end">
-                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-2 py-2 shadow-sm ">
-                    <label className="inline-flex items-center gap-2 px-1 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={filters.isDownloaded}
-                        onChange={(e) => handleFilterChange('isDownloaded', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
-                      />
-                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Downloaded</span>
-                    </label>
-                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={filters.isShared}
-                        onChange={(e) => handleFilterChange('isShared', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
-                      />
-                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Shared</span>
-                    </label>
-                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-orange-300 dark:hover:border-orange-700 transition-colors whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={filters.isCart}
-                        onChange={(e) => handleFilterChange('isCart', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
-                      />
-                      <ShoppingBag className="w-4 h-4 text-orange-500" />
-                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">CartItems</span>
-                    </label>
-                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={filters.isEnrolled}
-                        onChange={(e) => handleFilterChange('isEnrolled', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
-                      />
-                      <BookOpen className="w-4 h-4 text-blue-500" />
-                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Enrolled</span>
-                    </label>
-                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-purple-300 dark:hover:border-purple-700 transition-colors whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={filters.isTestimonial}
-                        onChange={(e) => handleFilterChange('isTestimonial', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
-                      />
-                      <MessageSquare className="w-4 h-4 text-purple-500" />
-                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Testimonial</span>
-                    </label>
+            {/* Dropdowns Group */}
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Verification</label>
+                  <div className="relative">
+                    <CheckCircle className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <select
+                      value={filters.isEmailVerified}
+                      onChange={(e) => handleFilterChange('isEmailVerified', e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                    >
+                      <option value="">All Status</option>
+                      <option value="true">✓ Verified</option>
+                      <option value="false">✗ Not Verified</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
-              </div>
-              <div className="xl:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Completion %</label>
-                <div className="relative">
-                  <Percent className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select
-                    value={filters.completionPercentage}
-                    onChange={(e) => handleFilterChange('completionPercentage', e.target.value)}
-                    className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
-                  >
-                    <option value="">All Percentages</option>
-                    <option value="0">0%</option>
-                    <option value="10">10%</option>
-                    <option value="20">20%</option>
-                    <option value="30">30%</option>
-                    <option value="40">40%</option>
-                    <option value="50">50%</option>
-                    <option value="60">60%</option>
-                    <option value="70">70%</option>
-                    <option value="80">80%</option>
-                    <option value="90">90%</option>
-                    <option value="100">100%</option>
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Signup Type</label>
+                  <div className="relative">
+                    <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <select
+                      value={filters.signupTypeId}
+                      onChange={(e) => handleFilterChange('signupTypeId', e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                    >
+                      <option value="">All Types</option>
+                      {signupTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.typeName}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="sm:col-span-2 xl:col-span-1">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Country</label>
+                  <div className="relative">
+                    <Globe className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                    <GenericDropdown
+                      value={filters.geoLocationCountry}
+                      onChange={(value) => handleFilterChange('geoLocationCountry', value)}
+                      items={countries}
+                      placeholder="All Countries"
+                      disabled={loadingDropdowns}
+                      loading={loadingDropdowns}
+                      allowClear={true}
+                      displayField="name"
+                      valueField="name"
+                      multiple={true}
+                      showSelectAll={true}
+                    />
+                  </div>
+                </div>
+                <div className="xl:col-span-1">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Course</label>
+                  <div className="relative">
+                    <BookOpen className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                    <GenericDropdown
+                      value={filters.courseId}
+                      onChange={(value) => handleFilterChange('courseId', value)}
+                      items={courses}
+                      placeholder="All Courses"
+                      disabled={loadingDropdowns}
+                      loading={loadingDropdowns}
+                      allowClear={true}
+                      displayField="title"
+                      valueField="id"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Completion %</label>
+                  <div className="relative">
+                    <Percent className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <select
+                      value={filters.completionPercentage}
+                      onChange={(e) => handleFilterChange('completionPercentage', e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                    >
+                      <option value="">All Percentages</option>
+                      <option value="0">0%</option>
+                      <option value="10">10%</option>
+                      <option value="20">20%</option>
+                      <option value="30">30%</option>
+                      <option value="40">40%</option>
+                      <option value="50">50%</option>
+                      <option value="60">60%</option>
+                      <option value="70">70%</option>
+                      <option value="80">80%</option>
+                      <option value="90">90%</option>
+                      <option value="100">100%</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Checkboxes Group */}
+            <div>
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-3 py-3 shadow-sm">
+                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={filters.isDownloaded}
+                    onChange={(e) => handleFilterChange('isDownloaded', e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                  />
+                  <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Downloaded</span>
+                </label>
+                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={filters.isShared}
+                    onChange={(e) => handleFilterChange('isShared', e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                  />
+                  <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Shared</span>
+                </label>
+                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-orange-300 dark:hover:border-orange-700 transition-colors whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={filters.isCart}
+                    onChange={(e) => handleFilterChange('isCart', e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                  />
+                  <ShoppingBag className="w-4 h-4 text-orange-500" />
+                  <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">CartItems</span>
+                </label>
+                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={filters.isEnrolled}
+                    onChange={(e) => handleFilterChange('isEnrolled', e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                  />
+                  <BookOpen className="w-4 h-4 text-blue-500" />
+                  <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Enrolled</span>
+                </label>
+                <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-purple-300 dark:hover:border-purple-700 transition-colors whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={filters.isTestimonial}
+                    onChange={(e) => handleFilterChange('isTestimonial', e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                  />
+                  <MessageSquare className="w-4 h-4 text-purple-500" />
+                  <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Testimonial</span>
+                </label>
               </div>
             </div>
           </div>
@@ -907,6 +906,19 @@ const StudentManagement = () => {
                     </span>
                   </div>
                 )}
+
+                {student.testimonialCount > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewTestimonials(student.id);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-2 py-1 text-xs font-medium text-purple-600 transition-colors duration-200 hover:border-purple-300 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    <span>Testimonials {student.testimonialCount}</span>
+                  </button>
+                )}
               </div>
             </td>
 
@@ -938,26 +950,27 @@ const StudentManagement = () => {
                 </button>
                 <button
                   onClick={(e) => {
+                    if ((student.cartCount || 0) === 0) return;
                     e.stopPropagation();
-                    handleViewTestimonials(student.id);
+                    handleViewCart(student.id);
                   }}
-                  disabled={!student.testimonialCount}
+                  disabled={(student.cartCount || 0) === 0}
                   className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
-                    student.testimonialCount
-                      ? "cursor-pointer border-purple-200 bg-purple-50 text-purple-600 hover:border-purple-300 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
-                      : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+                    (student.cartCount || 0) === 0
+                      ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
+                      : "cursor-pointer border-orange-200 bg-orange-50 text-orange-600 hover:border-orange-300 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30"
                   }`}
                 >
                   <div
                     className={`rounded-lg p-1 ${
-                      student.testimonialCount
+                      (student.cartCount || 0) > 0
                         ? "bg-white/20"
                         : "bg-gray-200 dark:bg-gray-700"
                     }`}
                   >
-                    <MessageSquare className="h-3.5 w-3.5" />
+                    <ShoppingBag className="h-3.5 w-3.5" />
                   </div>
-                  <span>Testimonials {student.testimonialCount || 0}</span>
+                  <span>Cart {student.cartCount || 0}</span>
                 </button>
               </div>
             </td>
@@ -1130,23 +1143,6 @@ const StudentManagement = () => {
             {/* Course Progress */}
             <td className="px-2 py-3 align-top">
               <div className="flex flex-col gap-2">
-                <button
-                  onClick={(e) => {
-                    if ((student.cartCount || 0) === 0) return;
-                    e.stopPropagation();
-                    handleViewCart(student.id);
-                  }}
-                  disabled={(student.cartCount || 0) === 0}
-                  className={`inline-flex w-fit items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors duration-200 ${
-                    (student.cartCount || 0) === 0
-                      ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-600"
-                      : "cursor-pointer border-orange-200 bg-orange-50 text-orange-600 hover:border-orange-300 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-900/20 dark:text-orange-400 dark:hover:bg-orange-900/30"
-                  }`}
-                >
-                  <ShoppingBag className="h-3.5 w-3.5" />
-                  <span>Cart {student.cartCount || 0}</span>
-                </button>
-
                 {student.completionPercentage !== undefined &&
                 student.completionPercentage !== null ? (
                   <>
@@ -1353,6 +1349,18 @@ const StudentManagement = () => {
                               : student.fullName || 'N/A'
                             }
                           </div>
+                          {student.testimonialCount > 0 && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewTestimonials(student.id);
+                              }}
+                              className="mt-1 inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-600 transition-colors duration-200 hover:border-purple-300 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
+                            >
+                              <MessageSquare className="h-3 w-3" />
+                              <span>Testimonials {student.testimonialCount}</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -1374,49 +1382,22 @@ const StudentManagement = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex flex-col gap-1.5">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewEnrollments(student.id);
-                          }}
-                          disabled={!student.enrollmentCount}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
-                            ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
-                            : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                            }`}
-                        >
-                          <div className={`p-1 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                            <BookOpen className="w-3.5 h-3.5" />
-                          </div>
-                          <span>Enroll {student.enrollmentCount || 0}</span>
-                        </button>
-                     <button
-  onClick={(e) => {
-    e.stopPropagation();
-    handleViewTestimonials(student.id);
-  }}
-  disabled={!student.testimonialCount}
-  className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-    student.testimonialCount
-      ? "cursor-pointer border-purple-200 bg-purple-50 text-purple-600 hover:border-purple-300 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
-      : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
-  }`}
->
-  <div
-    className={`rounded-lg p-1.5 ${
-      student.testimonialCount
-        ? "bg-white/20"
-        : "bg-gray-200 dark:bg-gray-700"
-    }`}
-  >
-    <MessageSquare className="h-4 w-4 shrink-0" />
-  </div>
-  <span className="whitespace-nowrap">
-    Testimonials {student.testimonialCount || 0}
-  </span>
-</button>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewEnrollments(student.id);
+                        }}
+                        disabled={!student.enrollmentCount}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.enrollmentCount
+                          ? 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 cursor-pointer'
+                          : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
+                          }`}
+                      >
+                        <div className={`p-1 rounded-lg ${student.enrollmentCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                          <BookOpen className="w-3.5 h-3.5" />
+                        </div>
+                        <span>Enroll {student.enrollmentCount || 0}</span>
+                      </button>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col gap-2">
@@ -1515,6 +1496,15 @@ const StudentManagement = () => {
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Active Student</span>
                     </div>
+                    {student.testimonialCount > 0 && (
+                      <button
+                        onClick={() => handleViewTestimonials(student.id)}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-600 transition-colors duration-200 hover:border-purple-300 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        <span>Testimonials {student.testimonialCount}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1579,19 +1569,6 @@ const StudentManagement = () => {
                       <BookOpen className="w-4 h-4" />
                     </div>
                     <span>Enroll {student.enrollmentCount || 0}</span>
-                  </button>
-                  <button
-                    onClick={() => student.testimonialCount && handleViewTestimonials(student.id)}
-                    disabled={!student.testimonialCount}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${student.testimonialCount
-                      ? 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 hover:border-purple-300 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/30 cursor-pointer'
-                      : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
-                      }`}
-                  >
-                    <div className={`p-1.5 rounded-lg ${student.testimonialCount ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                      <MessageSquare className="w-4 h-4" />
-                    </div>
-                    <span>Testimonials {student.testimonialCount || 0}</span>
                   </button>
 
                   <div className="text-xs text-gray-700 dark:text-gray-300">
