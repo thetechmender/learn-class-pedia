@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   ElementRef,
   EventEmitter,
   HostListener,
@@ -11,9 +12,10 @@ import {
   OnInit,
   Output,
   PLATFORM_ID,
+  signal,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { SafeHtmlPipe } from './safe-html.pipe';
+import { SafeHtmlPipe } from '../../../../services/safe-html.pipe';
 
 export type BookTheme = 'day' | 'sepia' | 'night';
 export type BookFontScale = 1 | 1.15 | 1.3;
@@ -80,6 +82,7 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
   private dragPointerId: number | null = null;
   private lastMoveX = 0;
   private lastMoveTime = 0;
+  progress = signal<any>(null);
   private dragVelocity = 0; // px per ms (positive = rightward)
 
   // Reading preferences / state
@@ -393,7 +396,7 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     this.lastMoveTime = performance.now();
     this.dragVelocity = 0;
 
-    try { container.setPointerCapture(ev.pointerId); } catch {}
+    try { container.setPointerCapture(ev.pointerId); } catch { }
     ev.preventDefault();
     this.cdr.markForCheck();
   }
@@ -423,7 +426,7 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     if (!this.dragging || this.dragPointerId !== ev.pointerId) return;
 
     const container = ev.currentTarget as HTMLElement;
-    try { container.releasePointerCapture(ev.pointerId); } catch {}
+    try { container.releasePointerCapture(ev.pointerId); } catch { }
 
     const overThreshold =
       this.dragDirection === 'forward'
@@ -624,5 +627,10 @@ export class ThreeDBookComponent implements OnInit, AfterViewInit {
     const title = h2?.textContent?.trim() || lecture.title || 'Untitled';
     if (h2) h2.remove();
     return { title, content: tmp.innerHTML };
-  }
+  };
+
+  completionPercentage = computed(() => {
+    const progress = this.progress();
+    return progress?.completionPercentage || 0;
+  });
 }

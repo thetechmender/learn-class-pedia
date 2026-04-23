@@ -1,3 +1,4 @@
+
 .lecture-cont
   position: relative
   min-height: 850px
@@ -8,20 +9,18 @@
 .view-mode-toggle
   display: flex
   gap: 12px
+  height: auto
   justify-content: center
   margin-bottom: 24px
   padding: 16px
-  background: #f9fafb
   border-radius: 12px
 
-  .toggle-btn
+  button
     display: flex
     align-items: center
     gap: 8px
     padding: 12px 24px
-    border: 2px solid #e5e7eb
     background: #ffffff
-    border-radius: 8px
     cursor: pointer
     transition: all 0.3s ease
     font-size: 14px
@@ -31,16 +30,10 @@
     svg
       transition: all 0.3s ease
 
-    &:hover
-      border-color: #0062CC
-      color: #0062CC
-      transform: translateY(-2px)
-      box-shadow: 0 4px 12px rgba(0, 98, 204, 0.15)
-
     &.active
       border-color: #0062CC
-      background: linear-gradient(135deg, #6b8cff 0%, #0062CC 100%)
-      color: #ffffff
+      background: #0062CC !important
+      color: #ffffff !important
       box-shadow: 0 4px 16px rgba(0, 98, 204, 0.3)
 
       svg

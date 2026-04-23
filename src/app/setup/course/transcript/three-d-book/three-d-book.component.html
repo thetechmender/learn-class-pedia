@@ -85,13 +85,18 @@
 
   <div class="footer">
     <div class="progress">
-      <div class="progress__bar">
+              <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden progressbr">
+          <div class="h-full bg-primary rounded-full transition-all duration-300"
+            [style.width.%]="progressPercent"></div>
+        </div>
+        <span class="text-sm text-primary">{{ progressPercent | number:'1.0-1' }}%</span>
+      <!-- <div class="progress__bar">
         <div class="progress__fill" [style.width.%]="progressPercent"></div>
       </div>
       <div class="progress__label">
         <span class="progress__percent">{{ progressPercent | number:'1.0-0' }}%</span>
         <span class="progress__muted">complete</span>
-      </div>
+      </div> -->
     </div>
   </div>
 </div>

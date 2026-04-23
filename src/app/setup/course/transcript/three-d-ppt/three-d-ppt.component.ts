@@ -13,7 +13,7 @@ import {
   PLATFORM_ID,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { SafeHtmlPipe } from './safe-html.pipe';
+import { SafeHtmlPipe } from '../../../../services/safe-html.pipe';
 
 export type PPTTheme = 'light' | 'dark' | 'blue';
 

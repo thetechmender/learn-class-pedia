@@ -18,7 +18,7 @@ import { FinalAssessment } from '../assessment/final-assessment/final-assessment
 import { FailedAssessment } from '../assessment/failed-assessment/failed-assessment';
 import { ClearedAssessment } from '../assessment/cleared-assessment/cleared-assessment';
 import { EnrolledCourses } from '../course/enrolled-courses/enrolled-courses';
-import { SimpleVideoPlayerComponent } from '../course/simple-video-player/simple-video-player';
+import { VideoPlayerComponent } from './video-player/video-player';
 import { Chat } from './chat/chat';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
@@ -27,7 +27,7 @@ import { SecurityService } from '../../services/security.service';
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent, Chat],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, VideoPlayerComponent, Chat],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -35,7 +35,7 @@ import { SecurityService } from '../../services/security.service';
 export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild(Quiz) quizComponent?: Quiz;
   @ViewChild('tabContainer') tabContainer?: ElementRef;
-  @ViewChild(SimpleVideoPlayerComponent) videoPlayer?: SimpleVideoPlayerComponent;
+  @ViewChild(VideoPlayerComponent) videoPlayer?: VideoPlayerComponent;
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);

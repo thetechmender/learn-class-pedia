@@ -7,10 +7,10 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-simple-video-player',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './simple-video-player.html',
-  styleUrls: ['./simple-video-player.sass']
+  templateUrl: './video-player.html',
+  styleUrls: ['./video-player.sass']
 })
-export class SimpleVideoPlayerComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class VideoPlayerComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
   @ViewChild('videoWrapper') videoWrapper!: ElementRef<HTMLDivElement>;
 

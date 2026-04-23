@@ -1,7 +1,7 @@
 import { Component, inject, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ThreeDBookComponent } from './three-d-book.component';
-import { ThreeDPPTComponent } from './three-d-ppt.component';
+import { ThreeDBookComponent } from './three-d-book/three-d-book.component';
+import { ThreeDPPTComponent } from './three-d-ppt/three-d-ppt.component';
 
 export type ViewMode = 'book' | 'ppt';
 
