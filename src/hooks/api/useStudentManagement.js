@@ -53,7 +53,10 @@ export const useStudentManagement = () => {
         ...(filters.courseId && { CourseId: filters.courseId }),
         ...(filters.isDownloaded && { IsDownloaded: filters.isDownloaded.toString() }),
         ...(filters.isShared && { IsShared: filters.isShared.toString() }),
-        ...(filters.isCart && { IsCart: filters.isCart.toString() })
+        ...(filters.isCart && { IsCart: filters.isCart.toString() }),
+        ...(filters.completionPercentage !== '' && filters.completionPercentage !== undefined && { CompletionPercentage: filters.completionPercentage }),
+        ...(filters.isEnrolled && { IsEnrolled: filters.isEnrolled.toString() }),
+        ...(filters.isTestimonial && { IsTestimonial: filters.isTestimonial.toString() })
       });
 
       if (filters.geoLocationCountry) {

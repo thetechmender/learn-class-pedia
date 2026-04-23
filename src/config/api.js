@@ -123,6 +123,7 @@ export const ENDPOINTS = {
   DISCOUNT_RATES_BY_ID: (id) => `/DiscountRates/${id}`,
   DISCOUNT_RATES_UPDATE: (id) => `/DiscountRates/${id}`,
   DISCOUNT_RATES_DELETE: (id) => `/DiscountRates/${id}`,
+  DISCOUNT_RATES_TYPES_DROPDOWN: '/DiscountRates/dropdown/types',
   DISCOUNT_RATES_ASSIGN: '/DiscountRates/assign-course',
   DISCOUNT_RATES_ASSIGN_COURSE_TYPE: '/DiscountRates/assign-course-type',
   DISCOUNT_RATES_ASSIGN_CAREER_PATH: '/DiscountRates/Assign-CareerPath',

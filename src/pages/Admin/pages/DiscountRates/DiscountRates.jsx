@@ -9,6 +9,7 @@ import {
   CheckCircle,
   AlertCircle,
   Percent,
+  DollarSign,
   Save,
   X
 } from 'lucide-react';
@@ -26,6 +27,7 @@ const DiscountRates = () => {
     createDiscountRate,
     updateDiscountRate,
     deleteDiscountRate,
+    getDiscountTypes,
     setPage
   } = useDiscountRates(1, 100);
   
@@ -36,10 +38,15 @@ const DiscountRates = () => {
   const [editingDiscountRate, setEditingDiscountRate] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
+    discountTypeId: 1,
     discountPercent: 0,
+    discountPrice: 0,
+    isCoupon: true,
     isActive: true
   });
   const [submitting, setSubmitting] = useState(false);
+  const [discountTypes, setDiscountTypes] = useState([]);
+  const [loadingDiscountTypes, setLoadingDiscountTypes] = useState(false);
 
   // Debounced search - only triggers when user stops typing (CareerSkills pattern)
   useEffect(() => {
@@ -76,26 +83,48 @@ const DiscountRates = () => {
     };
   }, [searchTerm, fetchDiscountRates, page, setPage]);
 
+  // Load discount types for dropdown
+  const loadDiscountTypes = useCallback(async () => {
+    setLoadingDiscountTypes(true);
+    try {
+      const types = await getDiscountTypes();
+      setDiscountTypes(types || []);
+    } catch (err) {
+      console.error('Error loading discount types:', err);
+      showToast('Failed to load discount types', 'error');
+    } finally {
+      setLoadingDiscountTypes(false);
+    }
+  }, [getDiscountTypes, showToast]);
+
   // Handle create/edit
-  const handleCreate = useCallback(() => {
+  const handleCreate = useCallback(async () => {
     setEditingDiscountRate(null);
     setFormData({
       title: '',
+      discountTypeId: 1,
       discountPercent: 0,
+      discountPrice: 0,
+      isCoupon: true,
       isActive: true
     });
+    await loadDiscountTypes();
     setShowModal(true);
-  }, []);
+  }, [loadDiscountTypes]);
 
-  const handleEdit = useCallback((rate) => {
+  const handleEdit = useCallback(async (rate) => {
     setEditingDiscountRate(rate);
     setFormData({
       title: rate.title,
-      discountPercent: rate.discountPercent,
+      discountTypeId: rate.discountTypeId || 1,
+      discountPercent: rate.discountPercent || 0,
+      discountPrice: rate.discountPrice || 0,
+      isCoupon: rate.isCoupon ?? true,
       isActive: rate.isActive
     });
+    await loadDiscountTypes();
     setShowModal(true);
-  }, []);
+  }, [loadDiscountTypes]);
 
   const handleDelete = useCallback(async (rate) => {
     if (window.confirm(`Are you sure you want to delete "${rate.title}"?`)) {
@@ -134,7 +163,10 @@ const DiscountRates = () => {
       setEditingDiscountRate(null);
       setFormData({
         title: '',
+        discountTypeId: 1,
         discountPercent: 0,
+        discountPrice: 0,
+        isCoupon: true,
         isActive: true
       });
     } catch (error) {
@@ -224,6 +256,9 @@ const DiscountRates = () => {
                       Discount
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Is Coupon
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -239,11 +274,31 @@ const DiscountRates = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center">
-                          <Percent className="w-4 h-4 text-green-600 mr-2" />
-                          <span className="font-medium text-green-600">
-                            {rate.discountPercent}% OFF
-                          </span>
+                          {rate.discountTypeId === 1 ? (
+                            <>
+                              <Percent className="w-4 h-4 text-green-600 mr-2" />
+                              <span className="font-medium text-green-600">
+                                {rate.discountPercent}% OFF
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <DollarSign className="w-4 h-4 text-green-600 mr-2" />
+                              <span className="font-medium text-green-600">
+                                ${rate.discountPrice} OFF
+                              </span>
+                            </>
+                          )}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          rate.isCoupon
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {rate.isCoupon ? 'Yes' : 'No'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -380,31 +435,98 @@ const DiscountRates = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Discount Percentage *
+                    Discount Type *
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={formData.discountPercent}
-                    onChange={(e) => setFormData(prev => ({ ...prev, discountPercent: parseInt(e.target.value) || 0 }))}
+                  <select
+                    value={formData.discountTypeId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, discountTypeId: parseInt(e.target.value) || 1 }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter discount percentage"
                     required
-                  />
+                    disabled={loadingDiscountTypes}
+                  >
+                    {loadingDiscountTypes ? (
+                      <option>Loading...</option>
+                    ) : discountTypes.length > 0 ? (
+                      discountTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.typeName}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value={1}>Percentage</option>
+                        <option value={2}>Fixed Price</option>
+                      </>
+                    )}
+                  </select>
                 </div>
 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-                    Active
-                  </label>
+                {formData.discountTypeId === 1 ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Percentage *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.discountPercent}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*$/.test(val)) {
+                          const num = parseInt(val, 10);
+                          setFormData(prev => ({ ...prev, discountPercent: val === '' ? 0 : (num > 100 ? 100 : num) }));
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter discount percentage"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Price *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.discountPrice}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                          setFormData(prev => ({ ...prev, discountPrice: val === '' ? 0 : parseFloat(val) }));
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter discount price"
+                      required
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isCoupon"
+                      checked={formData.isCoupon}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isCoupon: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isCoupon" className="ml-2 block text-sm text-gray-700">
+                      Is Coupon
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={formData.isActive}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                      Active
+                    </label>
+                  </div>
                 </div>
               </div>
 

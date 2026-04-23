@@ -23,7 +23,8 @@ import {
   SlidersHorizontal,
   ChevronDown,
   RotateCcw,
-  MessageSquare
+  MessageSquare,
+  Percent
 } from 'lucide-react';
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
@@ -70,6 +71,9 @@ const StudentManagement = () => {
     isDownloaded: false,
     isShared: false,
     isCart: false,
+    completionPercentage: '',
+    isEnrolled: false,
+    isTestimonial: false,
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
@@ -270,6 +274,9 @@ const StudentManagement = () => {
     isDownloaded: false,
     isShared: false,
     isCart: false,
+    completionPercentage: '',
+    isEnrolled: false,
+    isTestimonial: false,
   }), []);
 
   const clearFilters = useCallback(async () => {
@@ -312,6 +319,9 @@ const StudentManagement = () => {
       isDownloaded: 'Certificate',
       isShared: 'Certificate',
       isCart: 'Cart',
+      completionPercentage: 'Completion %',
+      isEnrolled: 'Enrolled',
+      isTestimonial: 'Testimonial',
     };
 
     const isActive = (k, v) => {
@@ -338,6 +348,12 @@ const StudentManagement = () => {
           return 'Shared';
         case 'isCart':
           return 'Has Items';
+        case 'completionPercentage':
+          return `${v}%`;
+        case 'isEnrolled':
+          return 'Enrolled';
+        case 'isTestimonial':
+          return 'Has Testimonial';
         case 'geoLocationCountry': {
           if (!Array.isArray(v) || v.length === 0) return String(v);
           if (countries.length > 0 && v.length >= countries.length) return 'All Countries';
@@ -658,9 +674,54 @@ const StudentManagement = () => {
                         className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
                       />
                       <ShoppingBag className="w-4 h-4 text-orange-500" />
-                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Has Cart Items</span>
+                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">CartItems</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={filters.isEnrolled}
+                        onChange={(e) => handleFilterChange('isEnrolled', e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                      />
+                      <BookOpen className="w-4 h-4 text-blue-500" />
+                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Enrolled</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 cursor-pointer hover:border-purple-300 dark:hover:border-purple-700 transition-colors whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={filters.isTestimonial}
+                        onChange={(e) => handleFilterChange('isTestimonial', e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 transition-colors"
+                      />
+                      <MessageSquare className="w-4 h-4 text-purple-500" />
+                      <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Testimonial</span>
                     </label>
                   </div>
+              </div>
+              <div className="xl:col-span-2">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Completion %</label>
+                <div className="relative">
+                  <Percent className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    value={filters.completionPercentage}
+                    onChange={(e) => handleFilterChange('completionPercentage', e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                  >
+                    <option value="">All Percentages</option>
+                    <option value="0">0%</option>
+                    <option value="10">10%</option>
+                    <option value="20">20%</option>
+                    <option value="30">30%</option>
+                    <option value="40">40%</option>
+                    <option value="50">50%</option>
+                    <option value="60">60%</option>
+                    <option value="70">70%</option>
+                    <option value="80">80%</option>
+                    <option value="90">90%</option>
+                    <option value="100">100%</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>

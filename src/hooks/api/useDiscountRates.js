@@ -145,6 +145,23 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
     }
   }, [totalPages]);
 
+  // Fetch discount types dropdown
+  const getDiscountTypes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await ApiService.getDiscountTypes();
+      return response.data || response || [];
+    } catch (err) {
+      console.error('Error fetching discount types:', err);
+      setError('Failed to fetch discount types');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -164,6 +181,7 @@ export const useDiscountRates = (initialPage = 1, pageSize = 10) => {
     createDiscountRate,
     updateDiscountRate,
     deleteDiscountRate,
+    getDiscountTypes,
 
     // Pagination
     nextPage,

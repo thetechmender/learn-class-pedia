@@ -1828,6 +1828,11 @@ async uploadCsvFileByName(formData) {
     return this.request(ENDPOINTS.DISCOUNT_RATES_BY_ID(id));
   }
 
+  // GET discount types dropdown
+  async getDiscountTypes() {
+    return this.request(ENDPOINTS.DISCOUNT_RATES_TYPES_DROPDOWN);
+  }
+
   // CREATE new discount rate
   async createDiscountRate(discountRateData) {
     return this.request(ENDPOINTS.DISCOUNT_RATES_CREATE, {
