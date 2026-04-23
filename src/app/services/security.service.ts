@@ -65,17 +65,9 @@ export class SecurityService {
 
   private async handleWarning(type: 'screenshot' | 'tab_switch') {
     if (!this.isAssessmentActive) {
-      // For entire classroom - just show toastr warning
-      this.toastr.warning(
-        type === 'screenshot' ? 'Screenshots are prohibited.' : 'Tab switching is not allowed during assessment.',
-        'Security Alert'
-      );
+      // Skip warning in classroom - no alert needed
       return;
     }
-
-    // During assessment - track warnings and call API
-    this.warningCount++;
-    const remainingWarnings = this.MAX_WARNINGS_PER_ATTEMPT - this.warningCount;
 
     // Emit warning event for component to handle
     this.warningEvent.next({
@@ -83,16 +75,19 @@ export class SecurityService {
       timestamp: Date.now()
     });
 
+    // Call warning API first to get the updated count
+    await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload);
+
+    // Calculate remaining warnings based on API response count
+    const remainingWarnings = this.MAX_WARNINGS_PER_ATTEMPT - this.warningCount;
+
     // Show warning with remaining attempts
     this.toastr.warning(
       `${type === 'screenshot' ? 'Screenshot' : 'Tab switch'} detected. Warnings remaining: ${remainingWarnings}`,
       'Security Warning'
     );
 
-    // Call warning API
-    await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload);
-
-    // Check if limit reached
+    // Check if limit reached based on API response count
     if (this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
       console.log('Warning limit reached. Auto-submitting assessment.');
       this.autoSubmitTriggered.next();
@@ -148,7 +143,7 @@ export class SecurityService {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         this.enableProtection();
-        this.handleWarning('tab_switch');
+        // this.handleWarning('tab_switch');
       }
     });
 
@@ -161,7 +156,7 @@ export class SecurityService {
       if (event.key === 'PrintScreen') {
         this.enableProtection();
         navigator.clipboard.writeText('');
-        this.handleWarning('screenshot');
+        // this.handleWarning('screenshot');
       }
 
       // Block Ctrl+P, Ctrl+S, Ctrl+U
@@ -192,19 +187,8 @@ export class SecurityService {
   async isDualDisplayActive(): Promise<boolean> {
     if (!isPlatformBrowser(this.platformId)) return true;
 
-    try {
-      const screenDetails = await (window as any).getScreenDetails?.();
-      if (screenDetails && screenDetails.screens.length > 1) {
-        this.toastr.error(
-          'Multiple displays detected. Please use a single display.',
-          'Security Alert'
-        );
-        return false;
-      }
-    } catch (error) {
-      console.warn('Screen Details API not supported');
-    }
-
+    // Skip dual display detection to avoid browser permission prompts
+    // The getScreenDetails() API requires "Manage windows on all your displays" permission
     return true;
   }
 

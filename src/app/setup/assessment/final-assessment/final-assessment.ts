@@ -134,8 +134,8 @@ export class FinalAssessment implements OnInit {
   ngOnInit(): void {
     this.startAssessment();
     // Initialize security service with order payload
-    this.securityService.setOrderPayload(this.orderPayload);
-    this.securityService.startAssessmentTracking();
+    // this.securityService.setOrderPayload(this.orderPayload);
+    // this.securityService.startAssessmentTracking();
 
     if (this.orderPayload?.careerPathLevelMapId) {
 
@@ -157,10 +157,10 @@ export class FinalAssessment implements OnInit {
 
 
 
-    this._initializeMouseTracking();
+    // this._initializeMouseTracking();
 
-    this._initializeSecurityTracking();
-    console.log(this.assessmentResultData())
+    // this._initializeSecurityTracking();
+
   }
 
 
@@ -535,7 +535,7 @@ export class FinalAssessment implements OnInit {
 
         this.stopTimer();
 
-        this._autoSubmit();
+        // this._autoSubmit();
 
       } else {
 
@@ -566,10 +566,6 @@ export class FinalAssessment implements OnInit {
   _autoSubmit() {
 
     this.isCompleting.set(true);
-
-
-
-    // Build payload based on career path or regular course
 
     const payload: any = {
 
