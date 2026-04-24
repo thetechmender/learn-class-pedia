@@ -2,7 +2,7 @@
   [attr.data-theme]="theme"
   [class.stage--fullscreen]="isFullscreen"
   [style.--reader-font-scale]="fontScale">
-  <div class="toolbar border border-gray-300">
+  <div class="toolbar border border-gray-300" style="max-width: 1100px !important">
     <div class="toolbar__brand">
       <div class="toolbar__badge border border-primary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -83,7 +83,7 @@
     </div>
   </div>
 
-  <div class="footer">
+  <div class="footer" style="width: 1100px;">
     <div class="progress">
               <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden progressbr">
           <div class="h-full bg-primary rounded-full transition-all duration-300"
