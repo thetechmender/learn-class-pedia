@@ -1,13 +1,12 @@
 <div class="ppt-container" [attr.data-theme]="theme" [class.fullscreen]="isFullscreen"
-  [class.presentation-mode]="isPresentationMode">
-  <!-- Top Controls (hidden in presentation mode) -->
-  @if (!isPresentationMode) { 
-     <div class="toolbar border border-gray-300" style="max-width: 1100px !important">
+  [class.presentation-mode]="isPresentationMode"> @if (!isPresentationMode) {
+  <div class="toolbar border border-gray-300" style="max-width: 1100px !important">
     <div class="toolbar__brand">
       <div class="toolbar__badge border border-primary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
         </svg>
       </div>
       <div class="toolbar__text">
@@ -17,38 +16,9 @@
     </div>
 
     <div class="toolbar__actions">
-      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="next()" title="Next (→)" [disabled]="currentIndex === slides.length - 1">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </button>
-      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="toggleFullscreen()" [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
-        @if (!isFullscreen) {
-     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-        </svg>
-        } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
-        </svg>
-        }
-      </button>
-    </div>
-  </div> 
-  <!-- <div class="ppt-controls">
-    <div class="controls-left">
-      <h2 class="ppt-title">{{ pptTitle }}</h2>
-      <span class="slide-counter">{{ currentSlideNumber }}</span>
-    </div>
-    <div class="controls-right">
       <button
         class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-        (click)="prev()" title="Previous (←)" [disabled]="currentIndex === 0" [class.hidden]="currentIndex === 0">
+        (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"
           stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6" />
@@ -56,31 +26,31 @@
       </button>
       <button
         class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-        (click)="next()" [disabled]="currentIndex === slides.length - 1"
-        [class.hidden]="currentIndex === slides.length - 1" title="Next (→)">
+        (click)="next()" title="Next (→)" [disabled]="currentIndex === slides.length - 1">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"
           stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </button>
-      <button (click)="toggleFullscreen()"
+      <button
         class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-        title="Fullscreen (Ctrl+F)">
-        @if (isFullscreen) {
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2">
-          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-        </svg>
-        } @else {
+        (click)="toggleFullscreen()" [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
+        @if (!isFullscreen) {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
         </svg>
+        } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+        </svg>
         }
       </button>
     </div>
-  </div> -->
-}
+  </div>
+
+  }
 
   <!-- Slides Container -->
   <div class="slides-wrapper">
@@ -130,9 +100,22 @@
     }
   </div>
 
-  <!-- Progress Bar -->
-  <div class="progress-bar">
-    <div class="progress-fill" [style.width.%]="progressPercent"></div>
+
+  <div class="footer">
+    <div class="progress">
+              <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden progressbr">
+          <div class="h-full bg-primary rounded-full transition-all duration-300"
+            [style.width.%]="progressPercent"></div>
+        </div>
+        <span class="text-sm text-primary">{{ progressPercent | number:'1.0-1' }}%</span>
+      <!-- <div class="progress__bar">
+        <div class="progress__fill" [style.width.%]="progressPercent"></div>
+      </div>
+      <div class="progress__label">
+        <span class="progress__percent">{{ progressPercent | number:'1.0-0' }}%</span>
+        <span class="progress__muted">complete</span>
+      </div> -->
+    </div>
   </div>
 
   <!-- Thumbnail Navigation (bottom, hidden in presentation mode) -->
