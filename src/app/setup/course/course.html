@@ -607,8 +607,8 @@
         </button>
       </div>
       <!-- Tab Content -->
-      <div class="flex gap-6 p-4 detailsec">
-        <div class="flex-1 bg-white rounded-xl">
+      <div class="flex gap-6 p-4 detailsec" style="min-width: 0;">
+        <div class="flex-1 bg-white rounded-xl" style="min-width: 0;">
           @if (activeTab() === 'overview') {
           <app-overview [courseTypeId]="courseTree()?.courseTypeId" [title]="courseTree()?.courseTitle"
             [courseTree]="courseTree()" [slug]="courseSlug()" [courseLevel]="courseLevel()"

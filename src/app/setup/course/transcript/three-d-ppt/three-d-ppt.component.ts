@@ -38,7 +38,7 @@ interface Slide {
   imports: [CommonModule, SafeHtmlPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './three-d-ppt.component.html',
-  styleUrls: ['./three-d-ppt.component.scss'],
+  styleUrls: ['./three-d-ppt.component.scss','../three-d-book/three-d-book.component.scss'],
 })
 export class ThreeDPPTComponent implements OnInit, AfterViewInit {
   @Input() lectures: Lecture[] = [];

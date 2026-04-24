@@ -2,9 +2,9 @@
   [attr.data-theme]="theme"
   [class.stage--fullscreen]="isFullscreen"
   [style.--reader-font-scale]="fontScale">
-  <div class="toolbar">
+  <div class="toolbar border border-gray-300">
     <div class="toolbar__brand">
-      <div class="toolbar__badge">
+      <div class="toolbar__badge border border-primary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
@@ -17,25 +17,25 @@
     </div>
 
     <div class="toolbar__actions">
-      <button class="icon-btn" (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
-      <button class="icon-btn icon-btn--primary" (click)="next()" [disabled]="currentIndex >= sheets.length" title="Next (→)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="next()" [disabled]="currentIndex >= sheets.length" title="Next (→)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </button>
-      <button class="icon-btn" (click)="toggleFullscreen()" [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
+      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="toggleFullscreen()" [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
         @if (!isFullscreen) {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>
-          </svg>
+     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
         } @else {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>
-          </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+        </svg>
         }
       </button>
     </div>
