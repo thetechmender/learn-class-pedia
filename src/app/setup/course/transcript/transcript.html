@@ -1,7 +1,6 @@
 <div class="lecture-cont">
   @if (lectures.length > 0) {
-  <!-- View Mode Toggle Switch -->
-  <div class="view-mode-toggle">
+  <!-- <div class="view-mode-toggle">
     <button (click)="viewMode.set('book')"
           class="px-8 py-4 flex items-center gap-2 text-gray-500 font-semibold rounded-full hover:bg-primary border border-gray-300 hover:text-white transition-all"
       [class.active]="viewMode() === 'book'">
@@ -22,14 +21,14 @@
       </svg>
       <span>Slides Mode</span>
     </button>
-  </div>
+  </div> -->
 
   <!-- Book View -->
-  @if (viewMode() === 'book') {
+  <!-- @if (viewMode() === 'book') {
   <app-3d-book [lectures]="lectures" [bookTitle]="currentShortCourse?.title || 'Lecture Materials'"
     (bookCompleted)="onBookCompleted()">
   </app-3d-book>
-  }
+  } -->
 
   <!-- PPT View -->
   @if (viewMode() === 'ppt') {

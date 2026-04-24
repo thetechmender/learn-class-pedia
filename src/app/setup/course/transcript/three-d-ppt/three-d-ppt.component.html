@@ -1,7 +1,7 @@
 <div class="ppt-container" [attr.data-theme]="theme" [class.fullscreen]="isFullscreen"
   [class.presentation-mode]="isPresentationMode"> @if (!isPresentationMode) {
-  <div class="toolbar border border-gray-300" style="max-width: 1100px !important">
-    <div class="toolbar__brand">
+  <div class="toolbar" style="max-width: 1100px !important">
+    <!-- <div class="toolbar__brand">
       <div class="toolbar__badge border border-primary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
           stroke-linejoin="round">
@@ -13,7 +13,7 @@
         <div class="toolbar__title" [title]="pptTitle">{{ pptTitle }}</div>
         <div class="toolbar__info">{{ currentSlideNumber }}</div>
       </div>
-    </div>
+    </div> -->
 
     <div class="toolbar__actions">
       <button

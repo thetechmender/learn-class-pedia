@@ -19,7 +19,7 @@ export class Transcript {
   @Output() moveToQuiz = new EventEmitter<void>();
   @Output() startAssessment = new EventEmitter<void>();
 
-  viewMode = signal<ViewMode>('book');
+  viewMode = signal<ViewMode>('ppt');
   contentCompleted = signal<boolean>(false);
 
   get lectures(): any[] {
