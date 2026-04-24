@@ -36,7 +36,7 @@ export class FinalAssessment implements OnInit {
 
   @Input() isAssessmentInProgress: boolean = false;
 
-  newQuestionsCount = signal(0);  
+  newQuestionsCount = signal(0);
 
   isCompleting = signal(false);
 
@@ -446,9 +446,9 @@ export class FinalAssessment implements OnInit {
         : this.orderPayload?.courseCertificateId || this.orderPayload?.professionalCertificateId ||
         this.orderPayload?.careerPathLevelMapId,
 
-      courseCertificateId: this.orderPayload?.courseCertificateId || null,
+      courseCertificateId: this.courseTypeId === 2 ? this.orderPayload?.courseCertificateId : null,
 
-      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      professionalCertificateId: this.courseTypeId === 1 ? this.orderPayload?.professionalCertificateId : null,
 
       careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null,
 
@@ -1206,9 +1206,9 @@ export class FinalAssessment implements OnInit {
 
     const payload = {
       assessmentTypeId: 2,
-      shortCourseId: this.orderPayload?.courseCertificateId ? null : this.orderPayload?.shortCourseId,
-      courseCertificateId: this.orderPayload?.courseCertificateId || null,
-      professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
+      shortCourseId: this.courseTypeId == 3 ? this.orderPayload?.shortCourseId : null,
+      courseCertificateId: this.courseTypeId === 2 ? this.orderPayload?.courseCertificateId : null,
+      professionalCertificateId: this.courseTypeId === 1 ? this.orderPayload?.professionalCertificateId : null,
       careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null
     };
     const token = this.authService.getToken();

@@ -32,6 +32,7 @@ export class SecurityService {
   private isAssessmentActive = false;
   private currentQuestionId: number = 0;
   private orderPayload: any = null;
+  private courseTypeId: number = 0;
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) { }
 
@@ -63,6 +64,10 @@ export class SecurityService {
     this.orderPayload = payload;
   }
 
+  setCourseTypeId(courseTypeId: number) {
+    this.courseTypeId = courseTypeId;
+  }
+
   private async handleWarning(type: 'screenshot' | 'tab_switch') {
     if (!this.isAssessmentActive) {
       // Skip warning in classroom - no alert needed
@@ -76,7 +81,7 @@ export class SecurityService {
     });
 
     // Call warning API first to get the updated count
-    await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload);
+    await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload, this.courseTypeId);
 
     // Calculate remaining warnings based on API response count
     const remainingWarnings = this.MAX_WARNINGS_PER_ATTEMPT - this.warningCount;
@@ -94,14 +99,16 @@ export class SecurityService {
     }
   }
 
-  private async callWarningAPI(type: 'screenshot' | 'tab_switch', questionId?: number, payload?: any) {
+  private async callWarningAPI(type: 'screenshot' | 'tab_switch', questionId?: number, payload?: any, courseTypeId?: number) {
     const warningPayload = {
       questionId: questionId || 0,
       warningReason: type === 'screenshot' ? 'Screen Shot' : 'Tab Switch',
       warningDetails: '', // Empty string as requested
-      courseId: payload?.shortCourseId || payload?.courseCertificateId || payload?.professionalCertificateId || payload?.careerPathLevelMapId,
-      courseCertificateId: payload?.courseCertificateId || null,
-      professionalCertificateId: payload?.professionalCertificateId || null,
+      courseId: courseTypeId === 3 ? payload?.shortCourseId
+        : payload?.courseCertificateId || payload?.professionalCertificateId ||
+        payload?.careerPathLevelMapId,
+      courseCertificateId: courseTypeId === 2 ? payload?.courseCertificateId : null,
+      professionalCertificateId: courseTypeId === 1 ? payload?.professionalCertificateId : null,
       careerPathLevelMapId: payload?.careerPathLevelMapId || null,
       assessmentTypeId: 2
     };
