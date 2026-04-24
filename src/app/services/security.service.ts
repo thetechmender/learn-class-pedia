@@ -136,13 +136,13 @@ export class SecurityService {
 
     // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
     let blurTimeout: any = null;
-    window.addEventListener('blur', () => {
-      this.enableProtection();
-      // If focus doesn't return within 500ms, it's likely a screenshot tool
-      blurTimeout = setTimeout(() => {
-        this.handleWarning('screenshot');
-      }, 500);
-    });
+    // window.addEventListener('blur', () => {
+    //   this.enableProtection();
+    //   // If focus doesn't return within 500ms, it's likely a screenshot tool
+    //   blurTimeout = setTimeout(() => {
+    //     this.handleWarning('screenshot');
+    //   }, 500);
+    // });
 
     // 2. Detect jab user wapas aaye
     window.addEventListener('focus', () => {
