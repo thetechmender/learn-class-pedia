@@ -1,6 +1,6 @@
 import { Component, inject, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ThreeDBookComponent } from './three-d-book/three-d-book.component';
+// import { ThreeDBookComponent } from './three-d-book/three-d-book.component';
 import { ThreeDPPTComponent } from './three-d-ppt/three-d-ppt.component';
 
 export type ViewMode = 'book' | 'ppt';
@@ -8,7 +8,7 @@ export type ViewMode = 'book' | 'ppt';
 @Component({
   selector: 'app-transcript',
   standalone: true,
-  imports: [CommonModule, ThreeDBookComponent, ThreeDPPTComponent],
+  imports: [CommonModule, ThreeDPPTComponent],
   templateUrl: './transcript.html',
   styleUrl: './transcript.sass',
 })
