@@ -46,7 +46,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private platformId = inject(PLATFORM_ID);
   private toastr = inject(ToastrService);
   private assessmentService = inject(AssessmentService);
-  private securityService = inject(SecurityService);
 
   course = signal<any>(null);
   courseTree = signal<any>(null);
