@@ -38,7 +38,8 @@
               "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.sass",
               "node_modules/ngx-toastr/toastr.css",
-              "src/icons.css"
+              "src/icons.css",
+              "node_modules/intl-tel-input/dist/css/intlTelInput.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",

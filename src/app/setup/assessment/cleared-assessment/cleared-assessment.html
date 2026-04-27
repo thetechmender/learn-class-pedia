@@ -159,3 +159,8 @@
   </div>
 </div>
 }
+
+<!-- Phone Number Update Modal -->
+@if (showPhoneModal()) {
+<app-update-phone-number (phoneUpdated)="onPhoneUpdated()" (close)="onPhoneModalClose()"></app-update-phone-number>
+}

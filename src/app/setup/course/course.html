@@ -673,65 +673,19 @@
   </main>
 
   <!-- Ask Course Companion Button -->
-  <button (click)="courseService.toggleChat()"
-    class="fixed bottom-2 chat-widget right-6 z-40 flex items-center text-gray-600 rounded-full shadow-lg transition-all duration-300 font-medium text-sm"
+  <div class="chat-widget"
     [class.hidden]="assessmentStep() === 'start' || assessmentStep() === 'final' || assessmentStep() === 'cleared' || assessmentStep() === 'failed' || assessmentStep() === 'maxattempts'">
-    <!-- <img src="assets/icons/chat-black-icon.svg" alt="Chat" class=""> -->
-<svg class="svg-responsive" width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="robotGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#0062CC" />
-          <stop offset="100%" stop-color="#0052AD" />
-        </linearGradient>
-      </defs>
-
-      <!-- Floating animation -->
-      <g>
-        <animateTransform attributeName="transform" type="translate" from="0 0" to="0 -3" dur="1.5s"
-          repeatCount="indefinite" direction="alternate" />
-
-        <!-- Antenna -->
-        <line x1="48" y1="8" x2="48" y2="16" stroke="#0062CC" stroke-width="3" />
-        <circle cx="48" cy="6" r="4" fill="#0062CC" />
-
-        <!-- Head -->
-        <rect x="20" y="16" rx="20" ry="20" width="56" height="44" fill="url(#robotGrad)" />
-
-        <!-- Side ears -->
-        <rect x="14" y="30" width="6" height="20" rx="3" fill="#0062CC" />
-        <rect x="76" y="30" width="6" height="20" rx="3" fill="#0062CC" />
-
-        <!-- Face panel -->
-        <rect x="30" y="26" width="36" height="24" rx="12" fill="#ffffff" />
-
-        <!-- Eyes (blink) -->
-        <rect x="38" y="32" width="6" height="12" rx="3" fill="#0062CC">
-          <animate attributeName="height" values="12;4;12" dur="3s" repeatCount="indefinite" />
-        </rect>
-        <rect x="52" y="32" width="6" height="12" rx="3" fill="#0062CC">
-          <animate attributeName="height" values="12;4;12" dur="3s" begin="0.2s" repeatCount="indefinite" />
-        </rect>
-
-        <!-- Speech bubble -->
-        <g>
-          <rect x="58" y="6" width="30" height="18" rx="6" fill="#0062CC" />
-          <path d="M64 24 L60 30 L70 24 Z" fill="#0062CC" />
-
-          <!-- Typing dots -->
-          <circle cx="66" cy="15" r="2" fill="#ffffff">
-            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="72" cy="15" r="2" fill="#ffffff">
-            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" begin="0.2s" repeatCount="indefinite" />
-          </circle>
-          <circle cx="78" cy="15" r="2" fill="#ffffff">
-            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" begin="0.4s" repeatCount="indefinite" />
-          </circle>
-        </g>
-      </g>
-    </svg>
-  </button>
-
+    <div class="chat-box">
+      <div class="top-chat fflex align-items-center">
+        <h4>Questions? <span>I can help you.</span></h4>
+        <img src="assets/Layer_1.svg" alt="Chat Icon">
+      </div>
+      <div class="bottom-chat">
+        <h5>I am online!</h5>
+        <a href="javascript:;" (click)="courseService.toggleChat()">Chat now</a>
+      </div>
+    </div>
+  </div>
 
   <!-- Chat Component -->
   <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()">

@@ -38,11 +38,11 @@
       <p class="text-sm text-gray-600 mb-6">Need help? Our support team is here for you.</p>
       <div class="flex items-center gap-3">
         <a [href]="getClassroomUrl(courseSlug)" target="_blank"
-          class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all inline-block">
+          class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all inline-block cursor-pointer relative z-10">
           Repurchase Course
         </a>
         <a href="/support"
-          class="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all inline-block">
+          class="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all inline-block cursor-pointer relative z-10">
           Get Support
         </a>
       </div>
@@ -55,8 +55,8 @@
       <p class="text-sm text-gray-600 mb-2">Don't worry, you still have {{ attemptsRemaining }} {{ attemptsRemaining ===
         1 ? 'attempt' : 'attempts' }} remaining to retake the exam and complete your course.</p>
       <p class="text-sm text-gray-600 mb-6">Review the material and try again when you're ready.</p>
-      <button (click)="onReattempt()"
-        class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all">
+      <button (click)="onReattempt()" type="button"
+        class="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-thirdly hover:text-gray-700 transition-all cursor-pointer">
         Reattempt Exam
       </button>
       }

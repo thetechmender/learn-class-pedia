@@ -266,7 +266,6 @@ export class StartAssessment implements OnInit, OnDestroy {
   async onStartAssessment() {
     // Check if assessment is already in progress - if so, skip to final assessment
     if (this.isAssessmentInProgress) {
-      console.log('[DEBUG] Assessment already in progress, skipping to final assessment');
       this.next.emit('final');
       return;
     }
@@ -275,7 +274,7 @@ export class StartAssessment implements OnInit, OnDestroy {
 
     if (isDualDisplayActive) {
 
-      this.next.emit('start');
+      this.next.emit('final');
 
       return;
 

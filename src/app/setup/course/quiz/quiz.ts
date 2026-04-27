@@ -220,12 +220,9 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
     this.isMovingToNext.set(false);
   }
 
-  async onStartAssessment() {
-    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
-    if (isDualDisplayActive) {
-      this.isStartingAssessment.set(true);
-      this.startAssessment.emit();
-    }
+  onStartAssessment() {
+    this.isStartingAssessment.set(true);
+    this.startAssessment.emit();
     return;
   }
 
