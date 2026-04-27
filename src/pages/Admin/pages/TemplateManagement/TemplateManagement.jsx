@@ -44,8 +44,7 @@ const TemplateManagement = () => {
 
   const [filters, setFilters] = useState({
     title: '',
-    templateTypeId: '',
-    isActive: ''
+    templateTypeId: ''
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -58,10 +57,8 @@ const TemplateManagement = () => {
     title: '',
     subject: '',
     htmlBody: '',
-    textBody: '',
-    dynamicVariables: '',
+    emailType: '',
     templateTypeId: 0,
-    isActive: true,
   });
 
   // Template type icons
@@ -100,12 +97,18 @@ const TemplateManagement = () => {
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     try {
+      // Convert empty emailType to null for API
+      const payload = {
+        ...formData,
+        emailType: formData.emailType || null
+      };
+      
       if (showEditModal && selectedTemplate) {
-        await updateTemplate(selectedTemplate.id, formData);
+        await updateTemplate(selectedTemplate.id, payload);
         showSuccess('Template updated successfully!');
         setShowEditModal(false);
       } else {
-        await createTemplate(formData);
+        await createTemplate(payload);
         showSuccess('Template created successfully!');
         setShowCreateModal(false);
       }
@@ -149,10 +152,9 @@ const TemplateManagement = () => {
         title: fullTemplate.title || '',
         subject: fullTemplate.subject || '',
         htmlBody: fullTemplate.htmlBody || '',
-        textBody: fullTemplate.textBody || '',
-        dynamicVariables: fullTemplate.dynamicVariables || '',
+        emailType: fullTemplate.emailType || '',
         templateTypeId: fullTemplate.templateTypeId || 0,
-        isActive: fullTemplate.isActive !== undefined ? fullTemplate.isActive : true,
+        
       });
       setShowEditModal(true);
     } catch (err) {
@@ -167,10 +169,9 @@ const TemplateManagement = () => {
       title: '',
       subject: '',
       htmlBody: '',
-      textBody: '',
-      dynamicVariables: '',
+      emailType: '',
       templateTypeId: 0,
-      isActive: true,
+    
     });
     setSelectedTemplate(null);
   }, []);
@@ -182,7 +183,7 @@ const TemplateManagement = () => {
 
   // Clear all filters
   const clearFilters = useCallback(() => {
-    const clearedFilters = { title: '', templateTypeId: '', isActive: '' };
+    const clearedFilters = { title: '', templateTypeId: '' };
     setFilters(clearedFilters);
     handlePageChange(1);
     fetchTemplates({ page: 1, pageSize: pagination.pageSize });
@@ -194,19 +195,15 @@ const TemplateManagement = () => {
       page: 1,
       pageSize: pagination.pageSize,
     };
-    
+
     if (filters.templateTypeId) {
       params.templateTypeId = parseInt(filters.templateTypeId);
     }
-    
-    if (filters.isActive) {
-      params.isActive = filters.isActive === 'true';
-    }
-    
+
     if (filters.title) {
       params.title = filters.title;
     }
-    
+
     fetchTemplates(params);
     setShowFilters(false);
   }, [filters, pagination.pageSize, fetchTemplates]);
@@ -219,17 +216,10 @@ const TemplateManagement = () => {
   // Prepare template types for dropdown
   const templateTypesForDropdown = [
     { id: '', name: 'All Types' },
-    ...templateTypes.map(type => ({ 
-      id: type.id.toString(), 
+    ...templateTypes.map(type => ({
+      id: type.id.toString(),
       name: type.title || type.name || type.typeName || type.label || 'Unknown Type'
     }))
-  ];
-
-  // Status options for dropdown
-  const statusOptions = [
-    { id: '', name: 'All Status' },
-    { id: 'true', name: 'Active' },
-    { id: 'false', name: 'Inactive' }
   ];
 
   const hasActiveFilters = getActiveFiltersCount() > 0 || showFilters;
@@ -290,7 +280,7 @@ const TemplateManagement = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -300,36 +290,6 @@ const TemplateManagement = () => {
               </div>
               <div className="bg-blue-100 p-3 rounded-lg">
                 <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Templates</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">
-                  {templates.filter(t => t.isActive).length}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Currently active</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Inactive Templates</p>
-                <p className="text-3xl font-bold text-gray-500 mt-2">
-                  {templates.filter(t => !t.isActive).length}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Disabled</p>
-              </div>
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <XCircle className="w-6 h-6 text-gray-500" />
               </div>
             </div>
           </div>
@@ -386,16 +346,6 @@ const TemplateManagement = () => {
                     className="w-full"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <GenericDropdown
-                    items={statusOptions}
-                    value={filters.isActive}
-                    onChange={(value) => handleFilterChange('isActive', value)}
-                    placeholder="All Status"
-                    className="w-full"
-                  />
-                </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 mt-4">
@@ -436,11 +386,6 @@ const TemplateManagement = () => {
                     Type: {templateTypes.find(t => t.id.toString() === filters.templateTypeId)?.title || 'Unknown'}
                   </span>
                 )}
-                {filters.isActive && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">
-                    Status: {filters.isActive === 'true' ? 'Active' : 'Inactive'}
-                  </span>
-                )}
               </div>
               <button
                 onClick={clearFilters}
@@ -462,20 +407,20 @@ const TemplateManagement = () => {
 
         {/* Templates Grid */}
         {templates.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-10 h-10 text-gray-400" />
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-16 text-center">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="w-12 h-12 text-blue-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No templates found</h3>
-            <p className="text-gray-600 mb-6">
-              {filters.title || filters.templateTypeId || filters.isActive ? 'Try adjusting your filters' : 'Get started by creating your first template'}
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">No templates found</h3>
+            <p className="text-gray-600 mb-8">
+              {filters.title || filters.templateTypeId ? 'Try adjusting your filters' : 'Get started by creating your first template'}
             </p>
             <button
               onClick={() => {
                 resetForm();
                 setShowCreateModal(true);
               }}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
             >
               <Plus className="w-5 h-5 mr-2" />
               Create Template
@@ -486,73 +431,61 @@ const TemplateManagement = () => {
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden group"
+                className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group hover:-translate-y-1"
               >
                 {/* Template Header */}
-                <div className="h-24 relative flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                <div className="h-28 relative flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
                       {getTemplateTypeIcon(templateTypes.find(t => t.id === template.templateTypeId)?.title)}
                     </div>
-                    <div className={`inline-flex items-center px-2 py-1 text-xs rounded-full font-medium border ${getTemplateTypeColor(templateTypes.find(t => t.id === template.templateTypeId)?.title)}`}>
+                    <div className={`inline-flex items-center px-3 py-1.5 text-xs rounded-full font-semibold border shadow-sm ${getTemplateTypeColor(templateTypes.find(t => t.id === template.templateTypeId)?.title)}`}>
                       {templateTypes.find(t => t.id === template.templateTypeId)?.title || 'Unknown'}
                     </div>
                   </div>
                 </div>
 
                 {/* Template Content */}
-                <div className="p-6">
-                  <h3 className="font-semibold text-gray-900 text-lg mb-2 truncate">{template.title}</h3>
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="p-5">
+                  <h3 className="font-bold text-gray-900 text-lg mb-3 truncate group-hover:text-blue-600 transition-colors">{template.title}</h3>
+                  <div className="flex items-center gap-2 mb-3 bg-gray-50 rounded-lg px-3 py-2">
                     <Hash className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-600 font-mono truncate">{template.templateKey}</span>
                   </div>
-                  
+
                   {template.subject && (
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-4 bg-gray-50 rounded-lg px-3 py-2">
                       <Mail className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-600 truncate">{template.subject}</span>
                     </div>
                   )}
-                  
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full font-medium ${
-                      template.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {template.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm">
-                        <div className="w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center mr-2">
-                          <span className="text-white text-xs font-bold">ID</span>
-                        </div>
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{template.id}</span>
+                    <div className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm">
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mr-2">
+                        <span className="text-white text-xs font-bold">ID</span>
                       </div>
+                      <span className="text-sm font-semibold text-gray-900">{template.id}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleView(template)}
-                        className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                        className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
                         title="View Template"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleEdit(template)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
                         title="Edit Template"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(template)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                         title="Delete Template"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -814,51 +747,22 @@ const TemplateManagement = () => {
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Text Body
-                  </label>
-                  <textarea
-                    value={formData.textBody}
-                    onChange={(e) => setFormData(prev => ({ ...prev, textBody: e.target.value }))}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none font-mono text-sm"
-                    placeholder="Enter plain text content..."
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Dynamic Variables
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.dynamicVariables}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dynamicVariables: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors font-mono"
-                    placeholder="e.g., {{name}}, {{email}}, {{date}}"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="isActive"
-                        checked={formData.isActive}
-                        onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor="isActive" className="ml-3 text-sm font-medium text-gray-700">
-                        Active Template
-                      </label>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {formData.isActive ? 'Template will be active' : 'Template will be inactive'}
-                    </span>
+                {(formData.templateTypeId === 1 || formData.templateTypeId === 3) && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Email Type
+                    </label>
+                    <select
+                      value={formData.emailType}
+                      onChange={(e) => setFormData(prev => ({ ...prev, emailType: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    >
+                      <option value="">Select Email Type</option>
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="Action">Action</option>
+                    </select>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
@@ -953,28 +857,16 @@ const TemplateManagement = () => {
                   </div>
                 )}
 
-                {selectedTemplate.dynamicVariables && (
+                {selectedTemplate.emailType && (
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Dynamic Variables</label>
-                    <div className="px-4 py-3 bg-gray-50 rounded-lg font-mono text-sm">
-                      {selectedTemplate.dynamicVariables}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Type</label>
+                    <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                      {selectedTemplate.emailType}
                     </div>
                   </div>
                 )}
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                  <div className="px-4 py-3 bg-gray-50 rounded-lg">
-                    <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full font-medium ${
-                      selectedTemplate.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {selectedTemplate.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
-
+              
                 {selectedTemplate.htmlBody && (
                   <div className="md:col-span-2">
                     <div className="flex items-center justify-between mb-2">
@@ -990,15 +882,6 @@ const TemplateManagement = () => {
                     </div>
                     <div className="px-4 py-3 bg-gray-50 rounded-lg max-h-64 overflow-y-auto">
                       <pre className="text-xs font-mono whitespace-pre-wrap">{selectedTemplate.htmlBody}</pre>
-                    </div>
-                  </div>
-                )}
-
-                {selectedTemplate.textBody && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Text Body</label>
-                    <div className="px-4 py-3 bg-gray-50 rounded-lg max-h-64 overflow-y-auto">
-                      <pre className="text-xs font-mono whitespace-pre-wrap">{selectedTemplate.textBody}</pre>
                     </div>
                   </div>
                 )}

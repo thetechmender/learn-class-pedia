@@ -1334,7 +1334,7 @@ async uploadCsvFileByName(formData) {
 
   async deleteTemplate(id) {
     const url = `${this.baseURL}${ENDPOINTS.TEMPLATE_DELETE(id)}`;
-    
+
     const config = {
       method: 'DELETE',
       headers: {
@@ -1350,7 +1350,9 @@ async uploadCsvFileByName(formData) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      return await response.json();
+      // Handle empty response body (e.g., 204 No Content)
+      const text = await response.text();
+      return text ? JSON.parse(text) : { success: true };
     } catch (error) {
       console.error('Failed to delete template:', error);
       throw error;
