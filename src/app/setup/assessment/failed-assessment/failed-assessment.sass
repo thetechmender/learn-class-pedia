@@ -1,25 +1,8 @@
-// Ensure failed assessment container is above everything
-.min-h-screen
+:host
+  display: block
   position: relative
-  z-index: 100000 !important
+  z-index: 10
 
 button, a
-  position: relative !important
-  z-index: 100001 !important
   cursor: pointer !important
   pointer-events: auto !important
-  user-select: none !important
-  
-  &:hover
-    opacity: 0.9
-    cursor: pointer !important
-
-button
-  &:active
-    transform: scale(0.98)
-
-a
-  text-decoration: none
-  
-  &[target="_blank"]
-    cursor: pointer !important
