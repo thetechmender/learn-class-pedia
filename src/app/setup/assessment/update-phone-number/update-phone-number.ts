@@ -5,6 +5,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../../services/auth.service';
 import { AssessmentService } from '../../../services/assessment.service';
 import { environment } from '../../../environments/environment';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-update-phone-number',
@@ -21,11 +22,11 @@ export class UpdatePhoneNumber implements AfterViewInit {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private assessmentService = inject(AssessmentService);
-
+  private toastr = inject(ToastrService);
   phoneForm: FormGroup;
   isSubmitting = signal(false);
   private iti: any;
-  
+
   constructor() {
     this.phoneForm = this.fb.group({
       phoneNumber: ['', [Validators.required]],
@@ -38,7 +39,7 @@ export class UpdatePhoneNumber implements AfterViewInit {
     import('intl-tel-input').then((module) => {
       const intlTelInput = module.default;
       const input = this.phoneInput.nativeElement;
-      
+
       this.iti = intlTelInput(input, {
         initialCountry: 'pk',
         separateDialCode: true
@@ -85,7 +86,7 @@ export class UpdatePhoneNumber implements AfterViewInit {
 
     // Get phone number from form value (intl-tel-input handles the country code separately)
     const phoneNumber = this.phoneForm.value.phoneNumber;
-    
+
     const payload = {
       phoneCountryCode: this.phoneForm.value.phoneCountryCode,
       phoneNumber: phoneNumber.trim()
@@ -101,6 +102,9 @@ export class UpdatePhoneNumber implements AfterViewInit {
             this.assessmentService.hasPhone.set(true);
             this.phoneUpdated.emit();
             this.close.emit();
+          }
+          else {
+            this.toastr.warning(response?.errorMessage);
           }
         },
         error: (error) => {
