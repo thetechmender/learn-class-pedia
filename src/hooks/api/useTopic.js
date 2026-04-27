@@ -9,6 +9,12 @@ export const useTopic = () => {
 
   // Data states
   const [topics, setTopics] = useState([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalCount: 0,
+    totalPages: 0
+  });
 
   // Error handling helper
   const handleError = useCallback((message, err) => {
@@ -23,13 +29,24 @@ export const useTopic = () => {
   }, []);
 
   // Get all topics
-  const getAllTopics = useCallback(async () => {
+  const getAllTopics = useCallback(async (page = null, pageSize = null) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await ApiService.getAllTopics();
+      const data = await ApiService.getAllTopics(page, pageSize);
       const topicsData = data.items || data || [];
       setTopics(Array.isArray(topicsData) ? topicsData : []);
+      
+      // Update pagination state if pagination data is available
+      if (data.pagination) {
+        setPagination({
+          currentPage: data.pagination.currentPage || 1,
+          pageSize: data.pagination.pageSize || 10,
+          totalCount: data.pagination.totalCount || 0,
+          totalPages: data.pagination.totalPages || 0
+        });
+      }
+      
       return Array.isArray(topicsData) ? topicsData : [];
     } catch (err) {
       handleError('Failed to fetch topics', err);
@@ -239,6 +256,7 @@ export const useTopic = () => {
 
     // Data states
     topics,
+    pagination,
 
     // API functions
     getAllTopics,

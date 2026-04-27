@@ -8,7 +8,9 @@ import {
   X,
   BookOpen,
   AlertCircle,
-  Users
+  Users,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useTopic } from '../../../../hooks/api/useTopic';
 
@@ -17,6 +19,7 @@ const TopicManagement = () => {
     loading,
     error,
     topics,
+    pagination,
     getAllTopics,
     getTopicById,
     createTopic,
@@ -34,6 +37,8 @@ const TopicManagement = () => {
 
   // Component state
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(100);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -80,7 +85,7 @@ const TopicManagement = () => {
     const loadInitialData = async () => {
       try {
         setLoadError('');
-        await getAllTopics();
+        await getAllTopics(currentPage, pageSize);
         
         // Use preloaded courses from hook cache for instant loading
         if (coursesCache && coursesCache.length > 0) {
@@ -99,7 +104,7 @@ const TopicManagement = () => {
     };
     
     loadInitialData();
-  }, [getAllTopics, coursesCache, coursesPreloaded, getAllCoursesForMapping]);
+  }, [getAllTopics, coursesCache, coursesPreloaded, getAllCoursesForMapping, currentPage, pageSize]);
 
   // Preload career paths for instant access
   useEffect(() => {
@@ -267,18 +272,20 @@ const TopicManagement = () => {
   // Handle create topic
   const handleCreateTopic = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setSubmitLoading(true);
-    
+
     try {
       await createTopic(formData);
       setIsCreateModalOpen(false);
       setFormData({ title: '', description: '' });
       setFormErrors({});
+      // Refresh topics list with current pagination
+      await getAllTopics(currentPage, pageSize);
     } catch (err) {
       console.error('Failed to create topic:', err);
       setLoadError('Failed to create topic. Please try again.');
@@ -291,19 +298,21 @@ const TopicManagement = () => {
   // Handle update topic
   const handleUpdateTopic = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !selectedTopic) {
       return;
     }
-    
+
     setSubmitLoading(true);
-    
+
     try {
       await updateTopic(selectedTopic.id, formData);
       setIsEditModalOpen(false);
       setSelectedTopic(null);
       setFormData({ title: '', description: '' });
       setFormErrors({});
+      // Refresh topics list with current pagination
+      await getAllTopics(currentPage, pageSize);
     } catch (err) {
       console.error('Failed to update topic:', err);
       setLoadError('Failed to update topic. Please try again.');
@@ -318,6 +327,8 @@ const TopicManagement = () => {
     if (window.confirm(`Are you sure you want to delete "${topic.title}"?`)) {
       try {
         await deleteTopic(topic.id);
+        // Refresh topics list with current pagination
+        await getAllTopics(currentPage, pageSize);
       } catch (err) {
         console.error('Failed to delete topic:', err);
         setLoadError('Failed to delete topic. Please try again.');
@@ -659,6 +670,17 @@ const TopicManagement = () => {
     setSearchTermMapping(value);
   }, []);
 
+  // Handle page change
+  const handlePageChange = useCallback((newPage) => {
+    setCurrentPage(newPage);
+  }, []);
+
+  // Handle page size change
+  const handlePageSizeChange = useCallback((newPageSize) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  }, []);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
       {/* Header */}
@@ -802,6 +824,71 @@ const TopicManagement = () => {
                 </p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {pagination.totalCount > 0 && (
+          <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalCount)} of {pagination.totalCount} topics
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage === 1}
+                className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pagination.currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                    pageNum = pagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = pagination.currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`w-8 h-8 text-sm rounded-lg transition-colors ${
+                        pagination.currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage === pagination.totalPages}
+                className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
+                className="ml-4 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
+              </select>
+            </div>
           </div>
         )}
       </div>

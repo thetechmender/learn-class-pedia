@@ -1596,8 +1596,24 @@ async uploadCsvFileByName(formData) {
   // Topic CRUD methods
   
   // GET all topics
-  async getAllTopics() {
-    return this.request(ENDPOINTS.TOPICS_ALL);
+  async getAllTopics(page = null, pageSize = null) {
+    let url = ENDPOINTS.TOPICS_ALL;
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    
+    // Add pagination params if provided
+    if (page !== null && pageSize !== null) {
+      params.append('page', page);
+      params.append('pageSize', pageSize);
+    }
+    
+    // Add params to URL if any exist
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    return this.request(url);
   }
 
   // GET topic by ID
