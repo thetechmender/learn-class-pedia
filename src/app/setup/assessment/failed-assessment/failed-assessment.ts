@@ -12,7 +12,7 @@ import { AssessmentService } from '../../../services/assessment.service';
 export class FailedAssessment implements OnChanges {
   @Input('slug') courseSlug: string = '';
   @Input() resultData: any = null;
-  @Output() next = new EventEmitter<void>();
+  @Output() next = new EventEmitter<string>();
   @Output() goBack = new EventEmitter<void>();
 
   private assessmentService = inject(AssessmentService);
@@ -64,11 +64,12 @@ export class FailedAssessment implements OnChanges {
   }
 
   getClassroomUrl(slug: string): string {
-    return `https://www.classpedia.ai/${slug}`;
+    const url = `https://www.classpedia.ai/${slug}`;
+    return url;
   }
 
   onReattempt() {
-    this.next.emit();
+    this.next.emit('start');
   }
 
   back() {

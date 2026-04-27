@@ -38,6 +38,8 @@ export class AssessmentService {
 
   canTakeAssessment = signal<boolean>(true);
 
+  hasPhone = signal<boolean>(true);
+
 
 
   getQuizQuestions(courseId: number, token: string | null): Observable<any> {
@@ -325,6 +327,8 @@ export class AssessmentService {
     this.isAssessmentCompleted.set(data.isAssessmentCompleted || false);
 
     this.canTakeAssessment.set(data.canTakeAssessment !== false);
+
+    this.hasPhone.set(data.hasPhone !== false);
 
   };
 

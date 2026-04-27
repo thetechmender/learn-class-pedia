@@ -94,7 +94,6 @@ export class SecurityService {
 
     // Check if limit reached based on API response count
     if (this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
-      console.log('Warning limit reached. Auto-submitting assessment.');
       this.autoSubmitTriggered.next();
     }
   }

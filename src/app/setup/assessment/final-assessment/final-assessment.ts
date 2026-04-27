@@ -185,7 +185,6 @@ export class FinalAssessment implements OnInit {
 
     this.securityService.warningEvent.pipe(takeUntil(this.destroy$)).subscribe((event) => {
 
-      console.log('[Security] Warning event received:', event);
 
       // Warning API is already called by SecurityService
 
@@ -199,7 +198,6 @@ export class FinalAssessment implements OnInit {
 
     this.securityService.autoSubmitTriggered.pipe(takeUntil(this.destroy$)).subscribe(() => {
 
-      console.log('[Security] Auto-submit triggered due to warning limit');
 
       this._autoSubmit();
 
@@ -466,7 +464,6 @@ export class FinalAssessment implements OnInit {
 
         next: (details: any) => {
 
-          console.log('Question saved:', details);
 
         },
 
@@ -617,7 +614,6 @@ export class FinalAssessment implements OnInit {
 
         next: (response: any) => {
 
-          console.log('[DEBUG] Auto-submit API response:', response);
 
           this.isCompleting.set(false);
 
@@ -770,7 +766,6 @@ export class FinalAssessment implements OnInit {
     if (isPassed === false) {
 
       // If failed, emit data immediately to route to failed-assessment
-      console.log(data);
       this.next.emit(data);
 
     } else if (isPassed === true) {
@@ -1200,7 +1195,6 @@ export class FinalAssessment implements OnInit {
   startAssessment() {
     // Check if assessment is already in progress - if so, don't call start API
     if (this.isAssessmentInProgress) {
-      console.log('[DEBUG] Assessment already in progress, skipping startAssessment API call');
       return;
     }
 
@@ -1215,7 +1209,6 @@ export class FinalAssessment implements OnInit {
     this.assessmentService.startAssessmentTime(payload, token).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
-          console.log(details);
         },
         error: (err: any) => {
           console.error('Start Assessment Time Error:', err);

@@ -3,11 +3,12 @@ import { DecimalPipe, CommonModule } from '@angular/common';
 import { AssessmentService } from '../../../services/assessment.service';
 import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
+import { UpdatePhoneNumber } from '../update-phone-number/update-phone-number';
 // import { ShareYourAccomplishment } from '../share-your-accomplishment/share-your-accomplishment';
 
 @Component({
   selector: 'app-cleared-assessment',
-  imports: [DecimalPipe, CommonModule,
+  imports: [DecimalPipe, CommonModule, UpdatePhoneNumber,
     //  ShareYourAccomplishment
   ],
   templateUrl: './cleared-assessment.html',
@@ -26,6 +27,8 @@ export class ClearedAssessment implements OnChanges {
   isGeneratingCertificate = signal(false); // Add loading state
   loaderAlreadyActivated = false; // Prevent multiple activations
   showShareModal = signal(false);
+  showPhoneModal = signal(false);
+  pendingAction: 'download' | 'share' | null = null;
 
   ngOnChanges() {
 
@@ -179,6 +182,18 @@ export class ClearedAssessment implements OnChanges {
   }
 
   updateEnrollmentActivity(activityType: string) {
+    // Check if user has phone number
+    if (!this.assessmentService.hasPhone()) {
+      this.pendingAction = activityType as 'download' | 'share';
+      this.showPhoneModal.set(true);
+      return;
+    }
+
+    // User has phone, proceed with normal flow
+    this.proceedWithActivity(activityType);
+  };
+
+  proceedWithActivity(activityType: string) {
     const token = this.authService.getToken();
     const payload = { customerEnrollmentId: this.customerEnrollmentId, activityType };
     this.startLoading(activityType);
@@ -203,6 +218,20 @@ export class ClearedAssessment implements OnChanges {
         });
     }, 1000)
   };
+
+  onPhoneUpdated() {
+    this.showPhoneModal.set(false);
+    // Continue with pending action
+    if (this.pendingAction) {
+      this.proceedWithActivity(this.pendingAction);
+      this.pendingAction = null;
+    }
+  }
+
+  onPhoneModalClose() {
+    this.showPhoneModal.set(false);
+    this.pendingAction = null;
+  }
 
   ngOnDestroy() {
     this.destroy$.next();

@@ -807,6 +807,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.activeSection.set(sectionData);
       this.courseService.activeSection.set(sectionData);
     }
+
+    // For video courses, prepare content immediately without waiting for user to click play
+    const tree = this.courseTree();
+    if (tree?.videoUrl && combinedContent) {
+      this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
+      this.isContentReady.set(true);
+    }
   }
 
   selectFirstShortCourse(sc: any) {
@@ -901,6 +908,23 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (lec.content) {
       this.activeSection.set({ ...lec, sectionTitle: lec.title || lec.courseTitle });
       this.courseService.activeSection.set({ ...lec, sectionTitle: lec.title || lec.courseTitle });
+    }
+
+    // For video courses (courseTypeId 3), prepare content immediately
+    if (tree?.videoUrl && tree?.courseTypeId === 3) {
+      const lectureContents: string[] = [];
+      let combinedContent = '';
+
+      allLectures.forEach((lecture: any) => {
+        if (lecture.content) {
+          combinedContent += lecture.content + '<br/><br/>';
+        }
+      });
+
+      if (combinedContent) {
+        this.lectureContent.set(this.sanitizer.bypassSecurityTrustHtml(combinedContent));
+        this.isContentReady.set(true);
+      }
     }
   }
 
@@ -1709,7 +1733,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return false;
   }
 
-  async startAssessment() {
+ startAssessment() {
     this.isStartingAssessment.set(true);
 
     // Stop any playing video and audio before starting assessment
@@ -1717,8 +1741,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     const token = this.authService.getToken();
     const courseId = this.existingSeasionCourseId();
-    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
-    if (!courseId && isDualDisplayActive) {
+    if (!courseId) {
       this.assessmentStep.set('start');
       return;
     }
@@ -1778,15 +1801,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.assessmentStep.set('maxattempts');
           }
         } else {
-
-          if (await this.securityService.isDualDisplayActive()) {
-            // Deselect lectures when starting assessment
             this.deselectSidebarLectures();
             this.assessmentStep.set('start');
-          } else {
-            this.isStartingAssessment.set(false);
-            return;
-          }
         }
       },
     });
@@ -1794,7 +1810,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
 
   onAssessmentNext(result: any) {
-    if (result === 'start' || result === undefined) {
+    if (result === 'start') {
+      // When reattempting from failed screen, go to start screen first for dual display check
+      // Clear the isAssessmentInProgress flag so dual display check happens
+      this.assessmentResult.set({
+        ...this.assessmentResult(),
+        isAssessmentInProgress: false
+      });
+      this.assessmentStep.set('start');
+    } else if (result === 'final' || result === undefined) {
       // Deselect lectures when moving to final assessment
       this.deselectSidebarLectures();
       this.assessmentStep.set('final');
