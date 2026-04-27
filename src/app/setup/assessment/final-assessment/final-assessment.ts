@@ -131,7 +131,7 @@ export class FinalAssessment implements OnInit {
 
 
 
-  ngOnInit(): void {
+ async ngOnInit(): Promise<void> {
     this.startAssessment();
     // Initialize security service with order payload
     this.securityService.setOrderPayload(this.orderPayload);
@@ -160,6 +160,11 @@ export class FinalAssessment implements OnInit {
     this._initializeMouseTracking();
 
     this._initializeSecurityTracking();
+    const isDualDisplayActive = await this.securityService.isDualDisplayActive();
+
+    if (isDualDisplayActive) {
+      return;
+    }
 
   }
 
