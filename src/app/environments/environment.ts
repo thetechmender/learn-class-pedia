@@ -15,7 +15,7 @@ export const ENVIRONMENTS = {
     API_URL: 'https://api.classpedia.ai/api',
     DEBUG: false,
     ENV_NAME: 'production',
-    HIDE_URL_PARAMS: true
+    HIDE_URL_PARAMS: false
   }
 };
 
