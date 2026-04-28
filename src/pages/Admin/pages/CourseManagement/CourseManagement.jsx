@@ -96,10 +96,14 @@ const CourseManagement = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, COURSE_MANAGEMENT_CONSTANTS.SEARCH_DEBOUNCE_DELAY);
 
   // Memoized calculations
-  const searchFilteredCourses = useMemo(() => 
-    filterCoursesBySearch(filteredCourses, debouncedSearchTerm),
-    [filteredCourses, debouncedSearchTerm]
-  );
+  const searchFilteredCourses = useMemo(() => {
+    const result = filterCoursesBySearch(filteredCourses, debouncedSearchTerm);
+    console.log('=== SEARCH FILTERED COURSES ===');
+    console.log('filteredCourses length:', filteredCourses.length);
+    console.log('debouncedSearchTerm:', debouncedSearchTerm);
+    console.log('searchFilteredCourses result length:', result.length);
+    return result;
+  }, [filteredCourses, debouncedSearchTerm]);
 
   const typeCounts = useMemo(() => {
     const counts = {
@@ -135,7 +139,9 @@ const CourseManagement = () => {
     try {
       const activeFilters = Object.fromEntries(
         Object.entries(updatedFilters).filter(([key, value]) => {
+          // Always include page and pageSize regardless of their value
           if (key === 'page' || key === 'pageSize') return true;
+          // For other fields, filter out empty/falsy values
           return value !== '' && value !== 0 && value !== null && value !== undefined;
         })
       );
@@ -672,19 +678,34 @@ const CourseManagement = () => {
   if (filtersLoading) {
     return;
   }
-    
+
     setFiltersLoading(true);
     try {
       const effectiveFilters = overrideFilters || filters;
+      // If no overrideFilters provided, reset page to 1
+      if (!overrideFilters) {
+        effectiveFilters.page = 1;
+      }
       const activeFilters = Object.fromEntries(
         Object.entries(effectiveFilters).filter(([key, value]) => {
+          // Always include page and pageSize regardless of their value
           if (key === 'page' || key === 'pageSize') return true;
+          // For other fields, filter out empty/falsy values
           return value !== '' && value !== 0 && value !== null && value !== undefined;
         })
       );
-    
+
+      console.log('=== APPLY FILTERS DEBUG ===');
+      console.log('effectiveFilters:', effectiveFilters);
+      console.log('activeFilters:', activeFilters);
+
       const coursesData = await getAllCoursesAdmin(activeFilters);
+      console.log('coursesData from API:', coursesData);
+
       const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
+      console.log('coursesArray length:', coursesArray.length);
+      console.log('coursesArray sample:', coursesArray.slice(0, 3));
+
       setFilteredCourses(coursesArray);
 
       setCourseTypeTotals({
@@ -692,7 +713,7 @@ const CourseManagement = () => {
         intermediate: coursesData?.totalIntermediateCount,
         advanced: coursesData?.totalAdvanceCount
       });
-      
+
       // Update pagination info from response
       if (coursesData?.page !== undefined) {
         setPaginationInfo({
@@ -702,6 +723,7 @@ const CourseManagement = () => {
         });
       }
     } catch (error) {
+      console.error('applyFilters error:', error);
       showToast('Failed to apply filters', 'error');
     } finally {
       setFiltersLoading(false);
@@ -874,9 +896,11 @@ const CourseManagement = () => {
             </div>
             <div className="flex justify-end mt-4">
               <button
-              
-  
-  onClick={() => applyFilters()}
+                onClick={() => {
+                  setSearchTerm(''); // Clear search term when applying filters
+                  setFilters({ ...filters, page: 1 }); // Reset to page 1
+                  applyFilters();
+                }}
 
                 className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
               >
@@ -904,7 +928,7 @@ const CourseManagement = () => {
             searchTerm={debouncedSearchTerm}
             itemHeight={COURSE_MANAGEMENT_CONSTANTS.ITEM_HEIGHT}
             containerHeight={COURSE_MANAGEMENT_CONSTANTS.CONTAINER_HEIGHT}
-            bufferSize={searchFilteredCourses.length}
+            bufferSize={15}
             expandable={true}
             renderExpandedContent={(course, details) => (
               <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">

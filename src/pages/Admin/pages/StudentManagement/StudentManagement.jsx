@@ -534,7 +534,7 @@ const StudentManagement = () => {
                     <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="tel"
-                      placeholder="+1 234 567 890"
+                      placeholder="1234567890"
                       value={filters.phoneNumber}
                       onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
                       className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
@@ -652,7 +652,6 @@ const StudentManagement = () => {
                       className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
                     >
                       <option value="">All Percentages</option>
-                      <option value="0">0%</option>
                       <option value="10">10%</option>
                       <option value="20">20%</option>
                       <option value="30">30%</option>
