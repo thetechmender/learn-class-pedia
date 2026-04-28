@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import  { useState, useCallback, useEffect } from 'react';
 import { useToast } from '../../../../hooks/utils/useToast';
 import { useContactUs } from '../../../../hooks/api/useContactUs';
-import { Search, X, Mail, Phone, User, MessageSquare, Calendar, Filter, Inbox, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Mail, Phone, MessageSquare, Calendar, Filter, Inbox, ChevronUp, Eye } from 'lucide-react';
 import AdminPageLayout from '../../../../components/AdminPageLayout';
 
 const ContactUs = () => {
@@ -16,6 +16,7 @@ const ContactUs = () => {
     fetchInquiryOptions,
     updateFilters,
     clearFilters,
+    applyFilters,
     handlePageChange,
     handlePageSizeChange,
   } = useContactUs();
@@ -88,6 +89,24 @@ const ContactUs = () => {
       subtitle={`${contactList.length} inquiry${contactList.length !== 1 ? 'ies' : 'y'} received`}
       icon={Inbox}
       loading={loading}
+      actions={
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors duration-200 shadow-sm ${
+            showFilters
+              ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+          }`}
+        >
+          <Filter className="w-4 h-4" />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full text-xs font-semibold">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      }
     >
       {/* Toast Notification */}
       {toast.show && (
@@ -105,30 +124,28 @@ const ContactUs = () => {
       )}
 
       {/* Filters Section */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
-        <div className="flex flex-col xl:flex-row xl:justify-end gap-4">
-          {/* Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-colors duration-200 shadow-sm ${
-              showFilters
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filters</span>
-            {showFilters && (
-              <span className="ml-2 px-2 py-1 bg-white/20 rounded-full text-xs">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-gray-200 animate-fadeIn">
+      {showFilters && (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Options</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleClearFilters}
+                className="px-4 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+              >
+                Clear All
+              </button>
+              <button
+                onClick={() => {
+                  applyFilters();
+                }}
+                className="px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 font-medium transition-colors shadow-sm"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Full Name</label>
               <input
@@ -178,8 +195,8 @@ const ContactUs = () => {
               </select>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Contact Cards */}
       {contactList.length > 0 ? (
