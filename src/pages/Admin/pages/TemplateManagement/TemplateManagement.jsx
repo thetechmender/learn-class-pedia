@@ -50,7 +50,6 @@ const TemplateManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({
     templateKey: '',
@@ -647,7 +646,7 @@ const TemplateManagement = () => {
       {/* Create/Edit Modal */}
       {(showCreateModal || showEditModal) && (
         <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto transform transition-all">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-screen overflow-y-auto transform transition-all">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center">
                 <div className="bg-blue-100 p-2 rounded-lg mr-3">
@@ -672,30 +671,30 @@ const TemplateManagement = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Template Key <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.templateKey}
                     onChange={(e) => setFormData(prev => ({ ...prev, templateKey: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors font-mono"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors font-mono text-sm"
                     placeholder="e.g., welcome_email"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Template Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.templateTypeId}
                     onChange={(e) => setFormData(prev => ({ ...prev, templateTypeId: parseInt(e.target.value) }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
                     required
                   >
                     <option value={0}>Select Type</option>
@@ -707,62 +706,96 @@ const TemplateManagement = () => {
                   </select>
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Title <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
                     placeholder="Enter template title"
                     required
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Email Type
+                  </label>
+                  <select
+                    value={formData.emailType}
+                    onChange={(e) => setFormData(prev => ({ ...prev, emailType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                  >
+                    <option value="">Select Email Type</option>
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Action">Action</option>
+                  </select>
+                </div>
+
+                <div className="lg:col-span-4">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Subject
                   </label>
                   <input
                     type="text"
                     value={formData.subject}
                     onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    placeholder="Enter email subject (for email templates)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                    placeholder="Enter email subject"
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div className="lg:col-span-4">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     HTML Body
                   </label>
-                  <textarea
-                    value={formData.htmlBody}
-                    onChange={(e) => setFormData(prev => ({ ...prev, htmlBody: e.target.value }))}
-                    rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none font-mono text-sm"
-                    placeholder="Enter HTML content..."
-                  />
-                </div>
-
-                {(formData.templateTypeId === 1 || formData.templateTypeId === 3) && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Email Type
-                    </label>
-                    <select
-                      value={formData.emailType}
-                      onChange={(e) => setFormData(prev => ({ ...prev, emailType: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    >
-                      <option value="">Select Email Type</option>
-                      <option value="Scheduled">Scheduled</option>
-                      <option value="Action">Action</option>
-                    </select>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* HTML Editor */}
+                    <div className="flex flex-col h-[500px]">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">HTML Editor</span>
+                      </div>
+                      <textarea
+                        value={formData.htmlBody}
+                        onChange={(e) => setFormData(prev => ({ ...prev, htmlBody: e.target.value }))}
+                        className="flex-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none font-mono text-sm"
+                        placeholder="Enter HTML content..."
+                      />
+                    </div>
+                    
+                    {/* Live Preview */}
+                    <div className="flex flex-col ">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Live Preview</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-gray-500">Auto-updating</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden bg-white">
+                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 h-[500px] overflow-auto">
+                          {formData.htmlBody ? (
+                            <div 
+                              dangerouslySetInnerHTML={{ __html: formData.htmlBody }}
+                              className="w-full"
+                            />
+                          ) : (
+                            <div className="text-center py-12">
+                              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FileText className="w-8 h-8 text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-medium text-gray-700 mb-2">No HTML Content</h3>
+                              <p className="text-gray-500">Start typing in the editor to see the preview.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
@@ -806,7 +839,7 @@ const TemplateManagement = () => {
       {/* View Modal */}
       {showViewModal && selectedTemplate && (
         <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto transform transition-all">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-screen overflow-y-auto transform transition-all">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center">
                 <div className="bg-blue-100 p-2 rounded-lg mr-3">
@@ -826,62 +859,78 @@ const TemplateManagement = () => {
             </div>
 
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Template Key</label>
-                  <div className="px-4 py-3 bg-gray-50 rounded-lg font-mono text-sm">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Template Key</label>
+                  <div className="px-3 py-2 bg-gray-50 rounded-lg font-mono text-sm">
                     {selectedTemplate.templateKey}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Template Type</label>
-                  <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Template Type</label>
+                  <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm">
                     {templateTypes.find(t => t.id === selectedTemplate.templateTypeId)?.title || 'Unknown'}
                   </div>
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
-                  <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Title</label>
+                  <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm">
                     {selectedTemplate.title}
                   </div>
                 </div>
 
                 {selectedTemplate.subject && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-                    <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Subject</label>
+                    <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm">
                       {selectedTemplate.subject}
                     </div>
                   </div>
                 )}
 
                 {selectedTemplate.emailType && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Type</label>
-                    <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Email Type</label>
+                    <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm">
                       {selectedTemplate.emailType}
                     </div>
                   </div>
                 )}
 
-              
                 {selectedTemplate.htmlBody && (
-                  <div className="md:col-span-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold text-gray-700">HTML Body</label>
-                      <button
-                        onClick={() => setShowPreviewModal(true)}
-                        className="flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                        title="Preview HTML"
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Preview
-                      </button>
-                    </div>
-                    <div className="px-4 py-3 bg-gray-50 rounded-lg max-h-64 overflow-y-auto">
-                      <pre className="text-xs font-mono whitespace-pre-wrap">{selectedTemplate.htmlBody}</pre>
+                  <div className="lg:col-span-3">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">HTML Body</label>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* HTML Code View */}
+                      <div className="flex flex-col h-[500px]">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">HTML Code</span>
+                        </div>
+                        <div className="flex-1 px-4 py-3 bg-gray-50 rounded-lg overflow-y-auto border border-gray-200">
+                          <pre className="text-xs font-mono whitespace-pre-wrap">{selectedTemplate.htmlBody}</pre>
+                        </div>
+                      </div>
+                      
+                      {/* Rendered Preview */}
+                      <div className="flex flex-col h-[500px]">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Rendered Preview</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-xs text-gray-500">Live</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden bg-white">
+                          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 h-full overflow-auto">
+                            <div 
+                              dangerouslySetInnerHTML={{ __html: selectedTemplate.htmlBody }}
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -903,87 +952,6 @@ const TemplateManagement = () => {
         </div>
       )}
 
-      {/* HTML Preview Modal */}
-      {showPreviewModal && selectedTemplate && (
-        <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="bg-white/20 backdrop-blur-sm p-3 rounded-lg mr-4">
-                    <Eye className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">HTML Preview</h2>
-                    <p className="text-green-100 text-sm mt-1">"{selectedTemplate.title}"</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowPreviewModal(false)}
-                  className="p-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 overflow-hidden shadow-inner">
-                <div className="bg-white px-4 py-3 border-b border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-semibold text-gray-700">Rendered HTML</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span className="bg-gray-100 px-2 py-1 rounded-full font-mono">
-                        {selectedTemplate.templateKey}
-                      </span>
-                      {selectedTemplate.subject && (
-                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                          {selectedTemplate.subject}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6 bg-white min-h-[300px] max-h-[500px] overflow-auto">
-                  {selectedTemplate.htmlBody ? (
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: selectedTemplate.htmlBody }}
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FileText className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-700 mb-2">No HTML Content</h3>
-                      <p className="text-gray-500">This template doesn't have any HTML content to preview.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-                <div className="text-sm text-gray-500">
-                  {selectedTemplate.htmlBody ? (
-                    <span>HTML content rendered successfully</span>
-                  ) : (
-                    <span>No HTML content available</span>
-                  )}
-                </div>
-                <button
-                  onClick={() => setShowPreviewModal(false)}
-                  className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  Close Preview
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
