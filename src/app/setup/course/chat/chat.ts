@@ -1,10 +1,11 @@
-import { Component, Input, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Component, Input, inject, signal, effect, ViewChild, ElementRef, PLATFORM_ID, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isPlatformBrowser } from '@angular/common';
 import { CourseService } from '../../../services/course.service';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, takeUntil } from 'rxjs';
+import { SpeechService } from '../../../services/speech.service';
 
 // Declare global window interface for chattrik API
 declare global {
@@ -27,8 +28,39 @@ export class Chat {
   courseService = inject(CourseService);
   private sanitizer = inject(DomSanitizer);
   private toastr = inject(ToastrService);
+  private speechService = inject(SpeechService);
+  private ngZone = inject(NgZone);
   private destroy$ = new Subject<void>();
   private platformId = inject(PLATFORM_ID);
+
+  // Voice recording state
+  isRecording = signal<boolean>(false);
+  private recognition: any = null;
+  isSendingVoice = signal<boolean>(false);
+  speakingMessageIndex = signal<number>(-1);
+  private lastQueryWasVoice = false;
+  private silenceTimer: any = null;
+  private ttsCheckInterval: any = null;
+
+  @ViewChild('chatBody') chatBody!: ElementRef<HTMLDivElement>;
+
+  constructor() {
+    // Auto-scroll to bottom when messages change or sending state changes
+    effect(() => {
+      this.chatMessages();
+      this.isChatSending();
+      this.isRecording();
+      this.scrollToBottom();
+    });
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      if (this.chatBody?.nativeElement) {
+        this.chatBody.nativeElement.scrollTop = this.chatBody.nativeElement.scrollHeight;
+      }
+    });
+  }
 
   @Input() assessmentStep: 'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts' = 'none';
   @Input() courseTree: any = null;
@@ -45,6 +77,154 @@ export class Chat {
     }
   ]);
 
+  // Toggle voice recording
+  toggleRecording() {
+    if (this.isRecording()) {
+      this.stopRecording();
+    } else {
+      this.startRecording();
+    }
+  }
+
+  private startRecording() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      this.toastr.error('Speech recognition is not supported in this browser.', 'Error');
+      return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = 'en-US';
+
+    this.recognition.onresult = (event: any) => {
+      this.ngZone.run(() => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        this.chatInput.set(transcript);
+
+        // Scroll input to show latest text
+        setTimeout(() => {
+          const inputEl = document.querySelector('app-chat input[type="text"]') as HTMLInputElement;
+          if (inputEl) {
+            inputEl.scrollLeft = inputEl.scrollWidth;
+          }
+        });
+
+        // Reset 2-second silence timer on each result
+        this.resetSilenceTimer();
+      });
+    };
+
+    this.recognition.onend = () => {
+      this.ngZone.run(() => {
+        this.clearSilenceTimer();
+        if (this.isRecording()) {
+          // Recognition ended unexpectedly while still recording
+          this.isRecording.set(false);
+          this.lastQueryWasVoice = true;
+          const text = (this.chatInput() || '').trim();
+          if (text) {
+            this.sendChatMessage();
+          }
+        }
+      });
+    };
+
+    this.recognition.onerror = (event: any) => {
+      this.ngZone.run(() => {
+        console.error('Speech recognition error:', event.error);
+        this.clearSilenceTimer();
+        this.isRecording.set(false);
+        if (event.error !== 'no-speech') {
+          this.toastr.error('Voice recognition error. Please try again.', 'Error');
+        }
+      });
+    };
+
+    this.recognition.start();
+    this.isRecording.set(true);
+  }
+
+  private stopRecording() {
+    this.clearSilenceTimer();
+    if (this.recognition) {
+      this.lastQueryWasVoice = true;
+      this.isRecording.set(false);
+      this.recognition.stop();
+      this.recognition = null;
+
+      // Auto-send if there's text
+      const text = (this.chatInput() || '').trim();
+      if (text) {
+        this.sendChatMessage();
+      }
+    }
+  }
+
+  private resetSilenceTimer() {
+    this.clearSilenceTimer();
+    this.silenceTimer = setTimeout(() => {
+      if (this.isRecording()) {
+        this.stopRecording();
+      }
+    }, 2000);
+  }
+
+  private clearSilenceTimer() {
+    if (this.silenceTimer) {
+      clearTimeout(this.silenceTimer);
+      this.silenceTimer = null;
+    }
+  }
+
+  // Toggle speech for a specific bot message (called from template)
+  toggleSpeakMessage(messageIndex: number) {
+    if (this.speakingMessageIndex() === messageIndex) {
+      // Currently speaking this message — stop it
+      this.speechService.stop();
+      this.speakingMessageIndex.set(-1);
+      this.clearTtsCheck();
+      return;
+    }
+    // Get the message text
+    const msg = this.chatMessages()[messageIndex];
+    if (!msg || msg.role !== 'bot') return;
+    const text = typeof msg.text === 'string' ? msg.text : (msg.text as any)?.changingThisBreaksApplicationSecurity || '';
+    this.speakResponse(text, messageIndex);
+  }
+
+  private speakResponse(text: string, messageIndex: number) {
+    if (!isPlatformBrowser(this.platformId)) return;
+    // Strip HTML tags for clean TTS
+    const cleanText = text.replace(/<[^>]*>/g, '');
+    this.speakingMessageIndex.set(messageIndex);
+    this.speechService.speak(cleanText);
+
+    // Poll speechSynthesis.speaking to detect when TTS finishes
+    this.clearTtsCheck();
+    this.ttsCheckInterval = setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        this.ngZone.run(() => {
+          this.speakingMessageIndex.set(-1);
+        });
+        this.clearTtsCheck();
+      }
+    }, 300);
+  }
+
+  private clearTtsCheck() {
+    if (this.ttsCheckInterval) {
+      clearInterval(this.ttsCheckInterval);
+      this.ttsCheckInterval = null;
+    }
+  }
+
   sendChatMessage() {
     const question = (this.chatInput() || '').trim();
     if (!question || this.isChatSending()) return;
@@ -55,6 +235,11 @@ export class Chat {
       this.toastr.error('Course is not loaded yet. Please try again in a moment.', 'Error');
       return;
     }
+
+    // Capture whether this message was voice-initiated before resetting
+    const wasVoice = this.lastQueryWasVoice;
+    this.lastQueryWasVoice = false;
+    this.isSendingVoice.set(wasVoice);
 
     const payload = {
       customerId: 1,
@@ -78,9 +263,17 @@ export class Chat {
         const text = typeof answer === 'string' && answer.trim().length > 0 ? answer : 'I could not find an answer for that.';
         this.chatMessages.set([...this.chatMessages(), { role: 'bot', text }]);
         this.isChatSending.set(false);
+        this.isSendingVoice.set(false);
+
+        // If the query was voice-initiated, speak the response
+        if (wasVoice) {
+          const msgIndex = this.chatMessages().length - 1;
+          this.speakResponse(text, msgIndex);
+        }
       },
       error: (err: any) => {
         this.isChatSending.set(false);
+        this.isSendingVoice.set(false);
         this.toastr.error('Failed to send your question. Please try again.', 'Error');
         console.error('Ask Course Question Error:', err);
       }
@@ -312,6 +505,13 @@ export class Chat {
   }
 
   ngOnDestroy() {
+    this.clearSilenceTimer();
+    this.clearTtsCheck();
+    if (this.recognition) {
+      this.recognition.abort();
+      this.recognition = null;
+    }
+    this.speechService.stop();
     this.destroy$.next();
     this.destroy$.complete();
   }
