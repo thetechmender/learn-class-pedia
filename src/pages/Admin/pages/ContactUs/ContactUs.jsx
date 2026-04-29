@@ -125,9 +125,9 @@ const ContactUs = () => {
 
       {/* Filters Section */}
       {showFilters && (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
-            <h3 className="text-lg font-semibold text-gray-900">Filter Options</h3>
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 space-y-2 sm:space-y-0">
+            <h3 className="text-base font-semibold text-gray-900">Filter Options</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleClearFilters}
@@ -145,46 +145,46 @@ const ContactUs = () => {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Full Name</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600">Full Name</label>
               <input
                 type="text"
-                placeholder="Enter full name"
+                placeholder="Search by name"
                 value={filters.fullName}
                 onChange={(e) => handleFilterChange('fullName', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Email Address</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600">Email Address</label>
               <input
                 type="text"
-                placeholder="Enter email address"
+                placeholder="Search by email"
                 value={filters.emailAddress}
                 onChange={(e) => handleFilterChange('emailAddress', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Phone Number</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600">Phone Number</label>
               <input
                 type="text"
-                placeholder="Enter phone number"
+                placeholder="Search by phone"
                 value={filters.phoneNumber}
                 onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Inquiry Type</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600">Inquiry Type</label>
               <select
                 value={filters.inquiryOptionId}
                 onChange={(e) => handleFilterChange('inquiryOptionId', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               >
                 <option value="">All Types</option>
                 {inquiryOptions.map((option) => (

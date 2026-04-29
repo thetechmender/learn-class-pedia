@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Users,
   Filter,
@@ -20,7 +20,9 @@ import {
   TrendingUp,
   AlertCircle,
   Check,
-  BookOpen
+  BookOpen,
+  SlidersHorizontal,
+  RotateCcw
 } from 'lucide-react';
 import useStudentOrderManagement from '../../../../hooks/api/useStudentOrderManagement';
 
@@ -43,13 +45,41 @@ const StudentOrderManagement = () => {
   const [filters, setFilters] = useState({
     orderNo: '',
     customerName: '',
-    statusId: '',
-    startDate: '',
-    endDate: ''
+    statusId: ''
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Build active-filter metadata (count + chips)
+  const { activeFilterCount, activeFilterChips } = useMemo(() => {
+    const labels = {
+      orderNo: 'Order No',
+      customerName: 'Customer Name',
+      statusId: 'Status'
+    };
+
+    const isActive = (k, v) => {
+      if (typeof v === 'boolean') return v === true;
+      if (Array.isArray(v)) return v.length > 0;
+      return v !== '' && v !== null && v !== undefined;
+    };
+
+    const displayValue = (k, v) => {
+      switch (k) {
+        case 'statusId':
+          return v === '1' ? 'Pending' : v === '2' ? 'Paid' : v === '3' ? 'Cancelled' : v;
+        default:
+          return String(v);
+      }
+    };
+
+    const chips = Object.entries(filters)
+      .filter(([k, v]) => isActive(k, v))
+      .map(([k, v]) => ({ key: k, label: labels[k] || k, value: displayValue(k, v) }));
+
+    return { activeFilterCount: chips.length, activeFilterChips: chips };
+  }, [filters]);
 
   // Load orders function
   const loadOrders = useCallback(async (page = 1) => {
@@ -75,16 +105,30 @@ const StudentOrderManagement = () => {
   }, [filters, filterOrders, pagination.pageSize]);
 
   // Clear filters
-  const clearFilters = useCallback(() => {
+  const clearFilters = useCallback(async () => {
     setFilters({
       orderNo: '',
       customerName: '',
-      statusId: '',
-      startDate: '',
-      endDate: ''
+      statusId: ''
     });
-    getAllOrders(1, pagination.pageSize);
+    await getAllOrders(1, pagination.pageSize);
   }, [getAllOrders, pagination.pageSize]);
+
+  // Reset a single filter and re-fetch
+  const removeFilter = useCallback(async (key) => {
+    const resetValue = typeof filters[key] === 'boolean'
+      ? false
+      : Array.isArray(filters[key])
+        ? []
+        : '';
+    const next = { ...filters, [key]: resetValue };
+    setFilters(next);
+    try {
+      await getAllOrders(1, pagination.pageSize);
+    } catch (err) {
+      console.error('Failed to remove filter:', err);
+    }
+  }, [filters, getAllOrders, pagination.pageSize]);
 
   // Handle page change
   const handlePageChange = useCallback((newPage) => {
@@ -163,203 +207,240 @@ const StudentOrderManagement = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-3 lg:p-4">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg">
-              <ShoppingCart className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                Student Order Management
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">Manage and track student orders</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-2 rounded-xl border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Total Orders: <span className="text-blue-600">{pagination.totalCount}</span>
+      {/* Search and Filters - Modern Compact Design */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-visible">
+        {/* Filter Header Bar */}
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 rounded-t-xl">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+            {/* Left: Title & Stats */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
+                  <ShoppingCart className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+                    Student Order Management
+                  </h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
+                    {pagination.totalCount} orders
+                  </p>
+                </div>
+              </div>
+              {activeFilterCount > 0 && (
+                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                  {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
                 </span>
-              </div>
+              )}
             </div>
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing || loading}
-              className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Search and Filter Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6">
-        <div className="flex flex-col lg:flex-row lg:justify-end gap-4">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 ${
-              showFilters
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            <Filter className="w-5 h-5" />
-            <span>Filters</span>
-            {Object.values(filters).some(value => value !== '') && (
-              <span className="ml-2 px-2 py-1 bg-white/20 rounded-full text-xs">
-                {Object.values(filters).filter(value => value !== '').length}
-              </span>
-            )}
-            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Order Number
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., CP-20260310-724A59AF"
-                  value={filters.orderNo}
-                  onChange={(e) => setFilters({ ...filters, orderNo: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
+            {/* Right: Filter Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <div className="px-2.5 py-1 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400 font-medium uppercase tracking-wide">Total</div>
+                <div className="text-sm font-bold text-gray-900 dark:text-white leading-none">{pagination.totalCount}</div>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Customer Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., John Doe"
-                  value={filters.customerName}
-                  onChange={(e) => setFilters({ ...filters, customerName: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Status
-                </label>
-                <select
-                  value={filters.statusId}
-                  onChange={(e) => setFilters({ ...filters, statusId: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                 >
-                  <option value="">All Status</option>
-                  <option value="1">Pending</option>
-                  <option value="2">Paid</option>
-                  <option value="3">Cancelled</option>
-                </select>
-              </div>
-  
-            
-            </div>
-            <div className="flex items-center gap-3 mt-6">
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="hidden sm:inline">Reset</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  showFilters
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                aria-expanded={showFilters}
+                aria-controls="filter-panel"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span className="hidden sm:inline">Filters</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
+              </button>
               <button
                 onClick={handleFilter}
-                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg shadow-sm hover:shadow transition-all"
               >
-                Apply Filters
-              </button>
-              <button
-                onClick={clearFilters}
-                className="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
-              >
-                Clear All
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Apply</span>
               </button>
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Expandable Filter Panel */}
+        <div
+          id="filter-panel"
+          className={`transition-all duration-300 ease-in-out ${
+            showFilters ? 'max-h-[500px] opacity-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
+          }`}
+        >
+          <div className="p-4 space-y-4 bg-gray-50/60 dark:bg-gray-900/20 rounded-b-2xl">
+            {/* Text Inputs Group */}
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                <div className="relative">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Order Number</label>
+                  <div className="relative">
+                    <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by order no..."
+                      value={filters.orderNo}
+                      onChange={(e) => setFilters({ ...filters, orderNo: e.target.value })}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                    />
+                  </div>
+                </div>
+                <div className="relative">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Customer Name</label>
+                  <div className="relative">
+                    <Users className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by name..."
+                      value={filters.customerName}
+                      onChange={(e) => setFilters({ ...filters, customerName: e.target.value })}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all shadow-sm"
+                    />
+                  </div>
+                </div>
+             
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status</label>
+                  <div className="relative">
+                    <CheckCircle className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <select
+                      value={filters.statusId}
+                      onChange={(e) => setFilters({ ...filters, statusId: e.target.value })}
+                      className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                    >
+                      <option value="">All Status</option>
+                      <option value="1">Pending</option>
+                      <option value="2">Paid</option>
+                      <option value="3">Cancelled</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Active Filter Chips */}
+      {activeFilterChips.length > 0 && (
+        <div className="mt-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mr-1">
+            Active Filters:
+          </span>
+          {activeFilterChips.map((chip) => (
+            <span
+              key={chip.key}
+              className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+            >
+              <span className="text-blue-600/70 dark:text-blue-400/70">{chip.label}:</span>
+              <span className="font-semibold">{chip.value}</span>
+              <button
+                onClick={() => removeFilter(chip.key)}
+                className="ml-1 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                aria-label={`Remove ${chip.label} filter`}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={clearFilters}
+            className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
-        <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+        <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-6 py-4 rounded-xl flex items-center justify-between shadow-lg my-4">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600" />
-            <div>
-              <h3 className="font-semibold text-red-800 dark:text-red-400">Error</h3>
-              <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
-            </div>
-            <button
-              onClick={clearError}
-              className="ml-auto text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">{error}</span>
           </div>
+          <button
+            onClick={clearError}
+            className="text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-200 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       )}
 
       {/* Orders Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 mt-5 overflow-hidden">
+        {/* Desktop Table - Scrollable Container */}
+        <div className="hidden md:block w-full overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <table className="w-full min-w-[900px] table-fixed border-collapse">
+            <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-6 py-4 text-left">
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Order No</span>
-                  </div>
+                <th className="w-[180px] pl-4 pr-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                  Order No
                 </th>
-                <th className="px-6 py-4 text-left">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Customer</span>
-                  </div>
+                <th className="w-[150px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                  Customer
                 </th>
-                <th className="px-6 py-4 text-left">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Amount</span>
-                  </div>
+                <th className="w-[120px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                  Amount
                 </th>
-                <th className="px-6 py-4 text-left">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</span>
-                  </div>
+                <th className="w-[100px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                  Status
                 </th>
-                <th className="px-6 py-4 text-left">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date</span>
-                  </div>
+                <th className="w-[140px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                  Date
                 </th>
-                <th className="px-6 py-4 text-left">
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</span>
+                <th className="w-[100px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                  Actions
                 </th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12">
-                    <div className="flex flex-col items-center justify-center">
-                      <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mb-4" />
-                      <p className="text-gray-600 dark:text-gray-400">Loading orders...</p>
+                  <td colSpan="6" className="px-6 py-14 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                      <span className="font-medium text-gray-500 dark:text-gray-400">
+                        Loading orders...
+                      </span>
                     </div>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12">
-                    <div className="flex flex-col items-center justify-center">
-                      <ShoppingCart className="w-12 h-12 text-gray-400 mb-4" />
-                      <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">No orders found</p>
-                      <p className="text-gray-500 dark:text-gray-500 text-sm">Try adjusting your search or filters</p>
+                  <td colSpan="6" className="px-6 py-14 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <ShoppingCart className="h-12 w-12 text-gray-400" />
+                      <span className="text-lg font-medium text-gray-500 dark:text-gray-400">
+                        No orders found
+                      </span>
+                      <span className="text-sm text-gray-400 dark:text-gray-500">
+                        Try adjusting your search or filters
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -367,62 +448,61 @@ const StudentOrderManagement = () => {
                 orders.map((order) => (
                   <tr
                     key={order.id}
-                    className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20 transition-all duration-200"
+                    className="transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/60"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-xl flex items-center justify-center">
-                          <Tag className="h-5 w-5 text-white" />
+                    <td className="pl-4 pr-2 py-3 align-top">
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                          {order.orderNo}
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {order.orderNo}
+                      </div>
+                    </td>
+                    <td className="px-2 py-3 align-top">
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                          {order.customerFullName || 'N/A'}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-2 py-3 align-top">
+                      <div className="min-w-0 space-y-1">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {formatCurrency(order.totalAmount, order.currencyCode)}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          Sub: {formatCurrency(order.subtotalAmount, order.currencyCode)}
+                        </div>
+                        {order.discountAmount > 0 && (
+                          <div className="text-xs text-green-600 dark:text-green-400">
+                            -{formatCurrency(order.discountAmount, order.currencyCode)}
                           </div>
-                         
-                        </div>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white font-medium">
-                        {order.customerFullName || 'N/A'}
-                      </div>
-                     
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white font-medium">
-                        {formatCurrency(order.totalAmount, order.currencyCode)}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        Subtotal: {formatCurrency(order.subtotalAmount, order.currencyCode)}
-                      </div>
-                      {order.discountAmount > 0 && (
-                        <div className="text-xs text-green-600 dark:text-green-400">
-                          Discount: -{formatCurrency(order.discountAmount, order.currencyCode)}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.statusName)}`}>
+                    <td className="px-2 py-3 align-top">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.statusName)}`}>
                         {getStatusIcon(order.statusName)}
                         {order.statusName}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {formatDate(order.createdAt)}
-                      </div>
-                      {order.paidAt && (
-                        <div className="text-xs text-green-600 dark:text-green-400">
-                          Paid: {formatDate(order.paidAt)}
+                    <td className="px-2 py-3 align-top">
+                      <div className="min-w-0 space-y-1">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {formatDate(order.createdAt)}
                         </div>
-                      )}
+                        {order.paidAt && (
+                          <div className="text-xs text-green-600 dark:text-green-400">
+                            Paid: {formatDate(order.paidAt)}
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-3 align-top">
                       <button
                         onClick={() => handleViewOrder(order.id)}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all duration-200"
+                        className="inline-flex items-center gap-1.5 px-2 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all duration-200 text-xs font-medium"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3.5 h-3.5" />
                         View
                       </button>
                     </td>

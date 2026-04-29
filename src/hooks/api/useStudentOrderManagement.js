@@ -99,15 +99,23 @@ const useStudentOrderManagement = () => {
   }, [getAllOrders]);
 
   // Get payment methods
-  const getPaymentMethods = useCallback(async (pageNumber = 1, pageSize = 100) => {
+  const getPaymentMethods = useCallback(async (pageNumber = 1, pageSize = 100, filters = {}) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const queryParams = new URLSearchParams({
         PageNumber: pageNumber.toString(),
         PageSize: pageSize.toString()
       });
+
+      // Add filters to query params if provided
+      if (filters.customerFullName) {
+        queryParams.append('CustomerFullName', filters.customerFullName);
+      }
+      if (filters.customerEmail) {
+        queryParams.append('CustomerEmail', filters.customerEmail);
+      }
       
       const response = await ApiService.get(`${ENDPOINTS.PAYMENT_METHOD}?${queryParams}`);
       
