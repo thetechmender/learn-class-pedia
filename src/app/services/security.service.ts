@@ -205,8 +205,8 @@ export class SecurityService {
       const screenDetails = await (window as any).getScreenDetails?.();
       if (screenDetails && screenDetails.screens.length > 1) {
         this.toastr.error(
-          'Multiple displays detected. Please use a single display.',
-          'Security Alert'
+          'Disconnect extra displays.',
+          'Access Restricted'
         );
         return false;
       }

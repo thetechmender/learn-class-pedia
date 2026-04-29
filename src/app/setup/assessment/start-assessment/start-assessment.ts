@@ -1,4 +1,5 @@
 import { Component, Output, EventEmitter, Input, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../../services/auth.service';
 
@@ -14,7 +15,7 @@ import { SecurityService } from '../../../services/security.service';
 
   selector: 'app-start-assessment',
 
-  imports: [],
+  imports: [FormsModule],
 
   templateUrl: './start-assessment.html',
 
@@ -54,7 +55,7 @@ export class StartAssessment implements OnInit, OnDestroy {
 
   remainingMinutesCount = signal(0);
 
-
+  isAcceptedGuidelines = false;
 
   totalMinutes = computed(() => this.remainingMinutesCount() || (this.questions().length || 15) * 3);
 
@@ -264,22 +265,11 @@ export class StartAssessment implements OnInit, OnDestroy {
 
 
   async onStartAssessment() {
-    // Check if assessment is already in progress - if so, skip to final assessment
-    if (this.isAssessmentInProgress) {
-      this.next.emit('final');
-      return;
-    }
-
     const isDualDisplayActive = await this.securityService.isDualDisplayActive();
-
-    if (isDualDisplayActive) {
-
+    if (this.isAssessmentInProgress && isDualDisplayActive) {
       this.next.emit('final');
-
       return;
-
     }
-
   }
 
 
