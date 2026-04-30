@@ -12,6 +12,7 @@ import { SecurityService } from '../../../services/security.service';
 
 
 
+
 @Component({
 
   selector: 'app-final-assessment',
@@ -59,6 +60,7 @@ export class FinalAssessment implements OnInit {
   isMouseNearTopBar = signal(false); // Track if mouse is near URL bar area
 
   showKeyboardBlockWarning = signal(false); // Show warning when keyboard shortcuts are blocked
+
 
   private keyboardWarningTimeout: any = null;
 
@@ -171,9 +173,7 @@ export class FinalAssessment implements OnInit {
 
 
   private _initializeMouseTracking(): void {
-
-    document.body.classList.add('exam-mode');
-
+    // exam-mode removed — was causing scroll/click blocking on other pages
   }
 
 
@@ -199,6 +199,7 @@ export class FinalAssessment implements OnInit {
 
 
 
+
     // Subscribe to auto-submit trigger
 
     this.securityService.autoSubmitTriggered.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -209,6 +210,7 @@ export class FinalAssessment implements OnInit {
     });
 
   }
+
 
 
 
@@ -244,6 +246,13 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          this.securityService.setQuestions(this.questions());
+
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
 
           this.startTimer();
 
@@ -294,6 +303,13 @@ export class FinalAssessment implements OnInit {
 
           this.isQuestionLoading.set(false);
 
+          this.securityService.setQuestions(this.questions());
+
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
+
           this.startTimer();
 
         },
@@ -341,6 +357,13 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          this.securityService.setQuestions(this.questions());
+
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
 
           this.startTimer();
 
@@ -390,6 +413,13 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          this.securityService.setQuestions(this.questions());
+
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
 
           this.startTimer();
 
@@ -494,6 +524,9 @@ export class FinalAssessment implements OnInit {
 
       current.selectedOption = option.optionLetter;
 
+      // Sync latest answers to SecurityService for sendBeacon auto-submit
+      this.securityService.setQuestions(this.questions());
+
     };
 
   }
@@ -516,10 +549,13 @@ export class FinalAssessment implements OnInit {
 
     this.destroy$.complete();
 
-    document.body.classList.remove('exam-mode');
-
-    // Stop security tracking
+    // Stop security tracking — cleans up all body state
     this.securityService.stopAssessmentTracking();
+
+    // Reset any inline styles on body
+    document.body.style.cursor = '';
+    document.body.style.pointerEvents = '';
+    document.body.classList.remove('cursor-blocked');
 
   }
 
@@ -1117,22 +1153,6 @@ export class FinalAssessment implements OnInit {
 
       this.isMouseNearTopBar.set(true);
 
-      // Hide cursor completely
-
-      document.body.style.cursor = 'none';
-
-      // Disable all pointer events on the entire page
-
-      document.body.style.pointerEvents = 'none';
-
-      // Add a class for additional styling
-
-      document.body.classList.add('cursor-blocked');
-
-
-
-      // Prevent any mouse clicks in this area
-
       event.preventDefault();
 
       event.stopPropagation();
@@ -1140,12 +1160,6 @@ export class FinalAssessment implements OnInit {
     } else {
 
       this.isMouseNearTopBar.set(false);
-
-      document.body.style.cursor = 'default';
-
-      document.body.style.pointerEvents = 'auto';
-
-      document.body.classList.remove('cursor-blocked');
 
     }
 

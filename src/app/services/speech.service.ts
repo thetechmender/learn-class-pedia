@@ -16,6 +16,29 @@ export class SpeechService {
     private charToWordMap: number[] = [];
     private pausedTime: number = 0;
     private isCancelling: boolean = false;
+    private preferredVoice: SpeechSynthesisVoice | null = null;
+    private voicesReady: Promise<void>;
+    private resolveVoicesReady!: () => void;
+
+    // Preferred voices in priority order (soft female US English first)
+    private voicePreferences = [
+        'Google US English',
+        'Microsoft Zira',
+        'Google UK English Female',
+        'Microsoft Aria Online',
+        'Samantha',
+        'Karen',
+        'Moira',
+        'Fiona',
+    ];
+
+    constructor() {
+        this.voicesReady = new Promise<void>(resolve => {
+            this.resolveVoicesReady = resolve;
+        });
+        // Eagerly initialize synth so voices start loading immediately
+        this.getSynth();
+    }
 
     currentWordIndex = signal<number>(-1);
     currentTime = signal<number>(0);
@@ -31,8 +54,47 @@ export class SpeechService {
     private getSynth(): SpeechSynthesis | null {
         if (!this.synth && isPlatformBrowser(this.platformId)) {
             this.synth = window.speechSynthesis;
+            this.loadVoices();
         }
         return this.synth;
+    }
+
+    private loadVoices() {
+        if (!this.synth) return;
+
+        const pickBest = () => {
+            const voices = this.synth!.getVoices();
+            if (!voices.length) return;
+            for (const pref of this.voicePreferences) {
+                const found = voices.find(v => v.name === pref);
+                if (found) {
+                    this.preferredVoice = found;
+                    this.resolveVoicesReady();
+                    return;
+                }
+            }
+
+            // Fallback: pick first English female-sounding or any English voice
+            const englishVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'))
+                || voices.find(v => v.lang.startsWith('en-') && !v.localService)
+                || voices.find(v => v.lang.startsWith('en'));
+            if (englishVoice) {
+                this.preferredVoice = englishVoice;
+            } else {
+            }
+            this.resolveVoicesReady();
+        };
+
+        // Voices may already be available
+        pickBest();
+
+        // Chrome loads voices async — listen for the event
+        this.synth.onvoiceschanged = () => {
+            pickBest();
+        };
+
+        // Safety timeout — don't wait forever
+        setTimeout(() => this.resolveVoicesReady(), 2000);
     }
 
     calculateDuration(text: string): number {
@@ -66,25 +128,38 @@ export class SpeechService {
         const synth = this.getSynth();
         if (!synth) return;
 
+        // Wait for voices to load, then speak
+        this.voicesReady.then(() => this.doSpeak(synth, text, startFromWord));
+    }
+
+    private doSpeak(synth: SpeechSynthesis, text: string, startFromWord: number) {
         this.stop();
-        
+
         this.fullText = text;
         this.words = text.split(/\s+/).filter(w => w.length > 0);
         this.startWordOffset = startFromWord;
-        
-        const textToSpeak = startFromWord > 0 
-            ? this.words.slice(startFromWord).join(' ') 
+        this.isCompleted.set(false);
+
+        const textToSpeak = startFromWord > 0
+            ? this.words.slice(startFromWord).join(' ')
             : text;
-        
+
         this.charToWordMap = this.buildCharToWordMap(textToSpeak);
         this.totalDuration.set(this.calculateDuration(text));
-        
+
         this.utterance = new SpeechSynthesisUtterance(textToSpeak);
         this.utterance.pitch = 1;
         this.utterance.rate = this.rate();
 
+        // Set the preferred voice
+        if (this.preferredVoice) {
+            this.utterance.voice = this.preferredVoice;
+            console.log('[SpeechService] Speaking with voice:', this.preferredVoice.name);
+        }
+
         this.currentWordIndex.set(startFromWord);
         this.startTime = Date.now();
+        this.isCancelling = false;
 
         this.utterance.onboundary = (event: SpeechSynthesisEvent) => {
             if (event.name === 'word') {
@@ -112,7 +187,6 @@ export class SpeechService {
             this.isCompleted.set(true);
         };
 
-        this.isCancelling = false;
         synth.speak(this.utterance);
     }
 

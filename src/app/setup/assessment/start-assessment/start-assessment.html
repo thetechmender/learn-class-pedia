@@ -85,6 +85,13 @@
         </svg>
         <span>You must score at least 75% to pass</span>
       </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span>Any violation will end your assessment and count as one attempt.</span>
+      </div>
       <!-- Warning Box -->
       <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mt-4">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 flex-shrink-0" fill="none"
@@ -94,6 +101,11 @@
         </svg>
         <span class="text-sm text-amber-800">Once you click Start Assessment, the timer will begin immediately.</span>
       </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <input type="checkbox" name="isAcceptedGuidelines" id="isAcceptedGuidelines" [(ngModel)]="isAcceptedGuidelines"
+          class="h-4 w-4">
+        <span>I have read and accept the assessment guidelines.</span>
+      </div>
     </div>
 
     <!-- Divider -->
@@ -101,8 +113,8 @@
 
     <!-- Start Button -->
     <div class="p-6 flex justify-center">
-      <button (click)="onStartAssessment()"
-        class="px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
+      <button (click)="onStartAssessment()" [disabled]="!isAcceptedGuidelines"
+        class="px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
         Start Assessment
       </button>
     </div>

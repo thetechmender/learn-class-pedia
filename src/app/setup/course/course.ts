@@ -23,11 +23,12 @@ import { Chat } from './chat/chat';
 import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 import { SecurityService } from '../../services/security.service';
+import { WarningAssessment } from '../assessment/warning-assessment/warning-assessment';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, VideoPlayerComponent, Chat],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent, Chat, WarningAssessment],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -46,6 +47,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private platformId = inject(PLATFORM_ID);
   private toastr = inject(ToastrService);
   private assessmentService = inject(AssessmentService);
+  private securityService = inject(SecurityService);
+
+  // Warning popup state (persists across all assessment screens)
+  showWarningPopup = signal(false);
+  warningMessage = signal('');
+  currentWarningCount = signal(0);
+  warningType = signal('');
+  maxWarnings = 1;
 
   course = signal<any>(null);
   courseTree = signal<any>(null);
@@ -288,6 +297,14 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+
+    // Subscribe to warning popup events (persists across all assessment screens)
+    this.securityService.showWarningPopup.pipe(takeUntil(this.destroy$)).subscribe((data) => {
+      this.warningMessage.set(data.message);
+      this.currentWarningCount.set(data.warningCount);
+      this.warningType.set(data.type || '');
+      this.showWarningPopup.set(true);
+    });
 
     this.route.queryParams.subscribe(params => {
       const token = params['t'] || params['token'];
@@ -1732,7 +1749,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return false;
   }
 
- startAssessment() {
+  startAssessment() {
     this.isStartingAssessment.set(true);
 
     // Stop any playing video and audio before starting assessment
@@ -1800,8 +1817,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.assessmentStep.set('maxattempts');
           }
         } else {
-            this.deselectSidebarLectures();
-            this.assessmentStep.set('start');
+          this.deselectSidebarLectures();
+          this.assessmentStep.set('start');
         }
       },
     });
@@ -2014,18 +2031,37 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.expandedShortCourses.set(new Set());
           }
         } else if (data?.isAssessmentInProgress === true && this.assessmentStep() === 'none') {
+
           this.assessmentResult.set({
             isAssessmentInProgress: data.isAssessmentInProgress
           })
-          // Deselect lectures when routing directly to final assessment
           this.deselectSidebarLectures();
           this.assessmentStep.set('final');
+        }
+        else {
+          this.assessmentResult.set({
+            isAssessmentInProgress: data.isAssessmentInProgress
+          })
         }
       },
       error: () => {
         // Silently handle error, don't affect course loading
       }
     });
+  }
+
+  onWarningAcknowledge() {
+    this.showWarningPopup.set(false);
+    this.securityService.dismissPopup();
+
+    // Tab close: auto-submit then close the tab
+    if (this.warningType() === 'tab_close') {
+      this.securityService.autoSubmitTriggered.next();
+      // Close tab after a short delay to allow auto-submit to start
+      setTimeout(() => {
+        window.close();
+      }, 1500);
+    }
   }
 
   ngOnDestroy() {
