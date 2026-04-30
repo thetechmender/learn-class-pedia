@@ -32,12 +32,14 @@ const StudentOrderManagement = () => {
     error,
     orders,
     selectedOrder,
+    summary,
     pagination,
     loadingOrderDetails,
     getAllOrders,
     getOrderById,
     searchOrders,
     filterOrders,
+    getPaymentStatusesDropdown,
     clearError
   } = useStudentOrderManagement();
 
@@ -48,8 +50,11 @@ const StudentOrderManagement = () => {
     statusId: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [showSummary, setShowSummary] = useState(true); // Collapsible summary section
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [paymentStatuses, setPaymentStatuses] = useState([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(false);
 
   // Build active-filter metadata (count + chips)
   const { activeFilterCount, activeFilterChips } = useMemo(() => {
@@ -68,7 +73,8 @@ const StudentOrderManagement = () => {
     const displayValue = (k, v) => {
       switch (k) {
         case 'statusId':
-          return v === '1' ? 'Pending' : v === '2' ? 'Paid' : v === '3' ? 'Cancelled' : v;
+          const status = paymentStatuses.find(s => s.id.toString() === v);
+          return status ? status.name : v;
         default:
           return String(v);
       }
@@ -79,21 +85,44 @@ const StudentOrderManagement = () => {
       .map(([k, v]) => ({ key: k, label: labels[k] || k, value: displayValue(k, v) }));
 
     return { activeFilterCount: chips.length, activeFilterChips: chips };
+  }, [filters, paymentStatuses]);
+
+  // Check if any filters are active
+  const hasActiveFilters = useCallback(() => {
+    return filters.orderNo || filters.customerName || filters.statusId;
   }, [filters]);
 
-  // Load orders function
+  // Load dropdown data
+  const loadDropdownData = useCallback(async () => {
+    setLoadingDropdowns(true);
+    try {
+      const statusesData = await getPaymentStatusesDropdown();
+      setPaymentStatuses(statusesData || []);
+    } catch (err) {
+      console.error('Failed to load dropdown data:', err);
+    } finally {
+      setLoadingDropdowns(false);
+    }
+  }, [getPaymentStatusesDropdown]);
+
+  // Load orders function - uses filterOrders when filters are active
   const loadOrders = useCallback(async (page = 1) => {
     try {
-      await getAllOrders(page, pagination.pageSize);
+      if (hasActiveFilters()) {
+        await filterOrders(filters, page, pagination.pageSize);
+      } else {
+        await getAllOrders(page, pagination.pageSize);
+      }
     } catch (err) {
       console.error('Failed to load orders:', err);
     }
-  }, [getAllOrders, pagination.pageSize]);
+  }, [getAllOrders, filterOrders, filters, hasActiveFilters, pagination.pageSize]);
 
-  // Load orders on component mount
+  // Load orders and dropdowns on component mount
   useEffect(() => {
     loadOrders();
-  }, [loadOrders]);
+    loadDropdownData();
+  }, [loadOrders, loadDropdownData]);
 
   // Handle filter
   const handleFilter = useCallback(async () => {
@@ -112,7 +141,7 @@ const StudentOrderManagement = () => {
       statusId: ''
     });
     await getAllOrders(1, pagination.pageSize);
-  }, [getAllOrders, pagination.pageSize]);
+  }, [getAllOrders, pagination.pageSize, setFilters]);
 
   // Reset a single filter and re-fetch
   const removeFilter = useCallback(async (key) => {
@@ -124,11 +153,20 @@ const StudentOrderManagement = () => {
     const next = { ...filters, [key]: resetValue };
     setFilters(next);
     try {
-      await getAllOrders(1, pagination.pageSize);
+      // Check if any filters remain active after removal
+      const remainingActive = Object.entries(next).some(([k, v]) => {
+        if (k === key) return false;
+        return v && v !== '' && v !== false && v.length !== 0;
+      });
+      if (remainingActive) {
+        await filterOrders(next, 1, pagination.pageSize);
+      } else {
+        await getAllOrders(1, pagination.pageSize);
+      }
     } catch (err) {
       console.error('Failed to remove filter:', err);
     }
-  }, [filters, getAllOrders, pagination.pageSize]);
+  }, [filters, filterOrders, getAllOrders, pagination.pageSize]);
 
   // Handle page change
   const handlePageChange = useCallback((newPage) => {
@@ -139,13 +177,17 @@ const StudentOrderManagement = () => {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await loadOrders(pagination.currentPage);
+      if (hasActiveFilters()) {
+        await filterOrders(filters, pagination.currentPage, pagination.pageSize);
+      } else {
+        await getAllOrders(pagination.currentPage, pagination.pageSize);
+      }
     } catch (err) {
       console.error('Failed to refresh orders:', err);
     } finally {
       setIsRefreshing(false);
     }
-  }, [loadOrders, pagination.currentPage]);
+  }, [getAllOrders, filterOrders, filters, hasActiveFilters, pagination.currentPage, pagination.pageSize]);
 
   // Handle view order details
   const handleViewOrder = useCallback(async (orderId) => {
@@ -327,17 +369,111 @@ const StudentOrderManagement = () => {
                     <select
                       value={filters.statusId}
                       onChange={(e) => setFilters({ ...filters, statusId: e.target.value })}
-                      className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm"
+                      disabled={loadingDropdowns}
+                      className="w-full pl-9 pr-8 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white transition-all appearance-none cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="">All Status</option>
-                      <option value="1">Pending</option>
-                      <option value="2">Paid</option>
-                      <option value="3">Cancelled</option>
+                      {paymentStatuses.map((status) => (
+                        <option key={status.id} value={status.id.toString()}>
+                          {status.name}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    {loadingDropdowns && (
+                      <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                        <div className="w-3 h-3 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary Panel - Collapsible */}
+        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          {/* Summary Header Toggle */}
+          <button
+            onClick={() => setShowSummary(!showSummary)}
+            className="w-full px-4 py-3 flex items-center justify-between bg-gray-50/80 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Order Summary</span>
+              {summary && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  ({summary.totalOrders || 0} total)
+                </span>
+              )}
+            </div>
+            <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${showSummary ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Summary Cards */}
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              showSummary ? 'max-h-[300px] opacity-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'
+            }`}
+          >
+            <div className="p-4 bg-gray-50/60 dark:bg-gray-900/20">
+              {summary ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {/* Total Orders */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Orders</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.totalOrders || 0}</div>
+                  </div>
+
+                  {/* Paid Orders */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Paid</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.paidCount || 0}</div>
+                  </div>
+
+                  {/* Unpaid Orders */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                        <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unpaid</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.unPaidCount || 0}</div>
+                  </div>
+
+                  {/* Free Orders */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <DollarSign className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Free Orders</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.freeOrdersCount || 0}</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin"></div>
+                    <span>Loading summary...</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

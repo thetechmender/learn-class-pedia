@@ -8,6 +8,7 @@ const useStudentOrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [paymentMethods, setPaymentMethods] = useState([]);
+  const [summary, setSummary] = useState(null);
   
   // Separate loading state for order details to prevent list re-rendering
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
@@ -42,6 +43,7 @@ const useStudentOrderManagement = () => {
       if (response && (response.orders || response.data?.orders)) {
         const responseData = response.data || response;
         setOrders(responseData.orders || []);
+        setSummary(responseData.summary || null);
         setPagination({
           currentPage: responseData.currentPage || 1,
           pageSize: responseData.pageSize || pageSize,
@@ -171,7 +173,7 @@ const useStudentOrderManagement = () => {
       activeFilters.CustomerName = filters.customerName;
     }
     if (filters.statusId && filters.statusId !== '') {
-      activeFilters.StatusId = parseInt(filters.statusId);
+      activeFilters.PaymentStatusId = parseInt(filters.statusId);
     }
     if (filters.startDate && filters.startDate !== '') {
       activeFilters.StartDate = filters.startDate;
@@ -183,11 +185,23 @@ const useStudentOrderManagement = () => {
     return getAllOrders(pageNumber, pageSize, activeFilters);
   }, [getAllOrders]);
 
+  // Get payment statuses dropdown
+  const getPaymentStatusesDropdown = useCallback(async () => {
+    try {
+      const response = await ApiService.get(ENDPOINTS.STUDENT_ORDER_PAYMENT_STATUSES);
+      return response || [];
+    } catch (err) {
+      console.error('Failed to fetch payment statuses:', err);
+      return [];
+    }
+  }, []);
+
   return {
     loading,
     error,
     orders,
     selectedOrder,
+    summary,
     pagination,
     paymentMethods,
     loadingOrderDetails,
@@ -196,6 +210,7 @@ const useStudentOrderManagement = () => {
     searchOrders,
     filterOrders,
     getPaymentMethods,
+    getPaymentStatusesDropdown,
     clearError,
     setSelectedOrder,
   };
