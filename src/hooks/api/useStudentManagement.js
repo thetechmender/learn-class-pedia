@@ -16,6 +16,7 @@ export const useStudentManagement = () => {
   // Students data state
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [summary, setSummary] = useState(null);
   
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -75,6 +76,7 @@ export const useStudentManagement = () => {
       if (response && (response.students || response.data?.students)) {
         const responseData = response.data || response;
         setStudents(responseData.students || []);
+        setSummary(responseData.summary || null);
         setPagination({
           currentPage: responseData.currentPage || 1,
           pageSize: responseData.pageSize || pageSize,
@@ -146,6 +148,7 @@ export const useStudentManagement = () => {
   const resetState = useCallback(() => {
     setStudents([]);
     setSelectedStudent(null);
+    setSummary(null);
     setPagination({
       currentPage: 1,
       pageSize: 100,
@@ -321,6 +324,7 @@ export const useStudentManagement = () => {
     error,
     students,
     selectedStudent,
+    summary,
     pagination,
     loadingStudentDetails,
     loadingStudentOrders,
