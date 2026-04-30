@@ -28,7 +28,7 @@ import { WarningAssessment } from '../assessment/warning-assessment/warning-asse
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, SimpleVideoPlayerComponent, Chat, WarningAssessment],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, VideoPlayerComponent, Chat, WarningAssessment],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
