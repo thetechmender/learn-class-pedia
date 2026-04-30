@@ -12,6 +12,7 @@ import { SecurityService } from '../../../services/security.service';
 
 
 
+
 @Component({
 
   selector: 'app-final-assessment',
@@ -59,6 +60,7 @@ export class FinalAssessment implements OnInit {
   isMouseNearTopBar = signal(false); // Track if mouse is near URL bar area
 
   showKeyboardBlockWarning = signal(false); // Show warning when keyboard shortcuts are blocked
+
 
   private keyboardWarningTimeout: any = null;
 
@@ -199,6 +201,7 @@ export class FinalAssessment implements OnInit {
 
 
 
+
     // Subscribe to auto-submit trigger
 
     this.securityService.autoSubmitTriggered.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -209,6 +212,7 @@ export class FinalAssessment implements OnInit {
     });
 
   }
+
 
 
 
@@ -244,6 +248,11 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
 
           this.startTimer();
 
@@ -294,6 +303,11 @@ export class FinalAssessment implements OnInit {
 
           this.isQuestionLoading.set(false);
 
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
+
           this.startTimer();
 
         },
@@ -341,6 +355,11 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
 
           this.startTimer();
 
@@ -390,6 +409,11 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
+            this._autoSubmit();
+            return;
+          }
 
           this.startTimer();
 

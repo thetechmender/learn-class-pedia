@@ -691,5 +691,15 @@
   <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()">
   </app-chat>
 
+  <!-- Warning Popup (persists across all assessment screens) -->
+  @if (showWarningPopup()) {
+  <app-warning-assessment
+    [warningMessage]="warningMessage()"
+    [warningCount]="currentWarningCount()"
+    [maxWarnings]="maxWarnings"
+    (acknowledge)="onWarningAcknowledge()">
+  </app-warning-assessment>
+  }
+
   <!-- Completion Modal -->
   <app-completion-modal [isOpen]="showCompletionModal()" [data]="completionData()" (close)="onCompletionModalClose()">

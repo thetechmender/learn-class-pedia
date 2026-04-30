@@ -23,13 +23,15 @@ export class SecurityService {
   public securityTriggered = new Subject<boolean>();
   public warningEvent = new Subject<WarningEvent>();
   public autoSubmitTriggered = new Subject<void>();
+  public showWarningPopup = new Subject<{ message: string; warningCount: number }>();
   private toastr = inject(ToastrService);
   private http = inject(HttpClient);
   private apiUrl = environment.API_URL;
 
   private warningCount = 0;
-  private readonly MAX_WARNINGS_PER_ATTEMPT = 3;
+  private readonly MAX_WARNINGS_PER_ATTEMPT = 1;
   private isAssessmentActive = false;
+  private isPopupVisible = false;
   private currentQuestionId: number = 0;
   private orderPayload: any = null;
   private courseTypeId: number = 0;
@@ -68,9 +70,18 @@ export class SecurityService {
     this.courseTypeId = courseTypeId;
   }
 
+  dismissPopup() {
+    this.isPopupVisible = false;
+  }
+
   private async handleWarning(type: 'screenshot' | 'tab_switch') {
     if (!this.isAssessmentActive) {
       // Skip warning in classroom - no alert needed
+      return;
+    }
+
+    // Skip if popup is already visible (prevents re-trigger on blur from popup interaction)
+    if (this.isPopupVisible) {
       return;
     }
 
@@ -83,14 +94,13 @@ export class SecurityService {
     // Call warning API first to get the updated count
     await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload, this.courseTypeId);
 
-    // Calculate remaining warnings based on API response count
-    const remainingWarnings = this.MAX_WARNINGS_PER_ATTEMPT - this.warningCount;
+    // Build warning message
+    const violationType = type === 'screenshot' ? 'Screenshot attempt' : 'Tab switch';
+    const message = `${violationType} detected during your assessment. This is a violation of the assessment rules. Please stay focused on the assessment window.`;
 
-    // Show warning with remaining attempts
-    this.toastr.warning(
-      `${type === 'screenshot' ? 'Screenshot' : 'Tab switch'} detected. Warnings remaining: ${remainingWarnings}`,
-      'Security Warning'
-    );
+    // Emit popup event (auto-submit runs in parallel if limit reached)
+    this.isPopupVisible = true;
+    this.showWarningPopup.next({ message, warningCount: this.warningCount });
 
     // Check if limit reached based on API response count
     if (this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
@@ -135,13 +145,13 @@ export class SecurityService {
 
     // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
     let blurTimeout: any = null;
-    // window.addEventListener('blur', () => {
-    //   this.enableProtection();
-    //   // If focus doesn't return within 500ms, it's likely a screenshot tool
-    //   blurTimeout = setTimeout(() => {
-    //     this.handleWarning('screenshot');
-    //   }, 500);
-    // });
+    window.addEventListener('blur', () => {
+      this.enableProtection();
+      // If focus doesn't return within 500ms, it's likely a screenshot tool
+      blurTimeout = setTimeout(() => {
+        this.handleWarning('screenshot');
+      }, 500);
+    });
 
     // 2. Detect jab user wapas aaye
     window.addEventListener('focus', () => {
