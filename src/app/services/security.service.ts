@@ -4,9 +4,10 @@ import { Subject } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
+import { AuthService } from './auth.service';
 
 export interface WarningEvent {
-  type: 'screenshot' | 'tab_switch';
+  type: 'screenshot' | 'tab_switch' | 'tab_close';
   timestamp: number;
 }
 
@@ -23,7 +24,7 @@ export class SecurityService {
   public securityTriggered = new Subject<boolean>();
   public warningEvent = new Subject<WarningEvent>();
   public autoSubmitTriggered = new Subject<void>();
-  public showWarningPopup = new Subject<{ message: string; warningCount: number }>();
+  public showWarningPopup = new Subject<{ message: string; warningCount: number; type?: string }>();
   private toastr = inject(ToastrService);
   private http = inject(HttpClient);
   private apiUrl = environment.API_URL;
@@ -32,9 +33,12 @@ export class SecurityService {
   private readonly MAX_WARNINGS_PER_ATTEMPT = 1;
   private isAssessmentActive = false;
   private isPopupVisible = false;
+  private tabCloseInProgress = false;
   private currentQuestionId: number = 0;
   private orderPayload: any = null;
   private courseTypeId: number = 0;
+  private questions: any[] = [];
+  private authService = inject(AuthService);
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) { }
 
@@ -70,11 +74,15 @@ export class SecurityService {
     this.courseTypeId = courseTypeId;
   }
 
+  setQuestions(questions: any[]) {
+    this.questions = questions;
+  }
+
   dismissPopup() {
     this.isPopupVisible = false;
   }
 
-  private async handleWarning(type: 'screenshot' | 'tab_switch') {
+  private async handleWarning(type: 'screenshot' | 'tab_switch' | 'tab_close') {
     if (!this.isAssessmentActive) {
       // Skip warning in classroom - no alert needed
       return;
@@ -95,23 +103,26 @@ export class SecurityService {
     await this.callWarningAPI(type, this.currentQuestionId, this.orderPayload, this.courseTypeId);
 
     // Build warning message
-    const violationType = type === 'screenshot' ? 'Screenshot attempt' : 'Tab switch';
-    const message = `${violationType} detected during your assessment. This is a violation of the assessment rules. Please stay focused on the assessment window.`;
+    const violationType = type === 'screenshot' ? 'Screenshot attempt' : type === 'tab_close' ? 'Tab close attempt' : 'Tab switch';
+    const message = type === 'tab_close'
+      ? 'You attempted to close the assessment tab. This is a violation of the assessment rules. Your assessment will be auto-submitted.'
+      : `${violationType} detected during your assessment. This is a violation of the assessment rules. Please stay focused on the assessment window.`;
 
     // Emit popup event (auto-submit runs in parallel if limit reached)
     this.isPopupVisible = true;
-    this.showWarningPopup.next({ message, warningCount: this.warningCount });
+    this.showWarningPopup.next({ message, warningCount: this.warningCount, type });
 
     // Check if limit reached based on API response count
-    if (this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
+    // Tab close always triggers auto-submit on acknowledge (handled in course.ts)
+    if (type !== 'tab_close' && this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
       this.autoSubmitTriggered.next();
     }
   }
 
-  private async callWarningAPI(type: 'screenshot' | 'tab_switch', questionId?: number, payload?: any, courseTypeId?: number) {
+  private async callWarningAPI(type: 'screenshot' | 'tab_switch' | 'tab_close', questionId?: number, payload?: any, courseTypeId?: number) {
     const warningPayload = {
       questionId: questionId || 0,
-      warningReason: type === 'screenshot' ? 'Screen Shot' : 'Tab Switch',
+      warningReason: type === 'screenshot' ? 'Screen Shot' : type === 'tab_close' ? 'Tab Close' : 'Tab Switch',
       warningDetails: '', // Empty string as requested
       courseId: courseTypeId === 3 ? payload?.shortCourseId
         : payload?.courseCertificateId || payload?.professionalCertificateId ||
@@ -146,7 +157,8 @@ export class SecurityService {
     // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
     let blurTimeout: any = null;
     window.addEventListener('blur', () => {
-      this.enableProtection();
+      // Skip blur detection during tab close flow
+      if (this.tabCloseInProgress) return;
       // If focus doesn't return within 500ms, it's likely a screenshot tool
       blurTimeout = setTimeout(() => {
         this.handleWarning('screenshot');
@@ -160,18 +172,40 @@ export class SecurityService {
         clearTimeout(blurTimeout);
         blurTimeout = null;
       }
-      this.disableProtection();
+
+      // If returning from tab close dialog (user clicked Stay), show tab close warning
+      if (this.tabCloseInProgress) {
+        this.tabCloseInProgress = false;
+        this.handleWarning('tab_close');
+        return;
+      }
     });
 
     // 3. Visibility Change detection (Tab switch ya minimize hone par)
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        this.enableProtection();
+      if (document.hidden && !this.tabCloseInProgress) {
         this.handleWarning('tab_switch');
       }
     });
 
-    // 4. Keyboard Shortcuts (Jo browser allow karta hai)
+    // 4. Tab/Window close detection (beforeunload)
+    window.addEventListener('beforeunload', (e) => {
+      if (!this.isAssessmentActive) return;
+
+      // Mark tab close in progress to prevent blur/visibilitychange from interfering
+      this.tabCloseInProgress = true;
+
+      // Prevent tab/window close — shows browser's native "Leave site?" dialog
+      e.preventDefault();
+      e.returnValue = 'Your assessment is in progress. Are you sure you want to leave?';
+
+      // Send beacon to auto-submit if user clicks "Leave"
+      this.sendBeaconAutoSubmit();
+
+      return e.returnValue;
+    });
+
+    // 5. Keyboard Shortcuts (Jo browser allow karta hai)
     window.addEventListener('keydown', (event) => {
       // Block Print Screen key
       if (event.key === 'Meta' || event.key === 'Shift') {
@@ -206,6 +240,56 @@ export class SecurityService {
 
   private disableProtection() {
     document.body.classList.remove('screen-protected');
+  }
+
+  private sendBeaconAutoSubmit() {
+    if (!this.questions.length) return;
+
+    const payload: any = {
+      shortCourseId: this.orderPayload?.shortCourseId || null,
+      courseCertificateId: this.orderPayload?.courseCertificateId || null,
+      answers: this.questions.map((data: any) => ({
+        questionId: data?.id,
+        selectedAnswer: data?.selectedOption || ''
+      }))
+    };
+
+    if (this.orderPayload?.careerPathLevelMapId) {
+      payload.careerPathLevelMapId = this.orderPayload.careerPathLevelMapId;
+      payload.professionalCertificateId = null;
+    } else {
+      payload.professionalCertificateId = this.orderPayload?.professionalCertificateId || null;
+      payload.careerPathLevelMapId = null;
+    }
+
+    // Determine endpoint
+    let endpoint = '';
+    if (this.orderPayload?.careerPathLevelMapId) {
+      endpoint = `${this.apiUrl}/assessment/career-path/final-assessment/submit`;
+    } else {
+      const typeMap: Record<number, string> = { 1: 'professional', 2: 'certificate', 3: 'short-course' };
+      endpoint = `${this.apiUrl}/assessment/${typeMap[this.courseTypeId] || 'short-course'}/final-assessment/submit`;
+    }
+
+    // Use fetch with keepalive — survives page unload AND supports Authorization headers
+    const token = this.authService.getToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        keepalive: true  // Ensures request completes even after page unloads
+      });
+    } catch (e) {
+      // Fallback to sendBeacon if fetch fails
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      navigator.sendBeacon(endpoint, blob);
+    }
   }
 
   async isDualDisplayActive(): Promise<boolean> {

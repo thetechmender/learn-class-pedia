@@ -53,6 +53,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   showWarningPopup = signal(false);
   warningMessage = signal('');
   currentWarningCount = signal(0);
+  warningType = signal('');
   maxWarnings = 1;
 
   course = signal<any>(null);
@@ -301,6 +302,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.securityService.showWarningPopup.pipe(takeUntil(this.destroy$)).subscribe((data) => {
       this.warningMessage.set(data.message);
       this.currentWarningCount.set(data.warningCount);
+      this.warningType.set(data.type || '');
       this.showWarningPopup.set(true);
     });
 
@@ -2051,6 +2053,15 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   onWarningAcknowledge() {
     this.showWarningPopup.set(false);
     this.securityService.dismissPopup();
+
+    // Tab close: auto-submit then close the tab
+    if (this.warningType() === 'tab_close') {
+      this.securityService.autoSubmitTriggered.next();
+      // Close tab after a short delay to allow auto-submit to start
+      setTimeout(() => {
+        window.close();
+      }, 1500);
+    }
   }
 
   ngOnDestroy() {

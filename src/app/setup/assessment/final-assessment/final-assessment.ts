@@ -249,6 +249,8 @@ export class FinalAssessment implements OnInit {
 
           this.isQuestionLoading.set(false);
 
+          this.securityService.setQuestions(this.questions());
+
           if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
             this._autoSubmit();
             return;
@@ -303,6 +305,8 @@ export class FinalAssessment implements OnInit {
 
           this.isQuestionLoading.set(false);
 
+          this.securityService.setQuestions(this.questions());
+
           if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
             this._autoSubmit();
             return;
@@ -355,6 +359,8 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          this.securityService.setQuestions(this.questions());
 
           if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
             this._autoSubmit();
@@ -409,6 +415,8 @@ export class FinalAssessment implements OnInit {
           this.remainingMinutesCount.set(details['data']['remainingMinutesCount'] || 0);
 
           this.isQuestionLoading.set(false);
+
+          this.securityService.setQuestions(this.questions());
 
           if (this.questions().length === 0 && this.totalQuestionLength() > 0) {
             this._autoSubmit();
@@ -517,6 +525,9 @@ export class FinalAssessment implements OnInit {
       current.isSelect = true;
 
       current.selectedOption = option.optionLetter;
+
+      // Sync latest answers to SecurityService for sendBeacon auto-submit
+      this.securityService.setQuestions(this.questions());
 
     };
 
