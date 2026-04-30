@@ -173,9 +173,7 @@ export class FinalAssessment implements OnInit {
 
 
   private _initializeMouseTracking(): void {
-
-    document.body.classList.add('exam-mode');
-
+    // exam-mode removed — was causing scroll/click blocking on other pages
   }
 
 
@@ -551,10 +549,13 @@ export class FinalAssessment implements OnInit {
 
     this.destroy$.complete();
 
-    document.body.classList.remove('exam-mode');
-
-    // Stop security tracking
+    // Stop security tracking — cleans up all body state
     this.securityService.stopAssessmentTracking();
+
+    // Reset any inline styles on body
+    document.body.style.cursor = '';
+    document.body.style.pointerEvents = '';
+    document.body.classList.remove('cursor-blocked');
 
   }
 
@@ -1152,22 +1153,6 @@ export class FinalAssessment implements OnInit {
 
       this.isMouseNearTopBar.set(true);
 
-      // Hide cursor completely
-
-      document.body.style.cursor = 'none';
-
-      // Disable all pointer events on the entire page
-
-      document.body.style.pointerEvents = 'none';
-
-      // Add a class for additional styling
-
-      document.body.classList.add('cursor-blocked');
-
-
-
-      // Prevent any mouse clicks in this area
-
       event.preventDefault();
 
       event.stopPropagation();
@@ -1175,12 +1160,6 @@ export class FinalAssessment implements OnInit {
     } else {
 
       this.isMouseNearTopBar.set(false);
-
-      document.body.style.cursor = 'default';
-
-      document.body.style.pointerEvents = 'auto';
-
-      document.body.classList.remove('cursor-blocked');
 
     }
 

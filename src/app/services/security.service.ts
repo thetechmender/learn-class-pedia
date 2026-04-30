@@ -51,7 +51,10 @@ export class SecurityService {
 
   stopAssessmentTracking() {
     this.isAssessmentActive = false;
+    this.isPopupVisible = false;
+    this.tabCloseInProgress = false;
     this.warningCount = 0;
+    this.cleanupBodyState();
   }
 
   resetWarningCount() {
@@ -80,6 +83,17 @@ export class SecurityService {
 
   dismissPopup() {
     this.isPopupVisible = false;
+    this.isAssessmentActive = false;
+    this.tabCloseInProgress = false;
+    this.cleanupBodyState();
+  }
+
+  cleanupBodyState() {
+    document.body.classList.remove('exam-mode');
+    document.body.classList.remove('screen-protected');
+    document.body.classList.remove('cursor-blocked');
+    document.body.style.cursor = '';
+    document.body.style.pointerEvents = '';
   }
 
   private async handleWarning(type: 'screenshot' | 'tab_switch' | 'tab_close') {
@@ -115,6 +129,7 @@ export class SecurityService {
     // Check if limit reached based on API response count
     // Tab close always triggers auto-submit on acknowledge (handled in course.ts)
     if (type !== 'tab_close' && this.warningCount >= this.MAX_WARNINGS_PER_ATTEMPT) {
+      this.isAssessmentActive = false;
       this.autoSubmitTriggered.next();
     }
   }
@@ -157,33 +172,33 @@ export class SecurityService {
     // 1. Detect jab window focus se bahar jaye (Snipping tool khulne par blur trigger hota hai)
     let blurTimeout: any = null;
     window.addEventListener('blur', () => {
-      // Skip blur detection during tab close flow
-      if (this.tabCloseInProgress) return;
-      // If focus doesn't return within 500ms, it's likely a screenshot tool
+      if (!this.isAssessmentActive || this.tabCloseInProgress) return;
       blurTimeout = setTimeout(() => {
+        if (!this.isAssessmentActive) return;
         this.handleWarning('screenshot');
       }, 500);
     });
 
     // 2. Detect jab user wapas aaye
     window.addEventListener('focus', () => {
-      // Clear the blur timeout if focus returns quickly (alt+tab, not snipping tool)
       if (blurTimeout) {
         clearTimeout(blurTimeout);
         blurTimeout = null;
       }
 
       // If returning from tab close dialog (user clicked Stay), show tab close warning
-      if (this.tabCloseInProgress) {
+      if (this.tabCloseInProgress && this.isAssessmentActive) {
         this.tabCloseInProgress = false;
         this.handleWarning('tab_close');
         return;
       }
+      this.tabCloseInProgress = false;
     });
 
     // 3. Visibility Change detection (Tab switch ya minimize hone par)
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && !this.tabCloseInProgress) {
+      if (!this.isAssessmentActive || this.tabCloseInProgress) return;
+      if (document.hidden) {
         this.handleWarning('tab_switch');
       }
     });
@@ -192,54 +207,31 @@ export class SecurityService {
     window.addEventListener('beforeunload', (e) => {
       if (!this.isAssessmentActive) return;
 
-      // Mark tab close in progress to prevent blur/visibilitychange from interfering
       this.tabCloseInProgress = true;
 
-      // Prevent tab/window close — shows browser's native "Leave site?" dialog
       e.preventDefault();
       e.returnValue = 'Your assessment is in progress. Are you sure you want to leave?';
 
-      // Send beacon to auto-submit if user clicks "Leave"
       this.sendBeaconAutoSubmit();
 
       return e.returnValue;
     });
 
-    // 5. Keyboard Shortcuts (Jo browser allow karta hai)
+    // 5. Keyboard Shortcuts
     window.addEventListener('keydown', (event) => {
-      // Block Print Screen key
-      if (event.key === 'Meta' || event.key === 'Shift') {
-        this.enableProtection();
-      }
+      if (!this.isAssessmentActive) return;
+
       if (event.key === 'PrintScreen') {
-        this.enableProtection();
         navigator.clipboard.writeText('');
         this.handleWarning('screenshot');
       }
 
-      // Block Ctrl+P, Ctrl+S, Ctrl+U
       const blockedKeys = ['p', 's', 'u'];
       if (event.ctrlKey && blockedKeys.includes(event.key.toLowerCase())) {
         event.preventDefault();
         this.toastr.warning('This action is disabled.');
       }
     });
-    window.addEventListener('keyup', (event) => {
-      if (event.key === 'Meta' || event.key === 'Shift') {
-        // Optional: Add a delay before removing protection to ensure SS is finished
-        setTimeout(() => {
-          this.disableProtection();
-        }, 1000);
-      }
-    });
-  }
-
-  private enableProtection() {
-    document.body.classList.add('screen-protected');
-  }
-
-  private disableProtection() {
-    document.body.classList.remove('screen-protected');
   }
 
   private sendBeaconAutoSubmit() {

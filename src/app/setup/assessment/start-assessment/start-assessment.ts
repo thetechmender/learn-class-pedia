@@ -265,11 +265,12 @@ export class StartAssessment implements OnInit, OnDestroy {
 
 
   async onStartAssessment() {
+    if (!this.isAcceptedGuidelines && !this.isAssessmentInProgress) return;
+
     const isDualDisplayActive = await this.securityService.isDualDisplayActive();
-    if (this.isAssessmentInProgress || isDualDisplayActive) {
-      this.next.emit('final');
-      return;
-    }
+    if (!isDualDisplayActive) return;
+
+    this.next.emit('final');
   }
 
 
