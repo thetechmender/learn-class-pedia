@@ -11,11 +11,11 @@
     @if (warningCount < maxWarnings) {
     <div class="warning-box">
       <p class="warning-text">Warning: <strong>{{ warningCount }}</strong> / {{ maxWarnings }}</p>
-      <p class="warning-sub">Your assessment will be auto-submitted if you exceed the warning limit.</p>
+      <p class="warning-sub">A tab switch was detected, which is a violation of the assessment guidelines. As a result, your assessment is being automatically submitted.</p>
     </div>
     } @else {
     <div class="warning-box">
-      <p class="warning-text">Warning limit reached. Your assessment is being auto-submitted.</p>
+      <p class="warning-text">Your assessment is being auto-submitted.</p>
     </div>
     }
 
