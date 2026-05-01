@@ -57,16 +57,16 @@
         },
       },
     };
-    // document.addEventListener('contextmenu', (e) => e.preventDefault());
-    // document.onkeydown = function (e) {
-    //   if (event.keyCode == 123 ||
-    //     (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) ||
-    //     (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) ||
-    //     (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) ||
-    //     (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0))) {
-    //     return false;
-    //   }
-    // }
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.onkeydown = function (e) {
+      if (event.keyCode == 123 ||
+        (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) ||
+        (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) ||
+        (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) ||
+        (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0))) {
+        return false;
+      }
+    }
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
