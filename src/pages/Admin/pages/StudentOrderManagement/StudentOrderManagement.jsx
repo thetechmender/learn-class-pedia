@@ -547,7 +547,7 @@ const StudentOrderManagement = () => {
                   Payment Status
                 </th>
                 <th className="w-[140px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                  Date
+                 Order Date
                 </th>
                 <th className="w-[100px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
                   Actions
@@ -627,11 +627,11 @@ const StudentOrderManagement = () => {
                         <div className="text-sm text-gray-900 dark:text-white">
                           {formatDate(order.createdAt)}
                         </div>
-                        {order.paidAt && (
+                        {/* {order.paidAt && (
                           <div className="text-xs text-green-600 dark:text-green-400">
                             Paid: {formatDate(order.paidAt)}
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </td>
                     <td className="px-2 py-3 align-top">
@@ -794,7 +794,7 @@ const StudentOrderManagement = () => {
                           <p className="font-semibold text-gray-900 dark:text-white">{formatDate(selectedOrder.createdAt)}</p>
                         </div>
                       </div>
-                      {selectedOrder.paidAt && (
+                      {/* {selectedOrder.paidAt && (
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-green-500 rounded-xl">
                             <Check className="w-4 h-4 text-white" />
@@ -804,7 +804,7 @@ const StudentOrderManagement = () => {
                             <p className="font-semibold text-gray-900 dark:text-white">{formatDate(selectedOrder.paidAt)}</p>
                           </div>
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </div>
