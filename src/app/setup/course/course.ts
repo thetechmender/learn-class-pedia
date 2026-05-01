@@ -24,11 +24,13 @@ import { ToastrService } from 'ngx-toastr';
 import { map, Subject, switchMap, takeUntil } from 'rxjs';
 import { SecurityService } from '../../services/security.service';
 import { WarningAssessment } from '../assessment/warning-assessment/warning-assessment';
+import { MoodMascot } from './mood-mascot/mood-mascot';
+import { MoodService } from '../../services/mood.service';
 
 @Component({
   selector: 'app-course',
   standalone: true,
-  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, VideoPlayerComponent, Chat, WarningAssessment],
+  imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, VideoPlayerComponent, Chat, WarningAssessment, MoodMascot],
   templateUrl: './course.html',
   styleUrl: './course.sass',
   encapsulation: ViewEncapsulation.None
@@ -48,6 +50,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   private toastr = inject(ToastrService);
   private assessmentService = inject(AssessmentService);
   private securityService = inject(SecurityService);
+  private moodService = inject(MoodService);
 
   // Warning popup state (persists across all assessment screens)
   showWarningPopup = signal(false);
@@ -129,6 +132,33 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (step === 'start' || step === 'final' || step === 'cleared' || step === 'maxattempts') {
       this.isStartingAssessment.set(false);
     }
+  });
+
+  // ---- Mascot reactive event wiring (intelligent companion) ----
+  // True when the mascot should be hidden (during assessment screens)
+  mascotHidden = computed(() => {
+    const s = this.assessmentStep();
+    return s === 'start' || s === 'final' || s === 'cleared' || s === 'failed' || s === 'maxattempts';
+  });
+
+  // Drive mascot mood from the assessment lifecycle
+  private moodAssessmentEffect = effect(() => {
+    const step = this.assessmentStep();
+    switch (step) {
+      case 'start':            this.moodService.react('assessment-start'); break;
+      case 'final':            this.moodService.react('assessment-in-progress'); break;
+      case 'cleared':          this.moodService.react('assessment-cleared'); break;
+      case 'failed':           this.moodService.react('assessment-failed'); break;
+      case 'maxattempts':      this.moodService.react('assessment-max-attempts'); break;
+    }
+  });
+
+  // Mascot reacts to other student events
+  private moodAlertsEffect = effect(() => {
+    if (this.showWarningPopup()) this.moodService.react('warning-shown');
+  });
+  private moodCompletionEffect = effect(() => {
+    if (this.showCompletionModal()) this.moodService.react('course-completed');
   });
 
   // Check if device is large screen (desktop)

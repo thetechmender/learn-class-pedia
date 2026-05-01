@@ -3,6 +3,7 @@ import { AssessmentService } from '../../../services/assessment.service';
 import { AuthService } from '../../../services/auth.service';
 import { Subject, takeUntil } from 'rxjs';
 import { SecurityService } from '../../../services/security.service';
+import { MoodService } from '../../../services/mood.service';
 
 @Component({
   selector: 'app-quiz',
@@ -33,6 +34,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   @Output() goToDashboard = new EventEmitter<void>();
   @Output() selectIncomplete = new EventEmitter<void>();
   private securityService = inject(SecurityService);
+  private moodService = inject(MoodService);
 
   ngOnInit(): void {
     this._fetchQuizes()
@@ -99,6 +101,8 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
       return q;
     });
     this.questions.set(updated);
+    // Mascot acknowledges the choice with an idea pop
+    this.moodService.react('quiz-option-selected');
   }
 
   onCheckResult() {
@@ -153,6 +157,10 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
             this.isSubmitted.set(true);
             this.refreshTree.emit();
             this.showCompletionScreen.set(true);
+            // Drive mascot mood from the actual score
+            const correct = Number(details.data?.correctAnswers) || 0;
+            const total = Number(details.data?.totalQuestions) || this.questions().length;
+            this.moodService.reactToScore(correct, total, false);
           }
         },
         error: (err: any) => {

@@ -1,0 +1,52 @@
+<div
+  #host
+  class="mood-mascot"
+  [class.is-hidden]="hidden"
+  [attr.data-mood]="mood()"
+  (click)="onClick()"
+  role="button"
+  tabindex="0"
+  aria-label="Course companion - click to open chat"
+  title="Need help? Click to chat."
+>
+  <span class="aura" aria-hidden="true"></span>
+
+  <img
+    class="mascot-img"
+    [src]="src()"
+    [attr.data-key]="mood()"
+    alt="Course companion"
+    draggable="false"
+  />
+
+  <!-- Sparkles (only visible on congrats) -->
+  <span class="sparkles" aria-hidden="true">
+    <span class="spark s1"></span>
+    <span class="spark s2"></span>
+    <span class="spark s3"></span>
+    <span class="spark s4"></span>
+  </span>
+
+  <!-- Floating hearts (only visible on love) -->
+  <span class="hearts" aria-hidden="true">
+    <span class="heart h1">&#10084;</span>
+    <span class="heart h2">&#10084;</span>
+    <span class="heart h3">&#10084;</span>
+  </span>
+
+  <!-- Periodic "I'm here to help" callout -->
+  <div class="callout" [class.show]="promptVisible()" aria-live="polite">
+    <strong>I'm here to help!</strong>
+    <span>Click or tap me to start a chat.</span>
+  </div>
+
+  <!-- Tooltip bubble -->
+  <span class="bubble" aria-hidden="true">{{
+    mood() === 'congrats' ? 'Great job!' :
+    mood() === 'thumbs'   ? 'Nice work!' :
+    mood() === 'love'     ? 'You got this!' :
+    mood() === 'idea'     ? 'Hmm, good pick!' :
+    mood() === 'think'    ? 'Stay focused!' :
+                            'Need help? Chat with me!'
+  }}</span>
+</div>

@@ -672,20 +672,11 @@
     }
   </main>
 
-  <!-- Ask Course Companion Button -->
-  <div class="chat-widget"
-    [class.hidden]="assessmentStep() === 'start' || assessmentStep() === 'final' || assessmentStep() === 'cleared' || assessmentStep() === 'failed' || assessmentStep() === 'maxattempts'">
-    <div class="chat-box">
-      <div class="top-chat fflex align-items-center">
-        <h4>Questions? <span>I can help you.</span></h4>
-        <img src="assets/Layer_1.svg" alt="Chat Icon">
-      </div>
-      <div class="bottom-chat">
-        <h5>I am online!</h5>
-        <a href="javascript:;" (click)="courseService.toggleChat()">Chat now</a>
-      </div>
-    </div>
-  </div>
+  <!-- Animated Course Companion Mascot (replaces the old chat-widget) -->
+  <app-mood-mascot
+    [hidden]="mascotHidden()"
+    (mascotClick)="courseService.toggleChat()">
+  </app-mood-mascot>
 
   <!-- Chat Component -->
   <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()">
