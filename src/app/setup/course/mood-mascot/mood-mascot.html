@@ -2,14 +2,25 @@
   #host
   class="mood-mascot"
   [class.is-hidden]="hidden"
+  [class.attention]="attention()"
+  [class.hovered]="hovered()"
+  [class.pressed]="pressed()"
+  [class.has-prompt]="promptVisible()"
   [attr.data-mood]="mood()"
   (click)="onClick()"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
   role="button"
   tabindex="0"
   aria-label="Course companion - click to open chat"
-  title="Need help? Click to chat."
+  [title]="currentPrompt().title + ' ' + currentPrompt().body"
 >
   <span class="aura" aria-hidden="true"></span>
+  <span class="ring" aria-hidden="true"></span>
+  <span class="ripple" aria-hidden="true"></span>
+
+  <!-- Notification dot — appears when a callout is active -->
+  <span class="notif-dot" aria-hidden="true"></span>
 
   <img
     class="mascot-img"
@@ -27,6 +38,13 @@
     <span class="spark s4"></span>
   </span>
 
+  <!-- AI "thinking" typing dots (think mood only) -->
+  @if (mood() === 'think') {
+    <span class="typing-dots" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </span>
+  }
+
   <!-- Floating hearts (only visible on love) -->
   <span class="hearts" aria-hidden="true">
     <span class="heart h1">&#10084;</span>
@@ -34,10 +52,11 @@
     <span class="heart h3">&#10084;</span>
   </span>
 
-  <!-- Periodic "I'm here to help" callout -->
+  <!-- Periodic rotating callout -->
   <div class="callout" [class.show]="promptVisible()" aria-live="polite">
-    <strong>I'm here to help!</strong>
-    <span>Click or tap me to start a chat.</span>
+    <strong>{{ currentPrompt().title }}</strong>
+    <span>{{ currentPrompt().body }}</span>
+    <em class="cta">Tap to chat &rarr;</em>
   </div>
 
   <!-- Tooltip bubble -->
