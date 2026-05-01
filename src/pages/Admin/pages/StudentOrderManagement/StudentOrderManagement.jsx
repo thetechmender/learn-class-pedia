@@ -122,7 +122,8 @@ const StudentOrderManagement = () => {
   useEffect(() => {
     loadOrders();
     loadDropdownData();
-  }, [loadOrders, loadDropdownData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle filter
   const handleFilter = useCallback(async () => {
@@ -363,7 +364,7 @@ const StudentOrderManagement = () => {
                 </div>
              
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Payment Status</label>
                   <div className="relative">
                     <CheckCircle className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <select
@@ -543,7 +544,7 @@ const StudentOrderManagement = () => {
                   Amount
                 </th>
                 <th className="w-[100px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                  Status
+                  Payment Status
                 </th>
                 <th className="w-[140px] px-2 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
                   Date
@@ -767,18 +768,7 @@ const StudentOrderManagement = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500 rounded-xl">
-                          <CheckCircle className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
-                          <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedOrder.statusName)}`}>
-                            {getStatusIcon(selectedOrder.statusName)}
-                            {selectedOrder.statusName}
-                          </span>
-                        </div>
-                      </div>
+                      
                     </div>
                   </div>
                   <div>
