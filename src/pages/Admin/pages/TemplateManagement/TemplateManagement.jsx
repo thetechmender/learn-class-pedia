@@ -62,9 +62,13 @@ const TemplateManagement = () => {
   
   const [bodyContent, setBodyContent] = useState('');
   const [iframeKey, setIframeKey] = useState(0);
+  const [initialHtml, setInitialHtml] = useState('');
   const iframeRef = React.useRef(null);
   const updateTimeoutRef = React.useRef(null);
   const isEditingRef = React.useRef(false);
+  const textareaUpdateTimeoutRef = React.useRef(null);
+  const isUpdatingFromIframe = React.useRef(false);
+  const iframeLoadedRef = React.useRef(false);
   
   // Extract body content from full HTML
   const extractBodyContent = useCallback((html) => {
@@ -81,6 +85,52 @@ const TemplateManagement = () => {
     return fullHtml.replace(/<body[^>]*>[\s\S]*?<\/body>/i, `<body>\n${bodyContent}\n</body>`);
   }, []);
   
+  // Update iframe content without reload
+  const updateIframeContent = useCallback((htmlContent) => {
+    if (iframeRef.current) {
+      const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+      if (iframeDoc) {
+        // Save cursor position if editing
+        const selection = iframeDoc.getSelection();
+        let range = null;
+        let cursorOffset = 0;
+        
+        if (selection && selection.rangeCount > 0 && iframeDoc.body.contains(selection.anchorNode)) {
+          range = selection.getRangeAt(0);
+          cursorOffset = range.startOffset;
+        }
+        
+        // Update content
+        iframeDoc.open();
+        iframeDoc.write(htmlContent);
+        iframeDoc.close();
+        
+        // Re-enable editing
+        if (iframeDoc.body) {
+          iframeDoc.body.contentEditable = true;
+          iframeDoc.body.style.outline = 'none';
+          iframeDoc.designMode = 'on';
+          
+          // Restore cursor position (best effort)
+          if (range && iframeDoc.body.firstChild) {
+            try {
+              const newRange = iframeDoc.createRange();
+              const textNode = iframeDoc.body.firstChild;
+              if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                newRange.setStart(textNode, Math.min(cursorOffset, textNode.length));
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+              }
+            } catch (e) {
+              // Cursor restoration failed, ignore
+            }
+          }
+        }
+      }
+    }
+  }, []);
+  
   // Enable editing in iframe
   const enableIframeEditing = useCallback(() => {
     if (iframeRef.current && !isEditingRef.current) {
@@ -90,6 +140,7 @@ const TemplateManagement = () => {
         iframeDoc.body.style.outline = 'none';
         iframeDoc.designMode = 'on';
         isEditingRef.current = true;
+        iframeLoadedRef.current = true;
         
         // Listen for changes with debouncing
         const handleInput = () => {
@@ -100,6 +151,7 @@ const TemplateManagement = () => {
           
           // Debounce the update - only update state, don't reload iframe
           updateTimeoutRef.current = setTimeout(() => {
+            isUpdatingFromIframe.current = true;
             const bodyHTML = iframeDoc.body.innerHTML;
             const newHtmlBody = mergeBodyContent(bodyHTML, formData.htmlBody);
             // Update state without triggering iframe reload
@@ -108,13 +160,16 @@ const TemplateManagement = () => {
               ...prev,
               htmlBody: newHtmlBody
             }));
-          }, 1000); // Update after 1 second of no typing
+            setTimeout(() => {
+              isUpdatingFromIframe.current = false;
+            }, 100);
+          }, 500); // Update after 0.5 second of no typing
         };
         
         iframeDoc.body.addEventListener('input', handleInput);
       }
     }
-  }, [mergeBodyContent]);
+  }, [mergeBodyContent, formData.htmlBody]);
   
   // Execute formatting command
   const executeCommand = useCallback((command, value = null) => {
@@ -124,16 +179,37 @@ const TemplateManagement = () => {
         iframeDoc.execCommand(command, false, value);
         // Immediate update for formatting commands
         setTimeout(() => {
+          isUpdatingFromIframe.current = true;
           const bodyHTML = iframeDoc.body.innerHTML;
           setBodyContent(bodyHTML);
           setFormData(prev => ({
             ...prev,
             htmlBody: mergeBodyContent(bodyHTML, prev.htmlBody)
           }));
+          setTimeout(() => {
+            isUpdatingFromIframe.current = false;
+          }, 100);
         }, 100);
       }
     }
   }, [mergeBodyContent]);
+  
+  // Handle textarea HTML changes and sync to iframe
+  const handleHtmlBodyChange = useCallback((newHtmlBody) => {
+    setFormData(prev => ({ ...prev, htmlBody: newHtmlBody }));
+    
+    // Clear previous timeout
+    if (textareaUpdateTimeoutRef.current) {
+      clearTimeout(textareaUpdateTimeoutRef.current);
+    }
+    
+    // Debounce iframe update to avoid too frequent updates while typing
+    textareaUpdateTimeoutRef.current = setTimeout(() => {
+      if (!isUpdatingFromIframe.current && iframeLoadedRef.current) {
+        updateIframeContent(newHtmlBody);
+      }
+    }, 300); // Update iframe after 300ms of no typing
+  }, [updateIframeContent]);
 
   // Template type icons
   const getTemplateTypeIcon = (typeName) => {
@@ -232,8 +308,10 @@ const TemplateManagement = () => {
         
       });
       setBodyContent(extractBodyContent(htmlBody));
+      setInitialHtml(htmlBody);
       setIframeKey(prev => prev + 1); // Force iframe reload only when loading new template
       isEditingRef.current = false;
+      iframeLoadedRef.current = false;
       setShowEditModal(true);
     } catch (err) {
       showError(err.message || 'Failed to fetch template details');
@@ -252,7 +330,10 @@ const TemplateManagement = () => {
     
     });
     setBodyContent('');
+    setInitialHtml('');
     setSelectedTemplate(null);
+    isEditingRef.current = false;
+    iframeLoadedRef.current = false;
   }, []);
 
   // Handle filter change
@@ -981,7 +1062,7 @@ const TemplateManagement = () => {
                         <iframe
                           key={iframeKey}
                           ref={iframeRef}
-                          srcDoc={formData.htmlBody}
+                          srcDoc={initialHtml || '<!DOCTYPE html><html><head></head><body></body></html>'}
                           className="w-full h-full border-0"
                           title="Email Preview"
                           sandbox="allow-same-origin allow-scripts"
@@ -1004,7 +1085,7 @@ const TemplateManagement = () => {
                       <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden bg-white">
                         <textarea
                           value={formData.htmlBody}
-                          onChange={(e) => setFormData(prev => ({ ...prev, htmlBody: e.target.value }))}
+                          onChange={(e) => handleHtmlBodyChange(e.target.value)}
                           className="w-full h-full px-4 py-3 bg-white font-mono text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto border-0"
                           placeholder="HTML source code will appear here..."
                           style={{
