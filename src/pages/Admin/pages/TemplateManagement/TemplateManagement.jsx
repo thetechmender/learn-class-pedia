@@ -59,6 +59,81 @@ const TemplateManagement = () => {
     emailType: '',
     templateTypeId: 0,
   });
+  
+  const [bodyContent, setBodyContent] = useState('');
+  const [iframeKey, setIframeKey] = useState(0);
+  const iframeRef = React.useRef(null);
+  const updateTimeoutRef = React.useRef(null);
+  const isEditingRef = React.useRef(false);
+  
+  // Extract body content from full HTML
+  const extractBodyContent = useCallback((html) => {
+    if (!html) return '';
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    return bodyMatch ? bodyMatch[1] : html;
+  }, []);
+  
+  // Merge body content back into full HTML
+  const mergeBodyContent = useCallback((bodyContent, fullHtml) => {
+    if (!fullHtml || !fullHtml.includes('<body')) {
+      return bodyContent;
+    }
+    return fullHtml.replace(/<body[^>]*>[\s\S]*?<\/body>/i, `<body>\n${bodyContent}\n</body>`);
+  }, []);
+  
+  // Enable editing in iframe
+  const enableIframeEditing = useCallback(() => {
+    if (iframeRef.current && !isEditingRef.current) {
+      const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+      if (iframeDoc && iframeDoc.body) {
+        iframeDoc.body.contentEditable = true;
+        iframeDoc.body.style.outline = 'none';
+        iframeDoc.designMode = 'on';
+        isEditingRef.current = true;
+        
+        // Listen for changes with debouncing
+        const handleInput = () => {
+          // Clear previous timeout
+          if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current);
+          }
+          
+          // Debounce the update - only update state, don't reload iframe
+          updateTimeoutRef.current = setTimeout(() => {
+            const bodyHTML = iframeDoc.body.innerHTML;
+            const newHtmlBody = mergeBodyContent(bodyHTML, formData.htmlBody);
+            // Update state without triggering iframe reload
+            setBodyContent(bodyHTML);
+            setFormData(prev => ({
+              ...prev,
+              htmlBody: newHtmlBody
+            }));
+          }, 1000); // Update after 1 second of no typing
+        };
+        
+        iframeDoc.body.addEventListener('input', handleInput);
+      }
+    }
+  }, [mergeBodyContent]);
+  
+  // Execute formatting command
+  const executeCommand = useCallback((command, value = null) => {
+    if (iframeRef.current) {
+      const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+      if (iframeDoc) {
+        iframeDoc.execCommand(command, false, value);
+        // Immediate update for formatting commands
+        setTimeout(() => {
+          const bodyHTML = iframeDoc.body.innerHTML;
+          setBodyContent(bodyHTML);
+          setFormData(prev => ({
+            ...prev,
+            htmlBody: mergeBodyContent(bodyHTML, prev.htmlBody)
+          }));
+        }, 100);
+      }
+    }
+  }, [mergeBodyContent]);
 
   // Template type icons
   const getTemplateTypeIcon = (typeName) => {
@@ -146,20 +221,24 @@ const TemplateManagement = () => {
     try {
       const fullTemplate = await getTemplateById(template.id);
       setSelectedTemplate(fullTemplate);
+      const htmlBody = fullTemplate.htmlBody || '';
       setFormData({
         templateKey: fullTemplate.templateKey || '',
         title: fullTemplate.title || '',
         subject: fullTemplate.subject || '',
-        htmlBody: fullTemplate.htmlBody || '',
+        htmlBody: htmlBody,
         emailType: fullTemplate.emailType || '',
         templateTypeId: fullTemplate.templateTypeId || 0,
         
       });
+      setBodyContent(extractBodyContent(htmlBody));
+      setIframeKey(prev => prev + 1); // Force iframe reload only when loading new template
+      isEditingRef.current = false;
       setShowEditModal(true);
     } catch (err) {
       showError(err.message || 'Failed to fetch template details');
     }
-  }, [getTemplateById, showError]);
+  }, [getTemplateById, showError, extractBodyContent]);
 
   // Reset form
   const resetForm = useCallback(() => {
@@ -172,6 +251,7 @@ const TemplateManagement = () => {
       templateTypeId: 0,
     
     });
+    setBodyContent('');
     setSelectedTemplate(null);
   }, []);
 
@@ -753,45 +833,185 @@ const TemplateManagement = () => {
                     HTML Body
                   </label>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* HTML Editor */}
+                    {/* Visual Editor */}
                     <div className="flex flex-col h-[500px]">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">HTML Editor</span>
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Visual Editor</span>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-green-600 font-medium">Editable</span>
+                        </div>
                       </div>
-                      <textarea
-                        value={formData.htmlBody}
-                        onChange={(e) => setFormData(prev => ({ ...prev, htmlBody: e.target.value }))}
-                        className="flex-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none font-mono text-sm"
-                        placeholder="Enter HTML content..."
-                      />
+                      
+                      {/* Formatting Toolbar */}
+                      <div className="bg-gray-50 border border-gray-300 rounded-t-lg p-2 flex flex-wrap items-center gap-1">
+                          {/* Font Size */}
+                          <select
+                            onChange={(e) => executeCommand('fontSize', e.target.value)}
+                            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
+                            defaultValue="3"
+                          >
+                            <option value="1">Small</option>
+                            <option value="3">Normal</option>
+                            <option value="5">Large</option>
+                            <option value="7">Huge</option>
+                          </select>
+                          
+                          <div className="w-px h-6 bg-gray-300"></div>
+                          
+                          {/* Bold */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('bold')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                            title="Bold"
+                          >
+                            <span className="font-bold text-sm">B</span>
+                          </button>
+                          
+                          {/* Italic */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('italic')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                            title="Italic"
+                          >
+                            <span className="italic text-sm">I</span>
+                          </button>
+                          
+                          {/* Underline */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('underline')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                            title="Underline"
+                          >
+                            <span className="underline text-sm">U</span>
+                          </button>
+                          
+                          <div className="w-px h-6 bg-gray-300"></div>
+                          
+                          {/* Text Color */}
+                          <input
+                            type="color"
+                            onChange={(e) => executeCommand('foreColor', e.target.value)}
+                            className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                            title="Text Color"
+                          />
+                          
+                          {/* Background Color */}
+                          <input
+                            type="color"
+                            onChange={(e) => executeCommand('backColor', e.target.value)}
+                            className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                            title="Background Color"
+                          />
+                          
+                          <div className="w-px h-6 bg-gray-300"></div>
+                          
+                          {/* Align Left */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('justifyLeft')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                            title="Align Left"
+                          >
+                            <span className="text-xs">⬅</span>
+                          </button>
+                          
+                          {/* Align Center */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('justifyCenter')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                            title="Align Center"
+                          >
+                            <span className="text-xs">↔</span>
+                          </button>
+                          
+                          {/* Align Right */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('justifyRight')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                            title="Align Right"
+                          >
+                            <span className="text-xs">➡</span>
+                          </button>
+                          
+                          <div className="w-px h-6 bg-gray-300"></div>
+                          
+                          {/* Ordered List */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('insertOrderedList')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors text-xs"
+                            title="Numbered List"
+                          >
+                            1. 2. 3.
+                          </button>
+                          
+                          {/* Unordered List */}
+                          <button
+                            type="button"
+                            onClick={() => executeCommand('insertUnorderedList')}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors text-xs"
+                            title="Bullet List"
+                          >
+                            • • •
+                          </button>
+                          
+                          <div className="w-px h-6 bg-gray-300"></div>
+                          
+                          {/* Link */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = prompt('Enter URL:');
+                              if (url) executeCommand('createLink', url);
+                            }}
+                            className="p-1.5 hover:bg-gray-200 rounded transition-colors text-xs"
+                            title="Insert Link"
+                          >
+                            🔗
+                          </button>
+                      </div>
+                      
+                      <div className="flex-1 border border-gray-300 rounded-b-lg overflow-hidden bg-white">
+                        <iframe
+                          key={iframeKey}
+                          ref={iframeRef}
+                          srcDoc={formData.htmlBody}
+                          className="w-full h-full border-0"
+                          title="Email Preview"
+                          sandbox="allow-same-origin allow-scripts"
+                          onLoad={() => {
+                            enableIframeEditing();
+                          }}
+                        />
+                      </div>
                     </div>
                     
-                    {/* Live Preview */}
-                    <div className="flex flex-col ">
+                    {/* HTML Source Code */}
+                    <div className="flex flex-col h-[500px]">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Live Preview</span>
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">HTML Source</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-xs text-gray-500">Auto-updating</span>
+                          <Code className="w-3 h-3 text-gray-400" />
+                          <span className="text-xs text-gray-500">Editable</span>
                         </div>
                       </div>
                       <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden bg-white">
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 h-[500px] overflow-auto">
-                          {formData.htmlBody ? (
-                            <div 
-                              dangerouslySetInnerHTML={{ __html: formData.htmlBody }}
-                              className="w-full"
-                            />
-                          ) : (
-                            <div className="text-center py-12">
-                              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <FileText className="w-8 h-8 text-gray-400" />
-                              </div>
-                              <h3 className="text-lg font-medium text-gray-700 mb-2">No HTML Content</h3>
-                              <p className="text-gray-500">Start typing in the editor to see the preview.</p>
-                            </div>
-                          )}
-                        </div>
+                        <textarea
+                          value={formData.htmlBody}
+                          onChange={(e) => setFormData(prev => ({ ...prev, htmlBody: e.target.value }))}
+                          className="w-full h-full px-4 py-3 bg-white font-mono text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto border-0"
+                          placeholder="HTML source code will appear here..."
+                          style={{
+                            lineHeight: '1.6',
+                            tabSize: 2
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
