@@ -327,7 +327,7 @@
     <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0 sticky bottom-0 bg-white z-10">
       @if(courseTree()?.courseTypeId == 3 &&
       assessmentStep() === 'none') {
-      <button (click)="startAssessment()" [disabled]="isStartingAssessment()"
+      <button (click)="startAssessment(true)" [disabled]="isStartingAssessment()"
         class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm disabled:opacity-50">
         @if (isStartingAssessment()) {
         <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -339,7 +339,7 @@
       }
       @if(!isFinalAssessmentButton() && (courseTree()?.courseTypeId == 1 || courseTree()?.courseTypeId == 2) &&
       assessmentStep() === 'none') {
-      <button (click)="startAssessment()" [disabled]="isStartingAssessment()"
+      <button (click)="startAssessment(true)" [disabled]="isStartingAssessment()"
         class="w-full flex items-center justify-center cls-btn gap-2 px-3 py-2.5 rounded-[6px] text-xs  transition-all bg-[#61697B] hover:opacity-90 text-white shadow-sm disabled:opacity-50">
         @if (isStartingAssessment()) {
         <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

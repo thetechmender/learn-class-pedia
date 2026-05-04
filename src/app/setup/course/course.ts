@@ -1779,8 +1779,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     return false;
   }
 
-  startAssessment() {
-    this.isSidebarOpen.set(false);
+  startAssessment(shouldCloseSidebar = false) {
+    debugger;
+    if (shouldCloseSidebar && window.innerWidth < 1024) {
+      this.isSidebarOpen.set(false);
+    }
     this.isStartingAssessment.set(true);
 
     // Stop any playing video and audio before starting assessment
