@@ -35,6 +35,12 @@
     z-index: 9999;
 
     border-radius: 0;
+    
+    @media(max-width:767px){
+      .slide-body{
+        max-height: 350px;
+      }
+    }
 
   }
 
@@ -956,7 +962,7 @@
       font-size: 12px;
 
     }
-
+    
   }
 
 
