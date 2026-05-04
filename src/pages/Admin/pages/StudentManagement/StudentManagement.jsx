@@ -433,9 +433,6 @@ const StudentManagement = () => {
                   <h1 className="text-lg font-semibold text-gray-900 dark:text-white leading-tight">
                     Student Management
                   </h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
-                    {pagination.totalCount} students
-                  </p>
                 </div>
               </div>
               {activeFilterCount > 0 && (
@@ -763,7 +760,7 @@ const StudentManagement = () => {
                     <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                       <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Customers</span>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Students</span>
                   </div>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.totalCustomers || 0}</div>
                 </div>
@@ -2530,7 +2527,7 @@ const StudentManagement = () => {
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Status</div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Order Status</div>
                               <div className={`px-3 py-1 text-xs font-semibold rounded-full shadow-md inline-block ${order.paymentStatusName === 'Captured'
                                 ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/30 dark:to-green-800/30 dark:text-green-400'
                                 : 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:text-yellow-400'

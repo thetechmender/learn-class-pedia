@@ -173,7 +173,17 @@ const useStudentOrderManagement = () => {
       activeFilters.CustomerName = filters.customerName;
     }
     if (filters.statusId && filters.statusId !== '') {
-      activeFilters.PaymentStatusId = parseInt(filters.statusId);
+      const statusIdValue = parseInt(filters.statusId);
+      // If statusId is 1, 2, or 4, use StatusId parameter
+      if ([1, 2, 4].includes(statusIdValue)) {
+        activeFilters.StatusId = statusIdValue;
+      } else if (statusIdValue === 3) {
+        // If statusId is 3, send it as 4 with PaymentStatusId
+        activeFilters.PaymentStatusId = 4;
+      } else {
+        // For any other statusId, use PaymentStatusId
+        activeFilters.PaymentStatusId = statusIdValue;
+      }
     }
     if (filters.startDate && filters.startDate !== '') {
       activeFilters.StartDate = filters.startDate;

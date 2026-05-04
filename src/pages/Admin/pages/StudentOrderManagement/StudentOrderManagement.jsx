@@ -422,7 +422,7 @@ const StudentOrderManagement = () => {
           >
             <div className="p-4 bg-gray-50/60 dark:bg-gray-900/20">
               {summary ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                   {/* Total Orders */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2 mb-2">
@@ -445,15 +445,37 @@ const StudentOrderManagement = () => {
                     <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.paidCount || 0}</div>
                   </div>
 
-                  {/* Unpaid Orders */}
+                  {/* Pending Orders */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                        <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Pending</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.pendingCount || 0}</div>
+                  </div>
+
+                  {/* Cancelled Orders */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
                         <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </div>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unpaid</span>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cancelled</span>
                     </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.unPaidCount || 0}</div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.cancelledCount || 0}</div>
+                  </div>
+
+                  {/* Failed Orders */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                        <AlertCircle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Failed</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{summary.failedCount || 0}</div>
                   </div>
 
                   {/* Free Orders */}

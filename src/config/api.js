@@ -158,7 +158,7 @@ export const ENDPOINTS = {
   STUDENT_MANAGEMENT_TESTIMONIALS_APPROVE: '/StudentManagement/testimonials/approve',
   STUDENT_ORDER_ALL: '/StudentOrder',
   STUDENT_ORDER_BY_ID: (id) => `/StudentOrder/${id}`,
-  STUDENT_ORDER_PAYMENT_STATUSES: '/StudentOrder/dropdown/payment-statuses',
+  STUDENT_ORDER_PAYMENT_STATUSES: '/StudentOrder/dropdown/order-statuses',
   PAYMENT_METHOD: '/PaymentMethod',
   // Course Lecture Content endpoints
   COURSE_LECTURE_CONTENT: (lectureId) => `/courses/lecture-content/${lectureId}`,
