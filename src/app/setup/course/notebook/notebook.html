@@ -1,0 +1,204 @@
+<div class="p-2 pb-20">
+  <div class="flex gap-4 notesec">
+    <!-- Left Column - Main Content -->
+    <div class="flex-1">
+      @if (!isAddingNote()) {
+      <!-- Info Box -->
+      <div class="bg-white px-3 py-2 mb-6 cap-box">
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Click the Save Note button below the lecture when you want to capture a screen. You can also highlight and
+          save lines from the transcript. Add your own notes to anything you've captured.
+        </p>
+      </div>
+
+      <!-- Notes Header -->
+      <div class="flex items-center justify-between mb-6 cap-box">
+        <span class="text-sm text-gray-500">{{ savedNotes().length }} Notes taken</span>
+        <button (click)="onSaveNote()"
+          class="flex items-center gap-2 text-primary text-sm font-medium hover:opacity-80 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          Save note
+        </button>
+      </div>
+
+      @if (savedNotes().length === 0) {
+      <!-- Empty State -->
+      <div class="flex flex-col items-center justify-center py-12 notsave ">
+        <!-- Illustration - Person at computer -->
+        <div class="mb-6">
+          <img src="assets/icons/notebook-dumy.png" alt="No notes" class="h-32 w-32 opacity-80" />
+        </div>
+        <h3 class="text-xl text-gray-800 mb-2">No Notes Saved Yet</h3>
+        <p class="text-sm text-gray-500">Take notes to remember what you learned.</p>
+      </div>
+      } @else {
+      <!-- Saved Notes Section -->
+      <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <div class="bg-primary/10 px-4 py-2">
+          <span class="text-sm font-medium text-gray-700">Saved Notes</span>
+        </div>
+
+        @for (note of savedNotes(); track note.id) {
+        <div class="flex gap-4 p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
+          (click)="onNoteClick(note.videoTimeSeconds)">
+          <!-- Note Content -->
+          <div class="flex-1">
+            <span class="text-primary text-sm mb-2">
+              {{ formatTime(note.videoTimeSeconds || 0) }}
+            </span>
+            @if (editingNoteId() === note.id) {
+            <div (click)="$event.stopPropagation()">
+              <input type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mt-1"
+                [value]="editNoteText()" (input)="editNoteText.set($any($event.target).value)" />
+              <div class="flex items-center gap-2 mt-2">
+                <button (click)="onUpdateNote(note)" [disabled]="isSaving()"
+                  class="px-3 py-1 bg-primary text-white text-xs rounded hover:opacity-90 disabled:opacity-50">
+                  {{ isSaving() ? 'Saving...' : 'Update' }}
+                </button>
+                <button (click)="onCancelEdit()"
+                  class="px-3 py-1 border border-gray-300 text-gray-700 text-xs rounded hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+            } @else {
+            <p class="text-sm text-gray-600 mb-3">{{ note.noteText }}</p>
+
+            <div class="flex items-center gap-4">
+              <button (click)="onEditNote(note); $event.stopPropagation()" class="flex items-center gap-1 text-gray-500 text-sm hover:text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </button>
+              <button (click)="onDeleteNote(note.id); $event.stopPropagation()" class="flex items-center gap-1 text-sm"
+                [class.text-red-500]="deletingNoteId() === note.id" [class.text-gray-500]="deletingNoteId() !== note.id"
+                [disabled]="deletingNoteId() === note.id">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {{ deletingNoteId() === note.id ? 'Deleting...' : 'Delete' }}
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+      } @else {
+      <!-- Add Note Form -->
+      <div class="mb-6">
+        <!-- Add your thoughts -->
+        <div class="mb-4">
+          <!-- <p class="text-sm font-medium text-gray-800 mb-2">Add your note at {{ formatTime(videoTimeSeconds) }}</p> -->
+          <p class="text-sm font-medium text-gray-800 mb-2">Add your note</p>
+
+          <input type="text"
+            class="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            placeholder="" [value]="noteText()" (input)="noteText.set($any($event.target).value)" />
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-3">
+          <button (click)="onSaveNoteConfirm()" [disabled]="isSaving()"
+            class="px-4 py-1.5 bg-primary text-white text-sm rounded hover:opacity-90 transition-opacity disabled:opacity-50">
+            {{ isSaving() ? 'Saving...' : 'Save' }}
+          </button>
+          <button (click)="onCancelNote()"
+            class="px-4 py-1.5 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <!-- <button class="flex items-center gap-1 text-gray-500 text-sm hover:text-red-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Delete
+          </button> -->
+        </div>
+      </div>
+
+      <!-- Saved Notes Section -->
+      @if (savedNotes().length > 0) {
+      <div class="border border-gray-200 rounded-lg overflow-hidden mt-6">
+        <div class="bg-primary/10 px-4 py-2">
+          <span class="text-sm font-medium text-gray-700">Saved Notes</span>
+        </div>
+
+        @for (note of savedNotes(); track note.id) {
+        <div class="flex gap-4 p-4 border-b border-gray-100">
+          <!-- Note Content -->
+          <div class="flex-1">
+            <span class="text-primary text-sm mb-2">
+              {{ formatTime(note.videoTimeSeconds || 0) }}
+            </span>
+            @if (editingNoteId() === note.id) {
+            <div>
+              <input type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mt-1"
+                [value]="editNoteText()" (input)="editNoteText.set($any($event.target).value)" />
+              <div class="flex items-center gap-2 mt-2">
+                <button (click)="onUpdateNote(note)" [disabled]="isSaving()"
+                  class="px-3 py-1 bg-primary text-white text-xs rounded hover:opacity-90 disabled:opacity-50">
+                  {{ isSaving() ? 'Saving...' : 'Update' }}
+                </button>
+                <button (click)="onCancelEdit()"
+                  class="px-3 py-1 border border-gray-300 text-gray-700 text-xs rounded hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+            } @else {
+            <p class="text-sm text-gray-600 mb-3">{{ note.noteText }}</p>
+
+            <div class="flex items-center gap-4">
+              <button (click)="onEditNote(note)" class="flex items-center gap-1 text-gray-500 text-sm hover:text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </button>
+              <button (click)="onDeleteNote(note.id)"
+                class="flex items-center gap-1 text-gray-500 text-sm hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Delete
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+      }
+    </div>
+
+    <!-- Right Column - Export Notes -->
+    <div class="w-72 flex-shrink-0 p-4 in-lft-side">
+      <div class="bg-white" >
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Export Your Notes</h3>
+        <p class="text-sm text-gray-500 mb-4 leading-relaxed">
+          Get your notes for this course which includes description, chapters, and timestamps
+        </p>
+        <button (click)="exportNotesPdf()"
+                 [disabled]="savedNotes().length === 0"
+          class="px-6 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          Download
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

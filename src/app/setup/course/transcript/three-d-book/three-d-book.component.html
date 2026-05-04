@@ -1,0 +1,219 @@
+<div class="stage"
+  [attr.data-theme]="theme"
+  [class.stage--fullscreen]="isFullscreen"
+  [style.--reader-font-scale]="fontScale">
+  <div class="toolbar border border-gray-300" style="max-width: 1100px !important">
+    <!-- <div class="toolbar__brand">
+      <div class="toolbar__badge border border-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </div>
+      <div class="toolbar__text">
+        <div class="toolbar__title" [title]="bookTitle">{{ bookTitle }}</div>
+        <div class="toolbar__info">{{ currentLabel }}</div>
+      </div>
+    </div> -->
+
+    <div class="toolbar__actions">
+      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="next()" [disabled]="currentIndex >= sheets.length" title="Next (→)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+      <button class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50" (click)="toggleFullscreen()" [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
+        @if (!isFullscreen) {
+     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+        } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+        </svg>
+        }
+      </button>
+    </div>
+  </div>
+
+  <div class="book-wrap">
+    <div class="book">
+      <div class="book__shadow"></div>
+      <div class="book__spine"></div>
+
+      <div
+        class="book__pages"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerCancel($event)"
+        [class.book__pages--dragging]="dragging"
+      >
+        @for (sheet of sheets; track sheet.index; let i = $index) {
+          <div
+            class="sheet"
+            [class.sheet--flipped]="i < currentIndex"
+            [class.sheet--flipping]="i === flippingIndex"
+            [class.sheet--dragging]="i === dragSheetIdx && dragging"
+            [style.z-index]="getZIndex(i)"
+            [style.transform]="i === dragSheetIdx && dragging ? 'rotateY(' + dragRotation + 'deg)' : null"
+          >
+            <div class="sheet__face sheet__face--front">
+              <ng-container [ngTemplateOutlet]="pageTpl" [ngTemplateOutletContext]="{ $implicit: sheet.front, side: 'right' }"></ng-container>
+              <div class="sheet__gloss"></div>
+              @if (i === currentIndex) {
+                <div class="sheet__peek sheet__peek--forward" aria-hidden="true"></div>
+              }
+            </div>
+            <div class="sheet__face sheet__face--back">
+              <ng-container [ngTemplateOutlet]="pageTpl" [ngTemplateOutletContext]="{ $implicit: sheet.back, side: 'left' }"></ng-container>
+              <div class="sheet__gloss sheet__gloss--back"></div>
+              @if (i === currentIndex - 1) {
+                <div class="sheet__peek sheet__peek--backward" aria-hidden="true"></div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" style="width: 1100px;">
+    <div class="progress">
+              <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden progressbr">
+          <div class="h-full bg-primary rounded-full transition-all duration-300"
+            [style.width.%]="progressPercent"></div>
+        </div>
+        <span class="text-sm text-primary">{{ progressPercent | number:'1.0-1' }}%</span>
+      <!-- <div class="progress__bar">
+        <div class="progress__fill" [style.width.%]="progressPercent"></div>
+      </div>
+      <div class="progress__label">
+        <span class="progress__percent">{{ progressPercent | number:'1.0-0' }}%</span>
+        <span class="progress__muted">complete</span>
+      </div> -->
+    </div>
+  </div>
+</div>
+
+<ng-template #pageTpl let-page let-side="side">
+  @switch (page.kind) {
+    @case ('cover') {
+      <div class="page page--cover">
+        <div class="page--cover__glow"></div>
+        <div class="page--cover__ornament"></div>
+        <div class="page--cover__kicker">Classpedia</div>
+        <div class="page--cover__title">{{ page.title }}</div>
+        @if (page.subtitle) {
+          <div class="page--cover__subtitle">{{ page.subtitle }}</div>
+        }
+        <div class="page--cover__ornament page--cover__ornament--bottom"></div>
+        <div class="page--cover__meta">
+          {{ lectures.length }} lecture{{ lectures.length === 1 ? '' : 's' }}
+        </div>
+        <div class="page--cover__hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          Tap to begin
+        </div>
+      </div>
+    }
+    @case ('index') {
+      <div class="page page--index">
+        <div class="page--index__header">
+          <div class="page--index__kicker">{{ page.subtitle }}</div>
+          <h2 class="page--index__title">{{ page.title }}</h2>
+          <div class="page--index__rule"></div>
+        </div>
+        <ol class="page--index__list">
+          @for (entry of page.entries; track entry.chapter) {
+            <li class="page--index__item">
+              <button
+                type="button"
+                class="page--index__entry"
+                [class.page--index__entry--current]="isChapterCurrent(entry)"
+                [class.page--index__entry--visited]="isChapterVisited(entry) && !isChapterCurrent(entry)"
+                data-nodrag
+                (click)="goTo(entry.targetIndex)"
+              >
+                <span class="page--index__status" aria-hidden="true">
+                  @if (isChapterCurrent(entry)) {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  } @else if (isChapterVisited(entry)) {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  }
+                </span>
+                <span class="page--index__num">{{ entry.chapter < 10 ? '0' + entry.chapter : entry.chapter }}</span>
+                <span class="page--index__body">
+                  <span class="page--index__entry-title">{{ entry.title }}</span>
+                  <span class="page--index__meta">
+                    @if (entry.subtitle) {
+                      <span class="page--index__entry-sub">{{ entry.subtitle }}</span>
+                    }
+                    <span class="page--index__time">{{ entry.minutes }} min read</span>
+                  </span>
+                </span>
+                <span class="page--index__dots" aria-hidden="true"></span>
+                <span class="page--index__page">{{ entry.chapter }}</span>
+              </button>
+            </li>
+          }
+        </ol>
+        <div class="page__folio page__folio--left">— Contents —</div>
+      </div>
+    }
+    @case ('heading') {
+      <div class="page page--heading">
+        <div class="page--heading__inner">
+          @if (page.subtitle) {
+            <div class="page--heading__kicker">{{ page.subtitle }}</div>
+          }
+          <h1 class="page--heading__title">{{ page.title }}</h1>
+          <div class="page--heading__rule"></div>
+          @if (page.pageNumber) {
+            <div class="page--heading__chapter">Chapter {{ page.pageNumber }}</div>
+          }
+        </div>
+        <div class="page__folio page__folio--left">— {{ page.pageNumber }} —</div>
+      </div>
+    }
+    @case ('content') {
+      <div class="page page--content">
+        <header class="page__header">
+          <div class="page__kicker">{{ page.subtitle || 'Continued' }}</div>
+          <h2 class="page__title">{{ page.title }}</h2>
+        </header>
+        <div class="page__body" [innerHTML]="page.content | safeHtml"></div>
+        <div class="page__folio page__folio--right">— {{ page.pageNumber }} —</div>
+      </div>
+    }
+    @case ('end') {
+      <div class="page page--end">
+        <div class="page--end__inner">
+          <div class="page--end__seal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 15l-3.09 1.62.59-3.44-2.5-2.44 3.45-.5L12 7l1.55 3.24 3.45.5-2.5 2.44.59 3.44z"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <h2>The End</h2>
+          <p>You've reached the end of <em>{{ bookTitle }}</em>.</p>
+          <p class="muted">Use ← to revisit previous pages.</p>
+        </div>
+      </div>
+    }
+    @default {
+      <div class="page page--blank"></div>
+    }
+  }
+</ng-template>

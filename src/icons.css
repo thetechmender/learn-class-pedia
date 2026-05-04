@@ -1,0 +1,459 @@
+@font-face {
+  font-family: 'xicons';
+  src:  url('assets/fonts/xicons.eot?a73gi7');
+  src:  url('assets/fonts/xicons.eot?a73gi7#iefix') format('embedded-opentype'),
+    url('assets/fonts/xicons.ttf?a73gi7') format('truetype'),
+    url('assets/fonts/xicons.woff?a73gi7') format('woff'),
+    url('assets/fonts/xicons.svg?a73gi7#xicons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="ic-"], [class*=" ic-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'xicons' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.ic-126:before {
+  content: "\e981";
+}
+.ic-134:before {
+  content: "\e980";
+}
+.ic-133:before {
+  content: "\e900";
+}
+.ic-125:before {
+  content: "\e901";
+}
+.ic-132:before {
+  content: "\e95f";
+}
+.ic-131:before {
+  content: "\e960";
+}
+.ic-135:before {
+  content: "\e96a";
+}
+.ic-94:before {
+  content: "\e94b";
+}
+.ic-93:before {
+  content: "\e94c";
+}
+.ic-92:before {
+  content: "\e94d";
+}
+.ic-91:before {
+  content: "\e94e";
+}
+.ic-90:before {
+  content: "\e94a";
+}
+.ic-87:before {
+  content: "\e945";
+}
+.ic-89:before {
+  content: "\e946";
+}
+.ic-95:before {
+  content: "\e950";
+}
+.ic-96:before {
+  content: "\e951";
+}
+.ic-97:before {
+  content: "\e952";
+}
+.ic-98 .path1:before {
+  content: "\e953";
+  color: rgb(68, 170, 31);
+}
+.ic-98 .path2:before {
+  content: "\e954";
+  margin-left: -1em;
+  color: rgb(68, 170, 31);
+  opacity: 0.22;
+}
+.ic-98 .path3:before {
+  content: "\e955";
+  margin-left: -1em;
+  color: rgb(255, 255, 255);
+}
+.ic-100:before {
+  content: "\e956";
+}
+.ic-101:before {
+  content: "\e957";
+}
+.ic-102:before {
+  content: "\e958";
+}
+.ic-103:before {
+  content: "\e959";
+}
+.ic-104:before {
+  content: "\e95a";
+}
+.ic-105:before {
+  content: "\e95b";
+}
+.ic-106:before {
+  content: "\e95c";
+  color: #6b7280;
+}
+.ic-107:before {
+  content: "\e95d";
+}
+.ic-108:before {
+  content: "\e95e";
+}
+.ic-113:before {
+  content: "\e963";
+}
+.ic-114:before {
+  content: "\e967";
+}
+.ic-115:before {
+  content: "\e96b";
+}
+.ic-116:before {
+  content: "\e96c";
+}
+.ic-117:before {
+  content: "\e96d";
+}
+.ic-118:before {
+  content: "\e96e";
+}
+.ic-119:before {
+  content: "\e970";
+}
+.ic-120:before {
+  content: "\e971";
+}
+.ic-121:before {
+  content: "\e972";
+}
+.ic-122:before {
+  content: "\e973";
+}
+.ic-123:before {
+  content: "\e961";
+}
+.ic-124:before {
+  content: "\e962";
+}
+.ic-1251 .path1:before {
+  content: "\e964";
+  color: rgb(24, 119, 242);
+}
+.ic-1251 .path2:before {
+  content: "\e965";
+  margin-left: -1em;
+  color: rgb(255, 255, 255);
+}
+.ic-1261 .path1:before {
+  content: "\e966";
+  color: rgb(240, 242, 245);
+}
+.ic-1261 .path2:before {
+  content: "\e968";
+  margin-left: -1em;
+  color: rgb(36, 41, 47);
+}
+.ic-127 .path1:before {
+  content: "\e975";
+  color: rgb(0, 0, 0);
+}
+.ic-127 .path2:before {
+  content: "\e976";
+  margin-left: -1em;
+  color: none;
+}
+.ic-127 .path3:before {
+  content: "\e977";
+  margin-left: -1em;
+  color: none;
+}
+.ic-127 .path4:before {
+  content: "\e978";
+  margin-left: -1em;
+  color: rgb(255, 255, 255);
+}
+.ic-128:before {
+  content: "\e979";
+}
+.ic-129 .path1:before {
+  content: "\e97a";
+  color: rgb(240, 242, 245);
+}
+.ic-129 .path2:before {
+  content: "\e97b";
+  margin-left: -1em;
+  color: rgb(255, 0, 0);
+}
+.ic-129 .path3:before {
+  content: "\e97c";
+  margin-left: -1em;
+  color: rgb(255, 255, 255);
+}
+.ic-130:before {
+  content: "\e97d";
+}
+.ic-3:before {
+  content: "\e907";
+}
+.ic-4:before {
+  content: "\e90a";
+}
+.ic-5:before {
+  content: "\e90b";
+}
+.ic-1:before {
+  content: "\e90c";
+}
+.ic-2:before {
+  content: "\e90d";
+}
+.ic-23:before {
+  content: "\e96f";
+}
+.ic-24:before {
+  content: "\e932";
+}
+.ic-86:before {
+  content: "\e943";
+}
+.ic-85:before {
+  content: "\e944";
+}
+.ic-84:before {
+  content: "\e936";
+}
+.ic-83:before {
+  content: "\e937";
+}
+.ic-82:before {
+  content: "\e938";
+}
+.ic-81:before {
+  content: "\e939";
+}
+.ic-80:before {
+  content: "\e93a";
+}
+.ic-79:before {
+  content: "\e93b";
+}
+.ic-78:before {
+  content: "\e93c";
+}
+.ic-76:before {
+  content: "\e93d";
+}
+.ic-75:before {
+  content: "\e93e";
+}
+.ic-74:before {
+  content: "\e93f";
+}
+.ic-73:before {
+  content: "\e940";
+}
+.ic-72:before {
+  content: "\e941";
+}
+.ic-71:before {
+  content: "\e935";
+}
+.ic-441:before {
+  content: "\e934";
+}
+.ic-63:before {
+  content: "\e92f";
+}
+.ic-62:before {
+  content: "\e930";
+}
+.ic-61:before {
+  content: "\e931";
+}
+.ic-60:before {
+  content: "\e933";
+}
+.ic-00:before {
+  content: "\e92a";
+}
+.ic-66:before {
+  content: "\e92b";
+}
+.ic-77:before {
+  content: "\e92c";
+}
+.ic-88:before {
+  content: "\e92d";
+}
+.ic-99:before {
+  content: "\e92e";
+}
+.ic-54:before {
+  content: "\e925";
+}
+.ic-53:before {
+  content: "\e926";
+}
+.ic-52:before {
+  content: "\e927";
+}
+.ic-51:before {
+  content: "\e928";
+}
+.ic-50:before {
+  content: "\e929";
+}
+.ic-49:before {
+  content: "\e902";
+}
+.ic-47:before {
+  content: "\e922";
+}
+.ic-48:before {
+  content: "\e923";
+}
+.ic-55:before {
+  content: "\ea96";
+}
+.ic-56:before {
+  content: "\ea9d";
+}
+.ic-57:before {
+  content: "\eaca";
+}
+.ic-46:before {
+  content: "\e91c";
+}
+.ic-45:before {
+  content: "\e91d";
+}
+.ic-44:before {
+  content: "\e91e";
+}
+.ic-43:before {
+  content: "\e91f";
+}
+.ic-42:before {
+  content: "\e920";
+}
+.ic-41:before {
+  content: "\e921";
+}
+.ic-40:before {
+  content: "\e906";
+}
+.ic-39:before {
+  content: "\e908";
+}
+.ic-38:before {
+  content: "\e909";
+}
+.ic-37:before {
+  content: "\e90e";
+}
+.ic-36:before {
+  content: "\e90f";
+}
+.ic-35:before {
+  content: "\e910";
+}
+.ic-34:before {
+  content: "\e911";
+}
+.ic-33:before {
+  content: "\e912";
+}
+.ic-32:before {
+  content: "\e915";
+}
+.ic-31:before {
+  content: "\e916";
+}
+.ic-30:before {
+  content: "\e917";
+}
+.ic-29:before {
+  content: "\e918";
+}
+.ic-28:before {
+  content: "\e919";
+}
+.ic-27:before {
+  content: "\e91a";
+}
+.ic-26:before {
+  content: "\e91b";
+}
+.ic-25:before {
+  content: "\e905";
+}
+.ic-18:before {
+  content: "\e942";
+}
+.ic-19:before {
+  content: "\e949";
+}
+.ic-20:before {
+  content: "\ea90";
+}
+.ic-21:before {
+  content: "\ea92";
+}
+.ic-22:before {
+  content: "\eaa7";
+}
+.ic-15:before {
+  content: "\e903";
+}
+.ic-16:before {
+  content: "\e904";
+}
+.ic-17:before {
+  content: "\e913";
+}
+.ic-12:before {
+  content: "\e914";
+}
+.ic-13:before {
+  content: "\e924";
+}
+.ic-14:before {
+  content: "\e969";
+}
+.ic-9:before {
+  content: "\e974";
+}
+.ic-10:before {
+  content: "\e947";
+}
+.ic-11:before {
+  content: "\e948";
+}
+.ic-6:before {
+  content: "\e94f";
+}
+.ic-7:before {
+  content: "\e97e";
+}
+.ic-8:before {
+  content: "\e97f";
+}

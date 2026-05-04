@@ -1,52 +1,69 @@
 {
-  "name": "online-learning-platform",
-  "version": "0.1.0",
+  "name": "learn-class-pedia",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "serve:ssr:learn-class-pedia": "node dist/learn-class-pedia/server/server.mjs"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
   "private": true,
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.4.2",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
-    "@testing-library/user-event": "^13.5.0",
+    "@angular/animations": "^20.3.0",
+    "@angular/cdk": "^20.2.14",
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/forms": "^20.3.0",
+    "@angular/material": "^20.2.14",
+    "@angular/platform-browser": "^20.3.0",
+    "@angular/platform-server": "^20.3.0",
+    "@angular/router": "^20.3.0",
+    "@angular/ssr": "^20.3.12",
+    "angular-three": "^4.2.0",
+    "canvas-confetti": "^1.9.4",
+    "express": "^5.1.0",
     "html2canvas": "^1.4.1",
-    "lucide-react": "^0.562.0",
-    "mermaid": "^11.12.2",
-    "react": "^19.2.3",
-    "react-confetti": "^6.4.0",
-    "react-dom": "^19.2.3",
-    "react-router-dom": "^7.11.0",
-    "react-scripts": "5.0.1",
+    "intl-tel-input": "^28.0.2",
+    "lucide-angular": "^0.577.0",
+    "mermaid": "^11.13.0",
+    "ngx-toastr": "^19.1.0",
+    "rxjs": "~7.8.0",
     "three": "^0.182.0",
-    "web-vitals": "^2.1.4"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.23",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.19"
+    "@angular/build": "^20.3.12",
+    "@angular/cli": "^20.3.12",
+    "@angular/compiler-cli": "^20.3.0",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/express": "^5.0.1",
+    "@types/jasmine": "~5.1.0",
+    "@types/node": "^20.17.19",
+    "autoprefixer": "^10.4.27",
+    "jasmine-core": "~5.9.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1",
+    "typescript": "~5.9.2"
   }
 }

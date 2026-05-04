@@ -1,0 +1,24 @@
+<div class="p-2 pb-8">
+  @if (pdfFiles.length > 0) {
+    <div class="space-y-3">
+      @for (pdf of pdfFiles.slice(0, 1); track pdf.index; let i = $index) {
+        <div class="flex items-center justify-between p-4 bg-gray-50 dowload-box rounded-lg hover:bg-gray-100 transition-all">
+          <div>
+            <p class="text-xs text-gray-400 mb-1">PDF</p>
+            <p class="text-sm font-medium text-gray-800 namesec">Course Material File {{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }} (PDF)</p>
+          </div>
+          <button (click)="downloadPdf(pdf.path, pdf.name)" class="p-2 hover:bg-gray-200 rounded-full transition-all">
+           <i class="ic-120"></i>
+          </button>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="text-center py-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+      <p class="text-gray-500">No PDF files available for this section</p>
+    </div>
+  }
+</div>

@@ -1,0 +1,53 @@
+<div class="lecture-cont">
+  @if (lectures.length > 0) {
+  <!-- <div class="view-mode-toggle">
+    <button (click)="viewMode.set('book')"
+          class="px-8 py-4 flex items-center gap-2 text-gray-500 font-semibold rounded-full hover:bg-primary border border-gray-300 hover:text-white transition-all"
+      [class.active]="viewMode() === 'book'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      </svg>
+      <span>Book Mode</span>
+    </button>
+    <button (click)="viewMode.set('ppt')" [class.active]="viewMode() === 'ppt'"
+          class="px-8 py-4 flex items-center gap-2 text-gray-500 font-semibold rounded-full hover:bg-primary border border-gray-300 hover:text-white transition-all">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </svg>
+      <span>Slides Mode</span>
+    </button>
+  </div> -->
+
+  <!-- Book View -->
+  <!-- @if (viewMode() === 'book') {
+  <app-3d-book [lectures]="lectures" [bookTitle]="currentShortCourse?.title || 'Lecture Materials'"
+    (bookCompleted)="onBookCompleted()">
+  </app-3d-book>
+  } -->
+
+  <!-- PPT View -->
+  @if (viewMode() === 'ppt') {
+  <app-3d-ppt [lectures]="lectures" [pptTitle]="currentShortCourse?.title || 'Lecture Slides'"
+    (presentationCompleted)="onPresentationCompleted()">
+  </app-3d-ppt>
+  }
+
+  @if (showQuizButton()) {
+  <div class="mt-4 pb-20 movebtn">
+    <button (click)="onButtonClick()"
+      class="px-8 py-2.5 border border-gray-300 text-white font-medium rounded-full hover:bg-thirdly bg-primary hover:text-gray-700 transition-all">
+      {{ courseTypeId == 3 ? 'Move to Assessment' : 'Move to Quiz' }}
+    </button>
+  </div>
+  }
+  } @else {
+  <div class="text-center py-8">
+    <p class="text-gray-500">No lecture content available</p>
+  </div>
+  }
+</div>

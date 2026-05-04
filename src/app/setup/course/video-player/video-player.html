@@ -1,0 +1,149 @@
+<!-- simple-video-player.html -->
+<div class="video-player-container" 
+     (mousemove)="onMouseMove()"
+     (mouseleave)="controlsVisible = false">
+  @if (videoUrl) {
+  <div class="video-wrapper" 
+       #videoWrapper
+       [style.background]="'#081449'"
+       [class.fullscreen]="isFullscreen">
+    
+    @if (isYouTubeVideo()) {
+      <!-- YouTube iframe -->
+      <div id="youtube-player" class="video-element"></div>
+    } @else {
+      <!-- Regular video element -->
+      <video 
+        #videoElement
+        [src]="getValidVideoUrl()" 
+        class="video-element"
+        [poster]="posterImage"
+        [controls]="false"
+        controlsList="nodownload nofullscreen noremoteplayback"
+        disablePictureInPicture
+        (play)="onPlay()"
+        (pause)="onPause()"
+        (timeupdate)="onTimeUpdate($event)"
+        (ended)="onEnded()"
+        (seeked)="onSeek($event)"
+        (error)="onVideoError($event)"
+        (loadedmetadata)="onLoadedMetadata($event)"
+        (canplay)="onCanPlay($event)"
+        (waiting)="onWaiting($event)"
+        (playing)="onPlaying($event)"
+        preload="metadata">
+        Your browser does not support the video tag.
+      </video>
+    }
+
+    <!-- Loading Indicator -->
+    @if (isLoading) {
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <span class="loading-text">Loading video...</span>
+    </div>
+    }
+
+    <!-- Error Message -->
+    @if (hasVideoError) {
+    <div class="error-overlay">
+      <div class="error-content">
+        <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <p class="error-text">Video could not be loaded</p>
+        <p class="error-url">{{ videoUrl }}</p>
+        <button (click)="retryVideo()" class="retry-button">
+          <svg class="retry-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Retry
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Center Play Button Overlay -->
+    @if (!isVideoPlaying && !isLoading && videoLoaded && !hasVideoError) {
+    <div class="center-play-overlay" (click)="onPlay()">
+      <div class="center-play-button">
+        <svg class="play-icon" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+    </div>
+    }
+
+    <!-- Custom Controls Overlay -->
+    @if (!isYouTubeVideo() && videoLoaded && !hasVideoError) {
+    <div class="controls-overlay show">
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="progress-bar-bg">
+          <div class="buffered-progress" [style.width.%]="bufferedProgress"></div>
+          <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+        </div>
+        <input 
+          type="range" 
+          class="progress-slider"
+          [value]="currentTime" 
+          [max]="duration || 0"
+          (input)="onSeekSlider($event)"
+          (change)="onSeekSlider($event)">
+      </div>
+      
+      <!-- Bottom Controls Bar -->
+      <div class="controls-bottom">
+        <div class="controls-left">
+          <!-- Play/Pause Button -->
+          <button 
+            (click)="isVideoPlaying ? onPause() : onPlay()"
+            class="control-btn"
+            [disabled]="hasVideoError || !videoLoaded"
+            title="Play/Pause">
+            @if (isVideoPlaying) {
+            <svg class="icon" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 5h4v14H6zM14 5h4v14h-4z"/>
+            </svg>
+            } @else {
+            <svg class="icon" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            }
+          </button>
+          
+          <!-- Previous Button -->
+          <button 
+            (click)="onPrevious()"
+            class="control-btn"
+            title="Previous">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          
+          <!-- Next Button -->
+          <button 
+            (click)="onNext()"
+            class="control-btn"
+            title="Next">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          
+          <!-- Time Display -->
+          <div class="time-display">
+            <span class="current-time">{{ formatTime(currentTime) }}</span>
+            <span class="time-separator">/</span>
+            <span class="total-time">{{ formatTime(duration) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

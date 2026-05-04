@@ -1,0 +1,702 @@
+
+.section-btn
+  color: #374151
+  &:hover
+    background: linear-gradient(135deg, #6b8cff 0%, #1a3fd4 100%)
+    color: white
+    p, svg
+      color: white !important
+  &.active
+    background: linear-gradient(135deg, #6b8cff 0%, #1a3fd4 100%)
+    color: white
+    p, svg
+      color: white !important
+
+@keyframes accordion-down
+  from
+    opacity: 0
+    max-height: 0
+    transform: translateY(-10px)
+  to
+    opacity: 1
+    max-height: 200px
+    transform: translateY(0)
+
+@keyframes fade-in
+  from
+    opacity: 0
+  to
+    opacity: 1
+
+.animate-accordion-down
+  animation: accordion-down 0.3s ease-out forwards
+
+.animate-fade-in
+  animation: fade-in 0.3s ease-out forwards
+
+@keyframes modal-in
+  from
+    opacity: 0
+    transform: scale(0.9) translateY(20px)
+  to
+    opacity: 1
+    transform: scale(1) translateY(0)
+
+.animate-modal-in
+  animation: modal-in 0.3s ease-out forwards
+
+.fnt18
+  font-size:18px
+  @media (max-width:767px)
+    font-size: 14px
+
+.fondation
+    border-bottom: 1px solid #BBC9ED  
+    padding: 28px 15px 20px
+
+.course-left
+    border-right: 1px solid #BBC9ED
+    position: relative
+    @media (max-width:1023px)
+      position: fixed
+      top: 56px
+      left: 0
+      bottom: 0
+      height: calc(100vh - 56px) !important
+    
+.bigscreen
+  margin: 12px 10px 0
+
+.accord-sec
+  padding: 0px 0px 0px 0px
+  background-color: transparent
+  border-bottom: 1px solid #BBC9ED
+  margin: 0
+  h3
+    font-size: 14px
+    color: #000
+    font-weight: 400
+    @media (max-width:767px)
+      font-size: 13px
+    &.text-green-600
+      color: #16a34a
+  span
+    font-size: 13px
+  .bg-optional
+    background-color: #D4E8FF 
+  .animate-accordion-down
+    background-color: #D4E8FF 
+  p
+    color:#7D8A95
+    font-size: 12px
+    font-weight: 500
+  h4
+    font-size:13px
+    color: #000
+    font-weight: 400
+.text-primary
+  color: #0062CC
+
+.cls-btn
+  color: #fff
+  padding: 14px 6px
+  background-color: #61697B
+  border-radius: 10px
+  font-size: 15px
+  &:hover
+    background: #0062CC
+
+.screen-tab
+  border-bottom: 1px solid #BBC9ED;
+  padding: 14px 20px 3px
+  @media (max-width:767px)
+    overflow-y: hidden !important
+    overflow-x: auto !important
+    white-space: nowrap !important
+  button
+    margin: 0 30px 0 0
+    padding: 12px 0;
+    font-size: 16px
+    color: #9A9DA4
+    font-weight: 400
+    @media (max-width:767px)
+      font-size: 14px 
+      margin: 0 15px 0 0
+    &.text-primary
+      color: #000
+    &.border-primary
+        border-color: #000  
+
+.border-gray-200
+  border-color: #BBC9ED
+
+.course-content-left
+  h2
+    color: #000
+    font-size: 20px
+    font-weight: 600
+    @media (max-width:767px)
+      font-size: 18px
+  p
+    font-size: 16px 
+    color: #61697B
+    font-weight: 400 
+    @media (max-width:767px)
+      font-size: 14px
+    @media (max-width:480px)
+      font-size: 13px  
+.bg-thirdly
+ 
+  &.topisec
+    border-radius: 0;
+    border:1px solid #BBC9ED
+    background-color: #F6F8FD;
+    padding: 20px 20px;
+    @media (max-width:767px)
+      padding: 10px 20px
+    h3
+      font-size: 20px
+      font-weight: 500
+      @media (max-width:767px)
+        font-size: 17px
+    >div
+      @media (max-width:767px)
+        display: block !important
+    span
+      @media (max-width:767px)
+        padding: 10px 27px 0 0
+        font-size: 14px
+        display: inline-block !important
+        vertical-align: middle
+        text-align: center
+        margin: 0 auto
+      svg
+        @media (max-width:767px)
+          text-align: center
+          margin: 0 auto
+          display: block 
+      i
+        @media (max-width:767px)    
+          display: block
+          text-align: center
+    .contenttxt
+      @media (max-width:767px)  
+        display: block
+        padding: 10px 0
+      span
+        color: #000
+      svg
+        color: #0062CC   
+  &.knowledge-box
+    background-color: #F6F8FD;
+    padding: 20px 20px;   
+    h3
+      font-size: 20px
+      font-weight: 500
+      @media (max-width:767px)
+        font-size: 18px
+      @media (max-width:480px)
+        font-size: 15px
+    span 
+      font-weight: 500;
+      font-size: 15px
+      @media (max-width:767px)
+        font-size: 13px
+.topic-accor
+  padding: 0 20px
+  border: 1px solid #BBC9ED
+  border-top: 0
+  h4
+    font-size: 18px
+    font-weight: 500  
+    color: #717D87
+    @media (max-width:767px)
+      font-size: 15px
+  .topic-head
+    border-bottom: 1px solid #9FA6BF;
+    p
+      font-size: 16px
+      @media (max-width:767px)
+        font-size: 14px
+    .topic-inner
+      padding: 15px 20px;
+      border-bottom: 1px dashed #BBC9ED;
+      @media (max-width:767px)
+        padding: 10px 0
+      span
+        color: #68749F
+        font-size: 14px
+        @media (max-width:767px)
+          font-size: 13px
+          display: block !important
+          text-align: center
+      p
+        color: #11172C  
+        font-weight: 300
+      svg
+        color: #68749F
+        @media (max-width:767px)
+          margin: 0 auto  
+  .prof-topic
+    border-bottom: 1px dashed #BBC9ED;
+    p
+      color: #11172C  
+      font-weight: 300
+      font-size: 16px   
+      @media (max-width:767px)
+        font-size: 14px 
+    .dd-ico
+      @media (max-width:767px)
+        padding: 10px 0 0
+      span      
+        color: #68749F
+        font-size: 14px  
+        @media (max-width:480px)
+          font-size: 12px
+        i
+          color: #0062CC
+          font-size: 19px
+          font-weight: 500
+.lecture-cont
+  @media (max-width:767px)
+    padding-bottom: 0 !important
+  p
+    font-size: 16px  
+    color: #61697B
+    @media (max-width:767px)
+      font-size: 14px
+    @media (max-width:480px)
+      font-size: 13px  
+  h2
+    font-size: 20px
+    font-weight: 500
+    @media (max-width:767px)
+      font-size: 16px
+.cap-box
+  position: relative
+  margin: 0 auto
+  padding: 10px 0 0
+  .leading-relaxed
+    min-height: 80px
+    border: 1px solid #D9D9D9
+    border-radius: 0
+    padding: 8px 10px
+    width: 100%
+    margin-bottom: 10px
+    font-size:16px
+    background-color: #F6F8FD;
+    @media (max-width:767px)
+      font-size: 14px
+  span
+    font-size: 16px
+    @media (max-width:767px)
+      font-size: 14px
+  button
+    font-size: 16px
+    font-weight: 400
+    @media (max-width:767px)
+      font-size: 14px
+.in-lft-side
+  border-left: 1px solid #E4EBFB
+  border-bottom: 1px solid #E4EBFB
+  padding: 15px 20px
+  @media (max-width:767px)
+    width: 100%
+    display: block !important
+    border: 0
+    padding: 0
+  h3
+    font-size: 18px
+    font-weight: 400 
+    @media (max-width:767px)
+      font-size: 16px
+
+  p
+   font-size: 16px 
+   @media (max-width:767px)
+      font-size: 14px
+
+  button
+    padding: 13px 30px;
+
+.notsave
+  h3
+    font-size: 23px
+    font-weight: 400
+    @media (max-width:767px)
+      font-size: 20px
+  p
+   font-size: 16px
+   @media (max-width:767px)
+      font-size: 14px
+
+.other-enroll
+  border-left: 1px solid #E4EBFB
+  border-bottom: 1px solid #E4EBFB
+  padding: 15px 20px   
+  @media (max-width:767px)
+    padding: 10px 10px !important
+    border-left: 0
+  p
+    color: #61697B
+  h4
+    color: #000
+    font-weight: 400
+    font-size: 13px
+  .brddiv
+    border-bottom: 1px solid #E4EBFB
+    padding: 10px 5px 15px 
+.chat-top
+  padding: 10px 0 10px
+  h2
+    font-size: 16px
+    font-weight: 600 
+    @media (max-width:767px)
+      font-size: 15px
+.chat-body
+  padding: 10px 10px
+  p
+    font-size:12px
+.chat-note
+  font-size: 12px    
+  text-align: center
+  padding: 8px
+  color: #777
+  padding-bottom: 20px
+
+.quizsec
+  border-radius: 14px
+  padding: 30px 30px
+  margin: 0 0 15px
+  @media (max-width:767px)
+    padding: 10px 15px !important
+  h3
+    color: #000
+    border-bottom: 1px dashed #B1C3D9
+    padding: 0 0 10px
+    font-weight: 500
+    font-size: 18px
+    @media (max-width:767px)
+      font-size: 13px
+  label
+    span
+      font-weight: 400
+      color: #878585
+      padding: 0 0 0 6px 
+      font-size: 16px
+      @media (max-width:767px)
+        font-size: 13px
+  .correct
+    font-size: 13px  
+    font-weight: 600  
+  .blckresp
+    @media (max-width:767px)
+      display: block !important
+    label
+      @media (max-width:767px)
+        padding: 0 0 10px !important
+
+.review-count
+  color: #61697B
+  font-size: 16px
+  font-weight: 400
+  @media (max-width:767px)
+    font-size: 14px
+.courses-serials
+  color: #000
+  font-weight: 500
+  font-size: 16px
+  @media (max-width:767px)
+    padding: 10px 0 4px
+    display: block !important
+  span
+    font-size: 14px
+    font-weight: 400
+    color: #000
+    @media (max-width:767px)
+      font-size: 12px !important
+      display: block !important
+      padding: 10px 16px 0 0 !important
+    i
+      font-size: 23px
+      vertical-align: middle
+      @media (max-width:767px)
+        font-size: 18px
+
+.playvideo
+  i
+    color: #385D71
+    font-size: 30px
+    margin: 0 0 0 7px
+    @media (max-width:767px)
+      font-size: 20px
+  p
+   font-size: 22px
+   font-weight: 400  
+   @media (max-width:767px)
+      font-size: 16px
+
+.prgresssec
+  @media (max-width: 767px)
+    width: auto
+    margin-left: 0
+    padding: 10px 14px !important;
+    margin-top: 5px !important;
+  @media (max-width: 480px)
+    
+    margin-left: auto
+    
+  span
+    color: #000
+    font-weight: 400
+    font-size: 13px
+    @media (max-width:575px)
+      font-size: 11px
+      line-height: 1.2
+    &.text-primary
+      color: #0062CC
+  .progressbr
+    @media (max-width:767px)
+      width: 6rem !important
+
+.dowload-box
+  background-color: #F6F8FD !important
+  padding: 10px 12px
+  border: 0
+  border-radius: 0
+  display: flex
+  align-items: center
+  justify-content: space-between
+  margin-bottom: 10px
+  max-width: 350px
+  width: 100%
+  p
+    color: #9A9DA4
+    font-weight: 400
+ 
+    font-size: 14px
+    &.namesec
+      color: #000
+      font-weight: 500
+      font-size: 16px
+      
+  i
+    color:#000 
+    font-size: 16px
+    vertical-align: middle  
+
+
+.bg-primary 
+  background: #0062CC;   
+
+.chat-widget
+  color: #000
+  font-weight: 400
+  background: transparent !important
+  box-shadow: none !important
+  font-size: 15px
+  @media (max-width:767px)
+    font-size: 14px
+    padding: 10px 10px
+.detailsec
+  @media (max-width: 767px)
+    display: block !important 
+
+.enrolldiv
+  @media (max-width: 767px)
+    width: 100% !important
+    display: block !important
+
+.overviewpadd
+  @media (max-width: 767px)
+    padding-bottom: 0 !important
+.btn-leftbar
+  @media (max-width: 767px)
+    margin: -7px 0 0
+    display: block !important
+    
+
+.movebtn
+  @media (max-width: 767px)
+    padding-bottom: 10px
+  button
+    @media (max-width: 767px)
+      font-size: 14px
+.notesec
+  @media (max-width: 767px)
+    width: 100%
+    display: block  !important  
+
+.playvideo
+  .bg-thirdly
+    @media (max-width: 575px)
+      width: 70px
+      height: 70px
+
+.btn-control
+  @media (max-width: 480px) 
+    padding: 10px 6px !important     
+
+.comp-btn
+  @media (max-width: 767px)
+    display: block !important
+  button
+   @media (max-width: 767px)
+    width: 100% !important
+    margin: 0 0 10px   
+
+.videotxt
+  @media (max-width: 767px)
+    padding: 10px 10px !important
+    max-height: 300px
+    overflow-y: auto !important
+    overflow-x: hidden !important
+
+  .txtfont
+    @media (max-width: 767px)
+      font-size: 14px !important
+      padding: 0 !important
+      line-height: 1.3
+
+.assesssec
+  @media (max-width: 767px)
+    display: block !important
+  h1
+    @media (max-width: 767px)
+      font-size: 15px
+  p
+    @media (max-width: 767px)
+      font-size: 14px    
+      margin: 0 0 10px
+
+.asstext
+  span
+    @media (max-width: 767px)     
+      font-size: 13px
+
+.qestion
+  @media (max-width: 767px)
+    padding: 20px 10px !important
+  h2
+    @media (max-width: 767px)     
+      font-size: 13px
+      line-height: 1.3
+
+.dbcksec
+  @media (max-width: 767px) 
+    display: block !important
+  label
+    @media (max-width: 767px) 
+      padding: 0 0 10px !important 
+    span
+      @media (max-width:767px)
+        font-size: 13px !important 
+
+.clockdiv
+  @media (max-width: 767px) 
+    display: flex 
+    align-items: center
+    justify-content: center
+    width: 120px 
+    padding: 10px  
+
+.font-sm
+  @media (max-width: 767px) 
+    font-size: 20px
+
+.no-scrollbar
+  -ms-overflow-style: none
+  scrollbar-width: none
+  &::-webkit-scrollbar
+    display: none
+
+.svg-responsive 
+  width: 96px
+  height: 96px
+
+  @media (max-width: 767px) 
+    width: 80px
+    height: 80px
+
+.chat-widget
+  background-color: #fff
+  position: fixed
+  right: 20px
+  bottom: 10px
+  z-index: 50
+  @media (max-width: 767px) 
+    right: 0
+    bottom: 0
+  .chat-box
+    background-color: #fff
+    box-shadow: 0px 0px 7px rgba(36, 94, 195, 0.25)
+    border-radius: 11px
+    padding: 20px 0px 0
+    overflow: hidden
+    @media (max-width: 767px) 
+      background-color: transparent
+      box-shadow: none
+    .top-chat
+      gap: 0 10px
+      padding: 0 20px
+      justify-content: space-between
+      display: flex
+      align-items: center
+      @media (max-width: 767px) 
+        gap: 0
+        padding: 0
+        justify-content: center
+      h4
+        font-size: calc(13px + (15 - 13) * (100vw - 320px) / (1920 - 320))
+        font-weight: 500
+        margin: 0
+        color: #304467
+        @media (max-width: 767px) 
+          display: none
+        span
+          display: block
+          font-size: calc(11px + (13 - 11) * (100vw - 320px) / (1920 - 320))
+      img
+        @media (max-width: 767px)
+          width: 70%;
+          text-align: right;  
+    .bottom-chat
+      background-color: #0062CC
+      display: flex
+      align-items: center
+      justify-content: space-between
+      gap: 0 10px
+      padding: 10px 20px
+      margin-top: 0px
+      @media (max-width: 767px)
+        background-color: transparent
+        border-radius: 5px
+        justify-content: center
+        gap: 0
+        padding: 0
+      h5
+        color: #fff
+        font-size: calc(11px + (13 - 11) * (100vw - 320px) / (1920 - 320))
+        font-weight: 500
+        text-transform: none
+        margin: 0
+        @media (max-width: 767px) 
+          display: none
+      a
+        background-color: #A3F3C4
+        border-radius: 4px
+        font-size: calc(11px + (13 - 11) * (100vw - 320px) / (1920 - 320))
+        font-weight: 500
+        color: #304467
+        padding: 4px 10px
+        text-transform: none
+        text-decoration: none
+        cursor: pointer
+        transition: all 0.3s ease
+        @media (max-width: 767px) 
+          border-radius: 0
+          padding: 4px 10px
+        &:hover
+          background-color: #8FE4B0
+
+

@@ -1,0 +1,143 @@
+<div class="min-h-screen bg-gray-50 flex items-start justify-left p-6 assessment">
+  <!-- Keyboard Shortcut Blocked Warning -->
+  @if (showKeyboardBlockWarning()) {
+  <div
+    class="fixed top-4 right-4 z-[9999] bg-red-600 text-white py-3 px-6 rounded-lg shadow-2xl flex items-center gap-3 animate-bounce">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    </svg>
+    <span class="font-bold">Keyboard shortcuts are disabled during assessment!</span>
+  </div>
+  }
+
+  <div class="rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full bg-white pb-4 p-6">
+    <!-- <div class="pb-4">
+      <button (click)="back()" class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</button>
+    </div> -->
+    @if(!this.isQuestionLoading()) {
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-6 pb-4 assesssec">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 mb-1">Final Assessment. Multiple Answer Questions</h1>
+        <p class="text-sm text-gray-500">
+          <span class="font-medium text-gray-900">
+            {{ totalQuestionLength() }}
+          </span>
+          Total Questions •
+          <span class="font-medium text-gray-900">
+            {{ (totalQuestionLength() - questions().length) === 0 ? currentQuestionIndex() : (totalQuestionLength() -
+            questions().length) + newQuestionsCount() }}
+          </span>
+          Completed •
+          <span class="font-medium text-gray-900">
+            {{ questions().length - newQuestionsCount() }}
+          </span>
+          Remaining
+        </p>
+      </div>
+      <div
+        class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium clockdiv">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ formattedTime() }}
+      </div>
+    </div>
+
+    <!-- Question Card -->
+    <!-- @for(question of questions(); track question.id) {
+    <div class="bg-thirdly rounded-xl p-6 mb-6">
+      <h2 class="text-base font-bold text-gray-900 mb-6">{{question?.question}}</h2>
+      <div class="grid grid-cols-2 gap-4">
+        @for(option of question?.options; track option.id) {
+        <label class="flex items-left gap-3 cursor-pointer group">
+          <input type="radio" name="question4" class="w-6 h-6 text-primary border-gray-300 focus:ring-primary">
+          <span class="text-sm text-gray-700 group-hover:text-gray-900">{{option?.optionLetter}}. {{option?.optionText
+            || ''}}</span>
+        </label>
+
+        }
+      </div>
+    </div>
+    } -->
+    @if (currentQuestion()) {
+
+    <div class="bg-thirdly rounded-xl p-6 mb-6 qestion">
+      <h2 class="text-base font-bold text-gray-900 mb-6">
+        Q{{ (totalQuestionLength() - questions().length) + (currentQuestionIndex() === 0 ? 1 : currentQuestionIndex() +
+        1) }}. {{ currentQuestion().question }}
+      </h2>
+
+      <div class="grid grid-cols-2 gap-4 dbcksec">
+        @for (option of currentQuestion().options; track option.id; let index = $index) {
+        <label class="flex items-start gap-3 cursor-pointer group">
+          <input type="radio" [name]="'question-' + currentQuestion().id"
+            class="w-4 h-4 min-w-4 min-h-4 text-primary border-gray-300 focus:ring-primary mt-0.5"
+            (change)="onOptionChange(option)" />
+          <span class="text-sm text-gray-700">
+            {{getOptionLetter(index)}}. {{ option.optionText }}
+          </span>
+        </label>
+        }
+      </div>
+    </div>
+
+    }
+
+    <!-- Navigation Buttons -->
+    <div class="flex items-end justify-end gap-4">
+      @if (currentQuestionIndex() !== questions().length - 1) {
+      <button (click)="onNext()"
+        class="px-8 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
+        Next
+      </button>
+      }
+      @if (currentQuestionIndex() === questions().length - 1) {
+      <button (click)="onCheckResult()" [disabled]="isCompleting()"
+        class="px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all">
+
+        @if (isCompleting()) {
+        <span class="flex items-center gap-2">
+          <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          Submiting Result...
+        </span>
+        } @else {
+        Submit Result
+        }
+      </button>
+      }
+    </div>
+
+    }
+    @else {
+    <div class="flex flex-col items-center justify-center py-16">
+      <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-600 font-medium">Loading Questions...!</p>
+    </div>
+    }
+
+    <!-- Generate Certificate Modal -->
+    @if (showGenerateCertificateModal() && courseTypeId !== 3) {
+    <app-generate-certificate-modal [resultData]="assessmentResultData()" [courseTypeId]="courseTypeId"
+      (generateCertificate)="onGenerateCertificate()" (close)="onCloseModal()">
+    </app-generate-certificate-modal>
+    }
+
+    <!-- Certificate Generation Loading Overlay -->
+    @if (isGeneratingCertificate() && courseTypeId !== 3) {
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center">
+        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div class="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Reviewing Your Assessment</h3>
+        <p class="text-gray-600 mb-4">Please wait while we evaluate your assessment and calculate your score.</p>
+        <p class="text-sm text-gray-500">This usually takes a few seconds.</p>
+      </div>
+    </div>
+    }
+
+  </div>
+</div>

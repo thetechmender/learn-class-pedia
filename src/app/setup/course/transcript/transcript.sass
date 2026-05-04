@@ -1,0 +1,52 @@
+
+.lecture-cont
+  position: relative
+  min-height: 850px
+  @media (max-width:767px)
+    min-height: auto
+
+  ::selection
+    background: transparent
+
+.view-mode-toggle
+  display: flex
+  gap: 12px
+  height: auto
+  justify-content: center
+  margin-bottom: 24px
+  padding: 16px
+  border-radius: 12px
+
+  button
+    display: flex
+    align-items: center
+    gap: 8px
+    padding: 12px 24px
+    background: #ffffff
+    cursor: pointer
+    transition: all 0.3s ease
+    font-size: 14px
+    font-weight: 500
+    color: #6b7280
+
+    svg
+      transition: all 0.3s ease
+
+    &.active
+      border-color: #0062CC
+      background: #0062CC !important
+      color: #ffffff !important
+      box-shadow: 0 4px 16px rgba(0, 98, 204, 0.3)
+
+      svg
+        stroke: #ffffff
+
+.movebtn
+  text-align: center
+  @media (max-width:767px)
+    text-align: left
+    margin-top: 0
+    padding-bottom: 20px
+
+
+

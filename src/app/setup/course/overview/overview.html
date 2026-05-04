@@ -1,0 +1,376 @@
+<div class="p-2 pb-20">
+  @if(careerPathLevelDetailId && courseTree?.careerPathLevel) {
+  <div class="mb-6">
+    <h2 class="text-3xl  text-gray-900 mb-3">{{ courseTree.careerPathLevel.title }}</h2>
+    <p class="text-sm text-gray-600 leading-relaxed">
+      {{ courseTree.careerPathLevel.description }}
+    </p>
+  </div>
+
+  @if(courseTree.professionalCourse?.courseCertificates) {
+  @for (cert of courseTree.professionalCourse.courseCertificates; track cert.courseCertificateId; let certIndex =
+  $index) {
+  <div class="mb-8 bg-white rounded-xl border border-gray-200 p-6 shadow-[0_0_14px_rgba(38,85,255,0.18)]">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Left Column: Image, Description, Stats -->
+      <div>
+        <p class="text-primary text-sm mb-2">Course Certificate {{ certIndex + 1 }}</p>
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ cert.title }}</h3>
+
+        <!-- Certificate Image -->
+        <div class="mb-4">
+          <img [src]="cert.thumbnail || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500'"
+            [alt]="cert.title" class="w-full rounded-lg object-cover bg-gray-100" style="height: 250px;">
+        </div>
+
+        <!-- Description -->
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">
+          {{ cert.description || 'Learn statistics, Python fundamentals, data handling, and basic analytical techniques
+          through practical examples and guided exercises.' }}
+        </p>
+
+        <!-- Stats -->
+        <div class="flex flex-wrap items-center gap-3">
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FDCD4E">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            {{cert.rating || 4.6}}
+          </span>
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
+            <i class="ic-83"></i>
+            {{ cert.shortCourses?.length || 8 }} Lecture
+          </span>
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
+            <i class="ic-73"></i>
+            08 Video
+          </span>
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-700 rounded-full text-sm border border-gray-300">
+            <i class="ic-135"></i>
+            01 PDF
+          </span>
+        </div>
+      </div>
+
+      <!-- Right Column: Content Covered Accordion -->
+      <div>
+        <h4 class="text-[16px] font-semibold text-gray-900 mb-4">Content Covered</h4>
+
+        @if(cert.shortCourses && cert.shortCourses.length > 0) {
+        <div class="space-y-1">
+          @for (sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
+          @let isExpanded = isCourseExpanded(cert.courseCertificateId, sc.shortCourseId);
+          <div class="border-t border-gray-200 overflow-hidden">
+            <!-- Accordion Header -->
+            <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              (click)="toggleCourse(cert.courseCertificateId, sc.shortCourseId)">
+              <div class="flex items-start gap-3 flex-1">
+                <span class="text-primary text-lg font-semibold">{{ (scIndex + 1).toString().padStart(2, '0') }}</span>
+                <div class="flex-1">
+                  <h5 class="text-sm font-medium text-gray-900">{{ sc.title }}</h5>
+                  @if(isExpanded) {
+                  <div class="flex items-center gap-3 mt-2 text-xs text-primary">
+                    <span class="flex items-center gap-1">
+                      <i class="ic-83"></i>
+                      01 Lecture
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <i class="ic-73"></i>
+                      01 Video
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <i class="ic-135"></i>
+                      01 PDF
+                    </span>
+                  </div>
+                  }
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 transition-transform duration-200"
+                [class.rotate-180]="isExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+  }
+  }
+
+  @if(!careerPathLevelDetailId) {
+  <div class="flex gap-8 overviewpadd">
+    <!-- Left Column - Main Content -->
+    <div class="flex-1">
+      <!-- Course Details -->
+      <div class="mb-6 course-content-left">
+        <h2 class="text-lg font-bold text-gray-900 mb-3">Course Details</h2>
+        <div class="flex items-center gap-3 text-sm text-gray-500 mb-3">
+          <span>
+            @if(courseTree?.videoUrl && totalDuration > 0) {
+            {{ this.formatTimeFromSeconds(this.totalDuration) }}
+            }
+            @else {
+            {{this.overView()?.estimatedTimeMinutes ? this.formatDuration(this.overView()?.estimatedTimeMinutes, false)
+            : this.formatTimeFromSeconds(this.totalDuration)}}
+            }
+          </span>
+          <span>{{this.courseLevel || 'N/A'}}</span>
+          <span>Released: {{(this.overView()?.releaseDate | date:'dd/MM/yyyy') || 'N/A'}}</span>
+        </div>
+        <div class="flex items-center gap-2 mb-4">
+          <!-- Rating Number -->
+          <span class="text-base font-medium text-gray-500">
+            {{
+            this.overView()?.averageRating == 5
+            ? this.overView()?.averageRating
+            : this.overView()?.averageRating?.toFixed(1)
+            }}
+          </span>
+
+          <!-- Stars -->
+          <div class="flex items-center">
+            @for (star of [1,2,3,4,5]; track star) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" [ngClass]="
+      star <= getRoundedRating()
+        ? 'text-amber-400'
+        : 'text-gray-300'
+    " fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            }
+          </div>
+
+          <!-- Review Count -->
+          <span class="text-sm review-count">
+            ({{ this.overView()?.reviewCount }} reviews)
+          </span>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          {{this.overView()?.overview || ''}}
+        </p>
+      </div>
+
+      <!-- courseTypeId == 1: Course Content with Certificates Accordion -->
+      @if(courseTypeId == 1 && courseTree?.professionalCourse?.courseCertificates) {
+      <div class="mb-0 bg-thirdly topisec rounded-xl p-5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-primary text-xl font-semibold">Course content</h3>
+          <div class="flex items-center gap-6 text-sm text-primary contenttxt">
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {{ getTotalLectures() }} Lessons
+            </span>
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ getTotalVideos() }} Videos
+            </span>
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              {{ getTotalPDFs() }} Pdfs
+            </span>
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              {{ getTotalLectures() }} Quiz
+            </span>
+            <span class="flex items-center gap-2">
+              <i class="ic-86 cl-iPrimary"></i>
+              01 Assessment
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Certificates Accordion -->
+      <div class="mb-8 topic-accor">
+        @for (cert of courseTree.professionalCourse.courseCertificates; track cert.courseCertificateId) {
+        @let certExpanded = isCertificateExpanded(cert.courseCertificateId);
+        <div class="topic-head">
+          <!-- Certificate Header -->
+          <div class="flex items-center justify-between py-4 cursor-pointer"
+            (click)="toggleCertificate(cert.courseCertificateId)">
+            <h4 class="text-primary text-base font-medium">{{ cert.title }}</h4>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary transition-transform duration-200"
+              [class.rotate-90]="certExpanded" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+
+          <!-- Short Courses List (expanded) -->
+          @if (certExpanded && cert.shortCourses) {
+          <div class="pb-4">
+            @for (sc of cert.shortCourses; track sc.shortCourseId; let scIndex = $index) {
+            <div class="topic-inner">
+              <p class="text-sm text-gray-500 font-small mb-2">{{ scIndex + 1 }}. {{ sc.title }}</p>
+              <div class="flex items-center gap-4 text-xs text-primary">
+                <span class="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                 Lecture
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                   Videos
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  PDFs
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  1 Quiz
+                </span>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Topic of the Course - Green/Cyan background (for courseTypeId 2 & 3) -->
+      @if(courseTypeId == 3 || courseTypeId == 2) {
+      <div class="mb-0 bg-thirdly topisec rounded-xl p-5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-primary text-xl font-semibold">{{courseTypeId == 2 ? 'Course content' : 'Topic of the
+            course'}}
+          </h3>
+          <div class="flex items-center gap-6 courses-serials sty1">
+            <span class="flex items-center gap-2">
+              <i class="ic-72 cl-iPrimary"></i>
+              {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Lessons </span>
+                <span class="flex items-center gap-2">
+                  <i class="ic-73 cl-iPrimary"></i>
+                  {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                    this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Videos </span>
+                    <span class="flex items-center gap-2">
+                      <i class="ic-74 cl-iPrimary"></i>
+                      {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                        this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Pdfs </span>
+                        @if(courseTypeId != 3) {
+                        <span class="flex items-center gap-2">
+                          <i class="ic-85 cl-iPrimary"></i>
+                          {{ this.overView()?.totalLessons ? (this.overView()?.totalLessons < 10 ? '0' +
+                            this.overView()?.totalLessons : this.overView()?.totalLessons) : '01' }} Quiz </span>
+                            }
+          </div>
+        </div>
+      </div>
+
+      <!-- courseTypeId == 3: Show course title from content -->
+      @if(courseTypeId == 3 && this.overView()?.courseName) {
+      <div class="mb-8 topic-accor">
+        <div class="py-4 border-b border-gray-100 prof-topic">
+          <p class="text-sm text-gray-500 mb-2">1. {{ this.overView()?.courseName }}</p>
+          <div class="flex items-center gap-6 text-xs dd-ico">
+            <span class="flex items-center gap-1">
+              <i class="ic-83 text-primary"></i>
+              Lecture
+            </span>
+            <span class="flex items-center gap-1">
+              <i class="ic-73"></i>
+              Videos
+            </span>
+            <span class="flex items-center gap-1">
+              <i class="ic-74"></i>
+              PDFs
+            </span>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- courseTypeId == 2: Short Courses/Lectures List -->
+      @if(courseTypeId == 2 && courseTree?.certificateCourse?.shortCourses) {
+      <div class="mb-8 topic-accor">
+        @for (sc of courseTree.certificateCourse.shortCourses; track sc.shortCourseId; let scIndex = $index) {
+        <div class="py-4 border-b border-gray-100 prof-topic">
+          <p class="text-sm text-gray-500 mb-2">{{ scIndex + 1 }}. {{ sc.title }}</p>
+          <div class="flex items-center gap-6 text-xs dd-ico">
+            <span class="flex items-center gap-1">
+              <i class="ic-83"></i>
+              Lecture
+            </span>
+            <span class="flex items-center gap-1">
+              <i class="ic-73"></i>
+               Videos
+            </span>
+            <span class="flex items-center gap-1">
+              <i class="ic-74"></i>
+              PDFs
+            </span>
+          </div>
+        </div>
+        }
+      </div>
+      }
+      }
+
+      <!-- Knowledge & Skills - Green/Cyan background -->
+      @if(this.overView()?.courseTags?.length > 0) {
+      <div class="mb-8 mt-3 bg-thirdly knowledge-box rounded-2xl p-6">
+        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-3 text-lg">
+          <span class="text-2xl"><img src="assets/icons/bulb.svg" alt=""></span>
+          Knowledge & Skills You Will Learn
+        </h3>
+        <div class="flex flex-wrap gap-3">
+          @for(tag of this.overView()?.courseTags || []; track tag) {
+          <span class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-200">{{tag}}</span>
+          }
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  @if (isReviewsModalOpen()) {
+  <app-course-reviews [reviews]="overView()?.reviews || []" (close)="closeReviewsModal()"></app-course-reviews>
+  }
+</div>

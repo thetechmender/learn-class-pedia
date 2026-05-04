@@ -1,0 +1,166 @@
+<div class="min-h-screen bg-gray-50 flex items-start justify-left w-full">
+  <div class="w-full class-room-mid shadow-sm w-full bg-white pb-4 background">
+    <div class="room-mid-body">
+      <div class="congrats-body">
+        <div class="congrats-top">
+          <h3 class="">Congratatulations! you Passed</h3>
+          <p>Outstanding work! You scored 100% and earned your <strong> Course Certificate. </strong></p>
+        </div>
+
+        <div class="congrats-bar">
+          <div class="flex flex-col md:flex-row">
+            <div class="flex-1">
+              <div class="congrat-box">
+                <div class="congrat-box-icon">
+                  <img src="/assets/icons/check-blue.svg" alt="">
+                </div>
+                <div class="congrat-text">
+                  <span>Correct Answers</span>
+                  <p>{{ correctAnswers }}/{{ totalQuestions }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex-1">
+              <div class="congrat-box">
+                <div class="congrat-box-icon">
+                  <img src="/assets/icons/final-score.svg" alt="">
+                </div>
+                <div class="congrat-text">
+                  <span>Final Score</span>
+                  <p>{{ scorePercentage |
+                    number:'1.0-1' }}%</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex-1">
+              <div class="congrat-box">
+                <div class="congrat-box-icon">
+                  <img src="/assets/icons/rotating-arrow.svg" alt="">
+                </div>
+                <div class="congrat-text">
+                  <span>Attempt Used</span>
+                  <p>{{ attemptsUsed }} of {{ maxAttempts }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="congrate-certificate-box">
+          <div class="congrate-certificate-box-head">
+            <h6>Your Certificate</h6>
+            <div class="preview">
+              <a href="javascript:;" (click)="openFullPreview()" class="peivewtxt"><img
+                  src="/assets/icons/search-icon.svg"> Preview
+                Full Certificate</a>
+            </div>
+          </div>
+          @if(courseTypeId ===3) {
+          <div
+            class="rounded-2xl shadow-lg border border-gray-200 relative overflow-hidden aspect-[4/3] md:aspect-[16/10]">
+            <img src="images/passed-blur-img.webp" alt="Certificate Preview" class="w-full h-full object-cover block" />
+
+            <div class="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[2px]">
+              <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+
+              <a href="https://www.classpedia.ai/learning?tabid=3" target="_blank"
+                class="px-6 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all mb-4 inline-block">
+                Unlock Certificate - $1
+              </a>
+
+              <p class="text-sm text-gray-600">
+                You can visit your <a href="https://www.classpedia.ai/learning?tabid=3"
+                  class="text-primary font-medium hover:underline">Learning Area</a>
+              </p>
+              <p class="text-sm text-gray-600">to get your certificate</p>
+            </div>
+          </div>
+
+
+          }
+          @else {
+          <div class="certificate template-1"
+            style="width: 930px; margin: auto; position: relative; padding: 60px 50px; box-sizing: border-box; overflow: hidden; background-color: #ffffff;">
+            <div
+              style="position: absolute; top: 10px; left: 0; width: 100%; height: 10px; background-image: url(/images/top-bottom-bar.png); background-size: cover; background-position: center; background-repeat: no-repeat;">
+            </div>
+
+            <div
+              class="rounded-2xl shadow-lg border border-gray-200 relative overflow-hidden aspect-[4/3] md:aspect-[16/10]">
+              <img [src]="pngPath" alt="Certificate Preview" class="w-full h-full object-cover block" />
+            </div>
+            <div
+              style="position: absolute; bottom: 10px; left: 0; width: 100%; height: 10px; background-image: url(/images/top-bottom-bar.png); background-size: cover; background-position: center; background-repeat: no-repeat;">
+            </div>
+          </div>
+          }
+          <div class="btn-holder">
+            @if(courseTypeId !== 3) {
+            <button [disabled]="isDownloadingCertificateLoading()" (click)="updateEnrollmentActivity('download')"
+              class="btn btn-border"> <i class="ic-120"></i>
+              @if (isDownloadingCertificateLoading()) {
+              <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Downloading...
+              }
+              @else {
+              Download Certificate
+              }
+            </button>
+            <button [disabled]="isLinkedinLoading()" class="btn btn-border"
+              (click)="updateEnrollmentActivity('share')"><i class="ic-119"></i>
+              @if (isLinkedinLoading()) {
+              <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Sharing...
+              }
+              @else {
+              Share on Linkedin
+              }
+            </button>
+            }
+            <button class="btn btn-border"><img src="/assets/icons/rotating-thin.svg" alt="">
+              <a href="https://www.classpedia.ai/dashboard" target="_blank" rel="noopener noreferrer"> Continue
+                Learning</a></button>
+          </div>
+        </div>
+        <div class="congrats-btm-box">
+          <h6><img src="/assets/icons/rocket.svg"> Continue Your Learning Journey</h6>
+          <p>Unlock advanced skills with Professional Certificates and Career Paths</p>
+          <button class="btn btn-primary">
+            <a href="https://www.classpedia.ai/dashboard" target="_blank" rel="noopener noreferrer">
+              Explore Next Programs
+            </a>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full Screen Certificate Preview Modal -->
+@if (showFullCertificate()) {
+<div class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" (click)="closeFullPreview()">
+  <div class="relative max-w-6xl w-full max-h-screen" (click)="$event.stopPropagation()">
+    <button (click)="closeFullPreview()"
+      class="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    <img [src]="pngPath" alt="Full Certificate" class="w-full h-auto max-h-screen object-contain" />
+  </div>
+</div>
+}
+
+<!-- Phone Number Update Modal -->
+@if (showPhoneModal()) {
+<app-update-phone-number (phoneUpdated)="onPhoneUpdated()" (close)="onPhoneModalClose()"></app-update-phone-number>
+}

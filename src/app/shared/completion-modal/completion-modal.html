@@ -1,0 +1,26 @@
+@if (isOpen) {
+<div class="fixed inset-0 z-50 flex items-center justify-center" (click)="onBackdropClick($event)">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/50 animate-fade-in"></div>
+  
+  <!-- Modal -->
+  <div class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden animate-modal-in text-center p-8">
+    <!-- Success Icon -->
+    <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+    
+    <!-- Message -->
+    <h2 class="text-xl font-bold text-gray-800 mb-2">Lecture Completed!</h2>
+    <p class="text-gray-500 text-sm mb-6">Great job! Moving to next lecture...</p>
+
+    <!-- Continue Button -->
+    <button (click)="onClose()" 
+      class="w-full btn-gradient-primary text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-all">
+      Continue
+    </button>
+  </div>
+</div>
+}

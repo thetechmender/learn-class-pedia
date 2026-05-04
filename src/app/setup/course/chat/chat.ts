@@ -1,0 +1,518 @@
+import { Component, Input, inject, signal, effect, ViewChild, ElementRef, PLATFORM_ID, NgZone } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { isPlatformBrowser } from '@angular/common';
+import { CourseService } from '../../../services/course.service';
+import { ToastrService } from 'ngx-toastr';
+import { Subject, takeUntil } from 'rxjs';
+import { SpeechService } from '../../../services/speech.service';
+
+// Declare global window interface for chattrik API
+declare global {
+  interface Window {
+    Chattrak?: {
+      openChat: () => void;
+      closeChat: () => void;
+      onChatMinimized?: (callback: () => void) => void;
+    };
+  }
+}
+
+@Component({
+  selector: 'app-chat',
+  imports: [CommonModule],
+  templateUrl: './chat.html',
+  styleUrl: './chat.sass',
+})
+export class Chat {
+  courseService = inject(CourseService);
+  private sanitizer = inject(DomSanitizer);
+  private toastr = inject(ToastrService);
+  private speechService = inject(SpeechService);
+  private ngZone = inject(NgZone);
+  private destroy$ = new Subject<void>();
+  private platformId = inject(PLATFORM_ID);
+
+  // Voice recording state
+  isRecording = signal<boolean>(false);
+  private recognition: any = null;
+  isSendingVoice = signal<boolean>(false);
+  speakingMessageIndex = signal<number>(-1);
+  private lastQueryWasVoice = false;
+  private silenceTimer: any = null;
+  private ttsCheckInterval: any = null;
+
+  @ViewChild('chatBody') chatBody!: ElementRef<HTMLDivElement>;
+
+  constructor() {
+    // Auto-scroll to bottom when messages change or sending state changes
+    effect(() => {
+      this.chatMessages();
+      this.isChatSending();
+      this.isRecording();
+      this.scrollToBottom();
+    });
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      if (this.chatBody?.nativeElement) {
+        this.chatBody.nativeElement.scrollTop = this.chatBody.nativeElement.scrollHeight;
+      }
+    });
+  }
+
+  @Input() assessmentStep: 'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts' = 'none';
+  @Input() courseTree: any = null;
+
+  isLiveChatActive = signal<boolean>(false);
+
+  chatInput = signal<string>('');
+  chatThreadId = signal<string>('');
+  isChatSending = signal<boolean>(false);
+  chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string | SafeHtml }>>([
+    {
+      role: 'bot',
+      text: this.sanitizer.bypassSecurityTrustHtml("Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics.")
+    }
+  ]);
+
+  // Toggle voice recording
+  toggleRecording() {
+    if (this.isRecording()) {
+      this.stopRecording();
+    } else {
+      this.startRecording();
+    }
+  }
+
+  private startRecording() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      this.toastr.error('Speech recognition is not supported in this browser.', 'Error');
+      return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = 'en-US';
+
+    this.recognition.onresult = (event: any) => {
+      this.ngZone.run(() => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        this.chatInput.set(transcript);
+
+        // Scroll input to show latest text
+        setTimeout(() => {
+          const inputEl = document.querySelector('app-chat input[type="text"]') as HTMLInputElement;
+          if (inputEl) {
+            inputEl.scrollLeft = inputEl.scrollWidth;
+          }
+        });
+
+        // Reset 2-second silence timer on each result
+        this.resetSilenceTimer();
+      });
+    };
+
+    this.recognition.onend = () => {
+      this.ngZone.run(() => {
+        this.clearSilenceTimer();
+        if (this.isRecording()) {
+          // Recognition ended unexpectedly while still recording
+          this.isRecording.set(false);
+          this.lastQueryWasVoice = true;
+          const text = (this.chatInput() || '').trim();
+          if (text) {
+            this.sendChatMessage();
+          }
+        }
+      });
+    };
+
+    this.recognition.onerror = (event: any) => {
+      this.ngZone.run(() => {
+        console.error('Speech recognition error:', event.error);
+        this.clearSilenceTimer();
+        this.isRecording.set(false);
+        if (event.error !== 'no-speech') {
+          this.toastr.error('Voice recognition error. Please try again.', 'Error');
+        }
+      });
+    };
+
+    this.recognition.start();
+    this.isRecording.set(true);
+  }
+
+  private stopRecording() {
+    this.clearSilenceTimer();
+    if (this.recognition) {
+      this.lastQueryWasVoice = true;
+      this.isRecording.set(false);
+      this.recognition.stop();
+      this.recognition = null;
+
+      // Auto-send if there's text
+      const text = (this.chatInput() || '').trim();
+      if (text) {
+        this.sendChatMessage();
+      }
+    }
+  }
+
+  private resetSilenceTimer() {
+    this.clearSilenceTimer();
+    this.silenceTimer = setTimeout(() => {
+      if (this.isRecording()) {
+        this.stopRecording();
+      }
+    }, 2000);
+  }
+
+  private clearSilenceTimer() {
+    if (this.silenceTimer) {
+      clearTimeout(this.silenceTimer);
+      this.silenceTimer = null;
+    }
+  }
+
+  // Toggle speech for a specific bot message (called from template)
+  toggleSpeakMessage(messageIndex: number) {
+    if (this.speakingMessageIndex() === messageIndex) {
+      // Currently speaking this message — stop it
+      this.speechService.stop();
+      this.speakingMessageIndex.set(-1);
+      this.clearTtsCheck();
+      return;
+    }
+    // Get the message text
+    const msg = this.chatMessages()[messageIndex];
+    if (!msg || msg.role !== 'bot') return;
+    const text = typeof msg.text === 'string' ? msg.text : (msg.text as any)?.changingThisBreaksApplicationSecurity || '';
+    this.speakResponse(text, messageIndex);
+  }
+
+  private speakResponse(text: string, messageIndex: number) {
+    if (!isPlatformBrowser(this.platformId)) return;
+    // Strip HTML tags for clean TTS
+    const cleanText = text.replace(/<[^>]*>/g, '');
+    this.speakingMessageIndex.set(messageIndex);
+    this.speechService.speak(cleanText);
+
+    // Poll speechSynthesis.speaking to detect when TTS finishes
+    this.clearTtsCheck();
+    this.ttsCheckInterval = setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        this.ngZone.run(() => {
+          this.speakingMessageIndex.set(-1);
+        });
+        this.clearTtsCheck();
+      }
+    }, 300);
+  }
+
+  private clearTtsCheck() {
+    if (this.ttsCheckInterval) {
+      clearInterval(this.ttsCheckInterval);
+      this.ttsCheckInterval = null;
+    }
+  }
+
+  sendChatMessage() {
+    const question = (this.chatInput() || '').trim();
+    if (!question || this.isChatSending()) return;
+
+    const tree = this.courseTree;
+    const cpCourseDetailId = tree?.courseId;
+    if (!cpCourseDetailId) {
+      this.toastr.error('Course is not loaded yet. Please try again in a moment.', 'Error');
+      return;
+    }
+
+    // Capture whether this message was voice-initiated before resetting
+    const wasVoice = this.lastQueryWasVoice;
+    this.lastQueryWasVoice = false;
+    this.isSendingVoice.set(wasVoice);
+
+    const payload = {
+      customerId: 1,
+      question: question,
+      cpCourseDetailId: cpCourseDetailId,
+      threadId: this.chatThreadId()
+    };
+
+    this.chatMessages.set([...this.chatMessages(), { role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
+    this.chatInput.set('');
+    this.isChatSending.set(true);
+
+    this.courseService.askCourseQuestion(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res: any) => {
+        const threadId = res?.data?.threadId ?? res?.threadId;
+        if (typeof threadId === 'string' && threadId.length > 0) {
+          this.chatThreadId.set(threadId);
+        }
+
+        const answer = res?.data?.answer ?? res?.answer ?? res?.data?.response ?? res?.response ?? res?.message;
+        const text = typeof answer === 'string' && answer.trim().length > 0 ? answer : 'I could not find an answer for that.';
+        this.chatMessages.set([...this.chatMessages(), { role: 'bot', text }]);
+        this.isChatSending.set(false);
+        this.isSendingVoice.set(false);
+
+        // If the query was voice-initiated, speak the response
+        if (wasVoice) {
+          const msgIndex = this.chatMessages().length - 1;
+          this.speakResponse(text, msgIndex);
+        }
+      },
+      error: (err: any) => {
+        this.isChatSending.set(false);
+        this.isSendingVoice.set(false);
+        this.toastr.error('Failed to send your question. Please try again.', 'Error');
+        console.error('Ask Course Question Error:', err);
+      }
+    });
+  }
+
+  handleChatMessageClick(event: Event) {
+    const target = event.target as HTMLElement;
+
+    // Check if the clicked element or its parent is the live chat link
+    if (target.classList.contains('live-chat-link') ||
+      target.closest('.live-chat-link') ||
+      target.getAttribute('data-live-chat') === 'true' ||
+      target.closest('[data-live-chat]')) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.activateLiveChat();
+    } else {
+    }
+  }
+
+  activateLiveChat() {
+
+    if (isPlatformBrowser(this.platformId)) {
+
+      // Check if script already exists to avoid duplicate loading
+      const existingScript = document.getElementById('cd360-snippet');
+      if (existingScript) {
+        if (window.Chattrak?.openChat) {
+          window.Chattrak.openChat();
+        }
+        return;
+      }
+
+      // Dynamically load the chattrik script
+      const script = document.createElement('script');
+      script.id = 'cd360-snippet';
+      script.src = 'https://app.chattrik.com/assets/scripts/snippet.js?key=69dd2f99b2f813411fe1e011&position=left';
+      script.async = true;
+      script.setAttribute('data-position', 'left');
+
+
+      script.onload = () => {
+
+        // Add CSS to hide launcher button
+        this.addLauncherButtonHidingCSS();
+
+        // Wait for widget to render, then attach event listener to minimize button
+        setTimeout(() => {
+          // Check if on assessment screen
+          const isAssessmentScreen = this.assessmentStep === 'start' ||
+            this.assessmentStep === 'final' ||
+            this.assessmentStep === 'cleared' ||
+            this.assessmentStep === 'failed' ||
+            this.assessmentStep === 'maxattempts';
+
+          // Directly modify the launcher iframe position
+          const launcherIframe = document.querySelector('iframe#launcher') as HTMLElement;
+          if (launcherIframe) {
+            launcherIframe.style.left = '0px';
+            launcherIframe.style.right = 'auto';
+            // Hide on assessment screens
+            if (isAssessmentScreen) {
+              launcherIframe.style.display = 'none';
+            }
+          }
+
+          // Directly modify the webWidget iframe position
+          const webWidgetIframe = document.querySelector('iframe#webWidget') as HTMLElement;
+          if (webWidgetIframe) {
+            webWidgetIframe.style.left = '0px';
+            webWidgetIframe.style.right = 'auto';
+            webWidgetIframe.style.display = 'block';
+            // Hide on assessment screens
+            if (isAssessmentScreen) {
+              webWidgetIframe.style.display = 'none';
+            }
+          }
+
+          const badgeIframe = document.querySelector('iframe#badge') as HTMLElement;
+          if (badgeIframe) {
+            badgeIframe.style.left = '0px';
+            badgeIframe.style.right = 'auto';
+            badgeIframe.style.display = 'block';
+            // Hide on assessment screens
+            if (isAssessmentScreen) {
+              badgeIframe.style.display = 'none';
+            }
+          }
+
+          this.attachMinimizeButtonListener();
+
+          // Open live chat
+          if (window.Chattrak?.openChat) {
+            window.Chattrak.openChat();
+          } else {
+          }
+        }, 2000); // Wait 2 seconds for widget to render
+      };
+
+      script.onerror = () => {
+        console.error('[Live Chat Debug] Failed to load chattrik script');
+        // Reset if script fails to load
+        this.isLiveChatActive.set(false);
+      };
+
+      document.body.appendChild(script);
+    } else {
+    }
+  }
+
+  private addLauncherButtonHidingCSS() {
+    if (isPlatformBrowser(this.platformId)) {
+      // Add CSS rule to hide launcher button and position widget on left
+      const style = document.createElement('style');
+      style.id = 'launcher-button-hider';
+      style.textContent = `
+        #launcher_btn {
+          display: none !important;
+        }
+        /* Position Chattrik launcher button on left side */
+        iframe#launcher {
+          left: 0px !important;
+          right: auto !important;
+        }
+        /* Position Chattrik webWidget on left side */
+        iframe#webWidget {
+          left: 0px !important;
+          right: auto !important;
+        }
+        iframe#badge {
+          left: 0px !important;
+          right: auto !important;
+        }
+        /* Position Chattrik widget on left side */
+        app-root div.content_body {
+          left: 20px !important;
+          right: auto !important;
+        }
+        app-root {
+          left: 20px !important;
+          right: auto !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  private removeLauncherButtonHidingCSS() {
+    if (isPlatformBrowser(this.platformId)) {
+      const style = document.getElementById('launcher-button-hider');
+      if (style) {
+        style.remove();
+      }
+    }
+  }
+
+  private attachMinimizeButtonListener() {
+
+    // Remove any existing listener to avoid duplicates
+    if ((window as any).liveChatMinimizeHandler) {
+      document.removeEventListener('click', (window as any).liveChatMinimizeHandler);
+    }
+
+    // Use polling to check if widget is visible
+    let widgetWasVisible = false;
+    let pollCount = 0;
+    const maxPolls = 30; // Poll for 30 seconds
+
+    const pollInterval = setInterval(() => {
+      pollCount++;
+      const chatWidget = document.querySelector('app-root div.content_body');
+      const isVisible = chatWidget && (chatWidget as HTMLElement).offsetParent !== null;
+
+
+      if (isVisible) {
+        widgetWasVisible = true;
+      }
+
+      // If widget was visible and now is not, it was minimized
+      if (widgetWasVisible && !isVisible) {
+        clearInterval(pollInterval);
+        this.deactivateLiveChat();
+      }
+
+      if (pollCount >= maxPolls) {
+        clearInterval(pollInterval);
+      }
+    }, 1000); // Check every second
+  }
+
+  deactivateLiveChat() {
+    if (isPlatformBrowser(this.platformId)) {
+
+      // Remove CSS hiding rule so launcher button can show again
+      this.removeLauncherButtonHidingCSS();
+
+      // Remove the chattrik script
+      const script = document.getElementById('cd360-snippet');
+      if (script) {
+        script.remove();
+      } else {
+      }
+
+      // Remove the chattrik widget HTML (app-root with content_body)
+      const chatWidget = document.querySelector('app-root div.content_body');
+      if (chatWidget) {
+        const appRoot = chatWidget.closest('app-root');
+        if (appRoot) {
+          appRoot.remove();
+        }
+      } else {
+        // Try alternative selectors
+        const allAppRoots = document.querySelectorAll('app-root');
+        allAppRoots.forEach((root, index) => {
+          if (root.querySelector('.content_body')) {
+            root.remove();
+          }
+        });
+      }
+
+      // Remove the launcher button if it exists
+      const launcherBtn = document.getElementById('launcher_btn');
+      if (launcherBtn) {
+        launcherBtn.remove();
+      }
+
+    }
+  }
+
+  ngOnDestroy() {
+    this.clearSilenceTimer();
+    this.clearTtsCheck();
+    if (this.recognition) {
+      this.recognition.abort();
+      this.recognition = null;
+    }
+    this.speechService.stop();
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}

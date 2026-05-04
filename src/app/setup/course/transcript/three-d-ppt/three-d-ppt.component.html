@@ -1,0 +1,136 @@
+<div class="ppt-container" [attr.data-theme]="theme" [class.fullscreen]="isFullscreen"
+  [class.presentation-mode]="isPresentationMode"> @if (!isPresentationMode) {
+  <div class="toolbar" style="max-width: 1100px !important">
+    <!-- <div class="toolbar__brand">
+      <div class="toolbar__badge border border-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+      </div>
+      <div class="toolbar__text">
+        <div class="toolbar__title" [title]="pptTitle">{{ pptTitle }}</div>
+        <div class="toolbar__info">{{ currentSlideNumber }}</div>
+      </div>
+    </div> -->
+
+    <div class="toolbar__actions">
+      <button
+        class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+        (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"
+          stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <button
+        class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+        (click)="next()" title="Next (→)" [disabled]="currentIndex === slides.length - 1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"
+          stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+      <button
+        class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+        (click)="toggleFullscreen()" [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
+        @if (!isFullscreen) {
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+        </svg>
+        } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+        </svg>
+        }
+      </button>
+    </div>
+  </div>
+
+  }
+
+  <!-- Slides Container -->
+  <div class="slides-wrapper">
+    @if (slides.length > 0) {
+    <div class="slide-container" [class.transitioning]="isTransitioning"
+      [class.slide-next]="transitionDirection === 'next'" [class.slide-prev]="transitionDirection === 'prev'">
+
+      <!-- Current Slide -->
+      <div class="slide active-slide">
+        <div class="slide-content">
+          <div class="slide-header">
+            <h1 class="slide-title">{{ slides[currentIndex].title }}</h1>
+            @if (slides[currentIndex].subtitle) {
+            <p class="slide-subtitle">{{ slides[currentIndex].subtitle }}</p>
+            }
+          </div>
+          <div class="slide-body" [innerHTML]="slides[currentIndex].content | safeHtml"></div>
+        </div>
+
+        <!-- Slide Number (bottom right) -->
+        @if (isPresentationMode) {
+        <div class="slide-number">{{ currentSlideNumber }}</div>
+        }
+      </div>
+    </div>
+
+    <!-- Navigation Arrows -->
+    <!-- <button (click)="prev()" class="nav-arrow nav-prev" [disabled]="currentIndex === 0"
+      [class.hidden]="currentIndex === 0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    </button>
+
+    <button (click)="next()" class="nav-arrow nav-next" [disabled]="currentIndex === slides.length - 1"
+      [class.hidden]="currentIndex === slides.length - 1">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button> -->
+    } @else {
+    <div class="empty-state">
+      <p>No slides available</p>
+    </div>
+    }
+  </div>
+
+
+  <div class="footer">
+    <div class="progress">
+              <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden progressbr">
+          <div class="h-full bg-primary rounded-full transition-all duration-300"
+            [style.width.%]="progressPercent"></div>
+        </div>
+        <span class="text-sm text-primary">{{ progressPercent | number:'1.0-1' }}%</span>
+    </div>
+  </div>
+
+  <!-- Thumbnail Navigation (bottom, hidden in presentation mode) -->
+  <!-- @if (!isPresentationMode && slides.length > 0) {
+  <div class="thumbnail-strip">
+    @for (slide of slides; track slide.index) {
+    <button (click)="goTo(slide.index)" class="thumbnail" [class.active]="currentIndex === slide.index">
+      <div class="thumbnail-number">{{ slide.index + 1 }}</div>
+      <div class="thumbnail-title">{{ slide.title }}</div>
+    </button>
+    }
+  </div>
+  } -->
+
+  <!-- Exit Presentation Mode Button -->
+  <!-- @if (isPresentationMode) {
+  <button (click)="togglePresentationMode()" class="exit-presentation" title="Exit Presentation (P)">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  </button>
+  } -->
+</div>

@@ -1,0 +1,122 @@
+<div class="min-h-screen bg-gray-50 flex items-start justify-left p-6 w-full">
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 max-w-3xl w-full">
+    <!-- Header with Timer -->
+    <div class="pt-4 px-4">
+      <button (click)="back()"
+        class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium">Back</button>
+    </div>
+    <div class="flex items-start justify-between p-6 pb-4 assesssec">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 mb-2">Ready To Start Your Assessment?</h1>
+        <p class="text-sm text-gray-600 ">You will have <span class="text-primary font-semibold ">{{ totalMinutes() }}
+            minutes</span> to
+          complete this assessment</p>
+      </div>
+      <div
+        class="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium clockdiv">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ formattedTime() }}
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-gray-100"></div>
+
+    <!-- Rules Section -->
+    <div class="p-6 space-y-3 asstext">
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Time limit: {{ totalMinutes() }} minutes</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        <span>You cannot pause once started</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        <span>Tab switching is not allowed</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        <span>Dual Display and Screenshots Restricted</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>If time expires, your attempt will be marked as failed</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>You have <span class="font-semibold text-gray-900">{{assessmentService.attemptsRemaining()}}
+            attempt{{assessmentService.attemptsRemaining() !== 1 ? 's' : ''}}</span> remaining</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>You must score at least 75% to pass</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span>Any violation will end your assessment and count as one attempt.</span>
+      </div>
+      <!-- Warning Box -->
+      <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mt-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 flex-shrink-0" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span class="text-sm text-amber-800">Once you click Start Assessment, the timer will begin immediately.</span>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-600">
+        <input type="checkbox" name="isAcceptedGuidelines" id="isAcceptedGuidelines" [(ngModel)]="isAcceptedGuidelines"
+          class="h-4 w-4">
+        <span>I have read and accept the assessment guidelines.</span>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-gray-100"></div>
+
+    <!-- Start Button -->
+    <div class="p-6 flex justify-center">
+      <button (click)="onStartAssessment()" [disabled]="!isAcceptedGuidelines"
+        class="px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+        Start Assessment
+      </button>
+    </div>
+  </div>
+</div>
