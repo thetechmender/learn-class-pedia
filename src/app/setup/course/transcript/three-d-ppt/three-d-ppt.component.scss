@@ -287,6 +287,8 @@
   justify-content: center;
 
   perspective: 1000px;
+  width: 100%;
+  margin-bottom: 20px;
 
 }
 
@@ -922,7 +924,7 @@
 
 // Responsive
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
 
   .slide {
 
@@ -932,7 +934,7 @@
 
     height: 400px;
     overflow-y: scroll;
-    padding: 24px 32px;
+    padding: 24px 20px;
 
 
 

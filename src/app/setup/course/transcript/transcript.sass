@@ -2,7 +2,9 @@
 .lecture-cont
   position: relative
   min-height: 850px
-  
+  @media (max-width:767px)
+    min-height: auto
+
   ::selection
     background: transparent
 
@@ -41,6 +43,10 @@
 
 .movebtn
   text-align: center
+  @media (max-width:767px)
+    text-align: left
+    margin-top: 0
+    padding-bottom: 20px
 
 
 
