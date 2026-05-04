@@ -16,9 +16,9 @@
 
   <!-- Left Sidebar -->
   <aside
-    class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300 fixed lg:relative lg:translate-x-0 z-50"
+    class="bg-white w-80 flex-shrink-0 flex flex-col course-left transition-all duration-300 fixed lg:relative lg:translate-x-0 z-50 overflow-hidden"
     [class.translate-x-0]="isSidebarOpen()" [class.-translate-x-full]="!isSidebarOpen()"
-    [class.lg:flex]="isSidebarOpen()" [class.hidden]="!isSidebarOpen()" style="height: 100%;">
+    [class.lg:flex]="isSidebarOpen()" [class.hidden]="!isSidebarOpen()">
     <!-- Sidebar Header with Title and Close Button -->
     <div class="fondation">
       <div class="flex items-center justify-between">
@@ -37,7 +37,7 @@
     </div>
 
     <!-- Lecture List -->
-    <div class="flex-1 overflow-y-auto overscroll-contain">
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain">
       <!-- Career Path Level Label -->
       @if (courseTree()) {
       @if (courseTree().courseTypeId === 1 && courseTree().professionalCourse?.courseCertificates) {
@@ -324,7 +324,7 @@
 
 
 
-    <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0">
+    <div class="p-3 border-t border-gray-100 space-y-2 flex-shrink-0 sticky bottom-0 bg-white z-10">
       @if(courseTree()?.courseTypeId == 3 &&
       assessmentStep() === 'none') {
       <button (click)="startAssessment()" [disabled]="isStartingAssessment()"
@@ -360,7 +360,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto" style="height: calc(100vh - 46px);">
+  <main class="flex-1 overflow-y-auto px-2 py-12 sm:w-full" style="height: calc(100vh - 46px);">
     <!-- Assessment Flow -->
     @if (courseTree(); as tree) {
     @if (assessmentStep() === 'none' && !courseTree()?.videoUrl) {
