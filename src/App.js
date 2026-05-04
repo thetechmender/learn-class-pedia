@@ -11,7 +11,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/admin/login" replace />} />
             <Route path="/admin/*" element={<AdminApp />} />
+            <Route path="*" element={<Navigate to="/admin/login" replace />} />
           </Routes>
+
         </div>
       </Router>
     </ToastProvider>
