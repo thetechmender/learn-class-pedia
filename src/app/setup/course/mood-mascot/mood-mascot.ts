@@ -94,13 +94,11 @@ export class MoodMascot implements OnInit, OnDestroy {
   private promptIdx = -1;
   currentPrompt = signal(this.promptMessages[0]);
 
-  private promptIntervalMs = 10000; // show every 10s
-  private promptVisibleMs = 5000;   // stays visible for 5s
+  private promptIntervalMs = 10000;
+  private promptVisibleMs = 5000;   
   private promptInterval: any = null;
   private promptHideTimer: any = null;
   private attentionTimer: any = null;
-
-  // Tracks how many callouts in a row the user has ignored (no hover/click).
   private ignoredCount = 0;
   // True on touch devices — magnetic cursor & hover effects are disabled.
   private isTouchDevice = false;
