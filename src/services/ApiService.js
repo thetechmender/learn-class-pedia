@@ -23,7 +23,10 @@ class ApiService {
       throw error;
     }
     
-    const url = `${this.baseURL}${endpoint}`;
+    // Check if endpoint is already a full URL (starts with http:// or https://)
+    const url = endpoint.startsWith('http://') || endpoint.startsWith('https://') 
+      ? endpoint 
+      : `${this.baseURL}${endpoint}`;
     
     const config = {
       headers: {

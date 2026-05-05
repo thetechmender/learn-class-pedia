@@ -29,9 +29,11 @@ import {
 import useStudentManagement from '../../../../hooks/api/useStudentManagement';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
 import GenericDropdown from '../../../../components/GenericDropdown';
+import { useToast } from '../../../../components/ToastProvider';
 import './StudentManagement.css';
 
 const StudentManagement = () => {
+  const { showSuccess, showError } = useToast();
   const {
     loading,
     error,
@@ -50,6 +52,7 @@ const StudentManagement = () => {
     getStudentCart,
     getStudentTestimonials,
     approveTestimonial,
+    getTestimonialStatusesDropdown,
     generateDashboardUrl,
     loadingStudentTestimonials,
   } = useStudentManagement();
@@ -91,6 +94,9 @@ const StudentManagement = () => {
   const [loadingCart, setLoadingCart] = useState(false);
   const [loadingTestimonials, setLoadingTestimonials] = useState(false);
   const [testimonialActionLoading, setTestimonialActionLoading] = useState({});
+  const [testimonialStatuses, setTestimonialStatuses] = useState([]);
+  const [selectedTestimonialStatus, setSelectedTestimonialStatus] = useState({});
+  const [testimonialComments, setTestimonialComments] = useState({});
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadingDashboardUrl, setLoadingDashboardUrl] = useState(null); // Store enrollment ID being processed
 
@@ -232,29 +238,87 @@ const StudentManagement = () => {
   const handleViewTestimonials = useCallback(async (studentId) => {
     setLoadingTestimonials(true);
     try {
-      const testimonialsData = await getStudentTestimonials(studentId);
+      const [testimonialsData, statusesData] = await Promise.all([
+        getStudentTestimonials(studentId),
+        getTestimonialStatusesDropdown()
+      ]);
       setStudentTestimonials(testimonialsData);
+      setTestimonialStatuses(statusesData || []);
+      
+      // Pre-populate status dropdown and comments with existing data
+      if (testimonialsData && Array.isArray(testimonialsData)) {
+        const initialStatuses = {};
+        const initialComments = {};
+        testimonialsData.forEach(testimonial => {
+          if (testimonial.testimonialStatusId) {
+            initialStatuses[testimonial.id] = testimonial.testimonialStatusId;
+          }
+          if (testimonial.comments) {
+            initialComments[testimonial.id] = testimonial.comments;
+          }
+        });
+        setSelectedTestimonialStatus(initialStatuses);
+        setTestimonialComments(initialComments);
+      }
+      
       setShowTestimonialsModal(true);
     } catch (err) {
       console.error('Failed to fetch student testimonials:', err);
     } finally {
       setLoadingTestimonials(false);
     }
-  }, [getStudentTestimonials]);
+  }, [getStudentTestimonials, getTestimonialStatusesDropdown]);
 
-  const handleApproveTestimonial = useCallback(async (testimonialId, customerId, isApproved) => {
+  const handleSubmitTestimonial = useCallback(async (testimonialId, customerId) => {
+    const statusId = selectedTestimonialStatus[testimonialId];
+    const comment = testimonialComments[testimonialId] || '';
+
+    console.log('Submit Testimonial Debug:', {
+      testimonialId,
+      statusId,
+      comment,
+      selectedTestimonialStatus,
+      customerId
+    });
+
+    if (!statusId) {
+      showError('Please select a status');
+      return;
+    }
+
     setTestimonialActionLoading(prev => ({ ...prev, [testimonialId]: true }));
     try {
-      await approveTestimonial(customerId, isApproved);
-      // Refresh testimonials after approval/denial
+      await approveTestimonial(testimonialId, statusId, comment);
+      
+      // Refresh testimonials data
       const testimonialsData = await getStudentTestimonials(customerId);
       setStudentTestimonials(testimonialsData);
+      
+      // Re-populate status dropdown and comments with refreshed data
+      if (testimonialsData && Array.isArray(testimonialsData)) {
+        const updatedStatuses = {};
+        const updatedComments = {};
+        testimonialsData.forEach(testimonial => {
+          if (testimonial.testimonialStatusId) {
+            updatedStatuses[testimonial.id] = testimonial.testimonialStatusId;
+          }
+          if (testimonial.comments) {
+            updatedComments[testimonial.id] = testimonial.comments;
+          }
+        });
+        setSelectedTestimonialStatus(updatedStatuses);
+        setTestimonialComments(updatedComments);
+      }
+      
+      // Show success message
+      showSuccess('Testimonial updated successfully!');
     } catch (err) {
       console.error('Failed to update testimonial status:', err);
+      showError('Failed to update testimonial. Please try again.');
     } finally {
       setTestimonialActionLoading(prev => ({ ...prev, [testimonialId]: false }));
     }
-  }, [approveTestimonial, getStudentTestimonials]);
+  }, [approveTestimonial, getStudentTestimonials, selectedTestimonialStatus, testimonialComments]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({
@@ -2908,158 +2972,192 @@ const StudentManagement = () => {
 
       {/* Testimonials Modal */}
       {showTestimonialsModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl max-w-4xl w-full max-h-[85vh] overflow-hidden shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-slideUp">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-slideUp">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                    <MessageSquare className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Testimonials
-                    </h2>
-                    <p className="text-purple-100 mt-1">
-                      {studentTestimonials?.length || 0} testimonials
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowTestimonialsModal(false);
-                    setStudentTestimonials(null);
-                  }}
-                  className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition-colors duration-200 group"
-                >
-                  <X className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
-                </button>
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-5 h-5 text-white" />
+                <h2 className="text-lg font-bold text-white">
+                  Testimonials ({studentTestimonials?.length || 0})
+                </h2>
               </div>
+              <button
+                onClick={() => {
+                  setShowTestimonialsModal(false);
+                  setStudentTestimonials(null);
+                }}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 lg:p-8 overflow-y-auto max-h-[calc(85vh-120px)] bg-gray-50 dark:bg-gray-900">
+            <div className="p-5 overflow-y-auto max-h-[calc(90vh-64px)] bg-gray-50 dark:bg-gray-900">
               {loadingTestimonials || loadingStudentTestimonials ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
+                  <p className="text-gray-500 dark:text-gray-400">Loading testimonials...</p>
                 </div>
               ) : studentTestimonials && studentTestimonials.length > 0 ? (
                 <div className="space-y-4">
-                  {/* Header with count */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-purple-500 rounded-xl">
-                      <MessageSquare className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                      Testimonials ({studentTestimonials.length})
-                    </h3>
-                  </div>
-
                   {/* Testimonial Cards */}
                   {studentTestimonials.map((testimonial, index) => (
-                    <div key={testimonial.id || index} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-purple-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-                      <div className="flex flex-col gap-4">
-                        {/* Testimonial Header */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                              <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                              <h4 className="text-base font-bold text-gray-900 dark:text-white">
-                                {testimonial.customerName || 'Unknown Customer'}
-                              </h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Customer ID: {testimonial.customerId}
-                              </p>
-                            </div>
+                    <div key={testimonial.id || index} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                      {/* Card Header */}
+                      <div className="bg-gray-50 dark:bg-gray-750 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
+                            <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                           </div>
-                          <div className="flex items-center gap-2">
-                            {testimonial.isApproved ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
-                                <CheckCircle className="w-3.5 h-3.5" />
-                                Approved
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
-                                <Clock className="w-3.5 h-3.5" />
-                                Pending
-                              </span>
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {testimonial.customerName || 'Unknown Customer'}
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              ID: {testimonial.customerId} • {testimonial.createdAt ? formatDateTime(testimonial.createdAt) : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        {testimonial.testimonialStatusId === 3 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Approved
+                          </span>
+                        ) : testimonial.testimonialStatusId === 2 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            <X className="w-3.5 h-3.5" />
+                            Denied
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                            <Clock className="w-3.5 h-3.5" />
+                            Pending
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {/* Left Column - Content & Video */}
+                          <div className="space-y-3">
+                            {/* Testimonial Text */}
+                            {testimonial.testimonial && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Message</p>
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                    {testimonial.testimonial}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Video Player */}
+                            {testimonial.testimonialVideoUrl && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Video</p>
+                                <div className="bg-black rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                                  <video
+                                    controls
+                                    controlsList="nodownload"
+                                    className="w-full aspect-video object-contain"
+                                    preload="metadata"
+                                  >
+                                    <source src={testimonial.testimonialVideoUrl} type="video/mp4" />
+                                    Your browser does not support the video tag.
+                                  </video>
+                                </div>
+                              </div>
                             )}
                           </div>
-                        </div>
 
-                        {/* Testimonial Content */}
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                            {testimonial.testimonial || 'No testimonial text provided.'}
-                          </p>
-                        </div>
+                          {/* Right Column - Status Management */}
+                          <div className="space-y-3">
+                            <div className="bg-purple-50 dark:bg-gray-700/50 rounded-lg p-4 border border-purple-200 dark:border-gray-600">
+                              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">Review Status</p>
+                              
+                              {/* Status Dropdown */}
+                              <div className="mb-3">
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                  Status <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                  value={selectedTestimonialStatus[testimonial.id] || ''}
+                                  onChange={(e) => {
+                                    const newStatusId = parseInt(e.target.value);
+                                    console.log('Status Changed:', {
+                                      testimonialId: testimonial.id,
+                                      newStatusId,
+                                      selectedOption: e.target.options[e.target.selectedIndex].text
+                                    });
+                                    setSelectedTestimonialStatus(prev => ({
+                                      ...prev,
+                                      [testimonial.id]: newStatusId
+                                    }));
+                                  }}
+                                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                >
+                                  <option value="">Select Status</option>
+                                  {testimonialStatuses.map(status => (
+                                    <option key={status.id} value={status.id}>
+                                      {status.statusName}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
 
-                        {/* Video URL if exists */}
-                        {testimonial.testimonialVideoUrl && (
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={testimonial.testimonialVideoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline transition-colors"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              Watch Video Testimonial
-                            </a>
+                              {/* Comment Textbox */}
+                              <div className="mb-3">
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+                                  Comment (Optional)
+                                </label>
+                                <textarea
+                                  value={testimonialComments[testimonial.id] || ''}
+                                  onChange={(e) => setTestimonialComments(prev => ({
+                                    ...prev,
+                                    [testimonial.id]: e.target.value
+                                  }))}
+                                  placeholder="Add notes..."
+                                  rows={3}
+                                  className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none transition-all"
+                                />
+                              </div>
+
+                              {/* Submit Button */}
+                              <button
+                                onClick={() => handleSubmitTestimonial(testimonial.id, testimonial.customerId)}
+                                disabled={testimonialActionLoading[testimonial.id] || !selectedTestimonialStatus[testimonial.id]}
+                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {testimonialActionLoading[testimonial.id] ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                    <span>Submitting...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span>Submit Review</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
-                        )}
-
-                        {/* Date */}
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <Calendar className="w-3.5 h-3.5" />
-                          <span>Submitted: {testimonial.createdAt ? formatDateTime(testimonial.createdAt) : 'N/A'}</span>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                          {testimonial.isApproved ? (
-                            <button
-                              onClick={() => handleApproveTestimonial(testimonial.id, testimonial.customerId, false)}
-                              disabled={testimonialActionLoading[testimonial.id]}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 text-sm font-medium rounded-xl border border-red-200 dark:border-red-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {testimonialActionLoading[testimonial.id] ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
-                              ) : (
-                                <XCircle className="w-4 h-4" />
-                              )}
-                              <span>Deny</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleApproveTestimonial(testimonial.id, testimonial.customerId, true)}
-                              disabled={testimonialActionLoading[testimonial.id]}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 text-sm font-medium rounded-xl border border-green-200 dark:border-green-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {testimonialActionLoading[testimonial.id] ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent"></div>
-                              ) : (
-                                <CheckCircle className="w-4 h-4" />
-                              )}
-                              <span>Approve</span>
-                            </button>
-                          )}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Testimonials Found</h3>
-                  <p className="text-gray-500 dark:text-gray-400">
+                <div className="text-center py-16">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full mb-4">
+                    <MessageSquare className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Testimonials Found</h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     This student has not submitted any testimonials yet.
                   </p>
                 </div>

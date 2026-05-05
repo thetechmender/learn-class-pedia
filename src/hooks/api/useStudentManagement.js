@@ -273,15 +273,29 @@ export const useStudentManagement = () => {
     }
   }, []);
 
-  // Approve or deny a testimonial
-  const approveTestimonial = useCallback(async (customerId, isApproved) => {
+  const getTestimonialStatusesDropdown = useCallback(async () => {
+    try {
+      const response = await ApiService.get(ENDPOINTS.STUDENT_MANAGEMENT_TESTIMONIAL_STATUSES);
+      return response.data || response;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch testimonial statuses';
+      setError(errorMessage);
+      throw err;
+    }
+  }, []);
+
+  const approveTestimonial = useCallback(async (customerTestimonialId, testimonialStatusId, comment) => {
     setError(null);
 
     try {
       const payload = {
-        customerId: customerId,
-        isApproved: isApproved
+        customerTestimonialId: customerTestimonialId,
+        testimonialStatusId: testimonialStatusId,
+        comment: comment
       };
+
+      console.log('API Payload for ApproveTestimonial:', payload);
+      console.log('Endpoint:', ENDPOINTS.STUDENT_MANAGEMENT_TESTIMONIALS_APPROVE);
 
       const response = await ApiService.post(ENDPOINTS.STUDENT_MANAGEMENT_TESTIMONIALS_APPROVE, payload);
       return response.data || response;
@@ -354,6 +368,7 @@ export const useStudentManagement = () => {
     // Testimonials
     getStudentTestimonials,
     approveTestimonial,
+    getTestimonialStatusesDropdown,
 
     // Dashboard URL
     generateDashboardUrl,
