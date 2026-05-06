@@ -98,10 +98,6 @@ const CourseManagement = () => {
   // Memoized calculations
   const searchFilteredCourses = useMemo(() => {
     const result = filterCoursesBySearch(filteredCourses, debouncedSearchTerm);
-    console.log('=== SEARCH FILTERED COURSES ===');
-    console.log('filteredCourses length:', filteredCourses.length);
-    console.log('debouncedSearchTerm:', debouncedSearchTerm);
-    console.log('searchFilteredCourses result length:', result.length);
     return result;
   }, [filteredCourses, debouncedSearchTerm]);
 
@@ -695,16 +691,10 @@ const CourseManagement = () => {
         })
       );
 
-      console.log('=== APPLY FILTERS DEBUG ===');
-      console.log('effectiveFilters:', effectiveFilters);
-      console.log('activeFilters:', activeFilters);
 
       const coursesData = await getAllCoursesAdmin(activeFilters);
-      console.log('coursesData from API:', coursesData);
 
       const coursesArray = coursesData?.items || coursesData?.data || coursesData || [];
-      console.log('coursesArray length:', coursesArray.length);
-      console.log('coursesArray sample:', coursesArray.slice(0, 3));
 
       setFilteredCourses(coursesArray);
 

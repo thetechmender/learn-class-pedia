@@ -273,14 +273,6 @@ const StudentManagement = () => {
     const statusId = selectedTestimonialStatus[testimonialId];
     const comment = testimonialComments[testimonialId] || '';
 
-    console.log('Submit Testimonial Debug:', {
-      testimonialId,
-      statusId,
-      comment,
-      selectedTestimonialStatus,
-      customerId
-    });
-
     if (!statusId) {
       showError('Please select a status');
       return;
@@ -3088,11 +3080,7 @@ const StudentManagement = () => {
                                   value={selectedTestimonialStatus[testimonial.id] || ''}
                                   onChange={(e) => {
                                     const newStatusId = parseInt(e.target.value);
-                                    console.log('Status Changed:', {
-                                      testimonialId: testimonial.id,
-                                      newStatusId,
-                                      selectedOption: e.target.options[e.target.selectedIndex].text
-                                    });
+                                   
                                     setSelectedTestimonialStatus(prev => ({
                                       ...prev,
                                       [testimonial.id]: newStatusId

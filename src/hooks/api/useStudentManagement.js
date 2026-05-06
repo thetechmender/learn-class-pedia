@@ -294,8 +294,6 @@ export const useStudentManagement = () => {
         comment: comment
       };
 
-      console.log('API Payload for ApproveTestimonial:', payload);
-      console.log('Endpoint:', ENDPOINTS.STUDENT_MANAGEMENT_TESTIMONIALS_APPROVE);
 
       const response = await ApiService.post(ENDPOINTS.STUDENT_MANAGEMENT_TESTIMONIALS_APPROVE, payload);
       return response.data || response;
