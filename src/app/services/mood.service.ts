@@ -184,6 +184,10 @@ startClassroom(): void {
   setActiveTab(tab: string | null | undefined): void {
     if (tab === 'notebook') {
       this._tab.set('writing');
+      // Stop classroom intro loop so writing mood can show immediately
+      if (this.loopState.kind === 'intro') {
+        this.stopLoop();
+      }
     } else if (tab === 'overview' || tab === 'keyPoints' || tab === 'transcript') {
       this._tab.set('reading');
     } else {
