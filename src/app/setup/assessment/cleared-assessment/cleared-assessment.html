@@ -106,7 +106,7 @@
           <div class="btn-holder">
             @if(courseTypeId !== 3) {
             <button [disabled]="isDownloadingCertificateLoading()" (click)="updateEnrollmentActivity('download')"
-              class="btn btn-border"> <i class="ic-120"></i>
+              class="btn btn-border">
               @if (isDownloadingCertificateLoading()) {
               <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               Downloading...
@@ -114,9 +114,10 @@
               @else {
               Download Certificate
               }
+              <i class="ic-120"></i>
             </button>
             <button [disabled]="isLinkedinLoading()" class="btn btn-border"
-              (click)="updateEnrollmentActivity('share')"><i class="ic-119"></i>
+              (click)="updateEnrollmentActivity('share')">
               @if (isLinkedinLoading()) {
               <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               Sharing...
@@ -124,6 +125,7 @@
               @else {
               Share on Linkedin
               }
+              <i class="ic-119"></i>
             </button>
             }
             <a href="https://www.classpedia.ai/dashboard" target="_blank" rel="noopener noreferrer"
