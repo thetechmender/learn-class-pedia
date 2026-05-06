@@ -144,12 +144,18 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Drive mascot mood from the assessment lifecycle
   private moodAssessmentEffect = effect(() => {
     const step = this.assessmentStep();
-    switch (step) {
-      case 'start':            this.moodService.react('assessment-start'); break;
-      case 'final':            this.moodService.react('assessment-in-progress'); break;
-      case 'cleared':          this.moodService.react('assessment-cleared'); break;
-      case 'failed':           this.moodService.react('assessment-failed'); break;
-      case 'maxattempts':      this.moodService.react('assessment-max-attempts'); break;
+    const result = this.assessmentResult();
+    this.moodService.onAssessmentStep(step, {
+      attemptsUsed: result?.attemptsUsed,
+    });
+  });
+
+  // Drive mascot mood from the active classroom tab (helpful / writing)
+  private moodTabEffect = effect(() => {
+    const tab = this.activeTab();
+    // Only apply tab moods while not in an assessment screen
+    if (this.assessmentStep() === 'none') {
+      this.moodService.setActiveTab(tab);
     }
   });
 
@@ -327,6 +333,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+
+    // Lumi mascot: classroom intro animation (Reading ↔ Lumi still for 1 min)
+    this.moodService.startClassroom();
 
     // Subscribe to warning popup events (persists across all assessment screens)
     this.securityService.showWarningPopup.pipe(takeUntil(this.destroy$)).subscribe((data) => {

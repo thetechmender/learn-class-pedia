@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, Input, OnChanges, signal, inject } fro
 import { DecimalPipe, CommonModule } from '@angular/common';
 import { AssessmentService } from '../../../services/assessment.service';
 import { AuthService } from '../../../services/auth.service';
+import { MoodService } from '../../../services/mood.service';
 import { Subject, takeUntil } from 'rxjs';
 import { UpdatePhoneNumber } from '../update-phone-number/update-phone-number';
 // import { ShareYourAccomplishment } from '../share-your-accomplishment/share-your-accomplishment';
@@ -21,6 +22,7 @@ export class ClearedAssessment implements OnChanges {
   @Output() goBack = new EventEmitter<void>();
   private authService = inject(AuthService);
   private assessmentService = inject(AssessmentService);
+  private moodService = inject(MoodService);
   isLinkedinLoading = signal(false);
   isDownloadingCertificateLoading = signal(false)
   private destroy$ = new Subject<void>();
@@ -182,6 +184,9 @@ export class ClearedAssessment implements OnChanges {
   }
 
   updateEnrollmentActivity(activityType: string) {
+    // Lumi celebrates the certificate moment (share / download)
+    this.moodService.onCertificateAction();
+
     // Check if user has phone number
     if (!this.assessmentService.hasPhone()) {
       this.pendingAction = activityType as 'download' | 'share';

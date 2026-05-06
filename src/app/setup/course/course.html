@@ -380,13 +380,14 @@
     }
     @if (assessmentStep() !== 'none') {
     @if (assessmentStep() === 'start') {
-    <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')" (deselectLectures)="deselectSidebarLectures()"
-      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId" 
+    <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')"
+      (deselectLectures)="deselectSidebarLectures()" [orderPayload]="completeOrderPayload()"
+      [courseTypeId]="courseTree()?.courseTypeId"
       [isAssessmentInProgress]="assessmentResult()?.isAssessmentInProgress"></app-start-assessment>
     }
     @if (assessmentStep() === 'final') {
     <app-final-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('start')"
-      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId" 
+      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"
       [isAssessmentInProgress]="assessmentResult()?.isAssessmentInProgress"></app-final-assessment>
     }
     @if (assessmentStep() === 'failed') {
@@ -673,22 +674,31 @@
   </main>
 
   <!-- Animated Course Companion Mascot (replaces the old chat-widget) -->
-  <app-mood-mascot
-    [hidden]="mascotHidden()"
-    (mascotClick)="courseService.toggleChat()">
-  </app-mood-mascot>
+  <!-- [hidden]="false"
+  (mascotClick)="courseService.toggleChat()" -->
+  <app-mood-mascot>
 
+  </app-mood-mascot>
+  @if(!this.mascotHidden()){
+  <div class="fixed bottom-[4%] right-10 cursor-pointer z-[50]" (click)="courseService.toggleChat()">
+    <svg width="40" height="40" viewBox="0 0 118 118" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="59" cy="59" r="59" fill="#0062CC" />
+      <rect x="29.5" y="33.2" rx="5" ry="5" width="59" height="49" fill="#FFFFFF" />
+      <circle cx="46" cy="50" r="4" fill="#0062CC" />
+      <circle cx="72" cy="50" r="4" fill="#0062CC" />
+      <path d="M45 62 Q59 72 73 62" stroke="#05A550" stroke-width="4" fill="none" stroke-linecap="round" />
+    </svg>
+  </div>
+  }
   <!-- Chat Component -->
   <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()">
+
   </app-chat>
 
   <!-- Warning Popup (persists across all assessment screens) -->
   @if (showWarningPopup()) {
-  <app-warning-assessment
-    [warningMessage]="warningMessage()"
-    [warningCount]="currentWarningCount()"
-    [maxWarnings]="maxWarnings"
-    (acknowledge)="onWarningAcknowledge()">
+  <app-warning-assessment [warningMessage]="warningMessage()" [warningCount]="currentWarningCount()"
+    [maxWarnings]="maxWarnings" (acknowledge)="onWarningAcknowledge()">
   </app-warning-assessment>
   }
 

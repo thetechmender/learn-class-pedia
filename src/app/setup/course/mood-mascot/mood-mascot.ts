@@ -33,41 +33,39 @@ export class MoodMascot implements OnInit, OnDestroy {
   @ViewChild('host', { static: true }) host!: ElementRef<HTMLDivElement>;
 
   /** Hide the mascot entirely (e.g. during assessment screens). */
-  @Input() hidden = false;
+  // @Input() hidden = false;
   /** Use animated GIFs instead of static PNGs (falls back to PNG if GIF missing). */
   @Input() useGif = false;
   /** Click event so the parent can wire it up (e.g. open chat). */
-  @Output() mascotClick = new EventEmitter<void>();
+  // @Output() mascotClick = new EventEmitter<void>();
 
   private readonly assets: Record<Mood, MoodAsset> = {
-    happy: {
-      png: '/images/emotions/happy-emotion.png',
-      gif: '/images/emotions/happy-emotion.gif',
-    },
-    thumbs: {
-      png: '/images/emotions/thumbs-up-emotion.png',
-      gif: '/images/emotions/thumbs-up-emotion.gif',
-    },
-    idea: {
-      png: '/images/emotions/idea-emotion.png',
-      gif: '/images/emotions/idea-emotion.gif',
-    },
-    love: {
-      png: '/images/emotions/love-emotion.png',
-      gif: '/images/emotions/love-emotion.gif',
-    },
-    think: {
-      png: '/images/emotions/think-emotion.png',
-      gif: '/images/emotions/think-emotion.gif',
-    },
-    congrats: {
-      png: '/images/emotions/congrats-emotion.png',
-      gif: '/images/emotions/congrats-emotion.gif',
-    },
+    // Generic legacy fallbacks still in use
+    happy:    { png: '/images/emotions/Lumi happy.png' },
+    idea:     { png: '/images/emotions/idea-emotion.png' },
+    congrats: { png: '/images/emotions/congrats-emotion.png' },
+    eyeClose: { png: '/images/emotions/Eye-close.png' },
+    // Classroom emotions
+    reading:      { png: '/images/emotions/Reading.png' },
+    lumiStill:    { png: '/images/emotions/Lum still.png' },
+    lumiThinking: { png: '/images/emotions/Lumi thinking.png' },
+    sleepy:       { png: '/images/emotions/Sleepy.png' },
+    writing:      { png: '/images/emotions/Writing.png' },
+    thumbsUp:     { png: '/images/emotions/Thumbs up.png' },
+    clapping:     { png: '/images/emotions/Clapping.png' },
+    sad:          { png: '/images/emotions/Sad.png' },
+    cheering:     { png: '/images/emotions/Cheering.png' },
+    heart:        { png: '/images/emotions/Heart.png' },
+    hearing:      { png: '/images/emotions/Hearing.png' },
+    hooray:       { png: '/images/emotions/Hooray.png' },
+    helpful:      { png: '/images/emotions/Helpful.png' },
+    certificate:  { png: '/images/emotions/Certificate.png' },
+    worried:      { png: '/images/emotions/Worried.png' },
+    angry:        { png: '/images/emotions/Angry.png' },
   };
 
   // Calm idle rotation when no event-driven mood is active.
-  private readonly idleOrder: Mood[] = ['happy', 'idea', 'think'];
+  private readonly idleOrder: Mood[] = ['happy', 'reading'];
   private idleIdx = 0;
 
   mood = signal<Mood>('happy');
@@ -83,16 +81,7 @@ export class MoodMascot implements OnInit, OnDestroy {
   hovered = signal(false);
   pressed = signal(false);
 
-  // Rotating callout messages so it never feels repetitive.
-  private readonly promptMessages: { title: string; body: string }[] = [
-    { title: "I'm here to help!", body: 'Click or tap me to start a chat.' },
-    { title: 'Got a question?', body: 'Tap me — I love explaining things.' },
-    { title: 'Need a hint?', body: 'Click me anytime, I\'m listening.' },
-    { title: 'Stuck on something?', body: 'Let\'s figure it out together — tap me.' },
-    { title: 'Feeling curious?', body: 'Ask me anything about this lecture.' },
-  ];
-  private promptIdx = -1;
-  currentPrompt = signal(this.promptMessages[0]);
+
 
   private promptIntervalMs = 10000;
   private promptVisibleMs = 5000;   
@@ -104,23 +93,23 @@ export class MoodMascot implements OnInit, OnDestroy {
   private isTouchDevice = false;
   // Visibility listener reference so we can remove it cleanly
   private visibilityHandler: (() => void) | null = null;
+  // Document-level activity listener (resets idle/sleepy timers in MoodService)
+  private activityHandler: (() => void) | null = null;
 
   constructor() {
-    // React to MoodService changes — but only schedule timers in the browser.
-    // Recursive setTimeouts on the server keep the SSR zone unstable forever,
-    // which causes the page to load indefinitely.
+    // Render the mood that the MoodService computes (transient | loop | context).
     effect(() => {
-      const override = this.moodService.mood();
+      const m = this.moodService.mood();
       const tick = this.moodService.tick();
-      if (override) {
-        this.applyMood(override);
-        if (override === 'congrats' && tick !== this.lastTick && isPlatformBrowser(this.platformId)) {
+      if (m) {
+        this.applyMood(m);
+        if (m === 'congrats' && tick !== this.lastTick && isPlatformBrowser(this.platformId)) {
           this.fireConfetti();
         }
         this.lastTick = tick;
-        this.stopIdle();
-      } else if (isPlatformBrowser(this.platformId)) {
-        this.startIdle();
+      } else {
+        // No active mood — fall back to a calm default.
+        this.applyMood('happy');
       }
     });
   }
@@ -140,18 +129,25 @@ export class MoodMascot implements OnInit, OnDestroy {
       })
       .catch(() => {});
 
-    this.startIdle();
-    this.startPromptCycle();
+    // this.startIdle();
 
     // Pause heavy animations/timers when tab is backgrounded
     this.visibilityHandler = () => {
       if (document.hidden) {
         this.stopIdle();
       } else {
-        this.startIdle();
+        // this.startIdle();
       }
     };
     document.addEventListener('visibilitychange', this.visibilityHandler);
+
+    // Track user activity at the document level so MoodService can reset
+    // idle/sleepy timers across the entire classroom UI.
+    this.activityHandler = () => this.moodService.recordActivity();
+    document.addEventListener('mousedown', this.activityHandler, { passive: true });
+    document.addEventListener('keydown', this.activityHandler, { passive: true });
+    document.addEventListener('scroll', this.activityHandler, { passive: true, capture: true });
+    document.addEventListener('touchstart', this.activityHandler, { passive: true });
   }
 
   ngOnDestroy(): void {
@@ -160,6 +156,13 @@ export class MoodMascot implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId) && this.visibilityHandler) {
       document.removeEventListener('visibilitychange', this.visibilityHandler);
       this.visibilityHandler = null;
+    }
+    if (isPlatformBrowser(this.platformId) && this.activityHandler) {
+      document.removeEventListener('mousedown', this.activityHandler);
+      document.removeEventListener('keydown', this.activityHandler);
+      document.removeEventListener('scroll', this.activityHandler, true as any);
+      document.removeEventListener('touchstart', this.activityHandler);
+      this.activityHandler = null;
     }
   }
 
@@ -176,7 +179,7 @@ export class MoodMascot implements OnInit, OnDestroy {
     } else {
       this.pressed.set(false);
     }
-    this.mascotClick.emit();
+    // this.mascotClick.emit();
   }
 
   onMouseEnter(): void {
@@ -228,29 +231,7 @@ export class MoodMascot implements OnInit, OnDestroy {
     } catch {}
   }
 
-  // ---------- Prompt cycle (every 10s) ----------
-  private startPromptCycle(): void {
-    this.stopPromptCycle();
-    // Show first prompt shortly after mount, then on a 10s interval.
-    this.promptHideTimer = setTimeout(() => this.showPrompt(), 1500);
-    this.promptInterval = setInterval(() => this.showPrompt(), this.promptIntervalMs);
-  }
 
-  private showPrompt(): void {
-    if (this.hidden) return;
-    // Cycle through helpful messages
-    this.promptIdx = (this.promptIdx + 1) % this.promptMessages.length;
-    this.currentPrompt.set(this.promptMessages[this.promptIdx]);
-    this.promptVisible.set(true);
-    // Smart attention: if ignored 3+ times in a row, intensify the jump/shake
-    this.ignoredCount++;
-    this.triggerAttention();
-    if (this.promptHideTimer) clearTimeout(this.promptHideTimer);
-    this.promptHideTimer = setTimeout(
-      () => this.promptVisible.set(false),
-      this.promptVisibleMs
-    );
-  }
 
   /** True when the user has ignored enough callouts to justify extra motion. */
   isNagging(): boolean {
@@ -288,15 +269,15 @@ export class MoodMascot implements OnInit, OnDestroy {
   }
 
   // ---------- Idle cycle ----------
-  private startIdle(): void {
-    this.stopIdle();
-    const current = this.mood();
-    if (!this.idleOrder.includes(current)) {
-      this.idleIdx = 0;
-      this.applyMood(this.idleOrder[0]);
-    }
-    this.scheduleIdle();
-  }
+  // private startIdle(): void {
+  //   this.stopIdle();
+  //   const current = this.mood();
+  //   if (!this.idleOrder.includes(current)) {
+  //     this.idleIdx = 0;
+  //     this.applyMood(this.idleOrder[0]);
+  //   }
+  //   this.scheduleIdle();
+  // }
 
   private scheduleIdle(): void {
     this.idleTimer = setTimeout(() => this.advanceIdle(), 4000);

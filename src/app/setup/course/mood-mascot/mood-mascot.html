@@ -1,7 +1,7 @@
+<!-- [class.is-hidden]="hidden" -->
 <div
   #host
   class="mood-mascot"
-  [class.is-hidden]="hidden"
   [class.attention]="attention()"
   [class.hovered]="hovered()"
   [class.pressed]="pressed()"
@@ -13,14 +13,13 @@
   role="button"
   tabindex="0"
   aria-label="Course companion - click to open chat"
-  [title]="currentPrompt().title + ' ' + currentPrompt().body"
 >
-  <span class="aura" aria-hidden="true"></span>
+
+  <!-- <span class="aura" aria-hidden="true"></span>
   <span class="ring" aria-hidden="true"></span>
   <span class="ripple" aria-hidden="true"></span>
 
-  <!-- Notification dot — appears when a callout is active -->
-  <span class="notif-dot" aria-hidden="true"></span>
+  <span class="notif-dot" aria-hidden="true"></span> -->
 
   <img
     class="mascot-img"
@@ -30,42 +29,5 @@
     draggable="false"
   />
 
-  <!-- Sparkles (only visible on congrats) -->
-  <span class="sparkles" aria-hidden="true">
-    <span class="spark s1"></span>
-    <span class="spark s2"></span>
-    <span class="spark s3"></span>
-    <span class="spark s4"></span>
-  </span>
 
-  <!-- AI "thinking" typing dots (think mood only) -->
-  @if (mood() === 'think') {
-    <span class="typing-dots" aria-hidden="true">
-      <span></span><span></span><span></span>
-    </span>
-  }
-
-  <!-- Floating hearts (only visible on love) -->
-  <span class="hearts" aria-hidden="true">
-    <span class="heart h1">&#10084;</span>
-    <span class="heart h2">&#10084;</span>
-    <span class="heart h3">&#10084;</span>
-  </span>
-
-  <!-- Periodic rotating callout -->
-  <div class="callout" [class.show]="promptVisible()" aria-live="polite">
-    <strong>{{ currentPrompt().title }}</strong>
-    <span>{{ currentPrompt().body }}</span>
-    <em class="cta">Tap to chat &rarr;</em>
-  </div>
-
-  <!-- Tooltip bubble -->
-  <span class="bubble" aria-hidden="true">{{
-    mood() === 'congrats' ? 'Great job!' :
-    mood() === 'thumbs'   ? 'Nice work!' :
-    mood() === 'love'     ? 'You got this!' :
-    mood() === 'idea'     ? 'Hmm, good pick!' :
-    mood() === 'think'    ? 'Stay focused!' :
-                            'Need help? Chat with me!'
-  }}</span>
 </div>

@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
+import { MoodService } from './mood.service';
 
 export interface WarningEvent {
   type: 'screenshot' | 'tab_switch' | 'tab_close';
@@ -27,6 +28,7 @@ export class SecurityService {
   public showWarningPopup = new Subject<{ message: string; warningCount: number; type?: string }>();
   private toastr = inject(ToastrService);
   private http = inject(HttpClient);
+  private moodService = inject(MoodService);
   private apiUrl = environment.API_URL;
 
   private warningCount = 0;
@@ -294,6 +296,8 @@ export class SecurityService {
           'Disconnect extra displays.',
           'Access Restricted'
         );
+        // Lumi reacts immediately to a dual-display violation
+        this.moodService.setMood('angry', 4000);
         return false;
       }
     } catch (error) {
