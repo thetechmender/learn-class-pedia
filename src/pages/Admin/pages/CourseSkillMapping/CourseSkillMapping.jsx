@@ -1031,8 +1031,8 @@ const SkillMapping = () => {
                       onChange={(e) => {
                         const value = e.target.value;
                         setSearchTermMapping(value);
-                        // Trigger search immediately with course type filter
-                        fetchAvailableMappingItems('course', value, selectedCourseTypeForMapping);
+                        // Trigger search immediately with the selected mapping type
+                        fetchAvailableMappingItems(mappingType, value, selectedCourseTypeForMapping);
                       }}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                     />

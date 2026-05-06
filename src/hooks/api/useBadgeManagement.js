@@ -27,13 +27,8 @@ export const useBadgeManagement = () => {
     badgeColor: '#0062F7',
     badgeIcon: '',
     description: '',
-    isActive: true,
-    isDeleted: false,
-    createdAt: null,
     createdBy: null,
-    updatedAt: null,
     updatedBy: null,
-    slug: ''
   });
 
   // Fetch all badges with pagination
@@ -123,14 +118,9 @@ export const useBadgeManagement = () => {
       badgeName: '',
       badgeColor: '#0062F7',
       badgeIcon: '',
-      description: '',
-      isActive: true,
-      isDeleted: false,
-      createdAt: null,
+      description: '', 
       createdBy: null,
-      updatedAt: null,
       updatedBy: null,
-      slug: ''
     });
     setSelectedBadge(null);
   }, []);
@@ -161,11 +151,7 @@ export const useBadgeManagement = () => {
         badgeColor: badgeDetails.badgeColor || '#0062F7',
         badgeIcon: badgeDetails.badgeIcon || '',
         description: badgeDetails.description || '',
-        isActive: badgeDetails.isActive ?? true,
-        isDeleted: badgeDetails.isDeleted ?? false,
-        createdAt: badgeDetails.createdAt || null,
         createdBy: badgeDetails.createdBy || null,
-        updatedAt: badgeDetails.updatedAt || null,
         updatedBy: badgeDetails.updatedBy || null,
         slug: badgeDetails.slug || ''
       });

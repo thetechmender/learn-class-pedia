@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useBadgeManagement } from '../../../../hooks/api/useBadgeManagement';
 import { useToast } from '../../../../hooks/utils/useToast';
 import { useAdmin } from '../../../../hooks/api/useAdmin';
+import { useAuth } from '../../../../context/AuthContext';
 import GenericDropdown from '../../../../components/GenericDropdown';
 import {
   Award,
@@ -21,6 +22,7 @@ import {
 
 const FeaturedMarking = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
   
   const {
     badges,
@@ -91,12 +93,25 @@ const FeaturedMarking = () => {
     setFormErrors({});
 
     try {
+      // Get user ID from auth context or localStorage
+      const userId = user?.id || user?.userId || localStorage.getItem('userId') || null;
+      
       if (showEditModal && formData.id) {
-        await updateBadge(formData.id, formData);
+        // Add updatedBy when updating
+        const updatePayload = {
+          ...formData,
+          updatedBy: userId
+        };
+        await updateBadge(formData.id, updatePayload);
         showSuccess('Badge updated successfully!');
         closeEditModal();
       } else {
-        await createBadge(formData);
+        // Add createdBy when creating
+        const createPayload = {
+          ...formData,
+          createdBy: userId
+        };
+        await createBadge(createPayload);
         showSuccess('Badge created successfully!');
         closeCreateModal();
       }
@@ -105,7 +120,7 @@ const FeaturedMarking = () => {
       showError(errorMessage);
       setFormErrors({ submit: errorMessage });
     }
-  }, [formData, showEditModal, updateBadge, createBadge, showSuccess, closeEditModal, closeCreateModal, showError]);
+  }, [formData, showEditModal, updateBadge, createBadge, showSuccess, closeEditModal, closeCreateModal, showError, user]);
 
   // Handle delete
   const handleDelete = useCallback(async (badge) => {
@@ -330,36 +345,6 @@ const FeaturedMarking = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Badges</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">
-                  {badges.filter(b => b.isActive).length}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Currently active</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Inactive Badges</p>
-                <p className="text-3xl font-bold text-gray-500 mt-2">
-                  {badges.filter(b => !b.isActive).length}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Disabled</p>
-              </div>
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <X className="w-6 h-6 text-gray-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm font-medium text-gray-600">Unique Keys</p>
                 <p className="text-3xl font-bold text-purple-600 mt-2">
                   {new Set(badges.map(b => b.badgeKey)).size}
@@ -443,15 +428,7 @@ const FeaturedMarking = () => {
                         <Award className="w-8 h-8 text-white" />
                       )}
                     </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                        badge.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {badge.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
+                    
                   </div>
                 </div>
 
@@ -761,23 +738,7 @@ const FeaturedMarking = () => {
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="isActive"
-                      checked={formData.isActive}
-                      onChange={(e) => handleInputChange('isActive', e.target.checked)}
-                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="isActive" className="ml-3 text-sm font-medium text-gray-700">
-                      Active Badge
-                    </label>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {formData.isActive ? 'Badge will be visible' : 'Badge will be hidden'}
-                  </span>
-                </div>
+               
               </div>
 
               <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">

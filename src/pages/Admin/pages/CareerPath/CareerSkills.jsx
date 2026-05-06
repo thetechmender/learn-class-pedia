@@ -29,6 +29,7 @@ const CareerSkills = () => {
     loading,
     error,
     getAllCareerSkills,
+    getCareerSkillById,
     createCareerSkill,
     updateCareerSkill,
     deleteCareerSkill
@@ -246,14 +247,22 @@ const CareerSkills = () => {
     }
   }, [handleInputChange, resetForm, fetchCareerSkills, showSuccess, showError, editingCareerSkill, formData, createCareerSkill, updateCareerSkill]);
 
-  const handleEdit = useCallback((careerSkill) => {
-    setEditingCareerSkill(careerSkill);
-    setFormData({
-      title: careerSkill.title || '',
-      description: careerSkill.description || ''
-    });
-    setShowUpdateModal(true);
-  }, []);
+  const handleEdit = useCallback(async (careerSkill) => {
+    try {
+      // Fetch full career skill details by ID
+      const skillDetails = await getCareerSkillById(careerSkill.id);
+      
+      setEditingCareerSkill(skillDetails);
+      setFormData({
+        title: skillDetails.title || '',
+        description: skillDetails.description || ''
+      });
+      setShowUpdateModal(true);
+    } catch (err) {
+      showError('Failed to load career skill details');
+      console.error('Error fetching career skill details:', err);
+    }
+  }, [getCareerSkillById, showError]);
 
   const handleViewDetails = useCallback((careerSkill) => {
     setSelectedCareerSkill(careerSkill);
