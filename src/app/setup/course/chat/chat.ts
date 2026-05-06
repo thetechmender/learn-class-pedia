@@ -86,7 +86,7 @@ export class Chat {
     }
   }
 
-  private startRecording() {
+  private async startRecording() {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -95,10 +95,33 @@ export class Chat {
       return;
     }
 
+    // Mobile detection — continuous mode is unreliable on mobile Chrome
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Request microphone permission explicitly before starting recognition.
+    // On mobile browsers, SpeechRecognition does NOT always trigger the
+    // permission prompt by itself, so we proactively request mic access.
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Immediately stop the tracks — we only needed the permission grant.
+        stream.getTracks().forEach(t => t.stop());
+      }
+    } catch (err: any) {
+      console.error('Microphone permission denied:', err);
+      this.toastr.error(
+        'Microphone permission is required. Please allow microphone access in your browser settings.',
+        'Permission Required'
+      );
+      return;
+    }
+
     this.recognition = new SpeechRecognition();
-    this.recognition.continuous = true;
+    // On mobile, continuous mode often fails silently — use single-shot mode.
+    this.recognition.continuous = !isMobile;
     this.recognition.interimResults = true;
     this.recognition.lang = 'en-US';
+    this.recognition.maxAlternatives = 1;
 
     this.recognition.onresult = (event: any) => {
       this.ngZone.run(() => {
@@ -141,14 +164,37 @@ export class Chat {
         console.error('Speech recognition error:', event.error);
         this.clearSilenceTimer();
         this.isRecording.set(false);
-        if (event.error !== 'no-speech') {
-          this.toastr.error('Voice recognition error. Please try again.', 'Error');
+
+        // Surface a more useful message based on the actual error code
+        let msg = 'Voice recognition error. Please try again.';
+        switch (event.error) {
+          case 'not-allowed':
+          case 'service-not-allowed':
+            msg = 'Microphone access was blocked. Please allow microphone permission.';
+            break;
+          case 'audio-capture':
+            msg = 'No microphone detected. Please check your device.';
+            break;
+          case 'network':
+            msg = 'Network error during voice recognition. Check your internet connection.';
+            break;
+          case 'no-speech':
+            // Common on mobile — don't toast spam
+            return;
+          case 'aborted':
+            return;
         }
+        this.toastr.error(msg, 'Error');
       });
     };
 
-    this.recognition.start();
-    this.isRecording.set(true);
+    try {
+      this.recognition.start();
+      this.isRecording.set(true);
+    } catch (err) {
+      console.error('Failed to start recognition:', err);
+      this.toastr.error('Could not start voice recording. Please try again.', 'Error');
+    }
   }
 
   private stopRecording() {

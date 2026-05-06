@@ -1,6 +1,6 @@
 <!-- Chat Sidebar -->
 <div
-  class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-72 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
+  class="fixed top-[56px] right-0 h-[calc(100%-56px)] w-[85vw] max-w-xs sm:w-72 bg-optional shadow-2xl transform transition-transform duration-300 z-50 flex flex-col"
   [class.translate-x-full]="!courseService.isChatOpen() || assessmentStep === 'start' || assessmentStep === 'final' || assessmentStep === 'cleared' || assessmentStep === 'failed' || assessmentStep === 'maxattempts'"
   [class.translate-x-0]="courseService.isChatOpen() && assessmentStep !== 'start' && assessmentStep !== 'final' && assessmentStep !== 'cleared' && assessmentStep !== 'failed' && assessmentStep !== 'maxattempts'">
 
@@ -86,9 +86,9 @@
 
   <!-- Chat Input -->
   <div class="p-2 bg-optional">
-    <div class="flex gap-1 items-center">
+    <div class="flex gap-1.5 items-center w-full">
       <button (click)="toggleRecording()" [disabled]="isChatSending()"
-        class="w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-md"
+        class="w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center transition-all shadow-md"
         [class.bg-red-500]="isRecording()" [class.hover:bg-red-600]="isRecording()" [class.mic-pulse]="isRecording()"
         [class.bg-[#00D9A5]]="!isRecording()" [class.hover:bg-[#00c494]]="!isRecording()">
         @if (isRecording()) {
@@ -108,9 +108,9 @@
       <input type="text" placeholder="Ask a question" [value]="chatInput()"
         (input)="chatInput.set($any($event.target).value)" (keydown.enter)="sendChatMessage()"
         [disabled]="isChatSending() || isRecording()"
-        class="flex-1 px-2 py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+        class="flex-1 min-w-0 px-2 py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
       <button (click)="sendChatMessage()" [disabled]="isChatSending() || !(chatInput() || '').trim()"
-        class="w-8 h-8 bg-[#00D9A5] rounded-full flex items-center justify-center hover:bg-[#00c494] transition-all shadow-md">
+        class="w-8 h-8 flex-shrink-0 bg-[#00D9A5] rounded-full flex items-center justify-center hover:bg-[#00c494] transition-all shadow-md">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
           <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
         </svg>
