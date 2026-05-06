@@ -62,7 +62,10 @@
       top: 56px
       left: 0
       bottom: 0
-      height: calc(100vh - 56px) !important
+      // Use dvh (dynamic viewport height) so mobile browser
+      // address bar doesn't push the bottom button off-screen.
+      height: calc(100dvh - 56px) !important
+      max-height: calc(100dvh - 56px)
     
 .bigscreen
   margin: 12px 10px 0
