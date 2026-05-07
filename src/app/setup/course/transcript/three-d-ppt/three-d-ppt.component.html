@@ -1,24 +1,8 @@
 <div class="ppt-container border border-primary[1/2]" [attr.data-theme]="theme" [class.fullscreen]="isFullscreen"
   [class.presentation-mode]="isPresentationMode"> @if (!isPresentationMode) {
-  <div class="toolbar border-b border-primary[1/2]" style="max-width: 1100px !important">
-    <!-- <div class="toolbar__brand">
-      <div class="toolbar__badge border border-primary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-        </svg>
-      </div>
-      <div class="toolbar__text">
-        <div class="toolbar__title" [title]="pptTitle">{{ pptTitle }}</div>
-        <div class="toolbar__info">{{ currentSlideNumber }}</div>
-      </div>
-    </div> -->
+  <div class="toolbar border-b border-primary[1/2]" style="max-width: 100% !important">
     <h1 class="font-bold text-[20px]">{{ mainCourseTitle }}</h1>
-
     <div class="toolbar__actions">
-
-
       <button
         class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
         (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
