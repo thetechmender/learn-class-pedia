@@ -353,7 +353,7 @@ const UniversalVirtualizedTable = React.forwardRef(({
         className="relative"
       >
         {/* Spacer for virtual scrolling */}
-        <div style={{ height: data.length * itemHeight, position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
           {/* Visible items */}
           <div 
             style={{ 
