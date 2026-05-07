@@ -265,18 +265,15 @@ export class SecurityService {
       endpoint = `${this.apiUrl}/assessment/${typeMap[this.courseTypeId] || 'short-course'}/final-assessment/submit`;
     }
 
-    // Use fetch with keepalive — survives page unload AND supports Authorization headers
-    const token = this.authService.getToken();
+    // Use fetch with keepalive — survives page unload AND supports credentials
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
 
     try {
       fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
+        credentials: 'include',  // Send cookies for authentication
         keepalive: true  // Ensures request completes even after page unloads
       });
     } catch (e) {

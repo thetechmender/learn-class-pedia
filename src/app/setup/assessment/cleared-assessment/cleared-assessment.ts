@@ -199,11 +199,10 @@ export class ClearedAssessment implements OnChanges {
   };
 
   proceedWithActivity(activityType: string) {
-    const token = this.authService.getToken();
     const payload = { customerEnrollmentId: this.customerEnrollmentId, activityType };
     this.startLoading(activityType);
     setTimeout(() => {
-      this.assessmentService.updateAssessmentActivity(payload, token).pipe(takeUntil(this.destroy$))
+      this.assessmentService.updateAssessmentActivity(payload, null).pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
             this.stopLoading(activityType);

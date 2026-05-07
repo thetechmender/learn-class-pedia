@@ -129,9 +129,7 @@ export class StartAssessment implements OnInit, OnDestroy {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getCareerPathAssessment(this.orderPayload.careerPathLevelMapId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getCareerPathAssessment(this.orderPayload.careerPathLevelMapId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -162,9 +160,7 @@ export class StartAssessment implements OnInit, OnDestroy {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getShortCourseAssessment(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getShortCourseAssessment(this.orderPayload.shortCourseId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -198,9 +194,7 @@ export class StartAssessment implements OnInit, OnDestroy {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -234,9 +228,7 @@ export class StartAssessment implements OnInit, OnDestroy {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getProfessionalCourseAssessment(this.orderPayload.professionalCertificateId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getProfessionalCourseAssessment(this.orderPayload.professionalCertificateId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 

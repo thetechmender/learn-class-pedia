@@ -78,11 +78,6 @@ export class UpdatePhoneNumber implements AfterViewInit {
     }
 
     this.isSubmitting.set(true);
-    const token = this.authService.getToken();
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
 
     // Get phone number from form value (intl-tel-input handles the country code separately)
     const phoneNumber = this.phoneForm.value.phoneNumber;
@@ -93,7 +88,7 @@ export class UpdatePhoneNumber implements AfterViewInit {
     };
 
 
-    this.http.post(`${environment.API_URL}/CustomerProfile/UpdatePhoneNumber`, payload, { headers })
+    this.http.post(`${environment.API_URL}/CustomerProfile/UpdatePhoneNumber`, payload, { withCredentials: true })
       .subscribe({
         next: (response: any) => {
           this.isSubmitting.set(false);

@@ -220,9 +220,7 @@ export class FinalAssessment implements OnInit {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getShortCourseAssessment(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getShortCourseAssessment(this.orderPayload.shortCourseId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -276,9 +274,7 @@ export class FinalAssessment implements OnInit {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getCourseCertificateAssessment(this.orderPayload?.courseCertificateId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -332,9 +328,7 @@ export class FinalAssessment implements OnInit {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getCareerPathAssessment(this.orderPayload.careerPathLevelMapId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getCareerPathAssessment(this.orderPayload.careerPathLevelMapId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -387,9 +381,7 @@ export class FinalAssessment implements OnInit {
 
     this.isQuestionLoading.set(true);
 
-    const token = this.authService.getToken();
-
-    this.assessmentService.getProfessionalCourseAssessment(this.orderPayload.professionalCertificateId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getProfessionalCourseAssessment(this.orderPayload.professionalCertificateId, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -491,9 +483,7 @@ export class FinalAssessment implements OnInit {
 
 
 
-    const token = this.authService.getToken();
-
-    return this.assessmentService.onNextSaveAssessment(payload, token).pipe(takeUntil(this.destroy$))
+    return this.assessmentService.onNextSaveAssessment(payload, null).pipe(takeUntil(this.destroy$))
 
       .subscribe({
 
@@ -639,13 +629,11 @@ export class FinalAssessment implements OnInit {
 
     }
 
-    const token = this.authService.getToken();
-
     const submitApi = this.orderPayload?.careerPathLevelMapId
 
-      ? this.assessmentService.submitCareerPathAssessment(payload, token)
+      ? this.assessmentService.submitCareerPathAssessment(payload, null)
 
-      : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token);
+      : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, null);
 
 
 
@@ -738,13 +726,11 @@ export class FinalAssessment implements OnInit {
 
     }
 
-    const token = this.authService.getToken();
-
     const submitApi = this.orderPayload?.careerPathLevelMapId
 
-      ? this.assessmentService.submitCareerPathAssessment(payload, token)
+      ? this.assessmentService.submitCareerPathAssessment(payload, null)
 
-      : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, token);
+      : this.assessmentService.submitFinalAssessment(this.courseTypeId, payload, null);
 
 
 
@@ -849,8 +835,6 @@ export class FinalAssessment implements OnInit {
 
 
 
-    const token = this.authService.getToken();
-
     const courseId = Number(this.getCourseId());
 
     const careerPathLevelMapId = this.orderPayload?.careerPathLevelMapId;
@@ -869,7 +853,7 @@ export class FinalAssessment implements OnInit {
 
     setTimeout(() => {
 
-      this.assessmentService.getAttemptStatus(courseId, token, careerPathLevelMapId).pipe(takeUntil(this.destroy$))
+      this.assessmentService.getAttemptStatus(courseId, null, careerPathLevelMapId).pipe(takeUntil(this.destroy$))
 
         .subscribe({
 
@@ -1224,8 +1208,7 @@ export class FinalAssessment implements OnInit {
       professionalCertificateId: this.courseTypeId === 1 ? this.orderPayload?.professionalCertificateId : null,
       careerPathLevelMapId: this.orderPayload?.careerPathLevelMapId || null
     };
-    const token = this.authService.getToken();
-    this.assessmentService.startAssessmentTime(payload, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.startAssessmentTime(payload, null).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
         },
