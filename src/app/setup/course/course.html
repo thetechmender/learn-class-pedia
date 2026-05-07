@@ -623,13 +623,13 @@
           }
           @if (activeTab() === 'notebook') {
           <app-notebook [orderPayload]="completeOrderPayload()" [videoTimeSeconds]="currentTime()"
-            [isPlaying]="isPlaying()" [courseTitle]="courseTitle()" [courseTree]="courseTree()"
+            [isPlaying]="isPlaying()" [courseTitle]="courseTree()?.courseTitle" [courseTree]="courseTree()"
             [currentShortCourse]="currentShortCourse()" (notePlaying)="isPlaying.set(true)"
             (pauseVideo)="pauseVideoFromNotebook()" (resumeVideo)="resumeVideoFromNotebook()"></app-notebook>
           }
           @if (activeTab() === 'transcript') {
           <app-transcript [currentShortCourse]="currentShortCourse()" [courseTypeId]="courseTree()?.courseTypeId"
-            (startAssessment)="startAssessment()" (moveToQuiz)="activeTab.set('quiz')"></app-transcript>
+            (startAssessment)="startAssessment()" (moveToQuiz)="activeTab.set('quiz')" [courseTitle]="courseTree()?.courseTitle"></app-transcript>
           }
           <!-- @if (activeTab() === 'download') {
           <app-download></app-download>
