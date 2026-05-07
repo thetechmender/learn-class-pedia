@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { classroomGuard } from './guards/classroom.guard';
 
 export const routes: Routes = [
   {
@@ -16,13 +17,18 @@ export const routes: Routes = [
   },
   {
     path: 'course/classroom',
-    loadComponent: () => import('./setup/course/course').then(m => m.CourseComponent)
+    loadComponent: () => import('./setup/course/course').then(m => m.CourseComponent),
+    canActivate: [classroomGuard]
   },
   {
     path: 'classroom',
-    loadComponent: () => import('./setup/course/course').then(m => m.CourseComponent)
+    loadComponent: () => import('./setup/course/course').then(m => m.CourseComponent),
+    canActivate: [classroomGuard]
   },
-
+  {
+    path: 'unauthorized',
+    loadComponent: () => import('./shared/unauthorized/unauthorized').then(m => m.UnauthorizedComponent)
+  },
   {
     path: '**',
     redirectTo: 'course'

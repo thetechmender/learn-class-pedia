@@ -25,8 +25,7 @@ export class EnrolledCourses implements OnInit {
   };
 
   _fetchEnrolledCourses() {
-    const token = this.authService.getToken();
-    this.courseService.getEnrolledCourse(token).pipe(takeUntil(this.destroy$))
+    this.courseService.getEnrolledCourse(null).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (courses: any) => {
           const enrolledList = courses['data']['enrolledCourses'] || [];
@@ -43,12 +42,10 @@ export class EnrolledCourses implements OnInit {
   };
 
   getClassroomUrl(resourceId: number, resourcesTypeId: number): string {
-    const token = this.authService.getToken();
     if (resourcesTypeId == 2) {
-      return `https://learning.classpedia.ai/classroom?t=${token}&careerPathLevelDetailId=${resourceId}`;
+      return `https://learning.classpedia.ai/classroom?careerPathLevelDetailId=${resourceId}`;
     }
-    return `https://learning.classpedia.ai/classroom?t=${token}&courseId=${resourceId}`;
-
+    return `https://learning.classpedia.ai/classroom?courseId=${resourceId}`;
   }
 
   ngOnDestroy() {

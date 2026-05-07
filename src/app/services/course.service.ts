@@ -36,6 +36,18 @@ export class CourseService {
     return headers;
   }
 
+  getCourse(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Learning/course/${courseId}`, {
+      withCredentials: true
+    });
+  }
+
+  getCourseDetailsV2(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}`, {
+      withCredentials: true
+    });
+  }
+
   getCourseWithToken(courseId: number, token: string | null): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/Learning/course/${courseId}`, {
       headers: this.getHeaders(token)
@@ -45,6 +57,36 @@ export class CourseService {
   getCourseDetailsV2WithToken(courseId: number, token: string | null): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}`, {
       headers: this.getHeaders(token)
+    });
+  }
+
+  getLectureSections(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/Learning/course/${courseId}/lecture-sections`, {
+      withCredentials: true
+    });
+  }
+
+  getLectureSectionsV2(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/lecture-sections`, {
+      withCredentials: true
+    });
+  }
+
+  getCourseHierarchyV2(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/hierarchy`, {
+      withCredentials: true
+    });
+  }
+
+  getCertificateHierarchyV2(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/certificate-hierarchy`, {
+      withCredentials: true
+    });
+  }
+
+  getCourseTreeV2(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/tree`, {
+      withCredentials: true
     });
   }
 
@@ -79,6 +121,18 @@ export class CourseService {
   };
 
   // Career Path APIs
+  getCareerPathDetail(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/careerPathDetail/${courseId}`, {
+      withCredentials: true
+    });
+  }
+
+  getCareerPathTree(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/careerPathLevel/${courseId}/tree`, {
+      withCredentials: true
+    });
+  }
+
   getCareerPathDetailWithToken(courseId: number, token: string | null): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/learning/v2/careerPathDetail/${courseId}`, {
       headers: this.getHeaders(token)
@@ -110,8 +164,18 @@ export class CourseService {
     );
   };
 
-  getShortCourseDetails(courseSlug: string  = '', token: string | null){
-       return this.http.post<any>(
+  getShortCourseDetails(courseSlug: string = ''): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/Courses/ShortCourseDetail`,
+      { courseSlug },
+      {
+        withCredentials: true
+      }
+    );
+  }
+
+  getShortCourseDetailsWithToken(courseSlug: string = '', token: string | null): Observable<any> {
+    return this.http.post<any>(
       `${this.apiUrl}/Courses/ShortCourseDetail`,
       { courseSlug },
       {
@@ -252,6 +316,18 @@ export class CourseService {
     return out;
   }
 
+  getCourseProgress(courseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/progress`, {
+      withCredentials: true
+    });
+  }
+
+  updateCourseProgress(payload: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/learning/v2/course/progress`, payload, {
+      withCredentials: true
+    });
+  }
+
   getCourseProgressWithToken(courseId: number, token: string | null): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/learning/v2/course/${courseId}/progress`, {
       headers: this.getHeaders(token)
@@ -264,13 +340,41 @@ export class CourseService {
     });
   };
 
-  saveNotebook(payload: any, token: string | null): Observable<any> {
+  saveNotebook(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/learning/v2/notebook`, payload, {
+      withCredentials: true
+    });
+  }
+
+  saveNotebookWithToken(payload: any, token: string | null): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/learning/v2/notebook`, payload, {
       headers: this.getHeaders(token)
     });
   }
 
-  getNotebooks(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null, token: string | null): Observable<any> {
+  getNotebooks(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null): Observable<any> {
+    let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}`;
+    const params: string[] = [];
+    
+    if (courseCertificateId) {
+      params.push(`courseCertificateId=${courseCertificateId}`);
+    }
+    
+    if (careerPathLevelMapId) {
+      params.push(`careerPathLevelMapId=${careerPathLevelMapId}`);
+    } else if (professionalCertificateId) {
+      params.push(`professionalCertificateId=${professionalCertificateId}`);
+    }
+    
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return this.http.get<any>(url, {
+      withCredentials: true
+    });
+  }
+
+  getNotebooksWithToken(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null, token: string | null): Observable<any> {
     let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}`;
     const params: string[] = [];
     
@@ -295,19 +399,54 @@ export class CourseService {
     });
   }
 
-  deleteNotebook(noteId: number, token: string | null): Observable<any> {
+  deleteNotebook(noteId: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/learning/v2/notebook/${noteId}`, {
+      withCredentials: true
+    });
+  }
+
+  updateNotebook(noteId: number, payload: { videoTimeSeconds: number; noteText: string }): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/learning/v2/notebook/${noteId}`, payload, {
+      withCredentials: true
+    });
+  }
+
+  deleteNotebookWithToken(noteId: number, token: string | null): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/learning/v2/notebook/${noteId}`, {
       headers: this.getHeaders(token)
     });
   }
 
-  updateNotebook(noteId: number, payload: { videoTimeSeconds: number; noteText: string }, token: string | null): Observable<any> {
+  updateNotebookWithToken(noteId: number, payload: { videoTimeSeconds: number; noteText: string }, token: string | null): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/learning/v2/notebook/${noteId}`, payload, {
       headers: this.getHeaders(token)
     });
   }
 
-  downloadNotebookPdf(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null, token: string | null): Observable<Blob> {
+  downloadNotebookPdf(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null): Observable<Blob> {
+    let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}/download-pdf`;
+    const params: string[] = [];
+    
+    if (courseCertificateId) {
+      params.push(`courseCertificateId=${courseCertificateId}`);
+    }
+    
+    if (careerPathLevelMapId) {
+      params.push(`careerPathLevelMapId=${careerPathLevelMapId}`);
+    } else if (professionalCertificateId) {
+      params.push(`professionalCertificateId=${professionalCertificateId}`);
+    }
+    
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return this.http.get(url, {
+      withCredentials: true,
+      responseType: 'blob'
+    });
+  }
+
+  downloadNotebookPdfWithToken(shortCourseId: number, courseCertificateId: number | null, professionalCertificateId: number | null, careerPathLevelMapId: number | null, token: string | null): Observable<Blob> {
     let url = `${this.apiUrl}/learning/v2/notebook/course/${shortCourseId}/download-pdf`;
     const params: string[] = [];
     

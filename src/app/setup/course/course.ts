@@ -346,40 +346,42 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
 
     this.route.queryParams.subscribe(params => {
-      const token = params['t'] || params['token'];
       const courseId = params['courseId'];
       const careerPathLevelDetailId = params['careerPathLevelDetailId'];
       const lectureId = params['lectureId'];
+      const oldToken = params['t'] || params['token'];
 
       // Set career path level detail ID if present
       if (careerPathLevelDetailId) {
         this.careerPathLevelDetailId.set(parseInt(careerPathLevelDetailId));
       }
 
-      if (token && (courseId || careerPathLevelDetailId)) {
+      // Remove old token from URL if present
+      if (oldToken) {
+        const cleanParams: any = { ...params };
+        delete cleanParams['t'];
+        delete cleanParams['token'];
+        
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: cleanParams,
+          queryParamsHandling: '',
+          replaceUrl: true
+        });
+      }
+
+      if (courseId || careerPathLevelDetailId) {
         const idToStore = careerPathLevelDetailId ? parseInt(careerPathLevelDetailId) : parseInt(courseId);
         this.authService.storeSession({
           courseId: idToStore,
           lectureId: lectureId || null,
-          sessionToken: token,
           careerPathLevelDetailId: careerPathLevelDetailId ? parseInt(careerPathLevelDetailId) : null
         });
         this.existingSeasionCourseId.set(idToStore);
-
-        // Remove token from URL immediately after storing it (only in production/staging)
-        if (environment.HIDE_URL_PARAMS) {
-          this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: {},
-            queryParamsHandling: '',
-            replaceUrl: true
-          });
-        }
-
-        this.loadCourseDataWithToken(idToStore, token);
+        this.loadCourseData(idToStore);
       } else {
         const existingSession = this.authService.getStoredSession();
-        if (existingSession?.courseId && existingSession?.sessionToken) {
+        if (existingSession?.courseId) {
           // Restore career path level detail ID from session if present
           if (existingSession.careerPathLevelDetailId) {
             this.careerPathLevelDetailId.set(existingSession.careerPathLevelDetailId);
@@ -387,7 +389,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.existingSeasionCourseId.set(existingSession.courseId);
           this.loadCourseData(this.existingSeasionCourseId());
         } else {
-          this.error.set('No access token provided. Please access through the main portal.');
+          this.error.set('No course ID provided. Please access through the main portal.');
           this.isLoading.set(false);
         }
       }
@@ -395,17 +397,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private loadCourseData(courseId: number) {
-    const token = this.authService.getToken();
-    this.loadCourseDataWithToken(courseId, token);
-  }
-
-  private loadCourseDataWithToken(courseId: number, token: string | null) {
     this.isLoading.set(true);
 
     // Use career path API if careerPathLevelDetailId is present, otherwise use regular course API
     const courseDetailsApi = this.careerPathLevelDetailId()
-      ? this.courseService.getCareerPathDetailWithToken(courseId, token)
-      : this.courseService.getCourseDetailsV2WithToken(courseId, token);
+      ? this.courseService.getCareerPathDetail(courseId)
+      : this.courseService.getCourseDetailsV2(courseId);
 
     courseDetailsApi.pipe(
       map((res: any) => res?.isSuccess !== undefined ? res.data : res),
@@ -428,8 +425,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         const courseTypeIdFromDetails = courseDetails?.courseTypeId;
         // Use career path tree API if careerPathLevelDetailId is present, otherwise use regular tree API
         const treeApi = this.careerPathLevelDetailId()
-          ? this.courseService.getCareerPathTreeWithToken(courseId, token)
-          : this.courseService.getCourseTreeV2WithToken(courseId, token);
+          ? this.courseService.getCareerPathTree(courseId)
+          : this.courseService.getCourseTreeV2(courseId);
 
         return treeApi.pipe(
           map((treeRes: any) => treeRes?.isSuccess !== undefined ? treeRes.data : treeRes),
@@ -578,7 +575,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.selectFirstLecture(firstLec);
           this.refreshProgress();
           // Fetch estimatedTimeMinutes from ShortCourseDetail API
-          this.courseService.getShortCourseDetails(this.courseSlug(), token).pipe(takeUntil(this.destroy$))
+          this.courseService.getShortCourseDetails(this.courseSlug()).pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (details: any) => {
                 if (details?.data?.estimatedTimeMinutes) {
@@ -601,7 +598,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  private startProgressTracking(token: string | null) {
+  private startProgressTracking() {
     this.progressStartTime = Date.now();
     this.lastProgressUpdate = this.progress()?.secondsWatched || 0;
 
@@ -610,11 +607,11 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     this.progressInterval = setInterval(() => {
-      this.updateProgress(token);
+      this.updateProgress();
     }, 20000);
   }
 
-  private updateProgress(token: string | null) {
+  private updateProgress() {
     const tree = this.courseTree();
     if (!tree) return;
 
@@ -664,7 +661,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       payload.professionalCourseId = null;
     }
 
-    this.courseService.updateCourseProgressWithToken(payload, token).subscribe({
+    this.courseService.updateCourseProgress(payload).subscribe({
       next: (res: any) => {
         const data = res.isSuccess !== undefined ? res.data : res;
         this.progress.set(data);
@@ -821,14 +818,13 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   refreshProgress() {
-    const token = this.authService.getToken();
     const selectedId = this.completeOrderPayload()?.shortCourseId;
     if (!selectedId) return;
-    this.courseService.getCourseProgressWithToken(selectedId, token).subscribe({
+    this.courseService.getCourseProgress(selectedId).subscribe({
       next: (res: any) => {
         const data = res.isSuccess !== undefined ? res.data : res;
         this.progress.set(data);
-        this.startProgressTracking(token);
+        this.startProgressTracking();
       },
       error: (err: any) => console.error('Progress Refresh Error:', err)
     });
@@ -1615,7 +1611,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   refreshCourseTree(callback?: () => void) {
     const courseId = this.existingSeasionCourseId() || this.courseTree()?.courseId;
-    const token = this.authService.getToken();
     const courseTypeId = this.courseTree()?.courseTypeId;
     if (!courseId || !courseTypeId) {
       if (callback) callback();
@@ -1624,8 +1619,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     // Use career path tree API if careerPathLevelDetailId is present
     const treeApi = this.careerPathLevelDetailId()
-      ? this.courseService.getCareerPathTreeWithToken(courseId, token)
-      : this.courseService.getCourseTreeV2WithToken(courseId, token);
+      ? this.courseService.getCareerPathTree(courseId)
+      : this.courseService.getCourseTreeV2(courseId);
 
     treeApi
       .pipe(
@@ -1798,7 +1793,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Stop any playing video and audio before starting assessment
     this.stopAllMedia();
 
-    const token = this.authService.getToken();
     const courseId = this.existingSeasionCourseId();
     if (!courseId) {
       this.assessmentStep.set('start');
@@ -1809,9 +1803,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     let getAttemptStatusObservable;
     if (this.careerPathLevelDetailId() && careerPathLevelMapId) {
-      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, token, careerPathLevelMapId);
+      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, null, careerPathLevelMapId);
     } else {
-      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, token);
+      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, null);
     }
 
     getAttemptStatusObservable.pipe(takeUntil(this.destroy$)).subscribe({
@@ -1946,11 +1940,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   _fetchAssessmentResultAndSetStep(defaultStep: 'failed' | 'cleared' | 'maxattempts') {
-    const token = this.authService.getToken();
     const courseId = this.existingSeasionCourseId();
     const careerPathLevelMapId = this.courseTree()?.careerPathLevel?.careerPathLevelMapId;
 
-    this.assessmentService.getAttemptStatus(courseId, token, careerPathLevelMapId).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getAttemptStatus(courseId, null, careerPathLevelMapId).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           if (details?.isSuccess && details?.data) {
@@ -2000,7 +1993,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private checkInitialAssessmentStatus() {
-    const token = this.authService.getToken();
     const courseId = this.existingSeasionCourseId();
     if (!courseId) {
       return;
@@ -2010,9 +2002,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     let getAttemptStatusObservable;
     if (this.careerPathLevelDetailId() && careerPathLevelMapId) {
-      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, token, careerPathLevelMapId);
+      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, null, careerPathLevelMapId);
     } else {
-      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, token);
+      getAttemptStatusObservable = this.assessmentService.getAttemptStatus(courseId, null);
     }
 
     getAttemptStatusObservable.pipe(takeUntil(this.destroy$)).subscribe({

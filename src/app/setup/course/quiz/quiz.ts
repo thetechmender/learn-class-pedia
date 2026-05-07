@@ -71,8 +71,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   _fetchQuizes() {
     if (!this.orderPayload?.shortCourseId) return;
     this.isQuestionLoading.set(true);
-    const token = this.authService.getToken();
-    this.assessmentService.getQuizQuestions(this.orderPayload.shortCourseId, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getQuizQuestions(this.orderPayload.shortCourseId, null).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           this.questions.set(details['data']['questions'].map((q: any) => ({
@@ -126,8 +125,7 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
       payload.professionalCertificateId = this.orderPayload?.professionalCertificateId || null;
       payload.careerPathLevelMapId = null;
     }
-    const token = this.authService.getToken();
-    this.assessmentService.submitQuizAssessment(payload, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.submitQuizAssessment(payload, null).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
           this.isCompleting.set(false);
@@ -142,14 +140,13 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   }
 
   _fetchQuizesResult() {
-    const token = this.authService.getToken();
     const payload = {
       courseId: this.orderPayload?.shortCourseId || null,
       courseCertificateId: this.orderPayload?.courseCertificateId || null,
       professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
       assessmentTypeId: 1
     };
-    this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+    this.assessmentService.getQuizesResult(payload, null).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           if (details?.isSuccess) {
@@ -178,14 +175,13 @@ export class Quiz implements OnInit, OnDestroy, OnChanges {
   onCheckAnswers() {
     if (this.isLectureCompleted && !this.isSubmitted()) {
       // Lecture already completed - fetch results from API before showing answers
-      const token = this.authService.getToken();
       const payload = {
         courseId: this.orderPayload?.shortCourseId || null,
         courseCertificateId: this.orderPayload?.courseCertificateId || null,
         professionalCertificateId: this.orderPayload?.professionalCertificateId || null,
         assessmentTypeId: 1
       };
-      this.assessmentService.getQuizesResult(payload, token).pipe(takeUntil(this.destroy$))
+      this.assessmentService.getQuizesResult(payload, null).pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (details: any) => {
             if (details?.isSuccess) {

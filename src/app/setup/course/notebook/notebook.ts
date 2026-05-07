@@ -57,8 +57,7 @@ export class Notebook implements OnInit, OnChanges {
   fetchNotes() {
     const p = this.orderPayload;
     if (!p?.shortCourseId) return;
-    const token = this.authService.getToken();
-    this.courseService.getNotebooks(p.shortCourseId, p.courseCertificateId, p.professionalCertificateId, p.careerPathLevelMapId, token).subscribe({
+    this.courseService.getNotebooks(p.shortCourseId, p.courseCertificateId, p.professionalCertificateId, p.careerPathLevelMapId).subscribe({
       next: (res: any) => {
         const data = res?.isSuccess !== undefined ? res.data : res;
         this.savedNotes.set(Array.isArray(data?.notes) ? data.notes : []);
@@ -91,7 +90,6 @@ export class Notebook implements OnInit, OnChanges {
   onSaveNoteConfirm() {
     if (!this.noteText() || !this.orderPayload?.shortCourseId) return;
     this.isSaving.set(true);
-    const token = this.authService.getToken();
     
     // Build payload based on hierarchy
     const payload: any = {
@@ -111,7 +109,7 @@ export class Notebook implements OnInit, OnChanges {
       payload.careerPathLevelMapId = null;
     }
 
-    this.courseService.saveNotebook(payload, token).subscribe({
+    this.courseService.saveNotebook(payload).subscribe({
       next: (res: any) => {
         this.isSaving.set(false);
         this.isAddingNote.set(false);
@@ -150,12 +148,11 @@ export class Notebook implements OnInit, OnChanges {
   onUpdateNote(note: any) {
     if (!this.editNoteText()) return;
     this.isSaving.set(true);
-    const token = this.authService.getToken();
     const payload = {
       videoTimeSeconds: note.videoTimeSeconds,
       noteText: this.editNoteText()
     };
-    this.courseService.updateNotebook(note.id, payload, token).subscribe({
+    this.courseService.updateNotebook(note.id, payload).subscribe({
       next: () => {
         this.savedNotes.update(notes => notes.map(n => n.id === note.id ? { ...n, noteText: this.editNoteText() } : n));
         this.editingNoteId.set(null);
@@ -170,9 +167,8 @@ export class Notebook implements OnInit, OnChanges {
   }
 
   onDeleteNote(id: number) {
-    const token = this.authService.getToken();
     this.deletingNoteId.set(id);
-    this.courseService.deleteNotebook(id, token).subscribe({
+    this.courseService.deleteNotebook(id).subscribe({
       next: () => {
         this.savedNotes.update(notes => notes.filter(n => n.id !== id));
         this.deletingNoteId.set(null);
@@ -190,8 +186,6 @@ export class Notebook implements OnInit, OnChanges {
 
     const p = this.orderPayload;
     if (!p?.shortCourseId) return;
-
-    const token = this.authService.getToken();
     
     
     this.isDownloadingPdf.set(true);
@@ -201,8 +195,7 @@ export class Notebook implements OnInit, OnChanges {
       p.shortCourseId, 
       p.courseCertificateId, 
       p.professionalCertificateId,
-      p.careerPathLevelMapId,
-      token
+      p.careerPathLevelMapId
     ).subscribe({
       next: (blob: Blob) => {
         // Create a download link and trigger download

@@ -90,8 +90,7 @@ export class KeyPoints implements OnInit, OnChanges {
   }
 
   _fetchShortCourse() {
-    const token = this.authService.getToken();
-    this.courseService.getShortCourseDetails(this.slug, token).pipe(takeUntil(this.destroy$))
+    this.courseService.getShortCourseDetails(this.slug).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           this.overView.set(details['data'] || null);
@@ -106,8 +105,7 @@ export class KeyPoints implements OnInit, OnChanges {
   };
 
   _fetcCourseCertificate() {
-    const token = this.authService.getToken();
-    this.courseService.getCourseCertificateDetails(this.slug, token).pipe(takeUntil(this.destroy$))
+    this.courseService.getCourseCertificateDetails(this.slug, null).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           this.overView.set(details['data'] || null);
@@ -120,8 +118,7 @@ export class KeyPoints implements OnInit, OnChanges {
   }
 
   _fetchProfessionalCertificate() {
-    const token = this.authService.getToken();
-    this.courseService.getProfessionalCertificateDetails(this.slug, token).pipe(takeUntil(this.destroy$))
+    this.courseService.getProfessionalCertificateDetails(this.slug, null).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (details: any) => {
           this.overView.set(details['data'] || null);

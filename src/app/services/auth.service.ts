@@ -1,10 +1,10 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
 
 export interface ClassroomSession {
   courseId: number | null;
   lectureId: string | null;
-  sessionToken: string | null;
   careerPathLevelDetailId?: number | null;
   storedAt?: number;
 }
@@ -14,6 +14,7 @@ export interface ClassroomSession {
 })
 export class AuthService {
   private platformId = inject(PLATFORM_ID);
+  private router = inject(Router);
 
   private get isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
@@ -42,11 +43,6 @@ export class AuthService {
     }
   }
 
-  getToken(): string | null {
-    const session = this.getStoredSession();
-    return session?.sessionToken || null;
-  }
-
   getCourseId(): number | null {
     const session = this.getStoredSession();
     return session?.courseId || null;
@@ -58,7 +54,13 @@ export class AuthService {
     }
   }
 
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+  handleUnauthorized(): void {
+    this.clearSession();
+    this.router.navigate(['/unauthorized']);
+  }
+
+  redirectToLogin(): void {
+    this.clearSession();
+    window.location.href = '/login';
   }
 }
