@@ -1,4 +1,4 @@
-import { useState, useEffect,useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Plus,
   Search,
@@ -80,8 +80,16 @@ const TopicManagement = () => {
   // Type parameter: 1 = course, 2 = career path, 3 = subcategories
   const [mappingType, setMappingType] = useState(1);
 
+  // Use refs to track if data has been loaded to prevent multiple loads
+  const initialLoadDone = useRef(false);
+  const coursesLoadDone = useRef(false);
+  const careerPathsLoadDone = useRef(false);
+  const subcategoriesLoadDone = useRef(false);
+
   // Load topics on component mount
   useEffect(() => {
+    if (initialLoadDone.current) return;
+    
     const loadInitialData = async () => {
       try {
         setLoadError('');
@@ -91,12 +99,16 @@ const TopicManagement = () => {
         if (coursesCache && coursesCache.length > 0) {
           setAllCourses(coursesCache);
           setCoursesPreloaded(true);
-        } else if (!coursesPreloaded) {
+          coursesLoadDone.current = true;
+        } else if (!coursesLoadDone.current) {
           // Fallback: Load courses if not preloaded
           const courses = await getAllCoursesForMapping();
           setAllCourses(courses);
           setCoursesPreloaded(true);
+          coursesLoadDone.current = true;
         }
+        
+        initialLoadDone.current = true;
       } catch (err) {
         console.error('Failed to load initial data:', err);
         setLoadError('Failed to load topics. Please try again later.');
@@ -104,43 +116,45 @@ const TopicManagement = () => {
     };
     
     loadInitialData();
-  }, [getAllTopics, coursesCache, coursesPreloaded, getAllCoursesForMapping, currentPage, pageSize]);
+  }, [getAllTopics, getAllCoursesForMapping, currentPage, pageSize, coursesCache]);
 
   // Preload career paths for instant access
   useEffect(() => {
+    if (careerPathsLoadDone.current) return;
+    
     const loadCareerPaths = async () => {
-      if (!careerPathsPreloaded) {
-        try {
-          const careerPaths = await getAllCareerPathsForMapping();
-          setAllCareerPaths(careerPaths);
-          setCareerPathsPreloaded(true);
-        } catch (err) {
-          console.error('Failed to load career paths:', err);
-          // Don't show error for secondary data loading
-        }
+      try {
+        const careerPaths = await getAllCareerPathsForMapping();
+        setAllCareerPaths(careerPaths);
+        setCareerPathsPreloaded(true);
+        careerPathsLoadDone.current = true;
+      } catch (err) {
+        console.error('Failed to load career paths:', err);
+        // Don't show error for secondary data loading
       }
     };
     
     loadCareerPaths();
-  }, [careerPathsPreloaded, getAllCareerPathsForMapping]);
+  }, [getAllCareerPathsForMapping]);
 
   // Preload subcategories for instant access
   useEffect(() => {
+    if (subcategoriesLoadDone.current) return;
+    
     const loadSubcategories = async () => {
-      if (!subcategoriesPreloaded) {
-        try {
-          const subcategories = await getAllSubcategoriesForMapping();
-          setAllSubcategories(subcategories);
-          setSubcategoriesPreloaded(true);
-        } catch (err) {
-          console.error('Failed to load subcategories:', err);
-          // Don't show error for secondary data loading
-        }
+      try {
+        const subcategories = await getAllSubcategoriesForMapping();
+        setAllSubcategories(subcategories);
+        setSubcategoriesPreloaded(true);
+        subcategoriesLoadDone.current = true;
+      } catch (err) {
+        console.error('Failed to load subcategories:', err);
+        // Don't show error for secondary data loading
       }
     };
     
     loadSubcategories();
-  }, [subcategoriesPreloaded, getAllSubcategoriesForMapping]);
+  }, [getAllSubcategoriesForMapping]);
 
   // Debounce search term to avoid excessive filtering
   useEffect(() => {

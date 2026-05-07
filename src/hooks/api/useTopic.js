@@ -1,4 +1,4 @@
-import { useState, useCallback,useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import ApiService from '../../services/ApiService';
 
 export const useTopic = () => {
@@ -240,13 +240,6 @@ export const useTopic = () => {
       setLoading(false);
     }
   }, [handleError]);
-
-  // Preload courses immediately when hook initializes
-  useEffect(() => {
-    if (!coursesCache) {
-      getAllCoursesForMapping();
-    }
-  }, [coursesCache, getAllCoursesForMapping]);
 
   return {
     // Global state
