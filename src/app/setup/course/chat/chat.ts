@@ -47,6 +47,7 @@ export class Chat {
   constructor() {
     // Auto-scroll to bottom when messages change or sending state changes
     effect(() => {
+
       this.chatMessages();
       this.isChatSending();
       this.isRecording();
@@ -64,7 +65,7 @@ export class Chat {
 
   @Input() assessmentStep: 'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts' = 'none';
   @Input() courseTree: any = null;
-
+  @Input() courseTypeName:string = ''
   isLiveChatActive = signal<boolean>(false);
 
   chatInput = signal<string>('');
@@ -287,17 +288,46 @@ export class Chat {
     this.lastQueryWasVoice = false;
     this.isSendingVoice.set(wasVoice);
 
+    // Calculate noOfCourseModules and noOfCourses based on courseTypeId
+    const courseTypeId = this.courseTree?.courseTypeId;
+    let noOfCourseModules = 0;
+    let noOfCourses = 0;
+
+    if (courseTypeId === 1) {
+      // Professional course: noOfCourseModules = length of courseCertificates array
+      noOfCourseModules = this.courseTree?.professionalCourse?.courseCertificates?.length || 0;
+      // noOfCourses = total shortCourses across all certificates
+      const certs = this.courseTree?.professionalCourse?.courseCertificates || [];
+      noOfCourses = certs.reduce((total: number, cert: any) => total + (cert.shortCourses?.length || 0), 0);
+    } else if (courseTypeId === 2) {
+      // Certificate course: noOfCourseModules = 1
+      noOfCourseModules = 1;
+      // noOfCourses = length of shortCourses array
+      noOfCourses = this.courseTree?.certificateCourse?.shortCourses?.length || 0;
+    } else if (courseTypeId === 3) {
+      // Short course: noOfCourseModules = 0
+      noOfCourseModules = 0;
+      // noOfCourses = 0 (single course, no shortCourses)
+      noOfCourses = 0;
+    }
+
     const payload = {
       customerId: 1,
       question: question,
       cpCourseDetailId: cpCourseDetailId,
-      threadId: this.chatThreadId()
+      threadId: this.chatThreadId(),
+      courseInfo: {
+        courseName: this.courseTree?.courseTitle,
+        courseType: this.courseTypeName,
+        noOfCourseModules,
+        noOfCourses
+      }
     };
 
     this.chatMessages.set([...this.chatMessages(), { role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
     this.chatInput.set('');
     this.isChatSending.set(true);
-
+    
     this.courseService.askCourseQuestion(payload).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res: any) => {
         const threadId = res?.data?.threadId ?? res?.threadId;
