@@ -1,34 +1,21 @@
-<div class="ppt-container" [attr.data-theme]="theme" [class.fullscreen]="isFullscreen"
+<div class="ppt-container border border-primary[1/2]" [attr.data-theme]="theme" [class.fullscreen]="isFullscreen"
   [class.presentation-mode]="isPresentationMode"> @if (!isPresentationMode) {
-  <div class="toolbar" style="max-width: 1100px !important">
-    <!-- <div class="toolbar__brand">
-      <div class="toolbar__badge border border-primary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-        </svg>
-      </div>
-      <div class="toolbar__text">
-        <div class="toolbar__title" [title]="pptTitle">{{ pptTitle }}</div>
-        <div class="toolbar__info">{{ currentSlideNumber }}</div>
-      </div>
-    </div> -->
-
+  <div class="toolbar border-b border-primary[1/2]" style="max-width: 100% !important">
+    <h1 class="font-bold text-[20px]">{{ mainCourseTitle }}</h1>
     <div class="toolbar__actions">
       <button
         class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
         (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"
-          stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
+          stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </button>
       <button
         class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
         (click)="next()" title="Next (→)" [disabled]="currentIndex === slides.length - 1">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round"
-          stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
+          stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </button>
@@ -47,9 +34,42 @@
         </svg>
         }
       </button>
+      <button
+        class="w-8 h-8 rounded border border-primary-300 text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+         title="Search" (click)="toggleSearchPopup()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </button>
+      <div class="relative">
+        <button
+          class="w-8 h-8 rounded border border-primary-300 text-gray flex items-center justify-center hover:opacity-90 transition-all"
+          title="Zoom" (click)="toggleZoomSlider()">
+          Aa
+        </button>
+        <!-- Zoom Slider Tooltip -->
+        @if (showZoomSlider) {
+        <div class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 w-[220px]">
+          <button (click)="toggleZoomSlider()" class="absolute top-1 right-1 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+          <div class="flex items-center gap-2 mt-4">
+            <button (click)="zoomOut()" class="w-5 h-5 border border-primary rounded flex items-center justify-center text-primary font-bold text-lg hover:bg-blue-50">−</button>
+            <input type="range" min="50" max="200" [value]="zoomLevel" (input)="onZoomChange($event)"
+              class="flex-1 h-1 accent-primary cursor-pointer" />
+            <button (click)="zoomIn()" class="w-5 h-5 border border-primary rounded flex items-center justify-center text-primary font-bold text-lg hover:bg-blue-50">+</button>
+          </div>
+          <p class="text-center text-xs text-gray-500 mt-1" style="font-size: 12px;">{{ zoomLevel }}%</p>
+        </div>
+        }
+      </div>
     </div>
   </div>
-
   }
 
   <!-- Slides Container -->
@@ -62,12 +82,17 @@
       <div class="slide active-slide">
         <div class="slide-content">
           <div class="slide-header">
-            <h1 class="slide-title">{{ slides[currentIndex].title }}</h1>
+            <h1 class="slide-title">{{ slides[currentIndex].mainTitle }}</h1>
             @if (slides[currentIndex].subtitle) {
-            <p class="slide-subtitle">{{ slides[currentIndex].subtitle }}</p>
+            <p class="slide-subtitle font-bold">{{ slides[currentIndex].subtitle }}</p>
             }
           </div>
-          <div class="slide-body" [innerHTML]="slides[currentIndex].content | safeHtml"></div>
+          <div class="slide-body" [innerHTML]="getHighlightedContent(slides[currentIndex].content) | safeHtml" [style.zoom]="zoomLevel + '%'"></div>
+          @if (highlightTerm) {
+          <button (click)="clearHighlight()" class="absolute top-2 right-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-all">
+            Clear highlight
+          </button>
+          }
         </div>
 
         <!-- Slide Number (bottom right) -->
@@ -102,16 +127,58 @@
 
 
   <div class="footer">
-    <div class="progress">
-              <div class="w-full h-2 bg-thirdly rounded-full overflow-hidden progressbr">
-          <div class="h-full bg-primary rounded-full transition-all duration-300"
-            [style.width.%]="progressPercent"></div>
-        </div>
-        <span class="text-sm text-primary">{{ progressPercent | number:'1.0-1' }}%</span>
+    <div class="progress flex items-center gap-2">
+      <span class="text-xs whitespace-nowrap">Page {{currentIndex + 1}} of {{slides.length}}</span>
+      <div class="flex-1 h-2 bg-thirdly rounded-full overflow-hidden progressbr">
+        <div class="h-full bg-primary rounded-full transition-all duration-300" [style.width.%]="progressPercent"></div>
+      </div>
+      <span class="text-sm text-primary whitespace-nowrap">{{ progressPercent | number:'1.0-1' }}%</span>
     </div>
   </div>
 
-  <!-- Thumbnail Navigation (bottom, hidden in presentation mode) -->
+  <!-- Search Popup -->
+  @if (showSearchPopup) {
+  <div class="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center" (click)="toggleSearchPopup()">
+    <div class="bg-white rounded-xl shadow-2xl w-[400px] max-w-[90vw] max-h-[70vh] flex flex-col relative" (click)="$event.stopPropagation()">
+      <button (click)="toggleSearchPopup()" class="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center bg-white text-gray-500 hover:text-gray-800 rounded-full shadow-md border border-gray-200 z-10">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <div class="p-4 pb-3 border-b border-gray-200">
+        <div class="relative">
+          <input type="text" [value]="searchQuery" (input)="onSearchInput($event)" placeholder="Search in slides..."
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:border-primary" autofocus />
+          @if (searchQuery) {
+          <button (click)="searchQuery = ''; searchResults = []" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+          }
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4">
+        @if (searchQuery && searchResults.length > 0) {
+        <p class="text-sm font-semibold text-primary mb-3">{{ searchResults.length }} results found</p>
+        @for (result of searchResults; track result.pageIndex) {
+        <div class="mb-4 pb-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded p-2 -mx-2" (click)="goToSearchResult(result.pageIndex)">
+          <p class="text-xs text-gray-500 mb-1">{{ result.pageLabel }}</p>
+          <p class="text-sm text-gray-700" [innerHTML]="highlightMatch(result.snippet)"></p>
+        </div>
+        }
+        } @else if (searchQuery && searchResults.length === 0) {
+        <p class="text-sm text-gray-500 text-center py-4">No results found</p>
+        } @else {
+        <p class="text-sm text-gray-400 text-center py-4">Type to search across all slides</p>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
   <!-- @if (!isPresentationMode && slides.length > 0) {
   <div class="thumbnail-strip">
     @for (slide of slides; track slide.index) {
@@ -121,10 +188,8 @@
     </button>
     }
   </div>
-  } -->
-
-  <!-- Exit Presentation Mode Button -->
-  <!-- @if (isPresentationMode) {
+  }
+  @if (isPresentationMode) {
   <button (click)="togglePresentationMode()" class="exit-presentation" title="Exit Presentation (P)">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2">

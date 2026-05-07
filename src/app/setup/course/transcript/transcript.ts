@@ -15,6 +15,7 @@ export type ViewMode = 'book' | 'ppt';
 export class Transcript {
   @Input() currentShortCourse: any = null;
   @Input() courseTypeId: any = null;
+  @Input() courseTitle: string = '';
   @Input() allCoursesCompleted: boolean = false;
   @Output() moveToQuiz = new EventEmitter<void>();
   @Output() startAssessment = new EventEmitter<void>();

@@ -33,7 +33,7 @@
   <!-- PPT View -->
   @if (viewMode() === 'ppt') {
   <app-3d-ppt [lectures]="lectures" [pptTitle]="currentShortCourse?.title || 'Lecture Slides'"
-    (presentationCompleted)="onPresentationCompleted()">
+    (presentationCompleted)="onPresentationCompleted()" [mainCourseTitle]="courseTitle">
   </app-3d-ppt>
   }
 

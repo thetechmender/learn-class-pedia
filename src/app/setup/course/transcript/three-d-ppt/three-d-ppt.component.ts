@@ -30,6 +30,7 @@ interface Slide {
   title: string;
   content: string;
   subtitle?: string;
+  mainTitle?:string
 }
 
 @Component({
@@ -38,12 +39,12 @@ interface Slide {
   imports: [CommonModule, SafeHtmlPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './three-d-ppt.component.html',
-  styleUrls: ['./three-d-ppt.component.scss','../three-d-book/three-d-book.component.scss'],
+  styleUrls: ['./three-d-ppt.component.scss'],
 })
 export class ThreeDPPTComponent implements OnInit, AfterViewInit {
   @Input() lectures: Lecture[] = [];
   @Input() pptTitle: string = 'Lecture Slides';
-
+  @Input() mainCourseTitle: string = '';
   @Output() slideChanged = new EventEmitter<number>();
   @Output() presentationCompleted = new EventEmitter<void>();
 
@@ -57,6 +58,16 @@ export class ThreeDPPTComponent implements OnInit, AfterViewInit {
   isFullscreen = false;
   isPresentationMode = false;
   showNotes = false;
+
+  // Search state
+  showSearchPopup = false;
+  searchQuery = '';
+  searchResults: { pageIndex: number; pageLabel: string; snippet: string }[] = [];
+  highlightTerm = '';
+
+  // Zoom state
+  showZoomSlider = false;
+  zoomLevel = 100;
 
   private readonly transitionDurationMs = 600;
   private completedOnce = false;
@@ -188,6 +199,122 @@ export class ThreeDPPTComponent implements OnInit, AfterViewInit {
     this.cdr.markForCheck();
   }
 
+  toggleSearchPopup(): void {
+    this.showSearchPopup = !this.showSearchPopup;
+    if (!this.showSearchPopup) {
+      this.searchQuery = '';
+      this.searchResults = [];
+    }
+    this.cdr.markForCheck();
+  }
+
+  onSearchInput(event: Event): void {
+    this.searchQuery = (event.target as HTMLInputElement).value;
+    this.performSearch();
+  }
+
+  performSearch(): void {
+    const query = this.searchQuery.trim().toLowerCase();
+    if (!query) {
+      this.searchResults = [];
+      this.cdr.markForCheck();
+      return;
+    }
+    this.searchResults = [];
+    for (const slide of this.slides) {
+      const plainText = this.stripHtml(slide.content);
+      const fullText = (slide.mainTitle || '') + ' ' + (slide.title || '') + ' ' + plainText;
+      const lowerFull = fullText.toLowerCase();
+      const idx = lowerFull.indexOf(query);
+      if (idx !== -1) {
+        const start = Math.max(0, idx - 30);
+        const end = Math.min(fullText.length, idx + query.length + 60);
+        let snippet = fullText.substring(start, end);
+        if (start > 0) snippet = '...' + snippet;
+        if (end < fullText.length) snippet = snippet + '...';
+        this.searchResults.push({
+          pageIndex: slide.index,
+          pageLabel: `Page ${slide.index + 1}`,
+          snippet,
+        });
+      }
+    }
+    this.cdr.markForCheck();
+  }
+
+  goToSearchResult(pageIndex: number): void {
+    this.highlightTerm = this.searchQuery.trim();
+    this.showSearchPopup = false;
+    this.searchQuery = '';
+    this.searchResults = [];
+    // Navigate even if same page
+    if (pageIndex === this.currentIndex) {
+      this.cdr.markForCheck();
+      return;
+    }
+    this.transitionDirection = pageIndex > this.currentIndex ? 'next' : 'prev';
+    this.currentIndex = pageIndex;
+    this.emitSlideChanged();
+    this.persistState();
+    this.cdr.markForCheck();
+  }
+
+  clearHighlight(): void {
+    this.highlightTerm = '';
+    this.cdr.markForCheck();
+  }
+
+  getHighlightedContent(html: string): string {
+    if (!this.highlightTerm) return html;
+    const regex = new RegExp(`(${this.escapeRegex(this.highlightTerm)})`, 'gi');
+    // Highlight in text nodes only (avoid breaking HTML tags)
+    return html.replace(/>([^<]*)</g, (match, textContent) => {
+      const highlighted = textContent.replace(regex, '<mark style="background:#fde68a;padding:1px 2px;border-radius:2px;">$1</mark>');
+      return '>' + highlighted + '<';
+    });
+  }
+
+  highlightMatch(text: string): string {
+    if (!this.searchQuery.trim()) return text;
+    const regex = new RegExp(`(${this.escapeRegex(this.searchQuery.trim())})`, 'gi');
+    return text.replace(regex, '<strong>$1</strong>');
+  }
+
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  private stripHtml(html: string): string {
+    if (typeof document === 'undefined') return html.replace(/<[^>]*>/g, '');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  toggleZoomSlider(): void {
+    this.showZoomSlider = !this.showZoomSlider;
+    this.cdr.markForCheck();
+  }
+
+  zoomIn(): void {
+    if (this.zoomLevel < 200) {
+      this.zoomLevel += 10;
+      this.cdr.markForCheck();
+    }
+  }
+
+  zoomOut(): void {
+    if (this.zoomLevel > 50) {
+      this.zoomLevel -= 10;
+      this.cdr.markForCheck();
+    }
+  }
+
+  onZoomChange(event: Event): void {
+    this.zoomLevel = +(event.target as HTMLInputElement).value;
+    this.cdr.markForCheck();
+  }
+
   toggleFullscreen(): void {
     if (!this.isBrowser) return;
     const doc: any = document;
@@ -251,9 +378,12 @@ export class ThreeDPPTComponent implements OnInit, AfterViewInit {
         index: i,
         title,
         content,
+        mainTitle:lec.title || '',
         subtitle: lec.sectionType || `Slide ${i + 1}`,
       };
     });
+
+    console.log(this.slides)
   }
 
   private extractTitleAndContent(lecture: Lecture): { title: string; content: string } {
