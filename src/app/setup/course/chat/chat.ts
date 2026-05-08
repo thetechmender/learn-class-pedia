@@ -316,12 +316,12 @@ export class Chat {
       question: question,
       cpCourseDetailId: cpCourseDetailId,
       threadId: this.chatThreadId(),
-      courseInfo: {
-        courseName: this.courseTree?.courseTitle,
-        courseType: this.courseTypeName,
-        noOfCourseModules,
-        noOfCourses
-      }
+      // courseInfo: {
+      //   courseName: this.courseTree?.courseTitle,
+      //   courseType: this.courseTypeName,
+      //   noOfCourseModules,
+      //   noOfCourses
+      // }
     };
 
     this.chatMessages.set([...this.chatMessages(), { role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
