@@ -5,22 +5,6 @@
     <div class="toolbar__actions">
       <button
         class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-        (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
-          stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      </button>
-      <button
-        class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-        (click)="next()" title="Next (→)" [disabled]="currentIndex === slides.length - 1">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
-          stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
-      <button
-        class="w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
         (click)="toggleFullscreen()" [attr.title]="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
         @if (!isFullscreen) {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -77,28 +61,47 @@
     @if (slides.length > 0) {
     <div class="slide-container" [class.transitioning]="isTransitioning"
       [class.slide-next]="transitionDirection === 'next'" [class.slide-prev]="transitionDirection === 'prev'">
-
-      <!-- Current Slide -->
-      <div class="slide active-slide">
-        <div class="slide-content">
-          <div class="slide-header">
-            <h1 class="slide-title">{{ slides[currentIndex].mainTitle }}</h1>
-            @if (slides[currentIndex].subtitle) {
-            <p class="slide-subtitle font-bold">{{ slides[currentIndex].subtitle }}</p>
+      <div class="slide-shell">
+        <!-- Current Slide -->
+        <div class="slide active-slide">
+          <div class="slide-content">
+            <div class="slide-header">
+              <h1 class="slide-title">{{ slides[currentIndex].mainTitle }}</h1>
+              @if (slides[currentIndex].subtitle) {
+              <p class="slide-subtitle font-bold">{{ slides[currentIndex].subtitle }}</p>
+              }
+            </div>
+            <div class="slide-body" [innerHTML]="getHighlightedContent(slides[currentIndex].content) | safeHtml" [style.zoom]="zoomLevel + '%'"></div>
+            @if (highlightTerm) {
+            <button (click)="clearHighlight()" class="absolute top-2 right-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-all">
+              Clear highlight
+            </button>
             }
           </div>
-          <div class="slide-body" [innerHTML]="getHighlightedContent(slides[currentIndex].content) | safeHtml" [style.zoom]="zoomLevel + '%'"></div>
-          @if (highlightTerm) {
-          <button (click)="clearHighlight()" class="absolute top-2 right-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-all">
-            Clear highlight
-          </button>
+
+          <!-- Slide Number (bottom right) -->
+          @if (isPresentationMode) {
+          <div class="slide-number">{{ currentSlideNumber }}</div>
           }
         </div>
 
-        <!-- Slide Number (bottom right) -->
-        @if (isPresentationMode) {
-        <div class="slide-number">{{ currentSlideNumber }}</div>
-        }
+        <div class="slide-nav-overlay" [class.nav-visible]="showNavButtons">
+          <button class="sticky-side-nav sticky-side-nav--left w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+            (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <button class="sticky-side-nav sticky-side-nav--right w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+            (click)="next()" title="Next (→)" [disabled]="currentIndex === slides.length - 1">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -124,7 +127,6 @@
     </div>
     }
   </div>
-
 
   <div class="footer">
     <div class="progress flex items-center gap-2">

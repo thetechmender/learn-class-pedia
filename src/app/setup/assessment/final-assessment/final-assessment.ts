@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, Input, OnInit, signal, computed, HostListener, Signal } from '@angular/core';
+import { Component, Output, EventEmitter, inject, Input, OnInit, signal, computed, HostListener, Signal, ElementRef } from '@angular/core';
 
 import { AuthService } from '../../../services/auth.service';
 
@@ -131,6 +131,8 @@ export class FinalAssessment implements OnInit {
 
   public securityService = inject(SecurityService);
 
+  private hostEl = inject(ElementRef);
+
 
 
  async ngOnInit(): Promise<void> {
@@ -138,6 +140,9 @@ export class FinalAssessment implements OnInit {
     // Initialize security service with order payload
     this.securityService.setOrderPayload(this.orderPayload);
     this.securityService.startAssessmentTracking();
+
+    // Enter fullscreen when component loads
+    this.enterFullscreen();
 
     if (this.orderPayload?.careerPathLevelMapId) {
 
@@ -1233,6 +1238,15 @@ export class FinalAssessment implements OnInit {
           console.error('Start Assessment Time Error:', err);
         }
       });
+  }
+
+  private enterFullscreen(): void {
+    const doc: any = document;
+    const el: any = this.hostEl.nativeElement;
+    const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
+    if (!fsEl) {
+      (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+    }
   }
 
 }

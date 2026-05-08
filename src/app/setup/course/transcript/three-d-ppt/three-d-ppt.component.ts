@@ -8,6 +8,7 @@ import {
   HostListener,
   Inject,
   Input,
+  OnDestroy,
   OnInit,
   Output,
   PLATFORM_ID,
@@ -41,7 +42,7 @@ interface Slide {
   templateUrl: './three-d-ppt.component.html',
   styleUrls: ['./three-d-ppt.component.scss'],
 })
-export class ThreeDPPTComponent implements OnInit, AfterViewInit {
+export class ThreeDPPTComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() lectures: Lecture[] = [];
   @Input() pptTitle: string = 'Lecture Slides';
   @Input() mainCourseTitle: string = '';
@@ -69,6 +70,11 @@ export class ThreeDPPTComponent implements OnInit, AfterViewInit {
   showZoomSlider = false;
   zoomLevel = 100;
 
+  // Nav buttons visibility based on scroll
+  showNavButtons = false;
+
+  private scrollHandler: any;
+
   private readonly transitionDurationMs = 600;
   private completedOnce = false;
   private readonly isBrowser: boolean;
@@ -88,6 +94,44 @@ export class ThreeDPPTComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.cdr.markForCheck();
+    if (this.isBrowser) {
+      this.scrollHandler = this.onScroll.bind(this);
+      // Listen to scroll on window and host element
+      window.addEventListener('scroll', this.scrollHandler);
+      this.hostEl.nativeElement.addEventListener('scroll', this.scrollHandler);
+      // Also check parent elements
+      let parent = this.hostEl.nativeElement.parentElement;
+      while (parent) {
+        parent.addEventListener('scroll', this.scrollHandler);
+        parent = parent.parentElement;
+      }
+      console.log('Scroll listeners attached');
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.isBrowser && this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler);
+      this.hostEl.nativeElement.removeEventListener('scroll', this.scrollHandler);
+      let parent = this.hostEl.nativeElement.parentElement;
+      while (parent) {
+        parent.removeEventListener('scroll', this.scrollHandler);
+        parent = parent.parentElement;
+      }
+    }
+  }
+
+  onScroll(event?: Event): void {
+    const target = event?.target as HTMLElement;
+    const scrollY = target?.scrollTop || window.scrollY || window.pageYOffset || 0;
+    const viewportHeight = window.innerHeight;
+    const scrollPercentage = (scrollY / viewportHeight) * 100;
+    const shouldShow = scrollPercentage > 30;
+    if (this.showNavButtons !== shouldShow) {
+      this.showNavButtons = shouldShow;
+      this.cdr.detectChanges();
+      console.log('Scroll triggered - scrollY:', scrollY, 'Scroll %:', scrollPercentage.toFixed(1), 'Show nav:', shouldShow);
+    }
   }
 
   get currentSlideNumber(): string {
@@ -382,8 +426,6 @@ export class ThreeDPPTComponent implements OnInit, AfterViewInit {
         subtitle: lec.sectionType || `Slide ${i + 1}`,
       };
     });
-
-    console.log(this.slides)
   }
 
   private extractTitleAndContent(lecture: Lecture): { title: string; content: string } {
