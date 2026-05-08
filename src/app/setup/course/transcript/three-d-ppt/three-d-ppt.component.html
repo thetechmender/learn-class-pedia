@@ -20,9 +20,9 @@
       </button>
       <button
         class="w-8 h-8 rounded border border-primary-300 text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
-         title="Search" (click)="toggleSearchPopup()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
+        title="Search" (click)="toggleSearchPopup()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" [attr.stroke]="isFullscreen ? '#fff' : '#000'"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="7" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
@@ -30,25 +30,40 @@
       <div class="relative">
         <button
           class="w-8 h-8 rounded border border-primary-300 text-gray flex items-center justify-center hover:opacity-90 transition-all"
-          title="Zoom" (click)="toggleZoomSlider()">
+          [class.text-white]="isFullscreen" title="Zoom" (click)="toggleZoomSlider()">
           Aa
         </button>
         <!-- Zoom Slider Tooltip -->
         @if (showZoomSlider) {
-        <div class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 w-[220px]">
-          <button (click)="toggleZoomSlider()" class="absolute top-1 right-1 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div
+          class="absolute top-full left-0 right-auto sm:left-auto sm:right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 w-[200px] sm:w-[220px]">
+          <button (click)="toggleZoomSlider()"
+            class="absolute top-1 right-1 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-          <div class="flex items-center gap-2 mt-4">
-            <button (click)="zoomOut()" class="w-5 h-5 border border-primary rounded flex items-center justify-center text-primary font-bold text-lg hover:bg-blue-50">−</button>
+
+          <div class="flex items-center gap-2.5 mt-4 justify-between">
+            <button (click)="zoomOut()"
+              class="ml-0.5 w-6 h-6 border border-primary rounded flex items-center justify-center text-primary font-bold text-xl hover:bg-blue-50 active:scale-95 transition-all">
+              −
+            </button>
+
             <input type="range" min="50" max="200" [value]="zoomLevel" (input)="onZoomChange($event)"
-              class="flex-1 h-1 accent-primary cursor-pointer" />
-            <button (click)="zoomIn()" class="w-5 h-5 border border-primary rounded flex items-center justify-center text-primary font-bold text-lg hover:bg-blue-50">+</button>
+              class="flex-1 h-1.5 accent-primary cursor-pointer appearance-none bg-gray-200 rounded-lg" />
+
+            <button (click)="zoomIn()"
+              class="mr-0.5 w-6 h-6 border border-primary rounded flex items-center justify-center text-primary font-bold text-xl hover:bg-blue-50 active:scale-95 transition-all">
+              +
+            </button>
           </div>
-          <p class="text-center text-xs text-gray-500 mt-1" style="font-size: 12px;">{{ zoomLevel }}%</p>
+
+          <p class="text-center text-xs text-gray-500 mt-2 font-medium" style="font-size: 13px;">
+            {{ zoomLevel }}%
+          </p>
         </div>
         }
       </div>
@@ -71,9 +86,11 @@
               <p class="slide-subtitle font-bold">{{ slides[currentIndex].subtitle }}</p>
               }
             </div>
-            <div class="slide-body" [innerHTML]="getHighlightedContent(slides[currentIndex].content) | safeHtml" [style.zoom]="zoomLevel + '%'"></div>
+            <div class="slide-body" [innerHTML]="getHighlightedContent(slides[currentIndex].content) | safeHtml"
+              [style.zoom]="zoomLevel + '%'"></div>
             @if (highlightTerm) {
-            <button (click)="clearHighlight()" class="absolute top-2 right-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-all">
+            <button (click)="clearHighlight()"
+              class="absolute top-2 right-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200 transition-all">
               Clear highlight
             </button>
             }
@@ -86,7 +103,8 @@
         </div>
 
         <div class="slide-nav-overlay" [class.nav-visible]="showNavButtons">
-          <button class="sticky-side-nav sticky-side-nav--left w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+          <button
+            class="sticky-side-nav sticky-side-nav--left w-6 h-6 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
             (click)="prev()" [disabled]="currentIndex === 0" title="Previous (←)">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
               stroke-linecap="round" stroke-linejoin="round">
@@ -94,7 +112,8 @@
             </svg>
           </button>
 
-          <button class="sticky-side-nav sticky-side-nav--right w-8 h-8 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
+          <button
+            class="sticky-side-nav sticky-side-nav--right w-6 h-6 rounded btn-gradient-primary text-white flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50"
             (click)="next()" title="Next (→)" [disabled]="currentIndex === slides.length - 1">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="0.5"
               stroke-linecap="round" stroke-linejoin="round">
@@ -141,8 +160,10 @@
   <!-- Search Popup -->
   @if (showSearchPopup) {
   <div class="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center" (click)="toggleSearchPopup()">
-    <div class="bg-white rounded-xl shadow-2xl w-[400px] max-w-[90vw] max-h-[70vh] flex flex-col relative" (click)="$event.stopPropagation()">
-      <button (click)="toggleSearchPopup()" class="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center bg-white text-gray-500 hover:text-gray-800 rounded-full shadow-md border border-gray-200 z-10">
+    <div class="bg-white rounded-xl shadow-2xl w-[400px] max-w-[90vw] max-h-[70vh] flex flex-col relative"
+      (click)="$event.stopPropagation()">
+      <button (click)="toggleSearchPopup()"
+        class="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center bg-white text-gray-500 hover:text-gray-800 rounded-full shadow-md border border-gray-200 z-10">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
@@ -151,9 +172,11 @@
       <div class="p-4 pb-3 border-b border-gray-200">
         <div class="relative">
           <input type="text" [value]="searchQuery" (input)="onSearchInput($event)" placeholder="Search in slides..."
-            class="w-full border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:border-primary" autofocus />
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:border-primary"
+            autofocus />
           @if (searchQuery) {
-          <button (click)="searchQuery = ''; searchResults = []" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+          <button (click)="searchQuery = ''; searchResults = []"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -166,7 +189,8 @@
         @if (searchQuery && searchResults.length > 0) {
         <p class="text-sm font-semibold text-primary mb-3">{{ searchResults.length }} results found</p>
         @for (result of searchResults; track result.pageIndex) {
-        <div class="mb-4 pb-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded p-2 -mx-2" (click)="goToSearchResult(result.pageIndex)">
+        <div class="mb-4 pb-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded p-2 -mx-2"
+          (click)="goToSearchResult(result.pageIndex)">
           <p class="text-xs text-gray-500 mb-1">{{ result.pageLabel }}</p>
           <p class="text-sm text-gray-700" [innerHTML]="highlightMatch(result.snippet)"></p>
         </div>
