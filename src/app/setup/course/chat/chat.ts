@@ -6,6 +6,7 @@ import { CourseService } from '../../../services/course.service';
 import { ToastrService } from 'ngx-toastr';
 import { Subject, takeUntil } from 'rxjs';
 import { SpeechService } from '../../../services/speech.service';
+import { Capacitor } from '@capacitor/core';
 
 // Declare global window interface for chattrik API
 declare global {
@@ -99,22 +100,30 @@ export class Chat {
 
     // Mobile detection — continuous mode is unreliable on mobile Chrome
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isNative = Capacitor.isNativePlatform();
 
     // Request microphone permission explicitly before starting recognition.
-    // On mobile browsers, SpeechRecognition does NOT always trigger the
+    // On mobile browsers and native apps, SpeechRecognition does NOT always trigger the
     // permission prompt by itself, so we proactively request mic access.
     try {
       if (navigator.mediaDevices?.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         // Immediately stop the tracks — we only needed the permission grant.
         stream.getTracks().forEach(t => t.stop());
+        console.log('Microphone permission granted');
       }
     } catch (err: any) {
       console.error('Microphone permission denied:', err);
-      this.toastr.error(
-        'Microphone permission is required. Please allow microphone access in your browser settings.',
-        'Permission Required'
-      );
+      
+      // More helpful error message for native apps
+      const errorMsg = isNative 
+        ? 'Microphone permission is required. Please allow microphone access in your device settings for this app.'
+        : 'Microphone permission is required. Please allow microphone access in your browser settings.';
+      
+      this.toastr.error(errorMsg, 'Permission Required', {
+        timeOut: 8000,
+        closeButton: true
+      });
       return;
     }
 

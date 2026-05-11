@@ -1,9 +1,15 @@
 
-<app-header></app-header>
+@if (!network.isOnline()) {
+  <div class="fixed top-0 left-0 right-0 z-[100] bg-red-600 text-white text-center py-2 text-sm font-medium">
+    No Internet Connection
+  </div>
+}
 
-<main class="min-h-screen bg-gray-50" [class.screen-blur]="isPaused">
+<main class="min-h-screen bg-gray-50 pb-16 sm:pb-0" [class.screen-blur]="isPaused">
   <router-outlet />
 </main>
+
+<app-mobile-nav></app-mobile-nav>
 <style>
   .screen-blur {
     filter: blur(20px);

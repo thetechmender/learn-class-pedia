@@ -387,7 +387,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.existingSeasionCourseId.set(existingSession.courseId);
           this.loadCourseData(this.existingSeasionCourseId());
         } else {
-          this.error.set('No access token provided. Please access through the main portal.');
+          const userSession = this.authService.getUserSession();
+          if (userSession?.token) {
+            this.error.set('Please select a course from your dashboard or access through a course link.');
+          } else {
+            this.error.set('No access token provided. Please log in to continue.');
+          }
           this.isLoading.set(false);
         }
       }

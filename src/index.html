@@ -3,60 +3,14 @@
 
 <head>
   <meta charset="utf-8">
-  <title style="font-style: italic;">Classpedia - Classroom</title>
+  <title>Classpedia - Classroom</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        fontFamily: {
-          sans: ['Poppins', 'system-ui', 'sans-serif'],
-        },
-        extend: {
-          colors: {
-            primary: {
-              DEFAULT: '#0062CC',   // base
-              50: '#eef6ff',
-              100: '#dbeaff',
-              200: '#b6d6ff',
-              300: '#8fc0ff',
-              400: '#5a9eff',
-              500: '#0062CC',       // same as DEFAULT
-              600: '#0056b3',
-              700: '#00448f',
-              800: '#00336b',
-              900: '#002247',
-              950: '#00132a',
-            },
-            secondary: {
-              DEFAULT: '#00D9A5',
-              50: '#e6fff8',
-              100: '#ccfff1',
-              200: '#99ffe3',
-              300: '#66ffd5',
-              400: '#33ffc7',
-              500: '#00D9A5',
-              600: '#00c294',
-              700: '#00a37c',
-              800: '#008564',
-              900: '#00664c',
-              950: '#004734',
-            },
-            optional: {
-              DEFAULT: '#EDFAFF',
-            },
-            thirdly: {
-              DEFAULT: '#D4E8FF',
-            },
-          },
-        },
-      },
-    };
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.onkeydown = function (e) {
       if (event.keyCode == 123 ||
