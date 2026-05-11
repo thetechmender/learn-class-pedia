@@ -289,6 +289,13 @@ export class SecurityService {
   async isDualDisplayActive(): Promise<boolean> {
     if (!isPlatformBrowser(this.platformId)) return true;
 
+    // Check if device is mobile - skip dual display check on mobile devices
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      console.log('Mobile device detected - skipping dual display check');
+      return true;
+    }
+
     try {
       // Check if API is available
       if (!(window as any).getScreenDetails) {
