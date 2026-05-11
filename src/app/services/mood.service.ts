@@ -130,38 +130,38 @@ export class MoodService {
    * After 60s of no activity: lumiThinking.
    * After 120s of no activity: sleepy.
    */
-startClassroom(): void {
-  if (!this.isBrowser()) return;
+  startClassroom(): void {
+    if (!this.isBrowser()) return;
 
-  this.stopLoop();
-
-  // 1️⃣ lumiStill (0–20s)
-  this._loop.set('lumiStill');
-
-  const eyeCloseTimer = setTimeout(() => {
-    // 2️⃣ eyeClose (20–40s)
-    this._loop.set('eyeClose');
-  }, 20_000);
-
-  const readingTimer = setTimeout(() => {
-    // 3️⃣ reading (40–60s)
-    this._loop.set('reading');
-  }, 40_000);
-
-  const endTimer = setTimeout(() => {
     this.stopLoop();
-  }, 60_000);
 
-  this.loopState = {
-    kind: 'intro',
-    startedAt: Date.now(),
-    eyeCloseTimer,
-    readingTimer,
-    endTimer
-  };
+    // 1️⃣ lumiStill (0–20s)
+    this._loop.set('lumiStill');
 
-  this.recordActivity();
-}
+    const eyeCloseTimer = setTimeout(() => {
+      // 2️⃣ eyeClose (20–40s)
+      this._loop.set('eyeClose');
+    }, 1000);
+
+    const readingTimer = setTimeout(() => {
+      // 3️⃣ reading (40–60s)
+      this._loop.set('reading');
+    }, 2000);
+
+    const endTimer = setTimeout(() => {
+      this.stopLoop();
+    }, 3000);
+
+    this.loopState = {
+      kind: 'intro',
+      startedAt: Date.now(),
+      eyeCloseTimer,
+      readingTimer,
+      endTimer
+    };
+
+    this.recordActivity();
+  }
   /** Reset idle/sleepy timers. Call on user input. */
   recordActivity(): void {
     if (!this.isBrowser()) return;
@@ -188,11 +188,17 @@ startClassroom(): void {
       if (this.loopState.kind === 'intro') {
         this.stopLoop();
       }
-    } else if (tab === 'overview' || tab === 'keyPoints' || tab === 'transcript') {
-      this._tab.set('reading');
+    }
+    else if (tab === 'transcript') {
+      setTimeout(() => {
+        setTimeout(() => {
+          this._tab.set('idea');
+        }, 10_000);
+        this._tab.set('reading');
+      }, 10_000);
     } else {
       // 'quiz' or anything else has no specific tab mood
-      this._tab.set(null);
+      this._tab.set('reading');
     }
     this.recordActivity();
   }
