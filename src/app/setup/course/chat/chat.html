@@ -20,6 +20,14 @@
     <h2 class="text-md font-bold text-primary">Classpedia Course Companion</h2>
   </div>
 
+  <!-- Live Chat Loading Overlay -->
+  @if (isLiveChatLoading()) {
+    <div class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-[60] gap-3">
+      <div class="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+      <p class="text-sm text-primary font-medium">Loading live chat...</p>
+    </div>
+  }
+
   <!-- Chat Messages -->
   <div #chatBody class="flex-1 overflow-y-auto p-2 bg-optional overscroll-contain chat-body"
     (click)="handleChatMessageClick($event)">

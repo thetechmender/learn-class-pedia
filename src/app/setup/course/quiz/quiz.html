@@ -84,13 +84,34 @@
     @if (isCourseCompleted) {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You have completed all lectures. You can
       now start the final assessment or go to dashboard.</p>
-    <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
+    <div class="flex items-center gap-3 comp-btn flex-col sm:flex-row" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        inline-flex items-center justify-center
+        w-full sm:w-auto
+      ">
         Check Answers
       </button>
       <button (click)="onStartAssessment()" [disabled]="isStartingAssessment()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        disabled:opacity-50
+        inline-flex items-center justify-center gap-2
+        w-full sm:w-auto
+      ">
         @if (isStartingAssessment()) {
         <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
         Starting Assessment...
@@ -102,13 +123,35 @@
     } @else {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
       course.</p>
-    <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
+    <div class="flex items-center gap-3 comp-btn flex-col sm:flex-row" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()" [disabled]="isMovingToNext()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        disabled:opacity-50
+        inline-flex items-center justify-center
+        w-full sm:w-auto
+      ">
         Check Answers
       </button>
       <button (click)="onMoveToNextTopic()" [disabled]="isMovingToNext()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        disabled:opacity-50
+        inline-flex items-center justify-center gap-2
+        w-full sm:w-auto
+      ">
         @if (isMovingToNext()) {
         <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
         Moving to next lecture...
@@ -136,13 +179,34 @@
     @if (isCourseCompleted) {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Congratulations! You’ve completed all lectures and
       quizzes. You’re now ready to take the final assessment and earn your certificate.</p>
-    <div class="flex items-center gap-4 comp-btn" id="aftersubmitquiz">
+    <div class="flex items-center gap-3 comp-btn flex-col sm:flex-row" id="aftersubmitquiz">
       <button (click)="onCheckAnswers()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        inline-flex items-center justify-center
+        w-full sm:w-auto
+      ">
         Check Answers
       </button>
       <button (click)="onStartAssessment()" [disabled]="isStartingAssessment()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        disabled:opacity-50
+        inline-flex items-center justify-center gap-2
+        w-full sm:w-auto
+      ">
         @if (isStartingAssessment()) {
         <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
         Starting Assessment...
@@ -154,13 +218,35 @@
     } @else {
     <p class="text-sm text-gray-500 mb-6 text-center max-w-md">Great job! Continue to the next topic to complete your
       course.</p>
-    <div class="flex items-center gap-4 comp-btn">
+    <div class="flex items-center gap-3 comp-btn flex-col sm:flex-row">
       <button (click)="onCheckAnswers()" [disabled]="isMovingToNext()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        disabled:opacity-50
+        inline-flex items-center justify-center
+        w-full sm:w-auto
+      ">
         Check Answers
       </button>
       <button (click)="onMoveToNextTopic()" [disabled]="isMovingToNext()"
-        class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        disabled:opacity-50
+        inline-flex items-center justify-center gap-2
+        w-full sm:w-auto
+      ">
         @if (isMovingToNext()) {
         <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
         Moving to next lecture...
@@ -194,7 +280,18 @@
   @if (questions().length > 0) {
   <div class="mt-6 flex justify-left">
     <button (click)="onCheckResult()" [disabled]="isCompleting() || !isSomeQuestionAnswered()"
-      class="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+      class="
+      px-4 py-2 text-sm
+      sm:px-5 sm:py-2.5 sm:text-base
+      md:px-8 md:py-3 md:text-base
+      bg-primary text-white font-medium
+      rounded-full
+      hover:bg-primary/90
+      transition-all
+      disabled:opacity-50
+      inline-flex items-center justify-center gap-2
+      w-full sm:w-auto
+    ">
       @if (isCompleting()) {
       <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
       Submitting...

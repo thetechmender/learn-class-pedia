@@ -40,7 +40,15 @@
   @if (showQuizButton()) {
   <div class="mt-4 pb-20 movebtn">
     <button (click)="onButtonClick()"
-      class="px-8 py-2.5 border border-gray-300 text-white font-medium rounded-full hover:bg-thirdly bg-primary hover:text-gray-700 transition-all">
+      class="px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-medium
+        rounded-full
+        hover:bg-primary/90
+        transition-all
+        inline-flex items-center justify-center
+        w-full sm:w-auto">
       {{ courseTypeId == 3 ? 'Move to Assessment' : 'Move to Quiz' }}
     </button>
   </div>

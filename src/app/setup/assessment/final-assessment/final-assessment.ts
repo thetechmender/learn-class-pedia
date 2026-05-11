@@ -1242,7 +1242,7 @@ export class FinalAssessment implements OnInit {
 
   private enterFullscreen(): void {
     const doc: any = document;
-    const el: any = this.hostEl.nativeElement;
+    const el: any = doc.documentElement;
     const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
     if (!fsEl) {
       (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);

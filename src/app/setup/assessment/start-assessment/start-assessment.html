@@ -114,7 +114,18 @@
     <!-- Start Button -->
     <div class="p-6 flex justify-center">
       <button (click)="onStartAssessment()" [disabled]="!isAcceptedGuidelines"
-        class="px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-thirdly hover:text-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+        class="
+        px-4 py-2 text-sm
+        sm:px-5 sm:py-2.5 sm:text-base
+        md:px-8 md:py-3 md:text-base
+        bg-primary text-white font-semibold
+        rounded-full
+        hover:bg-thirdly hover:text-gray-700
+        transition-all
+        inline-flex items-center justify-center
+        disabled:opacity-50 disabled:cursor-not-allowed
+        w-full sm:w-auto
+      ">
         Start Assessment
       </button>
     </div>

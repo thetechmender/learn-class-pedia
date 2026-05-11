@@ -67,6 +67,7 @@ export class Chat {
   @Input() courseTree: any = null;
   @Input() courseTypeName:string = ''
   isLiveChatActive = signal<boolean>(false);
+  isLiveChatLoading = signal<boolean>(false);
 
   chatInput = signal<string>('');
   chatThreadId = signal<string>('');
@@ -381,8 +382,15 @@ export class Chat {
         if (window.Chattrak?.openChat) {
           window.Chattrak.openChat();
         }
+        // Close local chat sidebar since widget is already loaded
+        if (this.courseService.isChatOpen()) {
+          this.courseService.toggleChat();
+        }
         return;
       }
+
+      // Show loading indicator inside local chat
+      this.isLiveChatLoading.set(true);
 
       // Dynamically load the chattrik script
       const script = document.createElement('script');
@@ -447,6 +455,14 @@ export class Chat {
             window.Chattrak.openChat();
           } else {
           }
+
+          // Hide loader and close local chat sidebar now that widget is rendered
+          this.ngZone.run(() => {
+            this.isLiveChatLoading.set(false);
+            if (this.courseService.isChatOpen()) {
+              this.courseService.toggleChat();
+            }
+          });
         }, 2000); // Wait 2 seconds for widget to render
       };
 
@@ -454,6 +470,9 @@ export class Chat {
         console.error('[Live Chat Debug] Failed to load chattrik script');
         // Reset if script fails to load
         this.isLiveChatActive.set(false);
+        this.ngZone.run(() => {
+          this.isLiveChatLoading.set(false);
+        });
       };
 
       document.body.appendChild(script);
