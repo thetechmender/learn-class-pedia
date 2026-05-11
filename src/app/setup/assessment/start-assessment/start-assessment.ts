@@ -93,9 +93,14 @@ export class StartAssessment implements OnInit, OnDestroy {
 
     this.deselectLectures.emit();
 
-
-
     this._fetchQuestions();
+
+    // Reset scroll position after content loads to prevent auto-scroll
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 300);
 
   }
 
@@ -266,7 +271,6 @@ export class StartAssessment implements OnInit, OnDestroy {
 
   async onStartAssessment() {
     if (!this.isAcceptedGuidelines && !this.isAssessmentInProgress) return;
-
     const isDualDisplayActive = await this.securityService.isDualDisplayActive();
     if (!isDualDisplayActive) return;
 

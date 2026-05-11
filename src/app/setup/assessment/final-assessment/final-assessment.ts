@@ -445,7 +445,6 @@ export class FinalAssessment implements OnInit {
   async onNext() {
 
     const isDualDisplayActive = await this.securityService.isDualDisplayActive();
-
     if (isDualDisplayActive) {
 
       if (this.currentQuestion()?.isSelect) {
@@ -561,6 +560,9 @@ export class FinalAssessment implements OnInit {
     document.body.style.cursor = '';
     document.body.style.pointerEvents = '';
     document.body.classList.remove('cursor-blocked');
+
+    // Exit fullscreen when component is destroyed
+    this.exitFullscreen();
 
   }
 
@@ -1246,6 +1248,20 @@ export class FinalAssessment implements OnInit {
     const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
     if (!fsEl) {
       (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+      // Reset scroll position after fullscreen to prevent auto-scroll
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 100);
+    }
+  }
+
+  private exitFullscreen(): void {
+    const doc: any = document;
+    const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
+    if (fsEl) {
+      (doc.exitFullscreen || doc.webkitExitFullscreen)?.call(doc);
     }
   }
 

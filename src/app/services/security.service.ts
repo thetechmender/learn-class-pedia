@@ -290,7 +290,13 @@ export class SecurityService {
     if (!isPlatformBrowser(this.platformId)) return true;
 
     try {
-      const screenDetails = await (window as any).getScreenDetails?.();
+      // Check if API is available
+      if (!(window as any).getScreenDetails) {
+        console.warn('Screen Details API not supported');
+        return true;
+      }
+
+      const screenDetails = await (window as any).getScreenDetails();
       if (screenDetails && screenDetails.screens.length > 1) {
         this.toastr.error(
           'Disconnect extra displays.',
@@ -300,10 +306,25 @@ export class SecurityService {
         this.moodService.setMood('angry', 4000);
         return false;
       }
-    } catch (error) {
-      console.warn('Screen Details API not supported');
+
+      return true;
+    } catch (error: any) {
+      console.error('Screen Details API error:', error);
+
+      // If user denied permission or closed popup, block access
+      if (error.name === 'NotAllowedError' || error.message?.includes('denied') || error.message?.includes('permission')) {
+        this.toastr.error(
+          'Disconnect extra displays.',
+          'Access Restricted'
+        );
+        this.moodService.setMood('worried', 3000);
+        return false;
+      }
+
+      // For other errors, allow but log
+      console.warn('Allowing assessment due to API error');
+      return true;
     }
-    return true;
   }
 
 }
