@@ -4,13 +4,26 @@ import { Router } from '@angular/router';
 import { AuthService, EnrolledCourse } from '../../services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { SkeletonComponent } from '../skeleton/skeleton';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, SkeletonComponent],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.sass'
+  styleUrl: './dashboard.sass',
+  animations: [
+    trigger('listAnimation', [
+      transition('* => *', [
+        query(':enter', [
+          style({ opacity: 0, transform: 'translateY(-20px)' }),
+          stagger(100, [
+            animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ], { optional: true })
+      ])
+    ])
+  ]
 })
 export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);

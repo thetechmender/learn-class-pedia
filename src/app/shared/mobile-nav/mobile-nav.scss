@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  z-index: 50;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  color: #6b7280;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  border-radius: 0.5rem;
+  width: 5rem;
+}
+
+.nav-item.active {
+  color: #0062CC;
+  background-color: #e0eefa;
+}
+
+.nav-item svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}

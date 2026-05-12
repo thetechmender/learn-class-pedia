@@ -1,37 +1,24 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CourseService } from '../../services/course.service';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './header.html',
-  styleUrl: './header.sass'
 })
 export class HeaderComponent {
-  isProfileDropdownOpen = signal(false);
-  isMobileMenuOpen = signal(false);
-  private courseService = inject(CourseService)
+  title = signal('Dashboard');
 
-  user = {
-    name: 'Danish Ahmed',
-    email: 'danish.ahmed@example.com',
-    initials: 'DA'
-  };
-
-  toggleProfileDropdown() {
-    this.isProfileDropdownOpen.update(v => !v);
-  }
-
-  toggleMobileMenu() {
-    this.isMobileMenuOpen.update(v => !v);
-  }
-
-  logout() {
-  }
-
-  toggleChat() {
-    this.courseService.toggleChat();
+  constructor(private router: Router) {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      const route = this.router.routerState.snapshot.root;
+      const title = route.firstChild?.data['title'] || 'Dashboard';
+      this.title.set(title);
+    });
   }
 }

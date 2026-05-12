@@ -2,6 +2,7 @@ import { Component, HostListener, NgZone } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { HeaderComponent } from './shared/header/header';
 import { MobileNavComponent } from './shared/mobile-nav/mobile-nav';
+import { LoadingComponent } from './shared/loading/loading';
 import { SecurityService } from './services/security.service';
 import { NetworkService } from './services/network.service';
 import { App as CapApp } from '@capacitor/app';
@@ -12,28 +13,21 @@ import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MobileNavComponent],
+  imports: [RouterOutlet, HeaderComponent, MobileNavComponent, LoadingComponent],
   templateUrl: './app.html',
   styleUrl: './app.sass'
 })
 export class App {
-  isPaused = false;
-
   constructor(
     private security: SecurityService,
     public network: NetworkService,
-    private router: Router,
+    public router: Router,
     private location: Location,
     private zone: NgZone
   ) {}
 
   ngOnInit() {
     this.security.init();
-
-    // Service se signal suno
-    this.security.securityTriggered.subscribe((state) => {
-      this.isPaused = state;
-    });
 
     if (Capacitor.isNativePlatform()) {
       this.initNativeFeatures();
@@ -53,25 +47,10 @@ export class App {
     });
 
     // Style Status Bar
-    try {
-      await StatusBar.setStyle({ style: Style.Default });
-      // In Capacitor 6+, Style.Default follows system, but we can force Light if we want white bg
-      await StatusBar.setBackgroundColor({ color: '#ffffff' });
-    } catch (e) {
-      console.warn('StatusBar not available', e);
-    }
+    await StatusBar.setStyle({ style: Style.Light });
+    await StatusBar.setBackgroundColor({ color: '#ffffff' });
 
     // Hide Splash Screen
-    try {
-      setTimeout(async () => {
-        await SplashScreen.hide();
-      }, 500);
-    } catch (e) {
-      console.warn('SplashScreen not available', e);
-    }
-  }
-
-  resumeContent() {
-    this.isPaused = false;
+    await SplashScreen.hide();
   }
 }

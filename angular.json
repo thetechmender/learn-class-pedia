@@ -36,10 +36,13 @@
             ],
             "styles": [
               "@angular/material/prebuilt-themes/azure-blue.css",
-              "src/styles.sass",
+              "src/styles.css",
               "node_modules/ngx-toastr/toastr.css",
               "src/icons.css",
               "node_modules/intl-tel-input/dist/css/intlTelInput.css"
+            ],
+            "scripts": [
+              "src/ripple.js"
             ]
           },
           "configurations": {
@@ -108,7 +111,7 @@
               }
             ],
             "styles": [
-              "src/styles.sass"
+              "src/styles.css"
             ]
           }
         }

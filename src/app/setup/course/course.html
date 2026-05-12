@@ -1,4 +1,4 @@
-<div class="flex bg-gray-50 font-sans relative" style="height: calc(100vh - 56px);">
+<div class="flex bg-gray-50 font-sans relative">
   <!-- Hamburger Button (visible when sidebar is closed) -->
   @if (!isSidebarOpen()) {
   <button (click)="toggleSidebar()"
@@ -360,7 +360,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto px-2 py-12 sm:w-full" style="height: calc(100vh - 46px);">
+  <main class="flex-1 overflow-y-auto p-4">
     <!-- Assessment Flow -->
     @if (courseTree(); as tree) {
     @if (assessmentStep() === 'none' && !courseTree()?.videoUrl) {

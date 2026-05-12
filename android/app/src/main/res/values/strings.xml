@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Learn Class Pedia</string>
-    <string name="title_activity_main">Learn Class Pedia</string>
+    <string name="app_name">Learn ClassPedia</string>
+    <string name="title_activity_main">Learn ClassPedia</string>
     <string name="package_name">com.learnclasspedia.app</string>
     <string name="custom_url_scheme">com.learnclasspedia.app</string>
 </resources>
