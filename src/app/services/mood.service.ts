@@ -231,7 +231,7 @@ export class MoodService {
       case 'final':
         this.stopLoop();
         this.clearTransient();
-        this._assessment.set('hearing');
+        this._assessment.set('lumiStill');
         this.blockTransient = true;  // Block transient during assessment
         break;
       case 'cleared':
