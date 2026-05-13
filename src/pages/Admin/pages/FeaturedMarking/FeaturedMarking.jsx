@@ -827,7 +827,7 @@ const FeaturedMarking = () => {
               {/* Search */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Search {markingType}s
+                  Search {markingType=='category' ? 'Categories' : markingType=='course' ? 'Courses' : 'Career Paths'}
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -855,7 +855,7 @@ const FeaturedMarking = () => {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-sm font-semibold text-gray-700">
-                    Available {markingType}s
+                    Available {markingType=='category' ? 'Categories' : markingType=='course' ? 'Courses' : 'Career Paths'}
                   </label>
                   <span className="text-sm text-gray-600">
                     {availableItems.length} found
