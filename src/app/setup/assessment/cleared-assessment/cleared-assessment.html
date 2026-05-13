@@ -4,7 +4,8 @@
       <div class="congrats-body">
         <div class="congrats-top">
           <h3 class="">Congratatulations! you Passed</h3>
-          <p>Outstanding work! You scored 100% and earned your <strong> Course Certificate. </strong></p>
+          <p>Outstanding work! You scored {{ scorePercentage |
+            number:'1.0-1' }}% and earned your <strong> Course Certificate. </strong></p>
         </div>
 
         <div class="congrats-bar">

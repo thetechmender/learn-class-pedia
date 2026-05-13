@@ -75,7 +75,21 @@ export class Chat {
   chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string | SafeHtml }>>([
     {
       role: 'bot',
-      text: this.sanitizer.bypassSecurityTrustHtml("Hi, I'm your Course Companion. I can help you understand lessons, explain concepts, or guide you through tricky topics.")
+      text: this.sanitizer.bypassSecurityTrustHtml(`
+        Hi! 👋<br>
+        I'm Lumi, your AI learning assistant. How can I help you with this lecture?
+        <div style="margin: 12px 0; display: flex; flex-direction: column; gap: 4px;">
+          <button data-suggestion="Summarize this lecture" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
+            <span style="font-size: 16px;">📊</span> Summarize this lecture
+          </button>
+          <button data-suggestion="Explain this topic" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
+            <span style="font-size: 16px;">📝</span> Explain this topic
+          </button>
+          <button data-suggestion="Ask a question" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
+            <span style="font-size: 16px;">ℹ️</span> Ask a question
+          </button>
+        </div>
+      `)
     }
   ]);
 
@@ -210,7 +224,9 @@ export class Chat {
       // Auto-send if there's text
       const text = (this.chatInput() || '').trim();
       if (text) {
-        this.sendChatMessage();
+        this.ngZone.run(() => {
+          this.sendChatMessage();
+        });
       }
     }
   }
@@ -326,8 +342,8 @@ export class Chat {
     };
 
     this.chatMessages.set([...this.chatMessages(), { role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
-    this.chatInput.set('');
     this.isChatSending.set(true);
+    this.chatInput.set('');
     
     this.courseService.askCourseQuestion(payload).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res: any) => {
@@ -359,6 +375,19 @@ export class Chat {
 
   handleChatMessageClick(event: Event) {
     const target = event.target as HTMLElement;
+
+    // Check if the clicked element or its parent is a suggestion button
+    const suggestionButton = target.closest('[data-suggestion]') as HTMLElement;
+    if (suggestionButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const suggestion = suggestionButton.getAttribute('data-suggestion');
+      if (suggestion) {
+        this.chatInput.set(suggestion);
+        this.sendChatMessage();
+      }
+      return;
+    }
 
     // Check if the clicked element or its parent is the live chat link
     if (target.classList.contains('live-chat-link') ||

@@ -1242,19 +1242,32 @@ export class FinalAssessment implements OnInit {
       });
   }
 
+  private scrollToTop(): void {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    // Scroll the actual overflow container (main element)
+    const mainEl = this.hostEl.nativeElement.closest('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
+    // Also try parent containers
+    let parent = this.hostEl.nativeElement.parentElement;
+    while (parent) {
+      parent.scrollTop = 0;
+      parent = parent.parentElement;
+    }
+  }
+
   private enterFullscreen(): void {
     const doc: any = document;
     const el: any = doc.documentElement;
     const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement;
     if (!fsEl) {
       (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
-      // Reset scroll position after fullscreen to prevent auto-scroll
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }, 100);
     }
+    this.scrollToTop();
+    setTimeout(() => this.scrollToTop(), 200);
   }
 
   private exitFullscreen(): void {
