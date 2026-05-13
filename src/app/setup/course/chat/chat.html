@@ -46,7 +46,7 @@
     (click)="handleChatMessageClick($event)">
     <!-- Test button for debugging -->
     <div class="space-y-4">
-      @for (msg of chatMessages(); track $index) {
+      @for (msg of chatMessages(); track msg.id) {
       <div class="flex gap-1" [class.justify-start]="msg.role === 'bot'" [class.justify-end]="msg.role === 'user'">
         @if (msg.role === 'bot') {
         <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">

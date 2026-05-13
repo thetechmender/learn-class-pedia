@@ -72,8 +72,10 @@ export class Chat {
   chatInput = signal<string>('');
   chatThreadId = signal<string>('');
   isChatSending = signal<boolean>(false);
-  chatMessages = signal<Array<{ role: 'bot' | 'user'; text: string | SafeHtml }>>([
+  private msgIdCounter = 0;
+  chatMessages = signal<Array<{ id: number; role: 'bot' | 'user'; text: string | SafeHtml }>>([
     {
+      id: 0,
       role: 'bot',
       text: this.sanitizer.bypassSecurityTrustHtml(`
         Hi! 👋<br>
@@ -341,7 +343,7 @@ export class Chat {
       // }
     };
 
-    this.chatMessages.set([...this.chatMessages(), { role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
+    this.chatMessages.set([...this.chatMessages(), { id: ++this.msgIdCounter, role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
     this.isChatSending.set(true);
     this.chatInput.set('');
     
@@ -354,7 +356,7 @@ export class Chat {
 
         const answer = res?.data?.answer ?? res?.answer ?? res?.data?.response ?? res?.response ?? res?.message;
         const text = typeof answer === 'string' && answer.trim().length > 0 ? answer : 'I could not find an answer for that.';
-        this.chatMessages.set([...this.chatMessages(), { role: 'bot', text }]);
+        this.chatMessages.set([...this.chatMessages(), { id: ++this.msgIdCounter, role: 'bot', text }]);
         this.isChatSending.set(false);
         this.isSendingVoice.set(false);
 
