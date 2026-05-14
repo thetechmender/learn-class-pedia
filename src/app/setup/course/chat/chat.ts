@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal, effect, ViewChild, ElementRef, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, Input, inject, signal, effect, ViewChild, ElementRef, PLATFORM_ID, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isPlatformBrowser } from '@angular/common';
@@ -24,7 +24,7 @@ declare global {
   templateUrl: './chat.html',
   styleUrl: './chat.sass',
 })
-export class Chat {
+export class Chat implements OnInit {
   courseService = inject(CourseService);
   private sanitizer = inject(DomSanitizer);
   private toastr = inject(ToastrService);
@@ -73,27 +73,34 @@ export class Chat {
   chatThreadId = signal<string>('');
   isChatSending = signal<boolean>(false);
   private msgIdCounter = 0;
-  chatMessages = signal<Array<{ id: number; role: 'bot' | 'user'; text: string | SafeHtml }>>([
-    {
-      id: 0,
-      role: 'bot',
-      text: this.sanitizer.bypassSecurityTrustHtml(`
-        Hi! 👋<br>
-        I'm Lumi, your AI learning assistant. How can I help you with this lecture?
-        <div style="margin: 12px 0; display: flex; flex-direction: column; gap: 4px;">
-          <button data-suggestion="Summarize this lecture" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
-            <span style="font-size: 16px;">📊</span> Summarize this lecture
-          </button>
-          <button data-suggestion="Explain this topic" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
-            <span style="font-size: 16px;">📝</span> Explain this topic
-          </button>
-          <button data-suggestion="Ask a question" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
-            <span style="font-size: 16px;">ℹ️</span> Ask a question
-          </button>
-        </div>
-      `)
+  private readonly WELCOME_MESSAGE_ID = -1;
+  chatMessages = signal<Array<{ id: number; role: 'bot' | 'user'; text: string | SafeHtml }>>([]);
+
+  ngOnInit(): void {
+    // Add welcome message only on browser (skip SSR to prevent duplicate on hydration)
+    if (isPlatformBrowser(this.platformId) && this.chatMessages().length === 0) {
+      this.chatMessages.set([{
+        id: this.WELCOME_MESSAGE_ID,
+        role: 'bot',
+        text: this.sanitizer.bypassSecurityTrustHtml(`
+          Hi! 👋<br>
+          I'm Lumi, your AI learning assistant. How can I help you with this lecture?
+          <div style="margin: 12px 0; display: flex; flex-direction: column; gap: 4px;">
+            <button data-suggestion="Summarize this lecture" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
+              <span style="font-size: 16px;"><img src="/assets/icons/Layer_3.png" class="h-3 w-3" /></span> Summarize this lecture
+            </button>
+            <button data-suggestion="Explain this topic" style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
+              <span style="font-size: 16px;"><img src="/assets/icons/Layer_2.png" class="h-3 w-3" /></span> Explain this topic
+            </button>
+            <button style="background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 4px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-weight: 500;">
+              <span style="font-size: 16px;"><img src="/assets/icons/Layer_1.png" class="h-3 w-3" /></span><a href='javascript:void(0)' class='no-underline live-chat-link ' data-live-chat='true'
+          (click)="handleChatMessageClick($event)">Connect to live chat</a>
+            </button>
+          </div>
+        `)
+      }]);
     }
-  ]);
+  }
 
   // Toggle voice recording
   toggleRecording() {

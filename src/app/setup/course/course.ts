@@ -2096,6 +2096,10 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.showWarningPopup.set(false);
     this.securityService.dismissPopup();
 
+    // Restore failed mood based on attempts after violation acknowledge
+    const attemptsUsed = this.assessmentResult()?.attemptsUsed ?? 1;
+    this.moodService.onViolationAcknowledge(attemptsUsed);
+
     // Tab close: auto-submit then close the tab
     if (this.warningType() === 'tab_close') {
       this.securityService.autoSubmitTriggered.next();

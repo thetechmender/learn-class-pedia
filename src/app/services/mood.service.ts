@@ -6,7 +6,7 @@ export type Mood =
   | 'happy' | 'idea' | 'congrats' | 'eyeClose'
   // Classroom emotions
   | 'reading' | 'lumiStill' | 'lumiThinking' | 'sleepy' | 'writing'
-  | 'thumbsUp' | 'clapping' | 'sad' | 'cheering' | 'heart'
+  | 'thumbsUp' | 'clapping' | 'sad' | 'cheering' | 'heart' | 'waiting'
   | 'hearing' | 'hooray' | 'helpful' | 'certificate' | 'worried' | 'angry';
 
 type LoopState =
@@ -64,6 +64,7 @@ export class MoodService {
   private transientTimer: any = null;
   private loopState: LoopState = { kind: 'none' };
   private blockTransient = false;  // Block transient moods during assessment
+  private violationActive = false;  // Track if violation popup is showing
 
   // Idle / sleepy detection
   private idleThinkingTimer: any = null;   // 60s after last activity
@@ -138,26 +139,12 @@ export class MoodService {
     // 1️⃣ lumiStill (0–20s)
     this._loop.set('lumiStill');
 
-    const eyeCloseTimer = setTimeout(() => {
-      // 2️⃣ eyeClose (20–40s)
-      this._loop.set('eyeClose');
-    }, 1000);
-
-    const readingTimer = setTimeout(() => {
-      // 3️⃣ reading (40–60s)
-      this._loop.set('reading');
-    }, 2000);
-
-    const endTimer = setTimeout(() => {
-      this.stopLoop();
-    }, 3000);
-
     this.loopState = {
       kind: 'intro',
       startedAt: Date.now(),
-      eyeCloseTimer,
-      readingTimer,
-      endTimer
+      eyeCloseTimer: null,
+      readingTimer: null,
+      endTimer: null
     };
 
     this.recordActivity();
@@ -182,23 +169,23 @@ export class MoodService {
 
   /** Persistent tab-based context mood. */
   setActiveTab(tab: string | null | undefined): void {
+    // Clear all higher priority moods before setting tab mood
+    this.stopLoop();
+    this.clearTransient();
+    this._assessment.set(null);
+    this._idle.set(null);
+
     if (tab === 'notebook') {
       this._tab.set('writing');
-      // Stop classroom intro loop so writing mood can show immediately
-      if (this.loopState.kind === 'intro') {
-        this.stopLoop();
-      }
     }
     else if (tab === 'transcript') {
-      setTimeout(() => {
-        setTimeout(() => {
-          this._tab.set('idea');
-        }, 10_000);
-        this._tab.set('reading');
-      }, 10_000);
-    } else {
-      // 'quiz' or anything else has no specific tab mood
       this._tab.set('reading');
+    } else if (tab === 'quiz') {
+      // Quiz tab default mood
+      this._tab.set('lumiThinking');
+    } else {
+      // anything else
+      this._tab.set('lumiStill');
     }
     this.recordActivity();
   }
@@ -221,17 +208,19 @@ export class MoodService {
     ctx?: { attemptsUsed?: number }
   ): void {
     if (!this.isBrowser()) return;
+    // Don't change mood while violation popup is showing
+    if (this.violationActive) return;
     switch (step) {
       case 'start':
         this.stopLoop();
         this._assessment.set(null);
-        this.blockTransient = false;  // Allow transient for hooray
-        this.setMood('hooray', 4000);
+        this.blockTransient = false;
+        this._loop.set('cheering');
         break;
       case 'final':
         this.stopLoop();
         this.clearTransient();
-        this._assessment.set('lumiStill');
+        this._assessment.set('waiting');
         this.blockTransient = true;  // Block transient during assessment
         break;
       case 'cleared':
@@ -242,11 +231,6 @@ export class MoodService {
         break;
       case 'failed':
       case 'maxattempts': {
-        // Per spec — drive the mood purely from how many attempts have been used:
-        //   1 used → sad, 2 used → worried, 3+ used → angry.
-        // This also explicitly clears any lingering transient mood (e.g. hooray
-        // from "Start", thumbsUp from the last lecture quiz) so that the
-        // assessment-screen emotion is what the user actually sees.
         this.stopLoop();
         this.clearTransient();
         const used = Math.max(1, ctx?.attemptsUsed ?? 1);
@@ -256,9 +240,10 @@ export class MoodService {
         break;
       }
       case 'none':
-        this._assessment.set(null);
-        this.blockTransient = false;  // Allow transient when not in assessment
-        // Don't stop loop here - classroom intro should run independently
+        this.stopLoop();
+        this.clearTransient();
+        this._assessment.set('lumiStill');
+        this.blockTransient = false;
         break;
     }
   }
@@ -266,18 +251,22 @@ export class MoodService {
   /** Cheering 5s ↔ Heart 5s loop, runs until the user leaves the screen. */
   private startCheeringLoop(): void {
     this.stopLoop();
-    this._loop.set('cheering');
-    let flip = false;
-    const toggleTimer = setInterval(() => {
-      flip = !flip;
-      this._loop.set(flip ? 'heart' : 'cheering');
-    }, 5000);
-    this.loopState = { kind: 'cheering', toggleTimer, flip };
+    this._loop.set('heart');
+    this.loopState = { kind: 'cheering', toggleTimer: null, flip: false };
   }
 
   /** User clicked Share-on-LinkedIn or Download Certificate. */
   onCertificateAction(): void {
     this.setMood('certificate', 5000);
+  }
+
+  /** After violation acknowledge, restore failed mood based on attempts. */
+  onViolationAcknowledge(attemptsUsed: number): void {
+    if (!this.isBrowser()) return;
+    this.violationActive = false;
+    const used = Math.max(1, attemptsUsed);
+    const m: Mood = used >= 3 ? 'angry' : used === 2 ? 'worried' : 'sad';
+    this._assessment.set(m);
   }
 
   // ---------- Legacy API (kept for backward compatibility) ----------
@@ -299,13 +288,21 @@ export class MoodService {
       | 'course-completed'
       | 'video-playing'
   ): void {
+    // Warning-shown should always work, even during assessment
+    if (event === 'warning-shown') {
+      this.violationActive = true;
+      this.clearTransient();
+      this._assessment.set('angry');
+      return;
+    }
+
     // Block all mood reactions during assessment to let assessment mood show
     if (this.blockTransient) {
       return;
     }
     switch (event) {
       case 'quiz-option-selected':
-        this.setMood('lumiThinking', 1500);
+        // lumiThinking is now default for quiz tab, no reaction needed
         break;
       case 'quiz-passed-perfect':
       case 'course-completed':
@@ -333,10 +330,6 @@ export class MoodService {
         break;
       case 'assessment-max-attempts':
         this._assessment.set('angry');
-        break;
-      case 'warning-shown':
-        // Screenshot / dual-display / tab-switch violations → immediate Angry.
-        this.setMood('angry', 3500);
         break;
       case 'video-playing':
         this.setMood('happy', 2500);

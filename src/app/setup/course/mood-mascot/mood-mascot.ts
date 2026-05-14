@@ -62,6 +62,7 @@ export class MoodMascot implements OnInit, OnDestroy {
     certificate:  { png: '/images/emotions/Certificate.png' },
     worried:      { png: '/images/emotions/Worried.png' },
     angry:        { png: '/images/emotions/Angry.png' },
+    waiting:      { png: '/images/emotions/Waiting.png' },
   };
 
   // Calm idle rotation when no event-driven mood is active.
