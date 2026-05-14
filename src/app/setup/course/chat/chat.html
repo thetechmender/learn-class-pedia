@@ -63,7 +63,15 @@
           [class.bg-primary]="msg.role === 'user'" [class.text-white]="msg.role === 'user'"
           [class.rounded-tr-none]="msg.role === 'user'">
           <p class="text-[11px] leading-relaxed" [class.text-white]="msg.role === 'user'"
-          [class.text-gray-800]="msg.role === 'bot'" [innerHTML]="msg.text"></p>
+          [class.text-gray-800]="msg.role === 'bot'" [innerHTML]="msg.text"
+          [attr.data-msg-id]="msg.role === 'bot' && msg.id !== -1 ? msg.id : null"
+          [class.line-clamp-10]="msg.role === 'bot' && msg.id !== -1 && !isMessageExpanded(msg.id)"></p>
+          @if (msg.role === 'bot' && msg.id !== -1 && (isMessageTruncated(msg.id) || isMessageExpanded(msg.id))) {
+          <button (click)="toggleMessageExpand(msg.id)" 
+            class="text-[10px] text-primary font-medium mt-1 hover:underline">
+            {{ isMessageExpanded(msg.id) ? 'See less' : 'See more' }}
+          </button>
+          }
           @if (msg.role === 'bot' && msg.id !== -1) {
           <div class="absolute bottom-1 right-1.5 w-4 h-4 flex items-center justify-center cursor-pointer"
             (click)="toggleSpeakMessage($index)">

@@ -47,11 +47,11 @@ export class Chat implements OnInit {
   constructor() {
     // Auto-scroll to bottom when messages change or sending state changes
     effect(() => {
-
       this.chatMessages();
       this.isChatSending();
       this.isRecording();
       this.scrollToBottom();
+      this.checkAllTruncations();
     });
   }
 
@@ -75,6 +75,44 @@ export class Chat implements OnInit {
   private msgIdCounter = 0;
   private readonly WELCOME_MESSAGE_ID = -1;
   chatMessages = signal<Array<{ id: number; role: 'bot' | 'user'; text: string | SafeHtml }>>([]);
+  expandedMessages = signal<Set<number>>(new Set());
+  truncatedMessages = signal<Set<number>>(new Set());
+
+  toggleMessageExpand(msgId: number): void {
+    const expanded = new Set(this.expandedMessages());
+    if (expanded.has(msgId)) {
+      expanded.delete(msgId);
+    } else {
+      expanded.add(msgId);
+    }
+    this.expandedMessages.set(expanded);
+  }
+
+  isMessageExpanded(msgId: number): boolean {
+    return this.expandedMessages().has(msgId);
+  }
+
+  isMessageTruncated(msgId: number): boolean {
+    return this.truncatedMessages().has(msgId);
+  }
+
+  checkAllTruncations(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    // Check truncation for all bot messages after render
+    setTimeout(() => {
+      const messages = document.querySelectorAll('[data-msg-id]');
+      const truncated = new Set<number>();
+      messages.forEach((el) => {
+        const msgId = parseInt(el.getAttribute('data-msg-id') || '', 10);
+        if (!isNaN(msgId) && el.scrollHeight > el.clientHeight) {
+          truncated.add(msgId);
+        }
+      });
+      if (truncated.size > 0) {
+        this.truncatedMessages.set(truncated);
+      }
+    }, 100);
+  }
 
   ngOnInit(): void {
     // Add welcome message only on browser (skip SSR to prevent duplicate on hydration)
@@ -298,7 +336,7 @@ export class Chat implements OnInit {
     }
   }
 
-  sendChatMessage() {
+  sendChatMessage(hideUserMessage = false) {
     const question = (this.chatInput() || '').trim();
     if (!question || this.isChatSending()) return;
 
@@ -342,15 +380,17 @@ export class Chat implements OnInit {
       question: question,
       cpCourseDetailId: cpCourseDetailId,
       threadId: this.chatThreadId(),
-      // courseInfo: {
-      //   courseName: this.courseTree?.courseTitle,
-      //   courseType: this.courseTypeName,
-      //   noOfCourseModules,
-      //   noOfCourses
-      // }
+      courseInfo: {
+        courseName: this.courseTree?.courseTitle,
+        courseType: this.courseTypeName,
+        noOfCourseModules,
+        noOfCourses
+      }
     };
 
-    this.chatMessages.set([...this.chatMessages(), { id: ++this.msgIdCounter, role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
+    if (!hideUserMessage) {
+      this.chatMessages.set([...this.chatMessages(), { id: ++this.msgIdCounter, role: 'user', text: this.sanitizer.bypassSecurityTrustHtml(question) }]);
+    }
     this.isChatSending.set(true);
     this.chatInput.set('');
     
@@ -393,7 +433,7 @@ export class Chat implements OnInit {
       const suggestion = suggestionButton.getAttribute('data-suggestion');
       if (suggestion) {
         this.chatInput.set(suggestion);
-        this.sendChatMessage();
+        this.sendChatMessage(true); // Hide user message for suggestion buttons
       }
       return;
     }

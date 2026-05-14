@@ -15,7 +15,7 @@ interface AskCourseQuestionPayload {
 })
 export class CourseService {
   private apiUrl = environment.API_URL;
-  private chatbotApiUrl = 'https://chatbot.thetechmenders.com/api';
+  private chatbotApiUrl = 'https://chatbot.classpedia.ai/api';
   private http = inject(HttpClient);
   isChatOpen = signal(false);
   activeSection = signal<any>(null);
