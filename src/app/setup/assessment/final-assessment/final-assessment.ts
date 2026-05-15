@@ -31,6 +31,8 @@ export class FinalAssessment implements OnInit {
 
   @Output() goBack = new EventEmitter<void>();
 
+  @Output() deselectLectures = new EventEmitter<void>();
+
   @Input() orderPayload: any = null;
 
   @Input() courseTypeId!: number;
@@ -830,7 +832,8 @@ export class FinalAssessment implements OnInit {
         this.showGenerateCertificateModal.set(true);
 
       } else {
-        // For courseTypeId=3, emit immediately without delay
+        // For courseTypeId=3, emit deselectLectures before emitting next
+        this.deselectLectures.emit();
         this.next.emit(data);
       }
 

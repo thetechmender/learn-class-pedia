@@ -1860,6 +1860,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
             });
             this.assessmentStep.set('maxattempts');
           }
+
         } else {
           this.deselectSidebarLectures();
           this.assessmentStep.set('start');
@@ -2045,6 +2046,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               totalQuestions: data.totalQuestions,
               customerEnrollmentId: data.customerEnrollmentId,
             });
+            this.deselectSidebarLectures();
             this.assessmentStep.set('cleared');
 
             // Unselect lectures when assessment is completed
@@ -2073,6 +2075,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
               courseTitle: data.courseTitle || data.title,
               customerEnrollmentId: data.customerEnrollmentId,
             });
+                        this.deselectSidebarLectures();
             this.assessmentStep.set('maxattempts');
 
             // Unselect lectures when max attempts reached
@@ -2085,7 +2088,6 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.assessmentResult.set({
             isAssessmentInProgress: data.isAssessmentInProgress
           })
-          this.deselectSidebarLectures();
           this.assessmentStep.set('final');
         }
         else {

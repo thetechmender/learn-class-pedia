@@ -387,7 +387,7 @@
     }
     @if (assessmentStep() === 'final') {
     <app-final-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('start')"
-      [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"
+      (deselectLectures)="deselectSidebarLectures()" [orderPayload]="completeOrderPayload()" [courseTypeId]="courseTree()?.courseTypeId"
       [isAssessmentInProgress]="assessmentResult()?.isAssessmentInProgress"></app-final-assessment>
     }
     @if (assessmentStep() === 'failed') {

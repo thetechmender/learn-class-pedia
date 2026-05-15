@@ -86,7 +86,6 @@ export class ClearedAssessment implements OnChanges {
   }
 
   get scorePercentage(): number {
-    debugger;
     return this.resultData?.score ?? this.resultData?.scorePercentage ?? 0;
   }
 
