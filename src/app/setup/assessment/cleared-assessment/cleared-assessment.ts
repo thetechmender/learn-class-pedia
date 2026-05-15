@@ -33,6 +33,11 @@ export class ClearedAssessment implements OnChanges {
   pendingAction: 'download' | 'share' | null = null;
 
   ngOnChanges() {
+    // For courseTypeId 3, automatically emit finish to return to course without lecture select
+    if (this.courseTypeId === 3 && this.resultData) {
+      this.finish.emit();
+      return;
+    }
 
     // Check if certificate is being generated for courseTypeId 1 & 2
     if ((this.courseTypeId === 1 || this.courseTypeId === 2) && this.resultData) {

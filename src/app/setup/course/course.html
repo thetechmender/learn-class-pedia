@@ -234,8 +234,8 @@
       @if (courseTree().courseTypeId === 3 && courseTree().shortCourseLectures &&
       courseTree().shortCourseLectures.length > 0) {
       @let lec = courseTree().shortCourseLectures[0];
-      @let isActive = true;
-      @let lecExpanded = true;
+      @let isActive = activeLectureTitle() !== null;
+      @let lecExpanded = activeLectureTitle() !== null;
       <div class="accord-sec">
         <div class="w-full px-4 py-3 text-left hover:bg-optional transition-all cursor-pointer"
           [class.bg-optional]="isActive" (click)="onLectureSelectType3(lec)">
@@ -380,7 +380,7 @@
     }
     @if (assessmentStep() !== 'none') {
     @if (assessmentStep() === 'start') {
-    <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="assessmentStep.set('none')"
+    <app-start-assessment (next)="onAssessmentNext($event)" (goBack)="onAssessmentFinish()"
       (deselectLectures)="deselectSidebarLectures()" [orderPayload]="completeOrderPayload()"
       [courseTypeId]="courseTree()?.courseTypeId"
       [isAssessmentInProgress]="assessmentResult()?.isAssessmentInProgress"></app-start-assessment>
@@ -400,7 +400,7 @@
     }
     @if (assessmentStep() === 'cleared') {
     <app-cleared-assessment [resultData]="assessmentResult()" [courseTypeId]="courseTree()?.courseTypeId"
-      (finish)="onAssessmentFinish()" (goBack)="assessmentStep.set('start')"></app-cleared-assessment>
+      (finish)="assessmentStep.set('none')" (goBack)="assessmentStep.set('start')"></app-cleared-assessment>
     }
     } @else if (lectureSection() && lectureSection().length > 0) {
 

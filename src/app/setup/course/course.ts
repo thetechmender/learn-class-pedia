@@ -1107,6 +1107,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Hide assessment components when user clicks on lecture after failing
     if (this.assessmentStep() === 'failed') {
       this.assessmentStep.set('none');
+      this.selectFirstLectureForCourseType3();
     }
 
     // Navigate to course route if not already on course page
@@ -1177,6 +1178,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Hide assessment components when user clicks on lecture after failing
     if (this.assessmentStep() === 'failed') {
       this.assessmentStep.set('none');
+      this.selectFirstLectureForCourseType3();
     }
 
     // Navigate to course route if not already on course page
@@ -1875,6 +1877,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
         ...this.assessmentResult(),
         isAssessmentInProgress: false
       });
+      this.deselectSidebarLectures();
       this.assessmentStep.set('start');
     } else if (result === 'final' || result === undefined) {
       // Deselect lectures when moving to final assessment
@@ -1882,10 +1885,12 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.assessmentStep.set('final');
     } else if (typeof result === 'object' && result?.isPassed === false) {
       // Handle failed assessment object from final-assessment component
+      this.deselectSidebarLectures();
       this.assessmentResult.set(result);
       this.assessmentStep.set('failed');
     } else if (typeof result === 'object' && result?.isPassed === true) {
       // Handle passed assessment object from final-assessment component
+      this.deselectSidebarLectures();
       this.assessmentResult.set(result);
       this.assessmentStep.set('cleared');
     } else if (result === 'failed') {
@@ -1945,6 +1950,8 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   _fetchAssessmentResultAndSetStep(defaultStep: 'failed' | 'cleared' | 'maxattempts') {
+    // Deselect lectures when moving to assessment result screens
+    this.deselectSidebarLectures();
     const token = this.authService.getToken();
     const courseId = this.existingSeasionCourseId();
     const careerPathLevelMapId = this.courseTree()?.careerPathLevel?.careerPathLevelMapId;
@@ -1996,6 +2003,7 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   onAssessmentFinish() {
     this.assessmentStep.set('none');
+    this.selectFirstLectureForCourseType3();
   }
 
   private checkInitialAssessmentStatus() {
@@ -2130,6 +2138,21 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.activeShortCourseId.set(null);
     this.activeCertificateId.set(null);
     this.expandedShortCourses.set(new Set()); // Reset expanded short courses to collapse content
+    this.activeLectureTitle.set(null); // Also deselect lecture for courseTypeId=3
+  }
+
+  selectFirstLectureForCourseType3() {
+    const tree = this.courseTree();
+    if (tree?.courseTypeId === 3 && tree?.shortCourseLectures?.length > 0) {
+      this.completeOrderPayload.set({
+        courseCertificateId: null,
+        shortCourseId: tree.courseId,
+        professionalCertificateId: null
+      });
+      const firstLec = tree.shortCourseLectures[0];
+      this.selectFirstLecture(firstLec);
+      this.refreshProgress();
+    }
   }
 
   isFinalAssessmentButton() {

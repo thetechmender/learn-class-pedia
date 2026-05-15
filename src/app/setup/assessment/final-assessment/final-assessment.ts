@@ -137,8 +137,9 @@ export class FinalAssessment implements OnInit {
 
  async ngOnInit(): Promise<void> {
     this.startAssessment();
-    // Initialize security service with order payload
+    // Initialize security service with order payload and courseTypeId
     this.securityService.setOrderPayload(this.orderPayload);
+    this.securityService.setCourseTypeId(this.courseTypeId);
     this.securityService.startAssessmentTracking();
 
     // Enter fullscreen when component loads
@@ -829,17 +830,8 @@ export class FinalAssessment implements OnInit {
         this.showGenerateCertificateModal.set(true);
 
       } else {
-
-        this.isGeneratingCertificate.set(true);
-
-        setTimeout(() => {
-
-          this.isGeneratingCertificate.set(false);
-
-          this.next.emit(data);
-
-        }, 30000);
-
+        // For courseTypeId=3, emit immediately without delay
+        this.next.emit(data);
       }
 
     } else {
