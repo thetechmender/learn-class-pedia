@@ -41,8 +41,7 @@ const DiscountRates = () => {
     discountTypeId: 1,
     discountPercent: 0,
     discountPrice: 0,
-    isCoupon: true,
-    isActive: true
+    isCoupon: true
   });
   const [submitting, setSubmitting] = useState(false);
   const [discountTypes, setDiscountTypes] = useState([]);
@@ -105,8 +104,7 @@ const DiscountRates = () => {
       discountTypeId: 1,
       discountPercent: 0,
       discountPrice: 0,
-      isCoupon: true,
-      isActive: true
+      isCoupon: true
     });
     await loadDiscountTypes();
     setShowModal(true);
@@ -119,8 +117,7 @@ const DiscountRates = () => {
       discountTypeId: rate.discountTypeId || 1,
       discountPercent: rate.discountPercent || 0,
       discountPrice: rate.discountPrice || 0,
-      isCoupon: rate.isCoupon ?? true,
-      isActive: rate.isActive
+      isCoupon: rate.isCoupon ?? true
     });
     await loadDiscountTypes();
     setShowModal(true);
@@ -166,8 +163,7 @@ const DiscountRates = () => {
         discountTypeId: 1,
         discountPercent: 0,
         discountPrice: 0,
-        isCoupon: true,
-        isActive: true
+        isCoupon: true
       });
     } catch (error) {
       console.error('Error saving discount rate:', error);
@@ -298,15 +294,6 @@ const DiscountRates = () => {
                             : 'bg-gray-100 text-gray-800'
                         }`}>
                           {rate.isCoupon ? 'Yes' : 'No'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          rate.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {rate.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
@@ -513,18 +500,6 @@ const DiscountRates = () => {
                     />
                     <label htmlFor="isCoupon" className="ml-2 block text-sm text-gray-700">
                       Is Coupon
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="isActive"
-                      checked={formData.isActive}
-                      onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-                      Active
                     </label>
                   </div>
                 </div>

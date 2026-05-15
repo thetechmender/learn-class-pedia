@@ -7,7 +7,7 @@ import { useModalState } from '../../../../hooks/utils/useModalState';
 import { useToast } from '../../../../hooks/utils/useToast';
 import { COURSE_MANAGEMENT_CONSTANTS } from '../../../../constants/courseManagement';
 import { filterCoursesBySearch } from '../../../../utils/courseUtils';
-import { Search, ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2, Star, MessageSquare, Clock, Tag, Layers, Video, FileText, Upload, ChevronRight } from 'lucide-react';
+import {  ChevronDown, Image, DollarSign, BookOpen, Globe, CheckCircle, XCircle, Filter, Users, Plus, X, Play, Award, Eye, Edit2, Trash2, Star, MessageSquare, Clock, Tag, Layers, Video, FileText, Upload, ChevronRight } from 'lucide-react';
 import CategoryDropdown from '../../../../components/CategoryDropdown';
 import CourseModal from '../../../../components/CourseModal';
 import CsvUploadModal from '../../../../components/CsvUploadModal';
@@ -18,7 +18,7 @@ import { courseTableColumns } from '../../../../config/tableConfigurations';
 const CourseManagement = () => {
   const { 
     error, getCourseById, clearError,
-    getCourseTypes, getCourseLevels, getCourseTopics, getAllCategories, deleteCourse, getAllCoursesAdmin,
+    getCourseTypes, getCourseLevels, getCourseTopics, deleteCourse, getAllCoursesAdmin,
     createCourseWithFile, uploadCourseCsv, updateCourseWithFile, getAllCourseBadgesNew, getAllSkills, generateCourseContent, removeThumbnail,
     getAllSubcategories
   } = useAdmin();
@@ -839,30 +839,40 @@ const CourseManagement = () => {
       {filtersExpanded && (
         <div className="relative z-10">
           <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
-          <div className="py-4 sm:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filter Options</h3>
+          <div className="py-2 sm:py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-end mb-2">
+              <button
+                onClick={() => {
+                  setSearchTerm(''); // Clear search term when applying filters
+                  setFilters({ ...filters, page: 1 }); // Reset to page 1
+                  applyFilters();
+                }}
+
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-md hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-xs"
+              >
+                Apply Filters
+              </button>
               <button
                 onClick={resetFilters}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Clear All
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                 <input
                   type="text"
                   value={filters.title}
                   onChange={(e) => handleFilterChange('title', e.target.value)}
                   placeholder="Search by title..."
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-xs"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                 <CategoryDropdown
                   categories={subcategories}
                   value={filters.categoryId}
@@ -872,11 +882,11 @@ const CourseManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Is Paid</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Is Paid</label>
                 <select
                   value={filters.isPaid}
                   onChange={(e) => handleFilterChange('isPaid', e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-sm"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent transition-all duration-200 text-xs"
                 >
                   <option value="">All</option>
                   <option value="true">Yes</option>
@@ -884,19 +894,7 @@ const CourseManagement = () => {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => {
-                  setSearchTerm(''); // Clear search term when applying filters
-                  setFilters({ ...filters, page: 1 }); // Reset to page 1
-                  applyFilters();
-                }}
-
-                className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl text-sm"
-              >
-                Apply Filters
-              </button>
-            </div>
+         
           </div>
         </div>
         </div>
@@ -1018,16 +1016,14 @@ const CourseManagement = () => {
                     <div className="flex items-center gap-2">
                       <div className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                         <DollarSign className="w-4 h-4 mr-1" />
-                        {details?.currencyCode || 'USD'} {details?.price?.toFixed(2) || course?.price?.toFixed(2) || '0.00'}
+                        {details?.currencyCode || 'USD'} {details?.discountedPrice ?.toFixed(2) || course?.price?.toFixed(2) || '0.00'}
                       </div>
                       {details?.discountedPrice && details.discountedPrice < details.price && (
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-500 line-through">
                             {details.currencyCode || 'USD'} {details.price?.toFixed(2)}
                           </span>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
-                            {Math.round(((details.price - details.discountedPrice) / details.price) * 100)}% OFF
-                          </span>
+                        
                         </div>
                       )}
                     </div>
