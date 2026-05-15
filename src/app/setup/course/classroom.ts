@@ -28,14 +28,14 @@ import { MoodMascot } from './mood-mascot/mood-mascot';
 import { MoodService } from '../../services/mood.service';
 
 @Component({
-  selector: 'app-course',
+  selector: 'app-classroom',
   standalone: true,
   imports: [CommonModule, Overview, Notebook, Quiz, Transcript, KeyPoints, CompletionModal, StartAssessment, FinalAssessment, FailedAssessment, ClearedAssessment, EnrolledCourses, VideoPlayerComponent, Chat, WarningAssessment, MoodMascot],
-  templateUrl: './course.html',
-  styleUrl: './course.sass',
+  templateUrl: './classroom.html',
+  styleUrl: './classroom.sass',
   encapsulation: ViewEncapsulation.None
 })
-export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ClassroomComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild(Quiz) quizComponent?: Quiz;
   @ViewChild('tabContainer') tabContainer?: ElementRef;
   @ViewChild(VideoPlayerComponent) videoPlayer?: VideoPlayerComponent;
@@ -1111,9 +1111,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Navigate to course route if not already on course page
-    if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
-      this.router.navigate(['/course']);
-    }
+    // if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
+    //   this.router.navigate(['/course']);
+    // }
   }
 
   onShortCourseSelect(sc: any) {
@@ -1182,9 +1182,9 @@ export class CourseComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Navigate to course route if not already on course page
-    if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
-      this.router.navigate(['/course']);
-    }
+    // if (this.router.url !== '/course' && this.router.url !== '/course/classroom' && this.router.url !== '/classroom') {
+    //   this.router.navigate(['/course']);
+    // }
   }
 
   playShortCourse() {
