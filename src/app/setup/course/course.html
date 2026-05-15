@@ -691,7 +691,8 @@
   </div>
   }
   <!-- Chat Component -->
-  <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()" [courseTypeName]="this.course()?.courseTypeName">
+  <app-chat [assessmentStep]="assessmentStep()" [courseTree]="courseTree()" [courseTypeName]="this.course()?.courseTypeName"
+    [courseDetailId]="currentShortCourse()?.lectures?.[0]?.courseDetailId">
 
   </app-chat>
 

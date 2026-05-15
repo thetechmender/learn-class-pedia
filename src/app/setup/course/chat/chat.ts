@@ -66,6 +66,7 @@ export class Chat implements OnInit {
   @Input() assessmentStep: 'none' | 'start' | 'final' | 'failed' | 'cleared' | 'maxattempts' = 'none';
   @Input() courseTree: any = null;
   @Input() courseTypeName:string = ''
+  @Input() courseDetailId: number | null = null;
   isLiveChatActive = signal<boolean>(false);
   isLiveChatLoading = signal<boolean>(false);
 
@@ -341,7 +342,7 @@ export class Chat implements OnInit {
     if (!question || this.isChatSending()) return;
 
     const tree = this.courseTree;
-    const cpCourseDetailId = tree?.courseId;
+    const cpCourseDetailId = this.courseDetailId ?? tree?.courseId;
     if (!cpCourseDetailId) {
       this.toastr.error('Course is not loaded yet. Please try again in a moment.', 'Error');
       return;
