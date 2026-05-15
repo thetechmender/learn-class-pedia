@@ -33,11 +33,8 @@ export class ClearedAssessment implements OnChanges {
   pendingAction: 'download' | 'share' | null = null;
 
   ngOnChanges() {
-    // For courseTypeId 3, automatically emit finish to return to course without lecture select
-    if (this.courseTypeId === 3 && this.resultData) {
-      this.finish.emit();
-      return;
-    }
+    // For courseTypeId 3, show cleared assessment screen without auto-finish
+    // Removed auto-finish to allow users to see their results
 
     // Check if certificate is being generated for courseTypeId 1 & 2
     if ((this.courseTypeId === 1 || this.courseTypeId === 2) && this.resultData) {
@@ -89,7 +86,8 @@ export class ClearedAssessment implements OnChanges {
   }
 
   get scorePercentage(): number {
-    return this.resultData?.score ?? 0;
+    debugger;
+    return this.resultData?.score ?? this.resultData?.scorePercentage ?? 0;
   }
 
   get attemptsUsed(): number {

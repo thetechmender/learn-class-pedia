@@ -109,6 +109,21 @@ export class SecurityService {
       return;
     }
 
+    // For courseTypeId = 3, trigger autoSubmit first, then show acknowledge popup
+    if (this.courseTypeId === 3 && type !== 'tab_close') {
+      this.isAssessmentActive = false;
+      this.autoSubmitTriggered.next();
+
+      // Build warning message
+      const violationType = type === 'screenshot' ? 'Screenshot attempt' : 'Tab switch';
+      const message = `${violationType} detected during your assessment. This is a violation of the assessment rules. Your assessment has been auto-submitted.`;
+
+      // Emit popup event for user to acknowledge
+      this.isPopupVisible = true;
+      this.showWarningPopup.next({ message, warningCount: this.warningCount, type });
+      return;
+    }
+
     // Emit warning event for component to handle
     this.warningEvent.next({
       type,
